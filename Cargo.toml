@@ -1,0 +1,14 @@
+[workspace]
+
+members = [
+  "general-mq",
+  "sylvia-iot-auth",
+  "sylvia-iot-broker",
+  "sylvia-iot-corelib",
+  "sylvia-iot-coremgr",
+  "sylvia-iot-coremgr-cli",
+  "sylvia-iot-data",
+  "sylvia-iot-sdk",
+  "sylvia-router",
+  "stress-simple",
+]

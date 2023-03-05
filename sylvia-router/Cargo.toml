@@ -1,0 +1,36 @@
+[package]
+name = "sylvia-router"
+version = "0.0.1"
+authors = ["Chien-Hong Chan"]
+description = "A simple router application with full Sylvia-IoT core components."
+edition = "2021"
+license = "MIT"
+readme = "README.md"
+
+[dependencies]
+actix-cors = "0.6.4"
+actix-files = "0.6.2"
+actix-http = "3.3.1"
+actix-web = { version = "4.3.1", default-features = false, features = ["rustls"] }
+actix-web-prom = "0.6.0"
+chrono = { version = "0.4.23", default-features = false, features = ["serde"] }
+clap = { version = "4.1.8", default-features = false, features = ["std", "help", "usage", "error-context"] }
+ipnet = "2.7.1"
+json5 = "0.4.1"
+log = "0.4.17"
+reqwest = { version = "0.11.14", default-features = false, features = ["json", "rustls-tls"] }
+rustls = "0.20.8"
+rustls-pemfile = "1.0.2"
+serde = { version = "1.0.152", features = ["derive"] }
+serde_json = "1.0.93"
+serde_urlencoded = "0.7.1"
+shell-escape = "0.1.5"
+sylvia-iot-auth = { path="../sylvia-iot-auth" }
+sylvia-iot-broker = { path="../sylvia-iot-broker" }
+sylvia-iot-corelib = { path="../sylvia-iot-corelib" }
+sylvia-iot-coremgr = { path="../sylvia-iot-coremgr" }
+sylvia-iot-coremgr-cli = { path="../sylvia-iot-coremgr-cli" }
+sylvia-iot-data = { path="../sylvia-iot-data" }
+sylvia-iot-sdk = { path="../sylvia-iot-sdk" }
+sysinfo = "0.28.2"
+tokio = { version = "1.26.0", features = ["io-util", "macros", "rt-multi-thread", "time"] }

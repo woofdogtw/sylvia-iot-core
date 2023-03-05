@@ -1,0 +1,24 @@
+# Message Format
+
+## Data Channel
+
+    coremgr.data: {
+        kind: string,   // operation
+        data: object    // data content
+    }
+
+### `operation` Kind
+
+- `operation`: HTTP API operation.
+    - *string* `dataId`: unique data ID.
+    - *string* `reqTime`: request time in ISO 8601 format (from `resTime` and `latencyMs`).
+    - *string* `resTime`: response time in ISO 8601 format.
+    - *number* `latencyMs`: latency in milliseconds.
+    - *number* `status`: response status code.
+    - *string* `sourceIp`: client source IP address.
+    - *string* `method`: request HTTP method.
+    - *object* `body`: (optional) request body.
+    - *string* `userId`: request user ID.
+    - *string* `clientId`: request request client ID.
+    - *string* `errCode`: (optional) error code.
+    - *string* `errMessage`: (optional) error message.

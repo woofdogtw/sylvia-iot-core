@@ -1,0 +1,9 @@
+{
+    "intervalUs": 400,
+    "count": 75000,
+    "netHost": "amqp://network.demo.lora-ifroglab:password@192.168.50.80/network.demo.lora-ifroglab",
+    "netQueue": "broker.network.demo.lora-ifroglab.uldata",
+    "appHost": "amqp://application.demo.test-app:password@192.168.50.80/application.demo.test-app",
+    "appQueue": "broker.application.demo.test-app.uldata",
+    "addr": "01000400"
+}

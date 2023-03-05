@@ -1,0 +1,221 @@
+{
+    "log": {
+        "level": "info",    // none, debug, [info], warn, error
+        "style": "log4j",   // [json], log4j
+    },
+    "server": {
+        "httpPort": 1080,
+        "httpsPort": 1443,
+        "cacertFile": "/etc/ssl/certs/ca-certificates.crt",
+        "certFile": "/home/user/rust/conf/certs/sylvia-iot.crt",
+        "keyFile": "/home/user/rust/conf/certs/sylvia-iot.key",
+        "staticPath": "/home/user/rust/static",
+    },
+    "auth": {
+        "db": {
+            "engine": "sqlite",                     // mongodb, [sqlite]
+            "mongodb": {
+                "url": "mongodb://localhost:27017", // default: mongodb://localhost:27017
+                "database": "test1",                // default: auth
+                //"poolSize": 1,                    // default:
+            },
+            "sqlite": {
+                "path": "test.db",                  // default: auth.db
+            },
+        },
+        "templates": {      // Jinja2 template paths.
+            "login": "/home/user/rust/static/login.j2",
+            "grant": "/home/user/rust/static/grant.j2",
+        },
+        "apiScopes": {
+            "auth.tokeninfo.get": [],
+            "auth.logout.post": [],
+            "user.get": [],
+            "user.patch": [],
+            "user.post.admin": [],
+            "user.get.admin": [],
+            "user.patch.admin": [],
+            "user.delete.admin": [],
+            "client.post": [],
+            "client.get": [],
+            "client.patch": [],
+            "client.delete": [],
+            "client.delete.user": [],
+        },
+    },
+    "broker": {
+        "auth": "http://localhost:1080/auth",
+        "db": {
+            "engine": "sqlite",                     // mongodb, [sqlite]
+            "mongodb": {
+                "url": "mongodb://localhost:27017", // default: mongodb://localhost:27017
+                "database": "test1",                // default: broker
+                //"poolSize": 1,                    // default:
+            },
+            "sqlite": {
+                "path": "test.db",                  // default: broker.db
+            },
+        },
+        "cache": {
+            "engine": "memory",                     // memory, [none]
+            "memory": {
+                "device": 1000000,
+                "deviceRoute": 1000000,
+                "networkRoute": 1000000,
+            },
+        },
+        "mq": {
+            "prefetch": 100,                        // AMQP prefetch
+            "sharedPrefix": "$share/sylvia-broker/",// MQTT shared subscription prefix
+        },
+        "mqChannels": {
+            "unit": {
+                "url": "amqp://localhost",
+                "prefetch": 100,
+            },
+            "application": {
+                "url": "amqp://localhost",
+                "prefetch": 100
+            },
+            "network": {
+                "url": "amqp://localhost",
+                "prefetch": 100,
+            },
+            "device": {
+                "url": "amqp://localhost",
+                "prefetch": 100,
+            },
+            "deviceRoute": {
+                "url": "amqp://localhost",
+                "prefetch": 100,
+            },
+            "networkRoute": {
+                "url": "amqp://localhost",
+                "prefetch": 100,
+            },
+            "data": {
+                "url": "amqp://localhost",
+            },
+        },
+        "apiScopes": {
+            "unit.post": [],
+            "unit.get": [],
+            "unit.patch": [],
+            "unit.delete": [],
+            "unit.delete.user": [],
+            "application.post": [],
+            "application.get": [],
+            "application.patch": [],
+            "application.delete": [],
+            "network.post": [],
+            "network.get": [],
+            "network.patch": [],
+            "network.delete": [],
+            "device.post": [],
+            "device.get": [],
+            "device.patch": [],
+            "device.delete": [],
+            "device-route.post": [],
+            "device-route.get": [],
+            "device-route.patch": [],
+            "device-route.delete": [],
+            "network-route.post": [],
+            "network-route.get": [],
+            "network-route.patch": [],
+            "network-route.delete": [],
+            "dldata-buffer.get": [],
+            "dldata-buffer.patch": [],
+            "dldata-buffer.delete": [],
+        },
+    },
+    "coremgr": {
+        "auth": "http://localhost:1080/auth",
+        "broker": "http://localhost:1080/broker",
+        "mq": {
+            "engine": {                             // support engines
+                "amqp": "rabbitmq",                 // [rabbitmq]
+                "mqtt": "emqx",                     // [emqx], rumqttd
+            },
+            "rabbitmq": {
+                "hosts": [                          // available message broker hosts. empty means unlimited.
+                    {"name": "local", "host": "localhost", "external": "localhost", "active": true },
+                ],
+                "username": "guest",
+                "password": "guest",
+                "ttl": 3600,
+                "length": 10000,
+            },
+            "emqx": {
+                "hosts": [                          // available message broker hosts. empty means unlimited.
+                    {"name": "local", "host": "localhost", "external": "localhost", "active": true },
+                ],
+                "apiKey": "key",
+                "apiSecret": "secret",
+            },
+            "rumqttd": {
+                "mqttPort": 1883,
+                "mqttsPort": 8883,
+                "consolePort": 18083,
+            },
+        },
+        "mqChannels": {
+            "data": {
+                "url": "amqp://localhost",
+            },
+        },
+    },
+    "coremgrCli": {
+        "auth": "http://localhost:1080/auth",
+        "coremgr": "http://localhost:1080/coremgr",
+        "data": "http://localhost:1080/data",
+        "clientId": "public",
+        "redirectUri": "http://localhost:1080/auth/oauth2/redirect",
+    },
+    "data": {
+        "auth": "http://localhost:1080/auth",
+        "broker": "http://localhost:1080/broker",
+        "db": {
+            "engine": "sqlite",                     // mongodb, [sqlite]
+            "mongodb": {
+                "url": "mongodb://localhost:27017", // default: mongodb://localhost:27017
+                "database": "test1",                // default: data
+                //"poolSize": 1,                    // default:
+            },
+            "sqlite": {
+                "path": "test.db",                  // default: data.db
+            },
+        },
+        "mqChannels": {
+            "brokerData": { // broker.data queue
+                "url": "amqp://localhost",
+                "prefetch": 100,
+            },
+            "coremgrData": { // coremgr.data queue
+                "url": "amqp://localhost",
+                "prefetch": 100,
+            },
+        },
+    },
+    "router": {
+        "auth": "http://localhost:1080/auth",
+        "router": "http://localhost:1080/router",   // for CLI
+        "wan": [
+            {
+                "name": "eth0",
+                "ifname": "eth0",
+            },
+        ],
+        "lan": {
+            "name": "eth0",
+            "ifname": "eth0",
+        },
+        "wlan": {                                   // coment wlan to not support WLAN
+            "name": "wlan",
+            "ifname": "wlx0123456789ab",
+        },
+        "wwan": {                                   // comment wwan to not support WWAN
+            "name": "wwan",
+            "ifname": "wlxba9876543210",
+        },
+    },
+}

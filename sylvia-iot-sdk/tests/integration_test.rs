@@ -1,0 +1,54 @@
+use std::{
+    collections::HashMap,
+    sync::{Arc, Mutex},
+};
+
+use actix_web::dev::ServerHandle;
+use general_mq::Queue;
+use laboratory::{describe, LabResult};
+use tokio::{runtime::Runtime, task};
+
+use sylvia_iot_auth::models::SqliteModel as AuthDbModel;
+use sylvia_iot_sdk::mq::{application::ApplicationMgr, network::NetworkMgr, Connection};
+
+mod middlewares;
+mod mq;
+
+#[derive(Default)]
+pub struct TestState {
+    pub runtime: Option<Runtime>, // use Option for Default. Always Some().
+    pub auth_db: Option<AuthDbModel>, // sylvia-auth relative databases.
+    pub auth_svc: Option<ServerHandle>, // sylvia-auth service.
+    pub auth_uri: Option<String>, // the /tokeninfo URI.
+    pub mq_engine: Option<String>,
+    pub mgr_conns: Option<Arc<Mutex<HashMap<String, Connection>>>>,
+    pub app_mgrs: Option<Vec<ApplicationMgr>>,
+    pub net_mgrs: Option<Vec<NetworkMgr>>,
+    pub app_net_conn: Option<Connection>, // application/network side connection.
+    pub app_net_queues: Option<Vec<Queue>>, // application/network side queues.
+    pub mqtt_shared_prefix: Option<String>,
+}
+
+pub const WAIT_COUNT: isize = 100;
+pub const WAIT_TICK: u64 = 100;
+pub const TEST_AUTH_BASE: &'static str = "http://localhost:1080/auth";
+pub const TEST_REDIRECT_URI: &'static str = "http://localhost:1080/auth/oauth2/redirect";
+pub const TEST_AMQP_HOST_URI: &'static str = "amqp://localhost";
+pub const TEST_MQTT_HOST_URI: &'static str = "mqtt://localhost";
+
+#[tokio::test]
+async fn integration_test() -> LabResult {
+    let handle = task::spawn_blocking(|| {
+        describe("full test", |context| {
+            context.describe_import(middlewares::suite());
+            context.describe_import(mq::suite(mq::MqEngine::RABBITMQ));
+            context.describe_import(mq::suite(mq::MqEngine::EMQX));
+        })
+        .run()
+    });
+
+    match handle.await {
+        Err(e) => Err(format!("join error: {}", e)),
+        Ok(result) => result,
+    }
+}

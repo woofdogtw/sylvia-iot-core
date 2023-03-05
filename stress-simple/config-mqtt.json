@@ -1,0 +1,9 @@
+{
+    "intervalUs": 400,
+    "count": 75000,
+    "netHost": "mqtt://network.demo.lora-ifroglab-mqtt:password@192.168.50.80/network.demo.lora-ifroglab",
+    "netQueue": "broker.network.demo.lora-ifroglab-mqtt.uldata",
+    "appHost": "mqtt://application.demo.test-app-mqtt:password@192.168.50.80/application.demo.test-app",
+    "appQueue": "broker.application.demo.test-app-mqtt.uldata",
+    "addr": "01000461"
+}

@@ -1,0 +1,421 @@
+name: Build and Test
+on:
+  push:
+    branches:
+      - main
+env:
+  BINUTILS_VER: v0.3.6
+  GRCOV_VER: v0.8.13
+jobs:
+  general-mq:
+    name: Build and test general-mq
+    permissions:
+      contents: write
+    runs-on: ubuntu-22.04
+    services:
+      rabbitmq:
+        image: rabbitmq:3.11.9-management-alpine
+        ports:
+          - 5671:5671
+          - 5672:5672
+          - 15672:15672
+      emqx:
+        image: emqx/emqx:5.0.17
+        ports:
+          - 1883:1883
+          - 8883:8883
+          - 18083:18083
+    env:
+      PROJ: general-mq
+      RUSTFLAGS: "-C instrument-coverage"
+    steps:
+      - name: Install tools
+        run: |
+          rustup component add llvm-tools-preview
+          curl -kLO https://github.com/rust-embedded/cargo-binutils/releases/download/$BINUTILS_VER/x86_64-unknown-linux-gnu.tar.gz
+          curl -kLO https://github.com/mozilla/grcov/releases/download/$GRCOV_VER/grcov-x86_64-unknown-linux-gnu.tar.bz2
+          tar xf x86_64-unknown-linux-gnu.tar.gz
+          tar xf grcov-x86_64-unknown-linux-gnu.tar.bz2
+          mv grcov ~/.cargo/bin/
+          mv x86_64-unknown-linux-gnu/* ~/.cargo/bin/
+      - name: Check out repository
+        uses: actions/checkout@v3
+      - name: Build bin/lib
+        run: cargo build -p $PROJ
+      - name: Run test
+        uses: nick-fields/retry@v2.8.3
+        with:
+          timeout_minutes: 60
+          max_attempts: 3
+          command: >
+            LLVM_PROFILE_FILE="$(pwd)/target/$PROJ.profraw"
+            cargo test -p $PROJ --test integration_test -- --nocapture
+      - name: Collect coverage
+        run: |
+          TEST_FILE=$(LLVM_PROFILE_FILE="$(pwd)/target/$PROJ.profraw" cargo test -p $PROJ --test integration_test --no-run --message-format=json | jq -r "select(.profile.test == true) | .filenames[]")
+          rm default*.profraw
+          cargo profdata -- merge -sparse target/$PROJ.profraw -o target/$PROJ.profdata
+          mkdir -p target/coverage
+          grcov . --binary-path $TEST_FILE -s $PROJ/src -t html --branch --ignore-not-existing -o ./target/coverage/$PROJ
+      - name: Publish coverage
+        uses: JamesIves/github-pages-deploy-action@v4.4.1
+        with:
+          folder: target/coverage/${{ env.PROJ }}
+          target-folder: docs/coverage/${{ env.PROJ }}
+
+  auth:
+    name: Build and test sylvia-iot-auth
+    permissions:
+      contents: write
+    runs-on: ubuntu-22.04
+    services:
+      mongo:
+        image: mongo:6.0.4
+        ports:
+          - 27017:27017
+      redis:
+        image: redis:7.0.8
+        ports:
+          - 6379:6379
+    env:
+      PROJ: sylvia-iot-auth
+      RUSTFLAGS: "-C instrument-coverage"
+    steps:
+      - name: Install tools
+        run: |
+          rustup component add llvm-tools-preview
+          curl -kLO https://github.com/rust-embedded/cargo-binutils/releases/download/$BINUTILS_VER/x86_64-unknown-linux-gnu.tar.gz
+          curl -kLO https://github.com/mozilla/grcov/releases/download/$GRCOV_VER/grcov-x86_64-unknown-linux-gnu.tar.bz2
+          tar xf x86_64-unknown-linux-gnu.tar.gz
+          tar xf grcov-x86_64-unknown-linux-gnu.tar.bz2
+          mv grcov ~/.cargo/bin/
+          mv x86_64-unknown-linux-gnu/* ~/.cargo/bin/
+      - name: Check out repository
+        uses: actions/checkout@v3
+      - name: Build bin/lib
+        run: cargo build -p $PROJ
+      - name: Run test
+        uses: nick-fields/retry@v2.8.3
+        with:
+          timeout_minutes: 60
+          max_attempts: 2
+          command: >
+            LLVM_PROFILE_FILE="$(pwd)/target/$PROJ.profraw"
+            cargo test -p $PROJ --test integration_test -- --nocapture
+      - name: Collect coverage
+        run: |
+          TEST_FILE=$(LLVM_PROFILE_FILE="$(pwd)/target/$PROJ.profraw" cargo test -p $PROJ --test integration_test --no-run --message-format=json | jq -r "select(.profile.test == true) | .filenames[]")
+          rm default*.profraw
+          cargo profdata -- merge -sparse target/$PROJ.profraw -o target/$PROJ.profdata
+          mkdir -p target/coverage
+          grcov . --binary-path $TEST_FILE -s $PROJ/src -t html --branch --ignore-not-existing -o ./target/coverage/$PROJ
+      - name: Publish coverage
+        uses: JamesIves/github-pages-deploy-action@v4.4.1
+        with:
+          folder: target/coverage/${{ env.PROJ }}
+          target-folder: docs/coverage/${{ env.PROJ }}
+
+  broker:
+    name: Build and test sylvia-iot-broker
+    permissions:
+      contents: write
+    runs-on: ubuntu-22.04
+    services:
+      mongo:
+        image: mongo:6.0.4
+        ports:
+          - 27017:27017
+      rabbitmq:
+        image: rabbitmq:3.11.9-management-alpine
+        ports:
+          - 5671:5671
+          - 5672:5672
+          - 15672:15672
+      emqx:
+        image: emqx/emqx:5.0.17
+        ports:
+          - 1883:1883
+          - 8883:8883
+          - 18083:18083
+    env:
+      PROJ: sylvia-iot-broker
+      RUSTFLAGS: "-C instrument-coverage"
+    steps:
+      - name: Install tools
+        run: |
+          rustup component add llvm-tools-preview
+          curl -kLO https://github.com/rust-embedded/cargo-binutils/releases/download/$BINUTILS_VER/x86_64-unknown-linux-gnu.tar.gz
+          curl -kLO https://github.com/mozilla/grcov/releases/download/$GRCOV_VER/grcov-x86_64-unknown-linux-gnu.tar.bz2
+          tar xf x86_64-unknown-linux-gnu.tar.gz
+          tar xf grcov-x86_64-unknown-linux-gnu.tar.bz2
+          mv grcov ~/.cargo/bin/
+          mv x86_64-unknown-linux-gnu/* ~/.cargo/bin/
+      - name: Check out repository
+        uses: actions/checkout@v3
+      - name: Build bin/lib
+        run: cargo build -p $PROJ
+      - name: Run test
+        uses: nick-fields/retry@v2.8.3
+        with:
+          timeout_minutes: 60
+          max_attempts: 3
+          command: >
+            LLVM_PROFILE_FILE="$(pwd)/target/$PROJ.profraw"
+            cargo test -p $PROJ --test integration_test -- --nocapture
+      - name: Collect coverage
+        run: |
+          TEST_FILE=$(LLVM_PROFILE_FILE="$(pwd)/target/$PROJ.profraw" cargo test -p $PROJ --test integration_test --no-run --message-format=json | jq -r "select(.profile.test == true) | .filenames[]")
+          rm default*.profraw
+          cargo profdata -- merge -sparse target/$PROJ.profraw -o target/$PROJ.profdata
+          mkdir -p target/coverage
+          grcov . --binary-path $TEST_FILE -s $PROJ/src -t html --branch --ignore-not-existing -o ./target/coverage/$PROJ
+      - name: Publish coverage
+        uses: JamesIves/github-pages-deploy-action@v4.4.1
+        with:
+          folder: target/coverage/${{ env.PROJ }}
+          target-folder: docs/coverage/${{ env.PROJ }}
+
+  corelib:
+    name: Build and test sylvia-iot-corelib
+    permissions:
+      contents: write
+    runs-on: ubuntu-22.04
+    env:
+      PROJ: sylvia-iot-corelib
+      RUSTFLAGS: "-C instrument-coverage"
+    steps:
+      - name: Install tools
+        run: |
+          rustup component add llvm-tools-preview
+          curl -kLO https://github.com/rust-embedded/cargo-binutils/releases/download/$BINUTILS_VER/x86_64-unknown-linux-gnu.tar.gz
+          curl -kLO https://github.com/mozilla/grcov/releases/download/$GRCOV_VER/grcov-x86_64-unknown-linux-gnu.tar.bz2
+          tar xf x86_64-unknown-linux-gnu.tar.gz
+          tar xf grcov-x86_64-unknown-linux-gnu.tar.bz2
+          mv grcov ~/.cargo/bin/
+          mv x86_64-unknown-linux-gnu/* ~/.cargo/bin/
+      - name: Check out repository
+        uses: actions/checkout@v3
+      - name: Build bin/lib
+        run: cargo build -p $PROJ
+      - name: Run test
+        uses: nick-fields/retry@v2.8.3
+        with:
+          timeout_minutes: 60
+          max_attempts: 2
+          command: >
+            LLVM_PROFILE_FILE="$(pwd)/target/$PROJ.profraw"
+            cargo test -p $PROJ --test integration_test -- --nocapture
+      - name: Collect coverage
+        run: |
+          TEST_FILE=$(LLVM_PROFILE_FILE="$(pwd)/target/$PROJ.profraw" cargo test -p $PROJ --test integration_test --no-run --message-format=json | jq -r "select(.profile.test == true) | .filenames[]")
+          rm default*.profraw
+          cargo profdata -- merge -sparse target/$PROJ.profraw -o target/$PROJ.profdata
+          mkdir -p target/coverage
+          grcov . --binary-path $TEST_FILE -s $PROJ/src -t html --branch --ignore-not-existing -o ./target/coverage/$PROJ
+      - name: Publish coverage
+        uses: JamesIves/github-pages-deploy-action@v4.4.1
+        with:
+          folder: target/coverage/${{ env.PROJ }}
+          target-folder: docs/coverage/${{ env.PROJ }}
+
+  coremgr:
+    name: Build and test sylvia-iot-coremgr
+    permissions:
+      contents: write
+    runs-on: ubuntu-22.04
+    services:
+      mongo:
+        image: mongo:6.0.4
+        ports:
+          - 27017:27017
+      rabbitmq:
+        image: rabbitmq:3.11.9-management-alpine
+        ports:
+          - 5671:5671
+          - 5672:5672
+          - 15672:15672
+    env:
+      PROJ: sylvia-iot-coremgr
+      RUSTFLAGS: "-C instrument-coverage"
+    steps:
+      - name: Install tools
+        run: |
+          rustup component add llvm-tools-preview
+          curl -kLO https://github.com/rust-embedded/cargo-binutils/releases/download/$BINUTILS_VER/x86_64-unknown-linux-gnu.tar.gz
+          curl -kLO https://github.com/mozilla/grcov/releases/download/$GRCOV_VER/grcov-x86_64-unknown-linux-gnu.tar.bz2
+          tar xf x86_64-unknown-linux-gnu.tar.gz
+          tar xf grcov-x86_64-unknown-linux-gnu.tar.bz2
+          mv grcov ~/.cargo/bin/
+          mv x86_64-unknown-linux-gnu/* ~/.cargo/bin/
+      - name: Check out repository
+        uses: actions/checkout@v3
+      - name: Run EMQX with the specified config file
+        run: >
+          docker run -d --rm --name emqx
+          -e EMQX_LOADED_PLUGINS="emqx_dashboard|emqx_management|emqx_auth_mnesia"
+          -e EMQX_LOADED_MODULES="emqx_mod_acl_internal,emqx_mod_presence,emqx_mod_topic_metrics"
+          -p 1883:1883 -p 8883:8883 -p 18083:18083
+          -v "$(pwd)/.github/workflows/files/emqx.conf":"/opt/emqx/etc/emqx.conf"
+          emqx/emqx:5.0.17
+      - name: Build bin/lib
+        run: cargo build -p $PROJ
+      - name: Run test
+        uses: nick-fields/retry@v2.8.3
+        with:
+          timeout_minutes: 60
+          max_attempts: 3
+          command: >
+            LLVM_PROFILE_FILE="$(pwd)/target/$PROJ.profraw"
+            cargo test -p $PROJ --test integration_test -- --nocapture
+      - name: Collect coverage
+        run: |
+          TEST_FILE=$(LLVM_PROFILE_FILE="$(pwd)/target/$PROJ.profraw" cargo test -p $PROJ --test integration_test --no-run --message-format=json | jq -r "select(.profile.test == true) | .filenames[]")
+          rm default*.profraw
+          cargo profdata -- merge -sparse target/$PROJ.profraw -o target/$PROJ.profdata
+          mkdir -p target/coverage
+          grcov . --binary-path $TEST_FILE -s $PROJ/src -t html --branch --ignore-not-existing -o ./target/coverage/$PROJ
+      - name: Publish coverage
+        uses: JamesIves/github-pages-deploy-action@v4.4.1
+        with:
+          folder: target/coverage/${{ env.PROJ }}
+          target-folder: docs/coverage/${{ env.PROJ }}
+
+  coremgr-cli:
+    name: Build and test sylvia-iot-coremgr-cli
+    permissions:
+      contents: write
+    runs-on: ubuntu-22.04
+    env:
+      PROJ: sylvia-iot-coremgr-cli
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v3
+      - name: Build bin/lib
+        run: cargo build -p $PROJ
+
+  data:
+    name: Build and test sylvia-iot-data
+    permissions:
+      contents: write
+    runs-on: ubuntu-22.04
+    services:
+      mongo:
+        image: mongo:6.0.4
+        ports:
+          - 27017:27017
+      rabbitmq:
+        image: rabbitmq:3.11.9-management-alpine
+        ports:
+          - 5671:5671
+          - 5672:5672
+          - 15672:15672
+      emqx:
+        image: emqx/emqx:5.0.17
+        ports:
+          - 1883:1883
+          - 8883:8883
+          - 18083:18083
+    env:
+      PROJ: sylvia-iot-data
+      RUSTFLAGS: "-C instrument-coverage"
+    steps:
+      - name: Install tools
+        run: |
+          rustup component add llvm-tools-preview
+          curl -kLO https://github.com/rust-embedded/cargo-binutils/releases/download/$BINUTILS_VER/x86_64-unknown-linux-gnu.tar.gz
+          curl -kLO https://github.com/mozilla/grcov/releases/download/$GRCOV_VER/grcov-x86_64-unknown-linux-gnu.tar.bz2
+          tar xf x86_64-unknown-linux-gnu.tar.gz
+          tar xf grcov-x86_64-unknown-linux-gnu.tar.bz2
+          mv grcov ~/.cargo/bin/
+          mv x86_64-unknown-linux-gnu/* ~/.cargo/bin/
+      - name: Check out repository
+        uses: actions/checkout@v3
+      - name: Build bin/lib
+        run: cargo build -p $PROJ
+      - name: Run test
+        uses: nick-fields/retry@v2.8.3
+        with:
+          timeout_minutes: 60
+          max_attempts: 3
+          command: >
+            LLVM_PROFILE_FILE="$(pwd)/target/$PROJ.profraw"
+            cargo test -p $PROJ --test integration_test -- --nocapture
+      - name: Collect coverage
+        run: |
+          TEST_FILE=$(LLVM_PROFILE_FILE="$(pwd)/target/$PROJ.profraw" cargo test -p $PROJ --test integration_test --no-run --message-format=json | jq -r "select(.profile.test == true) | .filenames[]")
+          rm default*.profraw
+          cargo profdata -- merge -sparse target/$PROJ.profraw -o target/$PROJ.profdata
+          mkdir -p target/coverage
+          grcov . --binary-path $TEST_FILE -s $PROJ/src -t html --branch --ignore-not-existing -o ./target/coverage/$PROJ
+      - name: Publish coverage
+        uses: JamesIves/github-pages-deploy-action@v4.4.1
+        with:
+          folder: target/coverage/${{ env.PROJ }}
+          target-folder: docs/coverage/${{ env.PROJ }}
+
+  sdk:
+    name: Build and test sylvia-iot-sdk
+    permissions:
+      contents: write
+    runs-on: ubuntu-22.04
+    services:
+      rabbitmq:
+        image: rabbitmq:3.11.9-management-alpine
+        ports:
+          - 5671:5671
+          - 5672:5672
+          - 15672:15672
+      emqx:
+        image: emqx/emqx:5.0.17
+        ports:
+          - 1883:1883
+          - 8883:8883
+          - 18083:18083
+    env:
+      PROJ: sylvia-iot-sdk
+      RUSTFLAGS: "-C instrument-coverage"
+    steps:
+      - name: Install tools
+        run: |
+          rustup component add llvm-tools-preview
+          curl -kLO https://github.com/rust-embedded/cargo-binutils/releases/download/$BINUTILS_VER/x86_64-unknown-linux-gnu.tar.gz
+          curl -kLO https://github.com/mozilla/grcov/releases/download/$GRCOV_VER/grcov-x86_64-unknown-linux-gnu.tar.bz2
+          tar xf x86_64-unknown-linux-gnu.tar.gz
+          tar xf grcov-x86_64-unknown-linux-gnu.tar.bz2
+          mv grcov ~/.cargo/bin/
+          mv x86_64-unknown-linux-gnu/* ~/.cargo/bin/
+      - name: Check out repository
+        uses: actions/checkout@v3
+      - name: Build bin/lib
+        run: cargo build -p $PROJ
+      - name: Run test
+        uses: nick-fields/retry@v2.8.3
+        with:
+          timeout_minutes: 60
+          max_attempts: 3
+          command: >
+            LLVM_PROFILE_FILE="$(pwd)/target/$PROJ.profraw"
+            cargo test -p $PROJ --test integration_test -- --nocapture
+      - name: Collect coverage
+        run: |
+          TEST_FILE=$(LLVM_PROFILE_FILE="$(pwd)/target/$PROJ.profraw" cargo test -p $PROJ --test integration_test --no-run --message-format=json | jq -r "select(.profile.test == true) | .filenames[]")
+          rm default*.profraw
+          cargo profdata -- merge -sparse target/$PROJ.profraw -o target/$PROJ.profdata
+          mkdir -p target/coverage
+          grcov . --binary-path $TEST_FILE -s $PROJ/src -t html --branch --ignore-not-existing -o ./target/coverage/$PROJ
+      - name: Publish coverage
+        uses: JamesIves/github-pages-deploy-action@v4.4.1
+        with:
+          folder: target/coverage/${{ env.PROJ }}
+          target-folder: docs/coverage/${{ env.PROJ }}
+
+  router:
+    name: Build and test sylvia-router
+    runs-on: ubuntu-22.04
+    env:
+      PROJ: sylvia-router
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v3
+      - name: Build bin/lib
+        run: cargo build -p $PROJ

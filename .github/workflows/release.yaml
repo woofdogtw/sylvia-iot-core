@@ -1,0 +1,220 @@
+name: Release Sylvia-IoT core
+on:
+  push:
+    tags:
+      - v*
+env:
+  GHR_VER: v0.16.0
+  BIN_DIR: dist
+jobs:
+  release:
+    name: Publish GitHub Releases and Docker Hub
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v3
+        with:
+          ref: ${{ github.ref_name }}
+      - name: Build general-mq
+        run: cargo build -p general-mq --release
+      - name: Build corelib
+        run: cargo build -p sylvia-iot-corelib --release
+      - name: Build auth
+        run: cargo build -p sylvia-iot-auth --release
+      - name: Build broker
+        run: cargo build -p sylvia-iot-broker --release
+      - name: Build coremgr
+        run: cargo build -p sylvia-iot-coremgr --release
+      - name: Build coremgr-cli
+        run: cargo build -p sylvia-iot-coremgr-cli --release
+      - name: Build data
+        run: cargo build -p sylvia-iot-data --release
+      - name: Build sdk
+        run: cargo build -p sylvia-iot-sdk --release
+      - name: Build router
+        run: cargo build -p sylvia-router --release
+      - name: Prepare assets
+        env:
+          RELEASE_VER: ${{ github.ref_name }}
+        run: |
+          mkdir -p ${BIN_DIR}
+          cp target/release/sylvia-iot-auth target/release/sylvia-iot-broker target/release/sylvia-iot-coremgr target/release/sylvia-iot-coremgr-cli target/release/sylvia-iot-data target/release/sylvia-iot-core target/release/sylvia-router target/release/sylvia-router-cli ${BIN_DIR}/
+          cd ${BIN_DIR}
+          strip -o sylvia-iot-auth sylvia-iot-auth && tar cf sylvia-iot-auth.tar sylvia-iot-auth && rm sylvia-iot-auth
+          strip -o sylvia-iot-broker sylvia-iot-broker && tar cf sylvia-iot-broker.tar sylvia-iot-broker && rm sylvia-iot-broker
+          strip -o sylvia-iot-coremgr sylvia-iot-coremgr && tar cf sylvia-iot-coremgr.tar sylvia-iot-coremgr && rm sylvia-iot-coremgr
+          strip -o sylvia-iot-coremgr-cli sylvia-iot-coremgr-cli && tar cf sylvia-iot-coremgr-cli.tar sylvia-iot-coremgr-cli && rm sylvia-iot-coremgr-cli
+          strip -o sylvia-iot-data sylvia-iot-data && tar cf sylvia-iot-data.tar sylvia-iot-data && rm sylvia-iot-data
+          strip -o sylvia-iot-core sylvia-iot-core && tar cf sylvia-iot-core.tar sylvia-iot-core && rm sylvia-iot-core
+          strip -o sylvia-router sylvia-router && tar cf sylvia-router.tar sylvia-router && rm sylvia-router
+          strip -o sylvia-router-cli sylvia-router-cli && tar cf sylvia-router-cli.tar sylvia-router-cli && rm sylvia-router-cli
+          cd ..
+          xz -z -9 -e ${BIN_DIR}/*
+          echo ${RELEASE_VER:1} > ${BIN_DIR}/VERSION
+      - name: Login to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - name: Docker meta auth
+        id: meta-auth
+        uses: docker/metadata-action@v4
+        with:
+          images: |
+            woofdogtw/sylvia-iot-auth
+          tags: |
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=semver,pattern={{major}}
+      - name: Create auth Docker image
+        uses: docker/build-push-action@v4
+        with:
+          build-args: |
+            BIN_DIR=${{ env.BIN_DIR }}
+            PROJ=sylvia-iot-auth
+          context: .
+          file: ./files/Dockerfile
+          platforms: linux/amd64
+          push: true
+          tags: ${{ steps.meta-auth.outputs.tags }}
+      - name: Docker meta broker
+        id: meta-broker
+        uses: docker/metadata-action@v4
+        with:
+          images: |
+            woofdogtw/sylvia-iot-broker
+          tags: |
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=semver,pattern={{major}}
+      - name: Create broker Docker image
+        uses: docker/build-push-action@v4
+        with:
+          build-args: |
+            BIN_DIR=${{ env.BIN_DIR }}
+            PROJ=sylvia-iot-broker
+          context: .
+          file: ./files/Dockerfile
+          platforms: linux/amd64
+          push: true
+          tags: ${{ steps.meta-broker.outputs.tags }}
+      - name: Docker meta coremgr
+        id: meta-coremgr
+        uses: docker/metadata-action@v4
+        with:
+          images: |
+            woofdogtw/sylvia-iot-coremgr
+          tags: |
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=semver,pattern={{major}}
+      - name: Create coremgr Docker
+        uses: docker/build-push-action@v4
+        with:
+          build-args: |
+            BIN_DIR=${{ env.BIN_DIR }}
+            PROJ=sylvia-iot-coremgr
+          context: .
+          file: ./files/Dockerfile
+          platforms: linux/amd64
+          push: true
+          tags: ${{ steps.meta-coremgr.outputs.tags }}
+      - name: Docker meta data
+        id: meta-data
+        uses: docker/metadata-action@v4
+        with:
+          images: |
+            woofdogtw/sylvia-iot-data
+          tags: |
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=semver,pattern={{major}}
+      - name: Create data Docker
+        uses: docker/build-push-action@v4
+        with:
+          build-args: |
+            BIN_DIR=${{ env.BIN_DIR }}
+            PROJ=sylvia-iot-data
+          context: .
+          file: ./files/Dockerfile
+          platforms: linux/amd64
+          push: true
+          tags: ${{ steps.meta-data.outputs.tags }}
+      - name: Docker meta core
+        id: meta-core
+        uses: docker/metadata-action@v4
+        with:
+          images: |
+            woofdogtw/sylvia-iot-core
+          tags: |
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=semver,pattern={{major}}
+      - name: Create core Docker
+        uses: docker/build-push-action@v4
+        with:
+          build-args: |
+            BIN_DIR=${{ env.BIN_DIR }}
+            PROJ=sylvia-iot-core
+            CLI=sylvia-iot-coremgr-cli
+          context: .
+          file: ./files/Dockerfile-cli
+          platforms: linux/amd64
+          push: true
+          tags: ${{ steps.meta-core.outputs.tags }}
+      - name: Create releases, assets and version
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          curl -LO https://github.com/tcnksm/ghr/releases/download/${GHR_VER}/ghr_${GHR_VER}_linux_amd64.tar.gz
+          tar xf ghr_${GHR_VER}_linux_amd64.tar.gz
+          ./ghr_${GHR_VER}_linux_amd64/ghr -u "${GITHUB_REPOSITORY%/*}" -r "${GITHUB_REPOSITORY#*/}" "${GITHUB_REF#refs/tags/}" ${BIN_DIR}
+  crates:
+    name: Publish crates.io
+    runs-on: ubuntu-22.04
+    env:
+      CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
+      RELEASE_VER: ${{ github.ref_name }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v3
+        with:
+          ref: ${{ github.ref_name }}
+      - name: Login to crates.io
+        run: |
+          cargo login ${CARGO_REGISTRY_TOKEN}
+      - name: Publish general-mq
+        run: |
+          cargo publish --allow-dirty -p general-mq
+      - name: Publish sylvia-iot-corelib
+        run: |
+          cargo publish --allow-dirty -p sylvia-iot-corelib
+      - name: Publish sylvia-iot-auth
+        run: |
+          sed -i "s,^sylvia-iot-corelib =.*,sylvia-iot-corelib = \"${RELEASE_VER:1}\"," sylvia-iot-auth/Cargo.toml
+          cargo publish --allow-dirty -p sylvia-iot-auth
+      - name: Publish sylvia-iot-broker
+        run: |
+          sed -i "s,^general-mq =.*,general-mq = \"${RELEASE_VER:1}\"," sylvia-iot-broker/Cargo.toml
+          sed -i "s,^sylvia-iot-corelib =.*,sylvia-iot-corelib = \"${RELEASE_VER:1}\"," sylvia-iot-broker/Cargo.toml
+          cargo publish --allow-dirty -p sylvia-iot-broker
+      - name: Publish sylvia-iot-coremgr
+        run: |
+          sed -i "s,^general-mq =.*,general-mq = \"${RELEASE_VER:1}\"," sylvia-iot-coremgr/Cargo.toml
+          sed -i "s,^sylvia-iot-auth =.*,sylvia-iot-auth = \"${RELEASE_VER:1}\"," sylvia-iot-coremgr/Cargo.toml
+          sed -i "s,^sylvia-iot-broker =.*,sylvia-iot-broker = \"${RELEASE_VER:1}\"," sylvia-iot-coremgr/Cargo.toml
+          sed -i "s,^sylvia-iot-corelib =.*,sylvia-iot-corelib = \"${RELEASE_VER:1}\"," sylvia-iot-coremgr/Cargo.toml
+          cargo publish --allow-dirty -p sylvia-iot-coremgr
+      - name: Publish sylvia-iot-data
+        run: |
+          sed -i "s,^general-mq =.*,general-mq = \"${RELEASE_VER:1}\"," sylvia-iot-data/Cargo.toml
+          sed -i "s,^sylvia-iot-auth =.*,sylvia-iot-auth = \"${RELEASE_VER:1}\"," sylvia-iot-data/Cargo.toml
+          sed -i "s,^sylvia-iot-broker =.*,sylvia-iot-broker = \"${RELEASE_VER:1}\"," sylvia-iot-data/Cargo.toml
+          sed -i "s,^sylvia-iot-corelib =.*,sylvia-iot-corelib = \"${RELEASE_VER:1}\"," sylvia-iot-data/Cargo.toml
+          sed -i "s,^sylvia-iot-coremgr =.*,sylvia-iot-coremgr = \"${RELEASE_VER:1}\"," sylvia-iot-data/Cargo.toml
+          cargo publish --allow-dirty -p sylvia-iot-data
+      - name: Publish sylvia-iot-sdk
+        run: |
+          sed -i "s,^general-mq =.*,general-mq = \"${RELEASE_VER:1}\"," sylvia-iot-sdk/Cargo.toml
+          sed -i "s,^sylvia-iot-corelib =.*,sylvia-iot-corelib = \"${RELEASE_VER:1}\"," sylvia-iot-sdk/Cargo.toml
+          cargo publish --allow-dirty -p sylvia-iot-sdk
