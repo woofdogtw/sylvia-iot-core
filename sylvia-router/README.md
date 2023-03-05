@@ -1,3 +1,5 @@
+[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+
 # sylvia-router
 
 A simple router application with full Sylvia-IoT core components:

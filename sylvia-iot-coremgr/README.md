@@ -1,5 +1,9 @@
-![GitHub Actions](https://github.com/woofdogtw/sylvia-iot-core/actions/workflows/build-test.yaml/badge.svg)
-![Coverage](https://raw.githubusercontent.com/woofdogtw/sylvia-iot-core/gh-pages/docs/coverage/sylvia-iot-coremgr/badges/flat.svg)
+[![crates.io](https://img.shields.io/crates/v/sylvia-iot-coremgr)](https://crates.io/crates/sylvia-iot-coremgr)
+[![Documentation](https://docs.rs/sylvia-iot-coremgr/badge.svg)](https://docs.rs/sylvia-iot-coremgr)
+![CI](https://github.com/woofdogtw/sylvia-iot-core/actions/workflows/build-test.yaml/badge.svg)
+[![Coverage](https://raw.githubusercontent.com/woofdogtw/sylvia-iot-core/gh-pages/docs/coverage/sylvia-iot-coremgr/badges/flat.svg)](https://woofdogtw.github.io/sylvia-iot-core/coverage/sylvia-iot-coremgr/)
+[![Docker](https://img.shields.io/docker/v/woofdogtw/sylvia-iot-coremgr?label=docker&logo=docker)](https://hub.docker.com/r/woofdogtw/sylvia-iot-coremgr)
+[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
 # sylvia-coremgr
 

@@ -1,4 +1,6 @@
-![GitHub Actions](https://github.com/woofdogtw/sylvia-iot-core/actions/workflows/build-test.yaml/badge.svg)
+![CI](https://github.com/woofdogtw/sylvia-iot-core/actions/workflows/build-test.yaml/badge.svg)
+[![Docker](https://img.shields.io/docker/v/woofdogtw/sylvia-iot-core?label=docker&logo=docker)](https://hub.docker.com/r/woofdogtw/sylvia-iot-core)
+[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
 # sylvia-iot-core
 

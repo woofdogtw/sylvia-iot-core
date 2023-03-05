@@ -1,5 +1,9 @@
-![GitHub Actions](https://github.com/woofdogtw/sylvia-iot-core/actions/workflows/build-test.yaml/badge.svg)
-![Coverage](https://raw.githubusercontent.com/woofdogtw/sylvia-iot-core/gh-pages/docs/coverage/sylvia-iot-auth/badges/flat.svg)
+[![crates.io](https://img.shields.io/crates/v/sylvia-iot-auth)](https://crates.io/crates/sylvia-iot-auth)
+[![Documentation](https://docs.rs/sylvia-iot-auth/badge.svg)](https://docs.rs/sylvia-iot-auth)
+![CI](https://github.com/woofdogtw/sylvia-iot-core/actions/workflows/build-test.yaml/badge.svg)
+[![Coverage](https://raw.githubusercontent.com/woofdogtw/sylvia-iot-core/gh-pages/docs/coverage/sylvia-iot-auth/badges/flat.svg)](https://woofdogtw.github.io/sylvia-iot-core/coverage/sylvia-iot-auth/)
+[![Docker](https://img.shields.io/docker/v/woofdogtw/sylvia-iot-auth?label=docker&logo=docker)](https://hub.docker.com/r/woofdogtw/sylvia-iot-auth)
+[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
 # sylvia-auth
 

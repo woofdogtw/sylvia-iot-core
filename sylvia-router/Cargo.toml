@@ -6,6 +6,7 @@ description = "A simple router application with full Sylvia-IoT core components.
 edition = "2021"
 license = "MIT"
 readme = "README.md"
+repository = "https://github.com/woofdogtw/sylvia-iot-core.git"
 
 [dependencies]
 actix-cors = "0.6.4"

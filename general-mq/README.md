@@ -1,5 +1,8 @@
-![GitHub Actions](https://github.com/woofdogtw/sylvia-iot-core/actions/workflows/build-test.yaml/badge.svg)
-![Coverage](https://raw.githubusercontent.com/woofdogtw/sylvia-iot-core/gh-pages/docs/coverage/general-mq/badges/flat.svg)
+[![crates.io](https://img.shields.io/crates/v/general-mq)](https://crates.io/crates/general-mq)
+[![Documentation](https://docs.rs/general-mq/badge.svg)](https://docs.rs/general-mq)
+![CI](https://github.com/woofdogtw/sylvia-iot-core/actions/workflows/build-test.yaml/badge.svg)
+[![Coverage](https://raw.githubusercontent.com/woofdogtw/sylvia-iot-core/gh-pages/docs/coverage/general-mq/badges/flat.svg)](https://woofdogtw.github.io/sylvia-iot-core/coverage/general-mq/)
+[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
 # general-mq
 
