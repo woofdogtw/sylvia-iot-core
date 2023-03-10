@@ -21,9 +21,9 @@ mod routes;
 #[derive(Default)]
 pub struct TestState {
     pub runtime: Option<Runtime>, // use Option for Default. Always Some().
-    pub auth_db: Option<AuthDbModel>, // sylvia-auth relative databases.
-    pub broker_db: Option<BrokerDbModel>, // sylvia-broker relative databases.
-    pub auth_broker_svc: Option<ServerHandle>, // sylvia-auth and sylvia-broker service.
+    pub auth_db: Option<AuthDbModel>, // sylvia-iot-auth relative databases.
+    pub broker_db: Option<BrokerDbModel>, // sylvia-iot-broker relative databases.
+    pub auth_broker_svc: Option<ServerHandle>, // sylvia-iot-auth and sylvia-iot-broker service.
     pub auth_uri: Option<String>, // the /tokeninfo URI.
     pub mongodb: Option<MongoDbModel>,
     pub sqlite: Option<SqliteModel>,
@@ -41,7 +41,7 @@ pub const TEST_MONGODB_URL: &'static str = "mongodb://localhost:27017";
 pub const TEST_MONGODB_DB: &'static str = "test";
 pub const TEST_SQLITE_PATH: &'static str = "test.db";
 pub const TEST_REDIRECT_URI: &'static str = "http://localhost:1080/auth/oauth2/redirect";
-pub const TEST_BROKER_BASE: &'static str = "http://localhost:1080/broker"; // share with sylvia-auth
+pub const TEST_BROKER_BASE: &'static str = "http://localhost:1080/broker"; // share with sylvia-iot-auth
 pub const TEST_AMQP_HOST_URI: &'static str = "amqp://localhost";
 pub const TEST_MQTT_HOST_URI: &'static str = "mqtt://localhost";
 

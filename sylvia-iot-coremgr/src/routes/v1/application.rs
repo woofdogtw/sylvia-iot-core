@@ -577,7 +577,7 @@ async fn patch_application(
         }
     }
 
-    // Send request body to the sylvia-broker.
+    // Send request body to the sylvia-iot-broker.
     if patch_data.host_uri.is_some() || patch_data.name.is_some() || patch_data.info.is_some() {
         let application_id = param.application_id.as_str();
         let uri = format!("{}/api/v1/application/{}", broker_base, application_id);

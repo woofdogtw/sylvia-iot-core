@@ -19,7 +19,7 @@ struct HttpFtpURL {
 const DEF_AUTH: &'static str = "http://localhost:1080/auth";
 const DEF_COREMGR: &'static str = "http://localhost:3080/coremgr";
 const DEF_DATA: &'static str = "http://localhost:4080/data";
-const STORAGE_FILE: &'static str = ".sylvia-coremgr-cli.json";
+const STORAGE_FILE: &'static str = ".sylvia-iot-coremgr-cli.json";
 
 pub fn read_storage() -> Result<Storage, Box<dyn StdError>> {
     let conf_str = fs::read_to_string(storage_path())?;

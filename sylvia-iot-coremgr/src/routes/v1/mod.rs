@@ -525,7 +525,7 @@ async fn clear_patch_host(fn_name: &str, state: &web::Data<State>, patch_host: &
     }
 }
 
-/// To composite management plugin's information in the URI for sylvia-broker.
+/// To composite management plugin's information in the URI for sylvia-iot-broker.
 fn transfer_host_uri(state: &web::Data<State>, host_uri: &mut Url, mq_username: &str) {
     match host_uri.scheme() {
         "amqp" | "amqps" => match &state.amqp {
@@ -546,7 +546,7 @@ fn transfer_host_uri(state: &web::Data<State>, host_uri: &mut Url, mq_username: 
     }
 }
 
-/// Truncates the host (from sylvia-broker) to `scheme://host:port`.
+/// Truncates the host (from sylvia-iot-broker) to `scheme://host:port`.
 fn trunc_host_uri(host_uri: &Url) -> String {
     let mut new_uri = host_uri.clone();
     let _ = new_uri.set_username("");

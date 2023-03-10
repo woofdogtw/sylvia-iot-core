@@ -28,9 +28,9 @@ mod routes;
 #[derive(Default)]
 pub struct TestState {
     pub runtime: Option<Runtime>, // use Option for Default. Always Some().
-    pub auth_db: Option<AuthDbModel>, // sylvia-auth relative databases.
-    pub broker_db: Option<BrokerDbModel>, // sylvia-broker relative databases.
-    pub auth_broker_svc: Option<ServerHandle>, // sylvia-auth and sylvia-broker service.
+    pub auth_db: Option<AuthDbModel>, // sylvia-iot-auth relative databases.
+    pub broker_db: Option<BrokerDbModel>, // sylvia-iot-broker relative databases.
+    pub auth_broker_svc: Option<ServerHandle>, // sylvia-iot-auth and sylvia-iot-broker service.
     pub auth_uri: Option<String>, // the /tokeninfo URI.
     pub routes_state: Option<State>,
     pub client: Option<Client>, // HTTP client.
@@ -44,7 +44,7 @@ pub struct TestState {
 pub const WAIT_COUNT: isize = 100;
 pub const WAIT_TICK: u64 = 100;
 pub const TEST_REDIRECT_URI: &'static str = "http://localhost:1080/auth/oauth2/redirect";
-pub const TEST_BROKER_BASE: &'static str = "http://localhost:1080/broker"; // share with sylvia-auth
+pub const TEST_BROKER_BASE: &'static str = "http://localhost:1080/broker"; // share with sylvia-iot-auth
 pub const TEST_RABBITMQ_USER: &'static str = "guest";
 pub const TEST_RABBITMQ_PASS: &'static str = "guest";
 pub const TEST_EMQX_USER: &'static str = "admin";

@@ -3,7 +3,7 @@ use serde::Deserialize;
 /// Application configurations.
 #[derive(Clone, Deserialize)]
 pub struct Config {
-    /// **sylvia-auth** API base path with host. For example: `http://localhost:1080/auth`.
+    /// **sylvia-iot-auth** API base path with host. For example: `http://localhost:1080/auth`.
     pub auth: String,
     /// **sylvia-router** API base path with host. For example: `http://localhost:1080/router`.
     pub router: String,

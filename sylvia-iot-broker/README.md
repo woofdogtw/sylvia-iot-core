@@ -5,7 +5,7 @@
 [![Docker](https://img.shields.io/docker/v/woofdogtw/sylvia-iot-broker?label=docker&logo=docker)](https://hub.docker.com/r/woofdogtw/sylvia-iot-broker)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-# sylvia-broker
+# sylvia-iot-broker
 
 The message broker module of the Sylvia-IoT platform.
 
@@ -19,9 +19,9 @@ This module provides:
     - Private network routes to applications
 - Public network management
 
-# Mount sylvia-broker in your Actix-Web App
+# Mount sylvia-iot-broker in your Actix-Web App
 
-You can simply mount sylvia-broker into your Actix-Web App:
+You can simply mount sylvia-iot-broker into your Actix-Web App:
 
     use actix_web::{self, App, HttpServer};
     use clap::App as ClapApp;

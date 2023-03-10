@@ -17,8 +17,8 @@ mod mq;
 #[derive(Default)]
 pub struct TestState {
     pub runtime: Option<Runtime>, // use Option for Default. Always Some().
-    pub auth_db: Option<AuthDbModel>, // sylvia-auth relative databases.
-    pub auth_svc: Option<ServerHandle>, // sylvia-auth service.
+    pub auth_db: Option<AuthDbModel>, // sylvia-iot-auth relative databases.
+    pub auth_svc: Option<ServerHandle>, // sylvia-iot-auth service.
     pub auth_uri: Option<String>, // the /tokeninfo URI.
     pub mq_engine: Option<String>,
     pub mgr_conns: Option<Arc<Mutex<HashMap<String, Connection>>>>,

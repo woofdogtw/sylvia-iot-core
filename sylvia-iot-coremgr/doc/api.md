@@ -90,7 +90,7 @@ This system supports the following roles:
 
 ## <a name="wrap"></a>API wrapping
 
-The coremgr module wraps most of `sylvia-auth` and `sylvia-broker` APIs by replacing `/auth` and `/broker` with `/coremgr`. The exceptions are **application** and **network** APIs because the coremgr not only manages them by requesting APIs but also controls underlying message brokers (RabbitMQ/EMQX/...) for **authentication** and **access control**.
+The coremgr module wraps most of `sylvia-iot-auth` and `sylvia-iot-broker` APIs by replacing `/auth` and `/broker` with `/coremgr`. The exceptions are **application** and **network** APIs because the coremgr not only manages them by requesting APIs but also controls underlying message brokers (RabbitMQ/EMQX/...) for **authentication** and **access control**.
 
 In this document, we only describe APIs that have different body from auth/broker modules.
 
@@ -404,17 +404,17 @@ Get the specified application statistics.
         - *object* `uldata`: The statistics of the `uldata` queue.
             - *number* `consumers`: Number of consumers.
             - *number* `messages`: Number of queuing messages.
-            - *number* `publishRate`: Data rate (msg/s) from the sylvia-broker to the queue.
+            - *number* `publishRate`: Data rate (msg/s) from the sylvia-iot-broker to the queue.
             - *number* `deliverRate`: Data rate (msg/s) from the queue to the consumer(s).
         - *object* `dldataResp`: The statistics of the `dldata-resp` queue.
             - *number* `consumers`: Number of consumers.
             - *number* `messages`: Number of queuing messages.
-            - *number* `publishRate`: Data rate (msg/s) from the sylvia-broker to the queue.
+            - *number* `publishRate`: Data rate (msg/s) from the sylvia-iot-broker to the queue.
             - *number* `deliverRate`: Data rate (msg/s) from the queue to the consumer(s).
         - *object* `dldataResult`: The statistics of the `dldata-result` queue.
             - *number* `consumers`: Number of consumers.
             - *number* `messages`: Number of queuing messages.
-            - *number* `publishRate`: Data rate (msg/s) from the sylvia-broker to the queue.
+            - *number* `publishRate`: Data rate (msg/s) from the sylvia-iot-broker to the queue.
             - *number* `deliverRate`: Data rate (msg/s) from the queue to the consumer(s).
 
 - **400, 401, 403, 500, 503**: See [Notes](#notes).
@@ -744,7 +744,7 @@ Get the specified network statistics.
         - *object* `dldata`: The statistics of the `dldata` queue.
             - *number* `consumers`: Number of consumers.
             - *number* `messages`: Number of queuing messages.
-            - *number* `publishRate`: Data rate (msg/s) from the sylvia-broker to the queue.
+            - *number* `publishRate`: Data rate (msg/s) from the sylvia-iot-broker to the queue.
             - *number* `deliverRate`: Data rate (msg/s) from the queue to the consumer(s).
 
 - **400, 401, 403, 500, 503**: See [Notes](#notes).

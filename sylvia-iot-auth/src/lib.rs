@@ -9,9 +9,9 @@
 //! - Client management.
 //!
 //!
-//! # Mount sylvia-auth in your Actix-Web App
+//! # Mount sylvia-iot-auth in your Actix-Web App
 //!
-//! You can simply mount sylvia-auth into your Actix-Web App:
+//! You can simply mount sylvia-iot-auth into your Actix-Web App:
 //!
 //! ```
 //! use actix_web::{self, App, HttpServer};

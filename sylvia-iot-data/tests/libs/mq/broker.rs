@@ -265,7 +265,7 @@ pub fn new_manual(context: &mut SpecContext<TestState>) -> Result<(), String> {
         MqEngine::EMQX => {
             let conf = DataMqConfig {
                 url: Some(crate::TEST_MQTT_HOST_URI.to_string()),
-                shared_prefix: Some("$share/sylvia-data/".to_string()),
+                shared_prefix: Some("$share/sylvia-iot-data/".to_string()),
                 ..Default::default()
             };
             match broker::new(model, mq_conns, &conf) {
@@ -310,7 +310,7 @@ pub fn new_same_host(context: &mut SpecContext<TestState>) -> Result<(), String>
         MqEngine::EMQX => {
             let conf = DataMqConfig {
                 url: Some(crate::TEST_MQTT_HOST_URI.to_string()),
-                shared_prefix: Some("$share/sylvia-data/".to_string()),
+                shared_prefix: Some("$share/sylvia-iot-data/".to_string()),
                 ..Default::default()
             };
             match broker::new(model, mq_conns, &conf) {
@@ -352,7 +352,7 @@ pub fn new_same_host(context: &mut SpecContext<TestState>) -> Result<(), String>
         MqEngine::EMQX => {
             let conf = DataMqConfig {
                 url: Some(crate::TEST_MQTT_HOST_URI.to_string()),
-                shared_prefix: Some("$share/sylvia-data/".to_string()),
+                shared_prefix: Some("$share/sylvia-iot-data/".to_string()),
                 ..Default::default()
             };
             match broker::new(model, mq_conns, &conf) {
@@ -1089,7 +1089,7 @@ fn create_default_queue(state: &mut TestState) -> Result<(), String> {
         MqEngine::EMQX => {
             let conf = DataMqConfig {
                 url: Some(crate::TEST_MQTT_HOST_URI.to_string()),
-                shared_prefix: Some("$share/sylvia-data/".to_string()),
+                shared_prefix: Some("$share/sylvia-iot-data/".to_string()),
                 ..Default::default()
             };
             match broker::new(model, mq_conns, &conf) {

@@ -1259,7 +1259,7 @@ fn create_connections(state: &mut TestState) -> Result<TestResources, String> {
         unit_code: "manager".to_string(),
         id: "manager".to_string(),
         name: "manager".to_string(),
-        shared_prefix: Some("$share/sylvia-broker/".to_string()),
+        shared_prefix: Some("$share/sylvia-iot-broker/".to_string()),
         ..Default::default()
     };
     let (
@@ -1295,7 +1295,7 @@ fn create_connections(state: &mut TestState) -> Result<TestResources, String> {
         unit_code: "".to_string(),
         id: "public".to_string(),
         name: "public".to_string(),
-        shared_prefix: Some("$share/sylvia-broker/".to_string()),
+        shared_prefix: Some("$share/sylvia-iot-broker/".to_string()),
         ..Default::default()
     };
     let (mut public_network_uldata, mut public_network_dldata, _, mut public_network_dldata_result) =
@@ -1311,7 +1311,7 @@ fn create_connections(state: &mut TestState) -> Result<TestResources, String> {
         unit_code: "owner".to_string(),
         id: "owner".to_string(),
         name: "owner".to_string(),
-        shared_prefix: Some("$share/sylvia-broker/".to_string()),
+        shared_prefix: Some("$share/sylvia-iot-broker/".to_string()),
         ..Default::default()
     };
     let (

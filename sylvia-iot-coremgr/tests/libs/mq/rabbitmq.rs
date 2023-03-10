@@ -396,7 +396,7 @@ pub fn put_policies(context: &mut SpecContext<TestState>) -> Result<(), String> 
         if let Err(e) = rabbitmq::put_policies(client, opts, host, user, &policies).await {
             return Err(format!("put_policies error: {}", e));
         }
-        let policy = format!("{}/sylvia-broker", user);
+        let policy = format!("{}/sylvia-iot-broker", user);
         match get_object(client, "policies", policy.as_str()).await {
             Err(e) => return Err(format!("get policies error: {}", e)),
             Ok(resp) => match resp {

@@ -49,7 +49,7 @@ pub struct State {
     pub model: Arc<dyn Model>,
     /// The database cache.
     pub cache: Option<Arc<dyn Cache>>,
-    /// The sylvia-auth base API path with host.
+    /// The sylvia-iot-auth base API path with host.
     ///
     /// For example, `http://localhost:1080/auth`.
     pub auth_base: String,

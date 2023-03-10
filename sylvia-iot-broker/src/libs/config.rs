@@ -10,7 +10,7 @@ use sylvia_iot_corelib::constants::{CacheEngine, DbEngine};
 /// Configuration file object.
 #[derive(Default, Deserialize)]
 pub struct Config {
-    /// **sylvia-auth** API base path with host. For example: `http://localhost:1080/auth`.
+    /// **sylvia-iot-auth** API base path with host. For example: `http://localhost:1080/auth`.
     pub auth: Option<String>,
     pub db: Option<Db>,
     pub cache: Option<Cache>,
@@ -126,7 +126,7 @@ pub const DEF_MEMORY_NETWORK_ROUTE: usize = 1_000_000;
 pub const DEF_MEMORY_NETWORK_ROUTE_STR: &'static str = "1000000";
 pub const DEF_MQ_PREFETCH: u16 = 100;
 pub const DEF_MQ_PREFETCH_STR: &'static str = "100";
-pub const DEF_MQ_SHAREDPREFIX: &'static str = "$share/sylvia-broker/";
+pub const DEF_MQ_SHAREDPREFIX: &'static str = "$share/sylvia-iot-broker/";
 pub const DEF_MQ_CHANNEL_URL: &'static str = "amqp://localhost";
 
 /// To register Clap arguments.
@@ -134,7 +134,7 @@ pub fn reg_args(cmd: Command) -> Command {
     cmd.arg(
         Arg::new("broker.auth")
             .long("broker.auth")
-            .help("sylvia-auth host (ex: http://localhost:1080/auth)")
+            .help("sylvia-iot-auth host (ex: http://localhost:1080/auth)")
             .num_args(1)
             .default_value(DEF_AUTH),
     )

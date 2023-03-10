@@ -31,11 +31,11 @@ use auth::refresh;
 /// Application configurations.
 #[derive(Deserialize)]
 pub struct Config {
-    /// **sylvia-auth** API base path with host. For example: `http://localhost:1080/auth`.
+    /// **sylvia-iot-auth** API base path with host. For example: `http://localhost:1080/auth`.
     auth: String,
-    /// **sylvia-coremgr** API base path with host. For example: `http://localhost:3080/coremgr`.
+    /// **sylvia-iot-coremgr** API base path with host. For example: `http://localhost:3080/coremgr`.
     coremgr: String,
-    /// **sylvia-data** API base path with host. For example: `http://localhost:4080/data`.
+    /// **sylvia-iot-data** API base path with host. For example: `http://localhost:4080/data`.
     data: String,
     /// Client ID of **coremgr-cli**.
     #[serde(rename = "clientId")]

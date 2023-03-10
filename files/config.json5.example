@@ -65,8 +65,8 @@
             },
         },
         "mq": {
-            "prefetch": 100,                        // AMQP prefetch
-            "sharedPrefix": "$share/sylvia-broker/",// MQTT shared subscription prefix
+            "prefetch": 100,                            // AMQP prefetch
+            "sharedPrefix": "$share/sylvia-iot-broker/",// MQTT shared subscription prefix
         },
         "mqChannels": {
             "unit": {

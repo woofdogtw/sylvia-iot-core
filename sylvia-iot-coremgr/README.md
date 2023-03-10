@@ -5,21 +5,21 @@
 [![Docker](https://img.shields.io/docker/v/woofdogtw/sylvia-iot-coremgr?label=docker&logo=docker)](https://hub.docker.com/r/woofdogtw/sylvia-iot-coremgr)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-# sylvia-coremgr
+# sylvia-iot-coremgr
 
 The manager of Sylvia-IoT core modules.
 
 This module:
 
-- Integrate APIs of `sylvia-auth` and `sylvia-broker`.
+- Integrate APIs of `sylvia-iot-auth` and `sylvia-iot-broker`.
 - Management the underlying brokers for applications and networks. Now we support:
     - AMQP: RabbitMQ
     - MQTT: EMQX
 - Records all POST, PUT, PATCH, DELETE APIs.
 
-# Mount sylvia-coremgr in your Actix-Web App
+# Mount sylvia-iot-coremgr in your Actix-Web App
 
-You can simply mount sylvia-coremgr into your Actix-Web App:
+You can simply mount sylvia-iot-coremgr into your Actix-Web App:
 
     use actix_web::{self, App, HttpServer};
     use clap::App as ClapApp;

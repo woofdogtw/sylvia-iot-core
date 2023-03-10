@@ -130,7 +130,7 @@ fn new_state(mq_engine: &'static str) -> TestState {
         runtime: Some(runtime),
         mq_engine: Some(mq_engine.to_string()),
         amqp_prefetch: Some(100),
-        mqtt_shared_prefix: Some("$share/sylvia-broker/".to_string()),
+        mqtt_shared_prefix: Some("$share/sylvia-iot-broker/".to_string()),
         ..Default::default()
     }
 }

@@ -10,9 +10,9 @@ use sylvia_iot_corelib::constants::MqEngine;
 /// Configuration file object.
 #[derive(Default, Deserialize)]
 pub struct Config {
-    /// **sylvia-auth** API base path with host. For example: `http://localhost:1080/auth`.
+    /// **sylvia-iot-auth** API base path with host. For example: `http://localhost:1080/auth`.
     pub auth: Option<String>,
-    /// **sylvia-broker** API base path with host. For example: `http://localhost:2080/broker`.
+    /// **sylvia-iot-broker** API base path with host. For example: `http://localhost:2080/broker`.
     pub broker: Option<String>,
     /// Message queue broker configurations.
     pub mq: Option<Mq>,
@@ -89,7 +89,7 @@ pub struct Rumqttd {
 pub struct MqHost {
     /// Display name.
     pub name: String,
-    /// Internal host name or IP address of the message broker for sylvia-broker to access.
+    /// Internal host name or IP address of the message broker for sylvia-iot-broker to access.
     pub host: String,
     /// External host name or IP address of the message broker for developer to access.
     pub external: String,
@@ -131,14 +131,14 @@ pub fn reg_args(cmd: Command) -> Command {
     cmd.arg(
         Arg::new("coremgr.auth")
             .long("coremgr.auth")
-            .help("sylvia-auth host (ex: http://localhost:1080/auth)")
+            .help("sylvia-iot-auth host (ex: http://localhost:1080/auth)")
             .num_args(1)
             .default_value(DEF_AUTH),
     )
     .arg(
         Arg::new("coremgr.broker")
             .long("coremgr.broker")
-            .help("sylvia-broker host (ex: http://localhost:2080/broker)")
+            .help("sylvia-iot-broker host (ex: http://localhost:2080/broker)")
             .num_args(1)
             .default_value(DEF_BROKER),
     )

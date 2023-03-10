@@ -598,7 +598,7 @@ async fn patch_network(
         }
     }
 
-    // Send request body to the sylvia-broker.
+    // Send request body to the sylvia-iot-broker.
     if patch_data.host_uri.is_some() || patch_data.name.is_some() || patch_data.info.is_some() {
         let network_id = param.network_id.as_str();
         let uri = format!("{}/api/v1/network/{}", broker_base, network_id);

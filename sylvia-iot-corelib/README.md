@@ -4,6 +4,6 @@
 [![Coverage](https://raw.githubusercontent.com/woofdogtw/sylvia-iot-core/gh-pages/docs/coverage/sylvia-iot-corelib/badges/flat.svg)](https://woofdogtw.github.io/sylvia-iot-core/coverage/sylvia-iot-corelib/)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-# sylvia-corelib
+# sylvia-iot-corelib
 
 Common libraries of Sylvia-IoT core modules.

@@ -3,11 +3,11 @@
 # sylvia-router
 
 A simple router application with full Sylvia-IoT core components:
-- sylvia-auth
-- sylvia-broker
-- sylvia-coremgr
-- sylvia-coremgr-cli
-- sylvia-data
+- sylvia-iot-auth
+- sylvia-iot-broker
+- sylvia-iot-coremgr
+- sylvia-iot-coremgr-cli
+- sylvia-iot-data
 
 **Note**: This is a demonstration how to develop your own system that integrates Sylvia-IoT core components.
 
@@ -19,7 +19,7 @@ Features:
 
 # Configuration file notes
 
-Because `sylvia-router-cli` includes `sylvia-coremgr-cli` by simply using `sylvia-coremgr-cli/src/lib` module,
+Because `sylvia-router-cli` includes `sylvia-iot-coremgr-cli` by simply using `sylvia-iot-coremgr-cli/src/lib` module,
 please provides `coremgrCli` key/values in the JSON5 configuration file.
 
 This project only support a JSON5 configuration file without parsing other command line arguments and environment variables.

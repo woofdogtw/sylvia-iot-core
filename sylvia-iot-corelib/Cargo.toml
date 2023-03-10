@@ -1,6 +1,6 @@
 [package]
 name = "sylvia-iot-corelib"
-version = "0.0.1"
+version = "0.0.2"
 authors = ["Chien-Hong Chan"]
 description = "Common libraries of Sylvia-IoT core modules."
 edition = "2021"
@@ -20,8 +20,8 @@ log4rs = "1.2.0"
 pbkdf2 = "0.12.1"
 rand = "0.8.5"
 regex = "1.7.1"
-serde = { version = "1.0.152", features = ["derive"] }
-serde_json = "1.0.93"
+serde = { version = "1.0.154", features = ["derive"] }
+serde_json = "1.0.94"
 sha2 = "0.10.6"
 url = "2.3.1"
 

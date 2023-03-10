@@ -305,7 +305,7 @@ pub async fn get_policies(
     username: &str,
 ) -> Result<BrokerPolicies, ErrResp> {
     let uri = format!(
-        "http://{}:15672/api/policies/{}/sylvia-broker",
+        "http://{}:15672/api/policies/{}/sylvia-iot-broker",
         hostname, username
     );
     let req = match client
@@ -365,7 +365,7 @@ pub async fn put_policies(
     policies: &BrokerPolicies,
 ) -> Result<(), ErrResp> {
     let uri = format!(
-        "http://{}:15672/api/policies/{}/sylvia-broker",
+        "http://{}:15672/api/policies/{}/sylvia-iot-broker",
         hostname, username
     );
     let is_delete = match policies.ttl {

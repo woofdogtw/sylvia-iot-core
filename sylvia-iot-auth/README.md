@@ -5,7 +5,7 @@
 [![Docker](https://img.shields.io/docker/v/woofdogtw/sylvia-iot-auth?label=docker&logo=docker)](https://hub.docker.com/r/woofdogtw/sylvia-iot-auth)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-# sylvia-auth
+# sylvia-iot-auth
 
 The authentication/authorization module of the Sylvia-IoT platform.
 
@@ -17,9 +17,9 @@ This module provides:
 - User management.
 - Client management.
 
-# Mount sylvia-auth in your Actix-Web App
+# Mount sylvia-iot-auth in your Actix-Web App
 
-You can simply mount sylvia-auth into your Actix-Web App:
+You can simply mount sylvia-iot-auth into your Actix-Web App:
 
     use actix_web::{self, App, HttpServer};
     use clap::App as ClapApp;

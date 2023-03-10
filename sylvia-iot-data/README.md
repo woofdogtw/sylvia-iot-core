@@ -5,13 +5,13 @@
 [![Docker](https://img.shields.io/docker/v/woofdogtw/sylvia-iot-data?label=docker&logo=docker)](https://hub.docker.com/r/woofdogtw/sylvia-iot-data)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-# sylvia-data
+# sylvia-iot-data
 
 The data storage of Sylvia-IoT core modules.
 
-# Mount sylvia-data in your Actix-Web App
+# Mount sylvia-iot-data in your Actix-Web App
 
-You can simply mount sylvia-data into your Actix-Web App:
+You can simply mount sylvia-iot-data into your Actix-Web App:
 
     use actix_web::{self, App, HttpServer};
     use clap::App as ClapApp;

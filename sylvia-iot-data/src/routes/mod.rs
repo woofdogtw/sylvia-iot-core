@@ -28,11 +28,11 @@ pub struct State {
     pub scope_path: &'static str,
     /// The database model.
     pub model: Arc<dyn Model>,
-    /// The sylvia-auth base API path with host.
+    /// The sylvia-iot-auth base API path with host.
     ///
     /// For example, `http://localhost:1080/auth`.
     pub auth_base: String,
-    /// The sylvia-broker base API path with host.
+    /// The sylvia-iot-broker base API path with host.
     ///
     /// For example, `http://localhost:2080/broker`.
     pub broker_base: String,
