@@ -3,6 +3,9 @@ on:
   push:
     branches:
       - main
+  pull_request:
+    branches:
+      - main
 env:
   BINUTILS_VER: v0.3.6
   GRCOV_VER: v0.8.13
@@ -51,6 +54,7 @@ jobs:
             LLVM_PROFILE_FILE="$(pwd)/target/$PROJ.profraw"
             cargo test -p $PROJ --test integration_test -- --nocapture
       - name: Collect coverage
+        if: ${{ github.event_name != 'pull_request' }}
         run: |
           TEST_FILE=$(LLVM_PROFILE_FILE="$(pwd)/target/$PROJ.profraw" cargo test -p $PROJ --test integration_test --no-run --message-format=json | jq -r "select(.profile.test == true) | .filenames[]")
           rm default*.profraw
@@ -58,6 +62,7 @@ jobs:
           mkdir -p target/coverage
           grcov . --binary-path $TEST_FILE -s $PROJ/src -t html --branch --ignore-not-existing -o ./target/coverage/$PROJ
       - name: Publish coverage
+        if: ${{ github.event_name != 'pull_request' }}
         uses: JamesIves/github-pages-deploy-action@v4.4.1
         with:
           folder: target/coverage/${{ env.PROJ }}
@@ -103,6 +108,7 @@ jobs:
             LLVM_PROFILE_FILE="$(pwd)/target/$PROJ.profraw"
             cargo test -p $PROJ --test integration_test -- --nocapture
       - name: Collect coverage
+        if: ${{ github.event_name != 'pull_request' }}
         run: |
           TEST_FILE=$(LLVM_PROFILE_FILE="$(pwd)/target/$PROJ.profraw" cargo test -p $PROJ --test integration_test --no-run --message-format=json | jq -r "select(.profile.test == true) | .filenames[]")
           rm default*.profraw
@@ -110,6 +116,7 @@ jobs:
           mkdir -p target/coverage
           grcov . --binary-path $TEST_FILE -s $PROJ/src -t html --branch --ignore-not-existing -o ./target/coverage/$PROJ
       - name: Publish coverage
+        if: ${{ github.event_name != 'pull_request' }}
         uses: JamesIves/github-pages-deploy-action@v4.4.1
         with:
           folder: target/coverage/${{ env.PROJ }}
@@ -163,6 +170,7 @@ jobs:
             LLVM_PROFILE_FILE="$(pwd)/target/$PROJ.profraw"
             cargo test -p $PROJ --test integration_test -- --nocapture
       - name: Collect coverage
+        if: ${{ github.event_name != 'pull_request' }}
         run: |
           TEST_FILE=$(LLVM_PROFILE_FILE="$(pwd)/target/$PROJ.profraw" cargo test -p $PROJ --test integration_test --no-run --message-format=json | jq -r "select(.profile.test == true) | .filenames[]")
           rm default*.profraw
@@ -170,6 +178,7 @@ jobs:
           mkdir -p target/coverage
           grcov . --binary-path $TEST_FILE -s $PROJ/src -t html --branch --ignore-not-existing -o ./target/coverage/$PROJ
       - name: Publish coverage
+        if: ${{ github.event_name != 'pull_request' }}
         uses: JamesIves/github-pages-deploy-action@v4.4.1
         with:
           folder: target/coverage/${{ env.PROJ }}
@@ -206,6 +215,7 @@ jobs:
             LLVM_PROFILE_FILE="$(pwd)/target/$PROJ.profraw"
             cargo test -p $PROJ --test integration_test -- --nocapture
       - name: Collect coverage
+        if: ${{ github.event_name != 'pull_request' }}
         run: |
           TEST_FILE=$(LLVM_PROFILE_FILE="$(pwd)/target/$PROJ.profraw" cargo test -p $PROJ --test integration_test --no-run --message-format=json | jq -r "select(.profile.test == true) | .filenames[]")
           rm default*.profraw
@@ -213,6 +223,7 @@ jobs:
           mkdir -p target/coverage
           grcov . --binary-path $TEST_FILE -s $PROJ/src -t html --branch --ignore-not-existing -o ./target/coverage/$PROJ
       - name: Publish coverage
+        if: ${{ github.event_name != 'pull_request' }}
         uses: JamesIves/github-pages-deploy-action@v4.4.1
         with:
           folder: target/coverage/${{ env.PROJ }}
@@ -268,6 +279,7 @@ jobs:
             LLVM_PROFILE_FILE="$(pwd)/target/$PROJ.profraw"
             cargo test -p $PROJ --test integration_test -- --nocapture
       - name: Collect coverage
+        if: ${{ github.event_name != 'pull_request' }}
         run: |
           TEST_FILE=$(LLVM_PROFILE_FILE="$(pwd)/target/$PROJ.profraw" cargo test -p $PROJ --test integration_test --no-run --message-format=json | jq -r "select(.profile.test == true) | .filenames[]")
           rm default*.profraw
@@ -275,6 +287,7 @@ jobs:
           mkdir -p target/coverage
           grcov . --binary-path $TEST_FILE -s $PROJ/src -t html --branch --ignore-not-existing -o ./target/coverage/$PROJ
       - name: Publish coverage
+        if: ${{ github.event_name != 'pull_request' }}
         uses: JamesIves/github-pages-deploy-action@v4.4.1
         with:
           folder: target/coverage/${{ env.PROJ }}
@@ -341,6 +354,7 @@ jobs:
             LLVM_PROFILE_FILE="$(pwd)/target/$PROJ.profraw"
             cargo test -p $PROJ --test integration_test -- --nocapture
       - name: Collect coverage
+        if: ${{ github.event_name != 'pull_request' }}
         run: |
           TEST_FILE=$(LLVM_PROFILE_FILE="$(pwd)/target/$PROJ.profraw" cargo test -p $PROJ --test integration_test --no-run --message-format=json | jq -r "select(.profile.test == true) | .filenames[]")
           rm default*.profraw
@@ -348,6 +362,7 @@ jobs:
           mkdir -p target/coverage
           grcov . --binary-path $TEST_FILE -s $PROJ/src -t html --branch --ignore-not-existing -o ./target/coverage/$PROJ
       - name: Publish coverage
+        if: ${{ github.event_name != 'pull_request' }}
         uses: JamesIves/github-pages-deploy-action@v4.4.1
         with:
           folder: target/coverage/${{ env.PROJ }}
@@ -397,6 +412,7 @@ jobs:
             LLVM_PROFILE_FILE="$(pwd)/target/$PROJ.profraw"
             cargo test -p $PROJ --test integration_test -- --nocapture
       - name: Collect coverage
+        if: ${{ github.event_name != 'pull_request' }}
         run: |
           TEST_FILE=$(LLVM_PROFILE_FILE="$(pwd)/target/$PROJ.profraw" cargo test -p $PROJ --test integration_test --no-run --message-format=json | jq -r "select(.profile.test == true) | .filenames[]")
           rm default*.profraw
@@ -404,6 +420,7 @@ jobs:
           mkdir -p target/coverage
           grcov . --binary-path $TEST_FILE -s $PROJ/src -t html --branch --ignore-not-existing -o ./target/coverage/$PROJ
       - name: Publish coverage
+        if: ${{ github.event_name != 'pull_request' }}
         uses: JamesIves/github-pages-deploy-action@v4.4.1
         with:
           folder: target/coverage/${{ env.PROJ }}
