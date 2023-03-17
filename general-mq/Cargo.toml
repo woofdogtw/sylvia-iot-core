@@ -1,6 +1,6 @@
 [package]
 name = "general-mq"
-version = "0.0.2"
+version = "0.0.3"
 authors = ["Chien-Hong Chan"]
 description = "General purposed interfaces for message queues."
 edition = "2021"
@@ -17,14 +17,14 @@ rand = "0.8.5"
 regex = "1.7.1"
 rumqttc = "0.20.0"
 tokio = { version = "1.26.0", features = ["io-util", "macros", "rt-multi-thread", "time"] }
-tokio-executor-trait = "2.1.0"
+tokio-executor-trait = "2.1.1"
 url = "2.3.1"
 urlencoding = "2.1.2"
 
 [dev-dependencies]
 laboratory = "2.0.0"
 reqwest = { version = "0.11.14", default-features = false, features = ["json"] }
-serde = { version = "1.0.154", features = ["derive"] }
+serde = { version = "1.0.156", features = ["derive"] }
 
 [profile.release]
 codegen-units = 1
