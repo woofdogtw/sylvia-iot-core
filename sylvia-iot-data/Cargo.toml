@@ -1,6 +1,6 @@
 [package]
 name = "sylvia-iot-data"
-version = "0.0.2"
+version = "0.0.3"
 authors = ["Chien-Hong Chan"]
 description = "The data storage of Sylvia-IoT core modules."
 edition = "2021"
@@ -17,10 +17,10 @@ actix-web = { version = "4.3.1", default-features = false, features = ["rustls"]
 actix-web-prom = "0.6.0"
 async-stream = "0.3.4"
 async-trait = "0.1.66"
-chrono = { version = "0.4.23", default-features = false, features = ["serde"] }
-clap = { version = "4.1.8", default-features = false, features = ["std", "help", "usage", "error-context"] }
+chrono = { version = "0.4.24", default-features = false, features = ["serde"] }
+clap = { version = "4.1.9", default-features = false, features = ["std", "help", "usage", "error-context"] }
 csv = "1.2.1"
-futures = "0.3.26"
+futures = "0.3.27"
 general-mq = { path="../general-mq" }
 json5 = "0.4.1"
 log = "0.4.17"
@@ -28,7 +28,7 @@ mongodb = { version = "2.4.0", features = ["bson-chrono-0_4"] }
 reqwest = { version = "0.11.14", default-features = false, features = ["json", "rustls-tls"] }
 rustls = "0.20.8"
 rustls-pemfile = "1.0.2"
-serde = { version = "1.0.154", features = ["derive"] }
+serde = { version = "1.0.156", features = ["derive"] }
 serde_json = "1.0.94"
 sql-builder = "3.1.1"
 sqlx = { version = "0.6.2", default-features = false, features = ["macros", "runtime-actix-rustls", "sqlite"] }

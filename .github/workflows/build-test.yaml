@@ -17,13 +17,13 @@ jobs:
     runs-on: ubuntu-22.04
     services:
       rabbitmq:
-        image: rabbitmq:3.11.9-management-alpine
+        image: rabbitmq:3.11.10-management-alpine
         ports:
           - 5671:5671
           - 5672:5672
           - 15672:15672
       emqx:
-        image: emqx/emqx:5.0.17
+        image: emqx/emqx:5.0.20
         ports:
           - 1883:1883
           - 8883:8883
@@ -75,11 +75,11 @@ jobs:
     runs-on: ubuntu-22.04
     services:
       mongo:
-        image: mongo:6.0.4
+        image: mongo:6.0.5
         ports:
           - 27017:27017
       redis:
-        image: redis:7.0.8
+        image: redis:7.0.9
         ports:
           - 6379:6379
     env:
@@ -129,17 +129,17 @@ jobs:
     runs-on: ubuntu-22.04
     services:
       mongo:
-        image: mongo:6.0.4
+        image: mongo:6.0.5
         ports:
           - 27017:27017
       rabbitmq:
-        image: rabbitmq:3.11.9-management-alpine
+        image: rabbitmq:3.11.10-management-alpine
         ports:
           - 5671:5671
           - 5672:5672
           - 15672:15672
       emqx:
-        image: emqx/emqx:5.0.17
+        image: emqx/emqx:5.0.20
         ports:
           - 1883:1883
           - 8883:8883
@@ -236,11 +236,11 @@ jobs:
     runs-on: ubuntu-22.04
     services:
       mongo:
-        image: mongo:6.0.4
+        image: mongo:6.0.5
         ports:
           - 27017:27017
       rabbitmq:
-        image: rabbitmq:3.11.9-management-alpine
+        image: rabbitmq:3.11.10-management-alpine
         ports:
           - 5671:5671
           - 5672:5672
@@ -267,7 +267,7 @@ jobs:
           -e EMQX_LOADED_MODULES="emqx_mod_acl_internal,emqx_mod_presence,emqx_mod_topic_metrics"
           -p 1883:1883 -p 8883:8883 -p 18083:18083
           -v "$(pwd)/.github/workflows/files/emqx.conf":"/opt/emqx/etc/emqx.conf"
-          emqx/emqx:5.0.17
+          emqx/emqx:5.0.20
       - name: Build bin/lib
         run: cargo build -p $PROJ
       - name: Run test
@@ -313,17 +313,17 @@ jobs:
     runs-on: ubuntu-22.04
     services:
       mongo:
-        image: mongo:6.0.4
+        image: mongo:6.0.5
         ports:
           - 27017:27017
       rabbitmq:
-        image: rabbitmq:3.11.9-management-alpine
+        image: rabbitmq:3.11.10-management-alpine
         ports:
           - 5671:5671
           - 5672:5672
           - 15672:15672
       emqx:
-        image: emqx/emqx:5.0.17
+        image: emqx/emqx:5.0.20
         ports:
           - 1883:1883
           - 8883:8883
@@ -375,13 +375,13 @@ jobs:
     runs-on: ubuntu-22.04
     services:
       rabbitmq:
-        image: rabbitmq:3.11.9-management-alpine
+        image: rabbitmq:3.11.10-management-alpine
         ports:
           - 5671:5671
           - 5672:5672
           - 15672:15672
       emqx:
-        image: emqx/emqx:5.0.17
+        image: emqx/emqx:5.0.20
         ports:
           - 1883:1883
           - 8883:8883
