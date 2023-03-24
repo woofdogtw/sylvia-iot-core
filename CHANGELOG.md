@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.0.4 - 2023-03-24
+
+### Changed
+
+- Update Rust to 1.68.1.
+- Update dependencies.
+
 ## 0.0.3 - 2023-03-17
 
 ### Added
