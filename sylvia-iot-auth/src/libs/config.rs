@@ -57,37 +57,32 @@ pub fn reg_args(cmd: Command) -> Command {
             .long("auth.db.engine")
             .help("database engine")
             .num_args(1)
-            .value_parser([DbEngine::MONGODB, DbEngine::SQLITE])
-            .default_value(DEF_ENGINE),
+            .value_parser([DbEngine::MONGODB, DbEngine::SQLITE]),
     )
     .arg(
         Arg::new("auth.db.mongodb.url")
             .long("auth.db.mongodb.url")
             .help("MongoDB URL (scheme://[username][:password][@][host][:port]")
-            .num_args(1)
-            .default_value(DEF_MONGODB_URL),
+            .num_args(1),
     )
     .arg(
         Arg::new("auth.db.mongodb.database")
             .long("auth.db.mongodb.database")
             .help("database nane")
-            .num_args(1)
-            .default_value(DEF_MONGODB_DB),
+            .num_args(1),
     )
     .arg(
         Arg::new("auth.db.mongodb.poolsize")
             .long("auth.db.mongodb.poolsize")
             .help("connection pool size")
             .num_args(1)
-            .value_parser(RangedU64ValueParser::<u64>::new().range(1..=u32::MAX as u64))
-            .default_value("1"),
+            .value_parser(RangedU64ValueParser::<u64>::new().range(1..=u32::MAX as u64)),
     )
     .arg(
         Arg::new("auth.db.sqlite.path")
             .long("auth.db.sqlite.path")
             .help("SQLite path")
-            .num_args(1)
-            .default_value(DEF_SQLITE_PATH),
+            .num_args(1),
     )
     .arg(
         Arg::new("auth.api-scopes")

@@ -33,9 +33,7 @@ pub struct Config {
 }
 
 pub const DEF_HTTP_PORT: u16 = 1080;
-pub const DEF_HTTP_PORT_STR: &'static str = "1080";
 pub const DEF_HTTPS_PORT: u16 = 1443;
-pub const DEF_HTTPS_PORT_STR: &'static str = "1443";
 
 /// To register Clap arguments.
 pub fn reg_args(cmd: Command) -> Command {
@@ -44,16 +42,14 @@ pub fn reg_args(cmd: Command) -> Command {
             .long("server.httpport")
             .help("HTTP port")
             .num_args(1)
-            .value_parser(RangedU64ValueParser::<u64>::new().range(1..=65535))
-            .default_value(DEF_HTTP_PORT_STR),
+            .value_parser(RangedU64ValueParser::<u64>::new().range(1..=65535)),
     )
     .arg(
         Arg::new("server.httpsport")
             .long("server.httpsport")
             .help("HTTPS port")
             .num_args(1)
-            .value_parser(RangedU64ValueParser::<u64>::new().range(1..=65535))
-            .default_value(DEF_HTTPS_PORT_STR),
+            .value_parser(RangedU64ValueParser::<u64>::new().range(1..=65535)),
     )
     .arg(
         Arg::new("server.cacertfile")

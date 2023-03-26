@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.0.5 - 2023-03-27
+
+### Changed
+
+- Update dependencies.
+
+### Fixed
+
+- Fix a bug that configurations cannot be modified by environment variables. This is caused by using clap `default_value()`.
+
 ## 0.0.4 - 2023-03-24
 
 ### Changed

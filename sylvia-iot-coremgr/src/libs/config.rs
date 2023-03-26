@@ -119,11 +119,8 @@ pub const DEF_RABBITMQ_PASSWORD: &'static str = "guest";
 pub const DEF_EMQX_API_KEY: &'static str = "";
 pub const DEF_EMQX_API_SECRET: &'static str = "";
 pub const DEF_RUMQTTD_MQTT_PORT: u16 = 1883;
-pub const DEF_RUMQTTD_MQTT_PORT_STR: &'static str = "1883";
 pub const DEF_RUMQTTD_MQTTS_PORT: u16 = 8883;
-pub const DEF_RUMQTTD_MQTTS_PORT_STR: &'static str = "8883";
 pub const DEF_RUMQTTD_CONSOLE_PORT: u16 = 18083;
-pub const DEF_RUMQTTD_CONSOLE_PORT_STR: &'static str = "18083";
 pub const DEF_MQ_CHANNEL_URL: &'static str = "amqp://localhost";
 
 /// To register Clap arguments.
@@ -132,45 +129,39 @@ pub fn reg_args(cmd: Command) -> Command {
         Arg::new("coremgr.auth")
             .long("coremgr.auth")
             .help("sylvia-iot-auth host (ex: http://localhost:1080/auth)")
-            .num_args(1)
-            .default_value(DEF_AUTH),
+            .num_args(1),
     )
     .arg(
         Arg::new("coremgr.broker")
             .long("coremgr.broker")
             .help("sylvia-iot-broker host (ex: http://localhost:2080/broker)")
-            .num_args(1)
-            .default_value(DEF_BROKER),
+            .num_args(1),
     )
     .arg(
         Arg::new("coremgr.mq.engine.amqp")
             .long("coremgr.mq.engine.amqp")
             .help("AMQP broker")
             .num_args(1)
-            .value_parser([MqEngine::RABBITMQ])
-            .default_value(DEF_ENGINE_AMQP),
+            .value_parser([MqEngine::RABBITMQ]),
     )
     .arg(
         Arg::new("coremgr.mq.engine.mqtt")
             .long("coremgr.mq.engine.mqtt")
             .help("MQTT broker")
             .num_args(1)
-            .value_parser([MqEngine::EMQX, MqEngine::RUMQTTD])
-            .default_value(DEF_ENGINE_MQTT),
+            .value_parser([MqEngine::EMQX, MqEngine::RUMQTTD]),
     )
     .arg(
         Arg::new("coremgr.mq.rabbitmq.username")
             .long("coremgr.mq.rabbitmq.username")
             .help("RabbitMQ configurations: management user name")
-            .num_args(1)
-            .default_value(DEF_RABBITMQ_USERNAME),
+            .num_args(1),
     )
     .arg(
         Arg::new("coremgr.mq.rabbitmq.password")
             .long("coremgr.mq.rabbitmq.password")
             .help("RabbitMQ configurations: management password")
-            .num_args(1)
-            .default_value(DEF_RABBITMQ_PASSWORD),
+            .num_args(1),
     )
     .arg(
         Arg::new("coremgr.mq.rabbitmq.ttl")
@@ -215,24 +206,21 @@ pub fn reg_args(cmd: Command) -> Command {
             .long("coremgr.mq.rumqttd.mqtt-port")
             .help("rumqttd MQTT listen port")
             .num_args(1)
-            .value_parser(RangedU64ValueParser::<u64>::new().range(1..=65535))
-            .default_value(DEF_RUMQTTD_MQTT_PORT_STR),
+            .value_parser(RangedU64ValueParser::<u64>::new().range(1..=65535)),
     )
     .arg(
         Arg::new("coremgr.mq.rumqttd.mqtts-port")
             .long("coremgr.mq.rumqttd.mqtts-port")
             .help("rumqttd MQTTS listen port")
             .num_args(1)
-            .value_parser(RangedU64ValueParser::<u64>::new().range(1..=65535))
-            .default_value(DEF_RUMQTTD_MQTTS_PORT_STR),
+            .value_parser(RangedU64ValueParser::<u64>::new().range(1..=65535)),
     )
     .arg(
         Arg::new("coremgr.mq.rumqttd.console-port")
             .long("coremgr.mq.rumqttd.console-port")
             .help("rumqttd console listen port")
             .num_args(1)
-            .value_parser(RangedU64ValueParser::<u64>::new().range(1..=65535))
-            .default_value(DEF_RUMQTTD_CONSOLE_PORT_STR),
+            .value_parser(RangedU64ValueParser::<u64>::new().range(1..=65535)),
     )
     .arg(
         Arg::new("coremgr.mq-channels.data.url")

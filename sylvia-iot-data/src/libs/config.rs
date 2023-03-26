@@ -73,7 +73,6 @@ pub const DEF_MONGODB_URL: &'static str = "mongodb://localhost:27017";
 pub const DEF_MONGODB_DB: &'static str = "data";
 pub const DEF_SQLITE_PATH: &'static str = "data.db";
 pub const DEF_MQ_PREFETCH: u16 = 100;
-pub const DEF_MQ_PREFETCH_STR: &'static str = "100";
 pub const DEF_MQ_SHAREDPREFIX: &'static str = "$share/sylvia-iot-data/";
 pub const DEF_MQ_CHANNEL_URL: &'static str = "amqp://localhost";
 
@@ -83,52 +82,45 @@ pub fn reg_args(cmd: Command) -> Command {
         Arg::new("data.auth")
             .long("data.auth")
             .help("sylvia-iot-auth host (ex: http://localhost:1080/auth)")
-            .num_args(1)
-            .default_value(DEF_AUTH),
+            .num_args(1),
     )
     .arg(
         Arg::new("data.broker")
             .long("data.broker")
             .help("sylvia-iot-broker host (ex: http://localhost:2080/broker)")
-            .num_args(1)
-            .default_value(DEF_BROKER),
+            .num_args(1),
     )
     .arg(
         Arg::new("data.db.engine")
             .long("data.db.engine")
             .help("database engine")
             .num_args(1)
-            .value_parser([DbEngine::MONGODB, DbEngine::SQLITE])
-            .default_value(DEF_ENGINE),
+            .value_parser([DbEngine::MONGODB, DbEngine::SQLITE]),
     )
     .arg(
         Arg::new("data.db.mongodb.url")
             .long("data.db.mongodb.url")
             .help("MongoDB URL (scheme://[username][:password][@][host][:port]")
-            .num_args(1)
-            .default_value(DEF_MONGODB_URL),
+            .num_args(1),
     )
     .arg(
         Arg::new("data.db.mongodb.database")
             .long("data.db.mongodb.database")
             .help("database nane")
-            .num_args(1)
-            .default_value(DEF_MONGODB_DB),
+            .num_args(1),
     )
     .arg(
         Arg::new("data.db.mongodb.poolsize")
             .long("data.db.mongodb.poolsize")
             .help("connection pool size")
             .num_args(1)
-            .value_parser(RangedU64ValueParser::<u64>::new().range(1..=u32::MAX as u64))
-            .default_value("1"),
+            .value_parser(RangedU64ValueParser::<u64>::new().range(1..=u32::MAX as u64)),
     )
     .arg(
         Arg::new("data.db.sqlite.path")
             .long("data.db.sqlite.path")
             .help("SQLite path")
-            .num_args(1)
-            .default_value(DEF_SQLITE_PATH),
+            .num_args(1),
     )
     .arg(
         Arg::new("data.mq-channels.broker.url")
@@ -141,8 +133,7 @@ pub fn reg_args(cmd: Command) -> Command {
             .long("data.mq-channels.broker.prefetch")
             .help("AMQP prefetch for `broker.data` channel")
             .num_args(1)
-            .value_parser(RangedU64ValueParser::<u64>::new().range(1..=u16::MAX as u64))
-            .default_value(DEF_MQ_PREFETCH_STR),
+            .value_parser(RangedU64ValueParser::<u64>::new().range(1..=u16::MAX as u64)),
     )
     .arg(
         Arg::new("data.mq-channels.broker.sharedprefix")
@@ -161,8 +152,7 @@ pub fn reg_args(cmd: Command) -> Command {
             .long("data.mq-channels.coremgr.prefetch")
             .help("AMQP prefetch for `coremgr.data` channel")
             .num_args(1)
-            .value_parser(RangedU64ValueParser::<u64>::new().range(1..=u16::MAX as u64))
-            .default_value(DEF_MQ_PREFETCH_STR),
+            .value_parser(RangedU64ValueParser::<u64>::new().range(1..=u16::MAX as u64)),
     )
     .arg(
         Arg::new("data.mq-channels.coremgr.sharedprefix")

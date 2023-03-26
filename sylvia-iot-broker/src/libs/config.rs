@@ -119,13 +119,9 @@ pub const DEF_MONGODB_DB: &'static str = "broker";
 pub const DEF_SQLITE_PATH: &'static str = "broker.db";
 pub const DEF_CACHE_ENGINE: &'static str = CacheEngine::NONE;
 pub const DEF_MEMORY_DEVICE: usize = 1_000_000;
-pub const DEF_MEMORY_DEVICE_STR: &'static str = "1000000";
 pub const DEF_MEMORY_DEVICE_ROUTE: usize = 1_000_000;
-pub const DEF_MEMORY_DEVICE_ROUTE_STR: &'static str = "1000000";
 pub const DEF_MEMORY_NETWORK_ROUTE: usize = 1_000_000;
-pub const DEF_MEMORY_NETWORK_ROUTE_STR: &'static str = "1000000";
 pub const DEF_MQ_PREFETCH: u16 = 100;
-pub const DEF_MQ_PREFETCH_STR: &'static str = "100";
 pub const DEF_MQ_SHAREDPREFIX: &'static str = "$share/sylvia-iot-broker/";
 pub const DEF_MQ_CHANNEL_URL: &'static str = "amqp://localhost";
 
@@ -135,182 +131,158 @@ pub fn reg_args(cmd: Command) -> Command {
         Arg::new("broker.auth")
             .long("broker.auth")
             .help("sylvia-iot-auth host (ex: http://localhost:1080/auth)")
-            .num_args(1)
-            .default_value(DEF_AUTH),
+            .num_args(1),
     )
     .arg(
         Arg::new("broker.db.engine")
             .long("broker.db.engine")
             .help("database engine")
             .num_args(1)
-            .value_parser([DbEngine::MONGODB, DbEngine::SQLITE])
-            .default_value(DEF_ENGINE),
+            .value_parser([DbEngine::MONGODB, DbEngine::SQLITE]),
     )
     .arg(
         Arg::new("broker.db.mongodb.url")
             .long("broker.db.mongodb.url")
             .help("MongoDB URL (scheme://[username][:password][@][host][:port]")
-            .num_args(1)
-            .default_value(DEF_MONGODB_URL),
+            .num_args(1),
     )
     .arg(
         Arg::new("broker.db.mongodb.database")
             .long("broker.db.mongodb.database")
             .help("database nane")
-            .num_args(1)
-            .default_value(DEF_MONGODB_DB),
+            .num_args(1),
     )
     .arg(
         Arg::new("broker.db.mongodb.poolsize")
             .long("broker.db.mongodb.poolsize")
             .help("connection pool size")
             .num_args(1)
-            .value_parser(RangedU64ValueParser::<u64>::new().range(1..=u32::MAX as u64))
-            .default_value("1"),
+            .value_parser(RangedU64ValueParser::<u64>::new().range(1..=u32::MAX as u64)),
     )
     .arg(
         Arg::new("broker.db.sqlite.path")
             .long("broker.db.sqlite.path")
             .help("SQLite path")
-            .num_args(1)
-            .default_value(DEF_SQLITE_PATH),
+            .num_args(1),
     )
     .arg(
         Arg::new("broker.cache.engine")
             .long("broker.cache.engine")
             .help("cache engine")
             .num_args(1)
-            .value_parser([CacheEngine::MEMORY, CacheEngine::NONE])
-            .default_value(DEF_CACHE_ENGINE),
+            .value_parser([CacheEngine::MEMORY, CacheEngine::NONE]),
     )
     .arg(
         Arg::new("broker.cache.memory.device")
             .long("broker.cache.memory.device")
             .help("Device cache size")
             .num_args(1)
-            .value_parser(RangedU64ValueParser::<u64>::new().range(1..=usize::MAX as u64))
-            .default_value(DEF_MEMORY_DEVICE_STR),
+            .value_parser(RangedU64ValueParser::<u64>::new().range(1..=usize::MAX as u64)),
     )
     .arg(
         Arg::new("broker.cache.memory.device-route")
             .long("broker.cache.memory.device-route")
             .help("Device route cache size")
             .num_args(1)
-            .value_parser(RangedU64ValueParser::<u64>::new().range(1..=usize::MAX as u64))
-            .default_value(DEF_MEMORY_DEVICE_ROUTE_STR),
+            .value_parser(RangedU64ValueParser::<u64>::new().range(1..=usize::MAX as u64)),
     )
     .arg(
         Arg::new("broker.cache.memory.network-route")
             .long("broker.cache.memory.network-route")
             .help("Network route cache size")
             .num_args(1)
-            .value_parser(RangedU64ValueParser::<u64>::new().range(1..=usize::MAX as u64))
-            .default_value(DEF_MEMORY_NETWORK_ROUTE_STR),
+            .value_parser(RangedU64ValueParser::<u64>::new().range(1..=usize::MAX as u64)),
     )
     .arg(
         Arg::new("broker.mq.prefetch")
             .long("broker.mq.prefetch")
             .help("AMQP prefetch")
             .num_args(1)
-            .value_parser(RangedU64ValueParser::<u64>::new().range(1..=u16::MAX as u64))
-            .default_value(DEF_MQ_PREFETCH_STR),
+            .value_parser(RangedU64ValueParser::<u64>::new().range(1..=u16::MAX as u64)),
     )
     .arg(
         Arg::new("broker.mq.sharedprefix")
             .long("broker.mq.sharedprefix")
             .help("MQTT shared subscription prefix")
-            .num_args(1)
-            .default_value(DEF_MQ_SHAREDPREFIX),
+            .num_args(1),
     )
     .arg(
         Arg::new("broker.mq-channels.unit.url")
             .long("broker.mq-channels.unit.url")
             .help("URL of `broker.ctrl.unit` channel")
-            .num_args(1)
-            .default_value(DEF_MQ_CHANNEL_URL),
+            .num_args(1),
     )
     .arg(
         Arg::new("broker.mq-channels.unit.prefetch")
             .long("broker.mq-channels.unit.prefetch")
             .help("AMQP prefetch for `broker.ctrl.unit` channel")
             .num_args(1)
-            .value_parser(RangedU64ValueParser::<u64>::new().range(1..=u16::MAX as u64))
-            .default_value(DEF_MQ_PREFETCH_STR),
+            .value_parser(RangedU64ValueParser::<u64>::new().range(1..=u16::MAX as u64)),
     )
     .arg(
         Arg::new("broker.mq-channels.application.url")
             .long("broker.mq-channels.application.url")
             .help("URL of `broker.ctrl.application` channel")
-            .num_args(1)
-            .default_value(DEF_MQ_CHANNEL_URL),
+            .num_args(1),
     )
     .arg(
         Arg::new("broker.mq-channels.application.prefetch")
             .long("broker.mq-channels.application.prefetch")
             .help("AMQP prefetch for `broker.ctrl.application` channel")
             .num_args(1)
-            .value_parser(RangedU64ValueParser::<u64>::new().range(1..=u16::MAX as u64))
-            .default_value(DEF_MQ_PREFETCH_STR),
+            .value_parser(RangedU64ValueParser::<u64>::new().range(1..=u16::MAX as u64)),
     )
     .arg(
         Arg::new("broker.mq-channels.network.url")
             .long("broker.mq-channels.network.url")
             .help("URL of `broker.ctrl.network` channel")
-            .num_args(1)
-            .default_value(DEF_MQ_CHANNEL_URL),
+            .num_args(1),
     )
     .arg(
         Arg::new("broker.mq-channels.network.prefetch")
             .long("broker.mq-channels.network.prefetch")
             .help("AMQP prefetch for `broker.ctrl.network` channel")
             .num_args(1)
-            .value_parser(RangedU64ValueParser::<u64>::new().range(1..=u16::MAX as u64))
-            .default_value(DEF_MQ_PREFETCH_STR),
+            .value_parser(RangedU64ValueParser::<u64>::new().range(1..=u16::MAX as u64)),
     )
     .arg(
         Arg::new("broker.mq-channels.device.url")
             .long("broker.mq-channels.device.url")
             .help("URL of `broker.ctrl.device` channel")
-            .num_args(1)
-            .default_value(DEF_MQ_CHANNEL_URL),
+            .num_args(1),
     )
     .arg(
         Arg::new("broker.mq-channels.device.prefetch")
             .long("broker.mq-channels.device.prefetch")
             .help("AMQP prefetch for `broker.ctrl.device` channel")
             .num_args(1)
-            .value_parser(RangedU64ValueParser::<u64>::new().range(1..=u16::MAX as u64))
-            .default_value(DEF_MQ_PREFETCH_STR),
+            .value_parser(RangedU64ValueParser::<u64>::new().range(1..=u16::MAX as u64)),
     )
     .arg(
         Arg::new("broker.mq-channels.device-route.url")
             .long("broker.mq-channels.device-route.url")
             .help("URL of `broker.ctrl.device-route` channel")
-            .num_args(1)
-            .default_value(DEF_MQ_CHANNEL_URL),
+            .num_args(1),
     )
     .arg(
         Arg::new("broker.mq-channels.device-route.prefetch")
             .long("broker.mq-channels.device-route.prefetch")
             .help("AMQP prefetch for `broker.ctrl.device-route` channel")
             .num_args(1)
-            .value_parser(RangedU64ValueParser::<u64>::new().range(1..=u16::MAX as u64))
-            .default_value(DEF_MQ_PREFETCH_STR),
+            .value_parser(RangedU64ValueParser::<u64>::new().range(1..=u16::MAX as u64)),
     )
     .arg(
         Arg::new("broker.mq-channels.network-route.url")
             .long("broker.mq-channels.network-route.url")
             .help("URL of `broker.ctrl.network-route` channel")
-            .num_args(1)
-            .default_value(DEF_MQ_CHANNEL_URL),
+            .num_args(1),
     )
     .arg(
         Arg::new("broker.mq-channels.network-route.prefetch")
             .long("broker.mq-channels.network-route.prefetch")
             .help("AMQP prefetch for `broker.ctrl.network-route` channel")
             .num_args(1)
-            .value_parser(RangedU64ValueParser::<u64>::new().range(1..=u16::MAX as u64))
-            .default_value(DEF_MQ_PREFETCH_STR),
+            .value_parser(RangedU64ValueParser::<u64>::new().range(1..=u16::MAX as u64)),
     )
     .arg(
         Arg::new("broker.mq-channels.data.url")
