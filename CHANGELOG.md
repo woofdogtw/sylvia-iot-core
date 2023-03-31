@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.0.6 - 2023-03-31
+
+### Changed
+
+- Update Rust to 1.68.1 (v0.0.4 uses the old action runner with 1.68.0).
+    - With GitHub Actions runner image 20230326.1.
+- Update dependencies.
+
+### Fixed
+
+- Update Docker images with alpine-3.17.3.
+
 ## 0.0.5 - 2023-03-27
 
 ### Changed
