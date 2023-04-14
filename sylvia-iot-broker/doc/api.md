@@ -952,12 +952,14 @@ Create a device.
 
 ## <a name="post_device_bulk"></a>Bulk creating devices
 
-Create devices in bulk. Notes:
+Create devices in bulk.
+
+    POST /broker/api/v1/device/bulk
+
+Notes:
 - Devices created earlier will be skipped.
 - **name** will be the network address.
 - Maximum 1024 devices.
-
-    POST /broker/api/v1/device/bulk
 
 #### Additional HTTP Headers
 
@@ -994,10 +996,12 @@ Create devices in bulk. Notes:
 
 ## <a name="post_device_bulk_del"></a>Bulk deleting devices
 
-Delete devices in bulk. Notes:
-- Maximum 1024 devices.
+Delete devices in bulk.
 
     POST /broker/api/v1/device/bulk-delete
+
+Notes:
+- Maximum 1024 devices.
 
 #### Additional HTTP Headers
 
@@ -1034,14 +1038,16 @@ Delete devices in bulk. Notes:
 
 ## <a name="post_device_range"></a>Bulk creating devices with address range
 
-Create devices in bulk with address range. Notes:
+Create devices in bulk with address range.
+
+    POST /broker/api/v1/device/range
+
+Notes:
 - Devices created earlier will be skipped.
 - **name** will be the network address.
 - Maximum 1024 devices (0x400).
 - `startAddrs` and `endAddrs` must be hexadecimal string with the same (even) length.
 - Strings up to 32 bytes (128 bits) are supported.
-
-    POST /broker/api/v1/device/range
 
 #### Additional HTTP Headers
 
@@ -1054,6 +1060,8 @@ Create devices in bulk with address range. Notes:
     - *string* `networkId`: The associated network ID. The public network can be assigned by **admin** or **manager**.
     - *string* `startAddr`: The start network address of the specified network.
     - *string* `endAddr`: The end network address of the specified network.
+
+- **Example**
 
         {
             "data": {
@@ -1074,12 +1082,14 @@ Create devices in bulk with address range. Notes:
 
 ## <a name="post_device_range_del"></a>Bulk deleting devices with address range
 
-Delete devices in bulk with address range. Notes:
+Delete devices in bulk with address range.
+
+    POST /broker/api/v1/device/range-delete
+
+Notes:
 - Maximum 1024 devices (0x400).
 - `startAddrs` and `endAddrs` must be hexadecimal string with the same (even) length.
 - Strings up to 32 bytes (128 bits) are supported.
-
-    POST /broker/api/v1/device/range-delete
 
 #### Additional HTTP Headers
 
@@ -1092,6 +1102,8 @@ Delete devices in bulk with address range. Notes:
     - *string* `networkId`: The associated network ID. The public network can be assigned by **admin** or **manager**.
     - *string* `startAddr`: The start network address of the specified network.
     - *string* `endAddr`: The end network address of the specified network.
+
+- **Example**
 
         {
             "data": {
@@ -1379,11 +1391,13 @@ Create an device route.
 
 ## <a name="post_device_route_bulk"></a>Bulk creating device routes
 
-Create device routes in bulk. Notes:
-- Devices routes created earlier will be skipped.
-- Maximum 1024 devices.
+Create device routes in bulk.
 
     POST /broker/api/v1/device-route/bulk
+
+Notes:
+- Devices routes created earlier will be skipped.
+- Maximum 1024 devices.
 
 #### Additional HTTP Headers
 
@@ -1421,10 +1435,12 @@ Create device routes in bulk. Notes:
 
 ## <a name="post_device_route_bulk_del"></a>Bulk deleting device routes
 
-Delete device routes in bulk. Notes:
-- Maximum 1024 devices.
+Delete device routes in bulk.
 
     POST /broker/api/v1/device-route/bulk-delete
+
+Notes:
+- Maximum 1024 devices.
 
 #### Additional HTTP Headers
 
@@ -1461,13 +1477,15 @@ Delete device routes in bulk. Notes:
 
 ## <a name="post_device_route_range"></a>Bulk creating device routes with address range
 
-Create device routes in bulk with address range. Notes:
+Create device routes in bulk with address range.
+
+    POST /broker/api/v1/device-route/range
+
+Notes:
 - Devices routes created earlier will be skipped.
 - Maximum 1024 devices (0x400).
 - `startAddrs` and `endAddrs` must be hexadecimal string with the same (even) length.
 - Strings up to 32 bytes (128 bits) are supported.
-
-    POST /broker/api/v1/device-route/range
 
 #### Additional HTTP Headers
 
@@ -1480,6 +1498,8 @@ Create device routes in bulk with address range. Notes:
     - *string* `networkId`: The associated network ID. The public network can be assigned by **admin** or **manager**.
     - *string* `startAddr`: The start network address of the specified network.
     - *string* `endAddr`: The end network address of the specified network.
+
+- **Example**
 
         {
             "data": {
@@ -1501,12 +1521,14 @@ Create device routes in bulk with address range. Notes:
 
 ## <a name="post_device_route_range_del"></a>Bulk deleting device routes with address range
 
-Delete device routes in bulk with address range. Notes:
+Delete device routes in bulk with address range.
+
+    POST /broker/api/v1/device-route/range-delete
+
+Notes:
 - Maximum 1024 devices (0x400).
 - `startAddrs` and `endAddrs` must be hexadecimal string with the same (even) length.
 - Strings up to 32 bytes (128 bits) are supported.
-
-    POST /broker/api/v1/device-route/range-delete
 
 #### Additional HTTP Headers
 
