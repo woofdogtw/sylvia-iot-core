@@ -26,9 +26,11 @@ All API requests must have a **Authorization** header with a **Bearer** token.
 
 - **Example**
 
-        GET /router/api/v1/network/lan HTTP/1.1
-        Host: localhost
-        Authorization: Bearer 766f29fa8691c81b749c0f316a7af4b7d303e45bf4000fe5829365d37caec2a4
+    ```http
+    GET /router/api/v1/network/lan HTTP/1.1
+    Host: localhost
+    Authorization: Bearer 766f29fa8691c81b749c0f316a7af4b7d303e45bf4000fe5829365d37caec2a4
+    ```
 
 All APIs may respond one of the following status codes:
 
@@ -48,15 +50,17 @@ All error responses have the following parameters in JSON format string:
 
 - **Example**
 
-        HTTP/1.1 401 Unauthorized
-        Access-Control-Allow-Origin: *
-        Content-Type: application/json
-        Content-Length: 70
-        ETag: W/"43-Npr+dy47IJFtraEIw6D8mYLw7Ws"
-        Date: Thu, 13 Jan 2022 07:46:09 GMT
-        Connection: keep-alive
+    ```http
+    HTTP/1.1 401 Unauthorized
+    Access-Control-Allow-Origin: *
+    Content-Type: application/json
+    Content-Length: 70
+    ETag: W/"43-Npr+dy47IJFtraEIw6D8mYLw7Ws"
+    Date: Thu, 13 Jan 2022 07:46:09 GMT
+    Connection: keep-alive
 
-        {"code":"err_auth","message":"Invalid token: access token is invalid"}
+    {"code":"err_auth","message":"Invalid token: access token is invalid"}
+    ```
 
 ## <a name="errcode"></a>Common error codes
 
@@ -84,7 +88,7 @@ Get system resource (CPU, memory, disk) usage.
 - **200 OK**: System resource usage information. Parameters are:
 
     - *object* `data`:
-        - *number[]* `cpu`: Usage of each CPU in percentage (0~100).
+        - *number[]* `cpu`: Usage of each CPU core in percentage (0~100).
         - *object* `mem`: Memory space usage.
             - *number* `total`: Total memory space in bytes.
             - *number* `used`: Used memory space in bytes.
@@ -94,19 +98,21 @@ Get system resource (CPU, memory, disk) usage.
 
     - **Example**
 
-            {
-                "data": {
-                    "cpu": [ 11, 2, 2, 8, 2, 2, 90, 10 ],
-                    "mem": {
-                        "total": 6300938240,
-                        "used": 2344439808
-                    },
-                    "disk": {
-                        "total": 269490393088,
-                        "used": 77246394368
-                    }
+        ```json
+        {
+            "data": {
+                "cpu": [ 11, 2, 2, 8, 2, 2, 90, 10 ],
+                "mem": {
+                    "total": 6300938240,
+                    "used": 2344439808
+                },
+                "disk": {
+                    "total": 269490393088,
+                    "used": 77246394368
                 }
             }
+        }
+        ```
 
 - **400, 401, 500, 503**: See [Notes](#notes).
 
@@ -125,11 +131,13 @@ Get system time information.
 
     - **Example**
 
-            {
-                "data": {
-                    "time": "2022-11-22T14:45:35.637Z"
-                }
+        ```json
+        {
+            "data": {
+                "time": "2022-11-22T14:45:35.637Z"
             }
+        }
+        ```
 
 - **400, 401, 500, 503**: See [Notes](#notes).
 
@@ -164,23 +172,15 @@ Get all WAN interface configurations.
 
     - **Example**
 
-            {
-                "data": [
-                    {
-                        "wanId": "wan1",
-                        "conf": {
-                            "type": "ethernet",
-                            "type4": "static",
-                            "static4" {
-                                "address": "10.1.0.11/24",
-                                "gateway": "10.1.0.254",
-                                "dns": [
-                                    "8.8.8.8",
-                                    "8.8.4.4"
-                                ]
-                            }
-                        },
-                        "conn4": {
+        ```json
+        {
+            "data": [
+                {
+                    "wanId": "wan1",
+                    "conf": {
+                        "type": "ethernet",
+                        "type4": "static",
+                        "static4" {
                             "address": "10.1.0.11/24",
                             "gateway": "10.1.0.254",
                             "dns": [
@@ -189,25 +189,35 @@ Get all WAN interface configurations.
                             ]
                         }
                     },
-                    {
-                        "wanId": "wan2",
-                        "conf": {
-                            "type": "pppoe"
-                            "pppoe": {
-                                "username": "user",
-                                "password": "pass"
-                            }
-                        },
-                        "conn4": {
-                            "address": "10.1.0.201/24",
-                            "gateway": "10.1.0.254",
-                            "dns": [
-                                "10.1.0.254"
-                            ]
-                        }
+                    "conn4": {
+                        "address": "10.1.0.11/24",
+                        "gateway": "10.1.0.254",
+                        "dns": [
+                            "8.8.8.8",
+                            "8.8.4.4"
+                        ]
                     }
-                ]
-            }
+                },
+                {
+                    "wanId": "wan2",
+                    "conf": {
+                        "type": "pppoe"
+                        "pppoe": {
+                            "username": "user",
+                            "password": "pass"
+                        }
+                    },
+                    "conn4": {
+                        "address": "10.1.0.201/24",
+                        "gateway": "10.1.0.254",
+                        "dns": [
+                            "10.1.0.254"
+                        ]
+                    }
+                }
+            ]
+        }
+        ```
 
 - **400, 401, 500, 503**: See [Notes](#notes).
 
@@ -238,20 +248,22 @@ Set one WAN interface configurations.
 
 - **Example**
 
-        {
-            "data": {
-                "type": "ethernet",
-                "type4": "static",
-                "static4" {
-                    "address": "10.1.0.11/24",
-                    "gateway": "10.1.0.254",
-                    "dns": [
-                        "8.8.8.8",
-                        "8.8.4.4"
-                    ]
-                }
+    ```json
+    {
+        "data": {
+            "type": "ethernet",
+            "type4": "static",
+            "static4" {
+                "address": "10.1.0.11/24",
+                "gateway": "10.1.0.254",
+                "dns": [
+                    "8.8.8.8",
+                    "8.8.4.4"
+                ]
             }
         }
+    }
+    ```
 
 #### Response
 
@@ -278,16 +290,18 @@ Get the LAN interface configurations.
 
     - **Example**
 
-            {
-                "data": {
-                    "conf4": {
-                        "address": "192.168.1.254/24",
-                        "dhcpStart": "192.168.1.101",
-                        "dhcpEnd": "192.168.1.200",
-                        "leaseTime": 86400
-                    }
+        ```json
+        {
+            "data": {
+                "conf4": {
+                    "address": "192.168.1.254/24",
+                    "dhcpStart": "192.168.1.101",
+                    "dhcpEnd": "192.168.1.200",
+                    "leaseTime": 86400
                 }
             }
+        }
+        ```
 
 - **400, 401, 500, 503**: See [Notes](#notes).
 
@@ -312,16 +326,18 @@ Set the LAN interface configurations.
 
 - **Example**
 
-        {
-            "data": {
-                "conf4": {
-                    "address": "192.168.1.254/24",
-                    "dhcpStart": "192.168.1.101",
-                    "dhcpEnd": "192.168.1.200",
-                    "leaseTime": 86400
-                }
+    ```json
+    {
+        "data": {
+            "conf4": {
+                "address": "192.168.1.254/24",
+                "dhcpStart": "192.168.1.101",
+                "dhcpEnd": "192.168.1.200",
+                "leaseTime": 86400
             }
         }
+    }
+    ```
 
 #### Response
 
@@ -347,24 +363,26 @@ Get DHCP leases.
 
     - **Example**
 
-            {
-                "data": [
-                    {
-                        "ip": "192.168.55.201",
-                        "starts": "2018-10-02T05:17:24Z",
-                        "ends": "2018-10-02T05:27:24Z",
-                        "macAddr": "08:00:27:be:86:94",
-                        "client": "someone-winxp"
-                    },
-                    {
-                        "ip": "192.168.55.202",
-                        "starts": "2018-10-02T05:19:06Z",
-                        "ends": "2018-10-02T05:29:06Z",
-                        "macAddr": "08:00:27:a9:56:84",
-                        "client": "anotherone-linux"
-                    }
-                ]
-            }
+        ```json
+        {
+            "data": [
+                {
+                    "ip": "192.168.55.201",
+                    "starts": "2018-10-02T05:17:24Z",
+                    "ends": "2018-10-02T05:27:24Z",
+                    "macAddr": "08:00:27:be:86:94",
+                    "client": "someone-winxp"
+                },
+                {
+                    "ip": "192.168.55.202",
+                    "starts": "2018-10-02T05:19:06Z",
+                    "ends": "2018-10-02T05:29:06Z",
+                    "macAddr": "08:00:27:a9:56:84",
+                    "client": "anotherone-linux"
+                }
+            ]
+        }
+        ```
 
 - **400, 401, 500, 503**: See [Notes](#notes).
 
@@ -387,16 +405,18 @@ Get the wireless LAN interface configurations.
 
     - **Example**
 
-            {
-                "data": {
-                    "enable": true,
-                    "conf": {
-                        "ssid": "sylvia-iot",
-                        "channel": 1,
-                        "password": "p@sSw0rD"
-                    }
+        ```json
+        {
+            "data": {
+                "enable": true,
+                "conf": {
+                    "ssid": "sylvia-iot",
+                    "channel": 1,
+                    "password": "p@sSw0rD"
                 }
             }
+        }
+        ```
 
 - **404 Not Found**: The router does not support wireless LAN.
 - **400, 401, 500, 503**: See [Notes](#notes).
@@ -422,16 +442,18 @@ Set the wireless LAN interface configurations.
 
 - **Example**
 
-        {
-            "data": {
-                "enable": true,
-                "conf": {
-                    "ssid": "sylvia-iot",
-                    "channel": 1,
-                    "password": "p@sSw0rD"
-                }
+    ```json
+    {
+        "data": {
+            "enable": true,
+            "conf": {
+                "ssid": "sylvia-iot",
+                "channel": 1,
+                "password": "p@sSw0rD"
             }
         }
+    }
+    ```
 
 #### Response
 
@@ -460,22 +482,24 @@ Get the wireless WAN interface configurations.
 
     - **Example**
 
-            {
-                "data": {
-                    "enable": true,
-                    "conf": {
-                        "ssid": "sylvia-iot"
-                    },
-                    "conn4": {
-                        "address": "10.1.0.11/24",
-                        "gateway": "10.1.0.254",
-                        "dns": [
-                            "8.8.8.8",
-                            "8.8.4.4"
-                        ]
-                    }
+        ```json
+        {
+            "data": {
+                "enable": true,
+                "conf": {
+                    "ssid": "sylvia-iot"
+                },
+                "conn4": {
+                    "address": "10.1.0.11/24",
+                    "gateway": "10.1.0.254",
+                    "dns": [
+                        "8.8.8.8",
+                        "8.8.4.4"
+                    ]
                 }
             }
+        }
+        ```
 
 - **404 Not Found**: The router does not support wireless WAN.
 - **400, 401, 500, 503**: See [Notes](#notes).
@@ -500,15 +524,17 @@ Set the wireless WAN interface configurations.
 
 - **Example**
 
-        {
-            "data": {
-                "enable": true,
-                "conf": {
-                    "ssid": "sylvia-iot",
-                    "password": "p@sSw0rD"
-                }
+    ```json
+    {
+        "data": {
+            "enable": true,
+            "conf": {
+                "ssid": "sylvia-iot",
+                "password": "p@sSw0rD"
             }
         }
+    }
+    ```
 
 #### Response
 
@@ -536,28 +562,30 @@ List available wireless AP.
 
     - **Example**
 
-            {
-                "data": [
-                    {
-                        "ssid": "sylvia-iot",
-                        "security": [ "WPA1", "WPA2" ],
-                        "channel": 11,
-                        "signal": 74
-                    },
-                    {
-                        "ssid": "Home WiFi",
-                        "security": [ "WPA2" ],
-                        "channel": 9,
-                        "signal": 47
-                    },
-                    {
-                        "ssid": "Public WiFi",
-                        "security": [],
-                        "channel": 1,
-                        "signal": 16
-                    }
-                ]
-            }
+        ```json
+        {
+            "data": [
+                {
+                    "ssid": "sylvia-iot",
+                    "security": [ "WPA1", "WPA2" ],
+                    "channel": 11,
+                    "signal": 74
+                },
+                {
+                    "ssid": "Home WiFi",
+                    "security": [ "WPA2" ],
+                    "channel": 9,
+                    "signal": 47
+                },
+                {
+                    "ssid": "Public WiFi",
+                    "security": [],
+                    "channel": 1,
+                    "signal": 16
+                }
+            ]
+        }
+        ```
 
 - **404 Not Found**: The router does not support wireless WAN.
 - **400, 401, 500, 503**: See [Notes](#notes).

@@ -64,9 +64,11 @@ All API requests must have a **Authorization** header with a **Bearer** token.
 
 - **Example**
 
-        GET /broker/api/v1/unit/list HTTP/1.1
-        Host: localhost
-        Authorization: Bearer 766f29fa8691c81b749c0f316a7af4b7d303e45bf4000fe5829365d37caec2a4
+    ```http
+    GET /broker/api/v1/unit/list HTTP/1.1
+    Host: localhost
+    Authorization: Bearer 766f29fa8691c81b749c0f316a7af4b7d303e45bf4000fe5829365d37caec2a4
+    ```
 
 All APIs may respond one of the following status codes:
 
@@ -86,15 +88,17 @@ All error responses have the following parameters in JSON format string:
 
 - **Example**
 
-        HTTP/1.1 401 Unauthorized
-        Access-Control-Allow-Origin: *
-        Content-Type: application/json
-        Content-Length: 70
-        ETag: W/"43-Npr+dy47IJFtraEIw6D8mYLw7Ws"
-        Date: Thu, 13 Jan 2022 07:46:09 GMT
-        Connection: keep-alive
+    ```http
+    HTTP/1.1 401 Unauthorized
+    Access-Control-Allow-Origin: *
+    Content-Type: application/json
+    Content-Length: 70
+    ETag: W/"43-Npr+dy47IJFtraEIw6D8mYLw7Ws"
+    Date: Thu, 13 Jan 2022 07:46:09 GMT
+    Connection: keep-alive
 
-        {"code":"err_auth","message":"Invalid token: access token is invalid"}
+    {"code":"err_auth","message":"Invalid token: access token is invalid"}
+    ```
 
 All APIs except [Create unit](#post_unit) can be used by unit owners.
 - Only `GET` APIs are available for unit members.
@@ -149,15 +153,17 @@ Create a unit. The user who use this API will be the owner of the unit.
 
 - **Example**
 
-        {
-            "data": {
-                "code": "sylvia",
-                "name": "Sylvia unit",
-                "info": {
-                    "address": "Mt. Sylvia"
-                }
+    ```json
+    {
+        "data": {
+            "code": "sylvia",
+            "name": "Sylvia unit",
+            "info": {
+                "address": "Mt. Sylvia"
             }
         }
+    }
+    ```
 
 #### Response
 
@@ -168,11 +174,13 @@ Create a unit. The user who use this API will be the owner of the unit.
 
     - **Example**
 
-            {
-                "data": {
-                    "unitId": "1640923958516-qvdFNpOV"
-                }
+        ```json
+        {
+            "data": {
+                "unitId": "1640923958516-qvdFNpOV"
             }
+        }
+        ```
 
 - **400 Bad Request**: the special error codes are:
     - `err_broker_owner_not_exist`: The specified owner does not exist.
@@ -201,11 +209,13 @@ Get unit list count.
 
     - **Example**
 
-            {
-                "data": {
-                    "count": 1
-                }
+        ```json
+        {
+            "data": {
+                "count": 1
             }
+        }
+        ```
 
 - **400, 401, 403, 500, 503**: See [Notes](#notes).
 
@@ -247,29 +257,9 @@ Get unit list.
 
     - **Example**
 
-            {
-                "data": [
-                    {
-                        "unitId": "1640923958516-qvdFNpOV",
-                        "code": "sylvia",
-                        "createdAt": "2021-12-31T04:12:38.516Z",
-                        "modifiedAt": "2021-12-31T04:12:38.516Z",
-                        "ownerId": "1640921188987-x51FTVPD",
-                        "memberIds": [
-                            "1640921188987-x51FTVPD",
-                            "1641003827053-c2e84RJO"
-                        ],
-                        "name": "Sylvia unit",
-                        "info": {
-                            "address": "Mt. Sylvia"
-                        }
-                    }
-                ]
-            }
-
-    - **Example (format=`array`)**
-
-            [
+        ```json
+        {
+            "data": [
                 {
                     "unitId": "1640923958516-qvdFNpOV",
                     "code": "sylvia",
@@ -286,6 +276,30 @@ Get unit list.
                     }
                 }
             ]
+        }
+        ```
+
+    - **Example (format=`array`)**
+
+        ```json
+        [
+            {
+                "unitId": "1640923958516-qvdFNpOV",
+                "code": "sylvia",
+                "createdAt": "2021-12-31T04:12:38.516Z",
+                "modifiedAt": "2021-12-31T04:12:38.516Z",
+                "ownerId": "1640921188987-x51FTVPD",
+                "memberIds": [
+                    "1640921188987-x51FTVPD",
+                    "1641003827053-c2e84RJO"
+                ],
+                "name": "Sylvia unit",
+                "info": {
+                    "address": "Mt. Sylvia"
+                }
+            }
+        ]
+        ```
 
 - **400, 401, 403, 500, 503**: See [Notes](#notes).
 
@@ -330,15 +344,17 @@ Update the specified unit information.
 
 - **Example**
 
-        {
-            "data": {
-                "name": "Sylvia depart",
-                "info": {
-                    "contact": "Sylvia depart's contact",
-                    "address": "Mt. Sylvia"
-                }
+    ```json
+    {
+        "data": {
+            "name": "Sylvia depart",
+            "info": {
+                "contact": "Sylvia depart's contact",
+                "address": "Mt. Sylvia"
             }
         }
+    }
+    ```
 
 #### Response
 
@@ -400,17 +416,19 @@ Create an application.
 
 - **Example**
 
-        {
-            "data": {
-                "code": "tracker",
-                "unitId": "1640923958516-qvdFNpOV",
-                "hostUri": "amqp://localhost/sylvia",
-                "name": "Position tracker application",
-                "info": {
-                    "description": "This is the position tracker application with maps"
-                }
+    ```json
+    {
+        "data": {
+            "code": "tracker",
+            "unitId": "1640923958516-qvdFNpOV",
+            "hostUri": "amqp://localhost/sylvia",
+            "name": "Position tracker application",
+            "info": {
+                "description": "This is the position tracker application with maps"
             }
         }
+    }
+    ```
 
 #### Response
 
@@ -421,11 +439,13 @@ Create an application.
 
     - **Example**
 
-            {
-                "data": {
-                    "applicationId": "1640924063709-rmJIxW0s"
-                }
+        ```json
+        {
+            "data": {
+                "applicationId": "1640924063709-rmJIxW0s"
             }
+        }
+        ```
 
 - **400 Bad Request**: the special error codes are:
     - `err_broker_unit_not_exist`: The unit does not exist.
@@ -452,11 +472,13 @@ Get application list count.
 
     - **Example**
 
-            {
-                "data": {
-                    "count": 2
-                }
+        ```json
+        {
+            "data": {
+                "count": 2
             }
+        }
+        ```
 
 - **400 Bad Request**: the special error codes are:
     - `err_broker_unit_not_exist`: The unit does not exist.
@@ -499,40 +521,9 @@ Get application list.
 
     - **Example**
 
-            {
-                "data": [
-                    {
-                        "applicationId": "1640924152438-eVJe8UhY",
-                        "code": "meter",
-                        "unitId": "1640923958516-qvdFNpOV",
-                        "unitCode": "sylvia",
-                        "createdAt": "2021-12-31T04:15:52.438Z",
-                        "modifiedAt": "2021-12-31T04:15:52.438Z",
-                        "hostUri": "amqp://localhost/sylvia",
-                        "name": "Meter application",
-                        "info": {
-                            "description": "This is the meter program"
-                        }
-                    },
-                    {
-                        "applicationId": "1640924063709-rmJIxW0s",
-                        "code": "tracker",
-                        "unitId": "1640923958516-qvdFNpOV",
-                        "unitCode": "sylvia",
-                        "createdAt": "2021-12-31T04:14:23.709Z",
-                        "modifiedAt": "2021-12-31T04:14:23.709Z",
-                        "hostUri": "amqp://localhost/sylvia",
-                        "name": "Position tracker application",
-                        "info": {
-                            "description": "This is the position tracker application with maps"
-                        }
-                    }
-                ]
-            }
-
-    - **Example (format=`array`)**
-
-            [
+        ```json
+        {
+            "data": [
                 {
                     "applicationId": "1640924152438-eVJe8UhY",
                     "code": "meter",
@@ -560,6 +551,41 @@ Get application list.
                     }
                 }
             ]
+        }
+        ```
+
+    - **Example (format=`array`)**
+
+        ```json
+        [
+            {
+                "applicationId": "1640924152438-eVJe8UhY",
+                "code": "meter",
+                "unitId": "1640923958516-qvdFNpOV",
+                "unitCode": "sylvia",
+                "createdAt": "2021-12-31T04:15:52.438Z",
+                "modifiedAt": "2021-12-31T04:15:52.438Z",
+                "hostUri": "amqp://localhost/sylvia",
+                "name": "Meter application",
+                "info": {
+                    "description": "This is the meter program"
+                }
+            },
+            {
+                "applicationId": "1640924063709-rmJIxW0s",
+                "code": "tracker",
+                "unitId": "1640923958516-qvdFNpOV",
+                "unitCode": "sylvia",
+                "createdAt": "2021-12-31T04:14:23.709Z",
+                "modifiedAt": "2021-12-31T04:14:23.709Z",
+                "hostUri": "amqp://localhost/sylvia",
+                "name": "Position tracker application",
+                "info": {
+                    "description": "This is the position tracker application with maps"
+                }
+            }
+        ]
+        ```
 
 - **400 Bad Request**: the special error codes are:
     - `err_broker_unit_not_exist`: The unit does not exist.
@@ -605,16 +631,18 @@ Update the specified application information.
 
 - **Example**
 
-        {
-            "data": {
-                "hostUri": "amqp://192.168.1.1/sylvia",
-                "name": "The tracker v2 application",
-                "info": {
-                    "description": "The version 2 tracker application",
-                    "changelog": "add altitude"
-                }
+    ```json
+    {
+        "data": {
+            "hostUri": "amqp://192.168.1.1/sylvia",
+            "name": "The tracker v2 application",
+            "info": {
+                "description": "The version 2 tracker application",
+                "changelog": "add altitude"
             }
         }
+    }
+    ```
 
 #### Response
 
@@ -659,17 +687,19 @@ Create a network.
 
 - **Example**
 
-        {
-            "data": {
-                "code": "lora",
-                "unitId": "1640923958516-qvdFNpOV",
-                "hostUri": "amqp://localhost/sylvia",
-                "name": "Sylvia unit's private LoRa network",
-                "info": {
-                    "description": "This is the private LoRa network"
-                }
+    ```json
+    {
+        "data": {
+            "code": "lora",
+            "unitId": "1640923958516-qvdFNpOV",
+            "hostUri": "amqp://localhost/sylvia",
+            "name": "Sylvia unit's private LoRa network",
+            "info": {
+                "description": "This is the private LoRa network"
             }
         }
+    }
+    ```
 
 #### Response
 
@@ -680,11 +710,13 @@ Create a network.
 
     - **Example**
 
-            {
-                "data": {
-                    "networkId": "1640924173420-BNg2lwo3"
-                }
+        ```json
+        {
+            "data": {
+                "networkId": "1640924173420-BNg2lwo3"
             }
+        }
+        ```
 
 - **400 Bad Request**: the special error codes are:
     - `err_broker_unit_not_exist`: The unit does not exist.
@@ -712,11 +744,13 @@ Get network list count.
 
     - **Example**
 
-            {
-                "data": {
-                    "count": 2
-                }
+        ```json
+        {
+            "data": {
+                "count": 2
             }
+        }
+        ```
 
 - **400, 401, 403, 500, 503**: See [Notes](#notes).
 
@@ -758,40 +792,9 @@ Get network list.
 
     - **Example**
 
-            {
-                "data": [
-                    {
-                        "networkId": "1640924173420-BNg2lwo3",
-                        "code": "lora",
-                        "unitId": "1640923958516-qvdFNpOV",
-                        "unitCode": "sylvia",
-                        "createdAt": "2021-12-31T04:16:13.420Z",
-                        "modifiedAt": "2021-12-31T04:16:13.420Z",
-                        "hostUri": "amqp://localhost/sylvia",
-                        "name": "Sylvia unit's private LoRa network",
-                        "info": {
-                            "description": "This is the private LoRa network"
-                        }
-                    },
-                    {
-                        "networkId": "1640924213217-oDwwyNK3",
-                        "code": "zigbee",
-                        "unitId": null,
-                        "unitCode": null,
-                        "createdAt": "2021-12-31T04:16:53.217Z",
-                        "modifiedAt": "2021-12-31T04:16:53.217Z",
-                        "hostUri": "amqp://localhost/sylvia",
-                        "name": "Public Zigbee network",
-                        "info": {
-                            "description": "This is the public Zigbee network"
-                        }
-                    }
-                ]
-            }
-
-    - **Example (format=`array`)**
-
-            [
+        ```json
+        {
+            "data": [
                 {
                     "networkId": "1640924173420-BNg2lwo3",
                     "code": "lora",
@@ -819,6 +822,41 @@ Get network list.
                     }
                 }
             ]
+        }
+        ```
+
+    - **Example (format=`array`)**
+
+        ```json
+        [
+            {
+                "networkId": "1640924173420-BNg2lwo3",
+                "code": "lora",
+                "unitId": "1640923958516-qvdFNpOV",
+                "unitCode": "sylvia",
+                "createdAt": "2021-12-31T04:16:13.420Z",
+                "modifiedAt": "2021-12-31T04:16:13.420Z",
+                "hostUri": "amqp://localhost/sylvia",
+                "name": "Sylvia unit's private LoRa network",
+                "info": {
+                    "description": "This is the private LoRa network"
+                }
+            },
+            {
+                "networkId": "1640924213217-oDwwyNK3",
+                "code": "zigbee",
+                "unitId": null,
+                "unitCode": null,
+                "createdAt": "2021-12-31T04:16:53.217Z",
+                "modifiedAt": "2021-12-31T04:16:53.217Z",
+                "hostUri": "amqp://localhost/sylvia",
+                "name": "Public Zigbee network",
+                "info": {
+                    "description": "This is the public Zigbee network"
+                }
+            }
+        ]
+        ```
 
 - **400 Bad Request**: the special error codes are:
     - `err_broker_unit_not_exist`: The unit does not exist.
@@ -864,15 +902,17 @@ Update the specified network information.
 
 - **Example**
 
-        {
-            "data": {
-                "hostUri": "amqp://192.168.1.1/sylvia",
-                "name": "The OpenLoRa network server",
-                "info": {
-                    "changelog": "upgrade LoRa network server"
-                }
+    ```json
+    {
+        "data": {
+            "hostUri": "amqp://192.168.1.1/sylvia",
+            "name": "The OpenLoRa network server",
+            "info": {
+                "changelog": "upgrade LoRa network server"
             }
         }
+    }
+    ```
 
 #### Response
 
@@ -916,18 +956,20 @@ Create a device.
 
 - **Example**
 
-        {
-            "data": {
-                "unitId": "1640923958516-qvdFNpOV",
-                "networkId": "1640924173420-BNg2lwo3",
-                "networkAddr": "800012ae",
-                "name": "Mt. Sylvia tracker",
-                "info": {
-                    "latitude": "24.38349800818775",
-                    "longitude": "121.22999674970842"
-                }
+    ```json
+    {
+        "data": {
+            "unitId": "1640923958516-qvdFNpOV",
+            "networkId": "1640924173420-BNg2lwo3",
+            "networkAddr": "800012ae",
+            "name": "Mt. Sylvia tracker",
+            "info": {
+                "latitude": "24.38349800818775",
+                "longitude": "121.22999674970842"
             }
         }
+    }
+    ```
 
 #### Response
 
@@ -938,11 +980,13 @@ Create a device.
 
     - **Example**
 
-            {
-                "data": {
-                    "deviceId": "1640924274329-yESwHhKO"
-                }
+        ```json
+        {
+            "data": {
+                "deviceId": "1640924274329-yESwHhKO"
             }
+        }
+        ```
 
 - **400 Bad Request**: the special error codes are:
     - `err_broker_unit_not_exist`: The unit does not exist.
@@ -974,17 +1018,19 @@ Notes:
 
 - **Example**
 
-        {
-            "data": {
-                "unitId": "1640923958516-qvdFNpOV",
-                "networkId": "1640924173420-BNg2lwo3",
-                "networkAddrs": [
-                    "800012ae",
-                    "8000257f",
-                    "800022f3"
-                ]
-            }
+    ```json
+    {
+        "data": {
+            "unitId": "1640923958516-qvdFNpOV",
+            "networkId": "1640924173420-BNg2lwo3",
+            "networkAddrs": [
+                "800012ae",
+                "8000257f",
+                "800022f3"
+            ]
         }
+    }
+    ```
 
 #### Response
 
@@ -1016,17 +1062,19 @@ Notes:
 
 - **Example**
 
-        {
-            "data": {
-                "unitId": "1640923958516-qvdFNpOV",
-                "networkId": "1640924173420-BNg2lwo3",
-                "networkAddrs": [
-                    "800012ae",
-                    "8000257f",
-                    "800022f3"
-                ]
-            }
+    ```json
+    {
+        "data": {
+            "unitId": "1640923958516-qvdFNpOV",
+            "networkId": "1640924173420-BNg2lwo3",
+            "networkAddrs": [
+                "800012ae",
+                "8000257f",
+                "800022f3"
+            ]
         }
+    }
+    ```
 
 #### Response
 
@@ -1063,14 +1111,16 @@ Notes:
 
 - **Example**
 
-        {
-            "data": {
-                "unitId": "1640923958516-qvdFNpOV",
-                "networkId": "1640924173420-BNg2lwo3",
-                "startAddr": "80001000",
-                "endAddr": "800013ff"
-            }
+    ```json
+    {
+        "data": {
+            "unitId": "1640923958516-qvdFNpOV",
+            "networkId": "1640924173420-BNg2lwo3",
+            "startAddr": "80001000",
+            "endAddr": "800013ff"
         }
+    }
+    ```
 
 #### Response
 
@@ -1105,14 +1155,16 @@ Notes:
 
 - **Example**
 
-        {
-            "data": {
-                "unitId": "1640923958516-qvdFNpOV",
-                "networkId": "1640924173420-BNg2lwo3",
-                "startAddr": "80001000",
-                "endAddr": "800013ff"
-            }
+    ```json
+    {
+        "data": {
+            "unitId": "1640923958516-qvdFNpOV",
+            "networkId": "1640924173420-BNg2lwo3",
+            "startAddr": "80001000",
+            "endAddr": "800013ff"
         }
+    }
+    ```
 
 #### Response
 
@@ -1146,11 +1198,13 @@ Get device list count.
 
     - **Example**
 
-            {
-                "data": {
-                    "count": 2
-                }
+        ```json
+        {
+            "data": {
+                "count": 2
             }
+        }
+        ```
 
 - **400 Bad Request**: the special error codes are:
     - `err_broker_unit_not_exist`: The unit does not exist.
@@ -1198,43 +1252,9 @@ Get device list.
 
     - **Example**
 
-            {
-                "data": [
-                    {
-                        "deviceId": "1640924274329-yESwHhKO",
-                        "unitId": "1640923958516-qvdFNpOV",
-                        "unitCode": "sylvia",
-                        "networkId": "1640924173420-BNg2lwo3",
-                        "networkCode": "lora",
-                        "networkAddr": "800012ae",
-                        "createdAt": "2021-12-31T04:17:54.329Z",
-                        "modifiedAt": "2021-12-31T04:17:54.329Z",
-                        "name": "Mt. Sylvia tracker",
-                        "info": {
-                            "latitude": "24.38349800818775",
-                            "longitude": "121.22999674970842"
-                        }
-                    },
-                    {
-                        "unitId": "1640924263290-Pyc1T5fT",
-                        "unitCode": null,
-                        "networkId": "1640924213217-oDwwyNK3",
-                        "networkCode": "zigbee",
-                        "networkAddr": "13a2",
-                        "createdAt": "2021-12-31T04:17:43.290Z",
-                        "modifiedAt": "2021-12-31T04:17:43.290Z",
-                        "name": "Mt. Sylvia meter",
-                        "info": {
-                            "latitude": "24.38349800818775",
-                            "longitude": "121.22999674970842"
-                        }
-                    }
-                ]
-            }
-
-    - **Example (format=`array`)**
-
-            [
+        ```json
+        {
+            "data": [
                 {
                     "deviceId": "1640924274329-yESwHhKO",
                     "unitId": "1640923958516-qvdFNpOV",
@@ -1251,8 +1271,7 @@ Get device list.
                     }
                 },
                 {
-                    "deviceId": "1640924263290-Pyc1T5fT",
-                    "unitId": "1640923958516-qvdFNpOV",
+                    "unitId": "1640924263290-Pyc1T5fT",
                     "unitCode": null,
                     "networkId": "1640924213217-oDwwyNK3",
                     "networkCode": "zigbee",
@@ -1266,6 +1285,45 @@ Get device list.
                     }
                 }
             ]
+        }
+        ```
+
+    - **Example (format=`array`)**
+
+        ```json
+        [
+            {
+                "deviceId": "1640924274329-yESwHhKO",
+                "unitId": "1640923958516-qvdFNpOV",
+                "unitCode": "sylvia",
+                "networkId": "1640924173420-BNg2lwo3",
+                "networkCode": "lora",
+                "networkAddr": "800012ae",
+                "createdAt": "2021-12-31T04:17:54.329Z",
+                "modifiedAt": "2021-12-31T04:17:54.329Z",
+                "name": "Mt. Sylvia tracker",
+                "info": {
+                    "latitude": "24.38349800818775",
+                    "longitude": "121.22999674970842"
+                }
+            },
+            {
+                "deviceId": "1640924263290-Pyc1T5fT",
+                "unitId": "1640923958516-qvdFNpOV",
+                "unitCode": null,
+                "networkId": "1640924213217-oDwwyNK3",
+                "networkCode": "zigbee",
+                "networkAddr": "13a2",
+                "createdAt": "2021-12-31T04:17:43.290Z",
+                "modifiedAt": "2021-12-31T04:17:43.290Z",
+                "name": "Mt. Sylvia meter",
+                "info": {
+                    "latitude": "24.38349800818775",
+                    "longitude": "121.22999674970842"
+                }
+            }
+        ]
+        ```
 
 - **400 Bad Request**: the special error codes are:
     - `err_broker_unit_not_exist`: The unit does not exist.
@@ -1310,16 +1368,18 @@ Update the specified device information.
 
 - **Example**
 
-        {
-            "data": {
-                "name": "Mt. Sylvia e-meter",
-                "info": {
-                    "latitude": "24.38349800818775",
-                    "longitude": "121.22999674970842",
-                    "changelog": "upgrade meter Dec 31st"
-                }
+    ```json
+    {
+        "data": {
+            "name": "Mt. Sylvia e-meter",
+            "info": {
+                "latitude": "24.38349800818775",
+                "longitude": "121.22999674970842",
+                "changelog": "upgrade meter Dec 31st"
             }
         }
+    }
+    ```
 
 #### Response
 
@@ -1360,12 +1420,14 @@ Create an device route.
 
 - **Example**
 
-        {
-            "data": {
-                "deviceId": "1640924274329-yESwHhKO",
-                "applicationId": "1640924063709-rmJIxW0s"
-            }
+    ```json
+    {
+        "data": {
+            "deviceId": "1640924274329-yESwHhKO",
+            "applicationId": "1640924063709-rmJIxW0s"
         }
+    }
+    ```
 
 #### Response
 
@@ -1376,11 +1438,13 @@ Create an device route.
 
     - **Example**
 
-            {
-                "data": {
-                    "routeId": "1640924308457-D455ZtkDW033"
-                }
+        ```json
+        {
+            "data": {
+                "routeId": "1640924308457-D455ZtkDW033"
             }
+        }
+        ```
 
 - **400 Bad Request**: the special error codes are:
     - `err_broker_application_not_exist`: The application does not exist.
@@ -1412,17 +1476,19 @@ Notes:
 
 - **Example**
 
-        {
-            "data": {
-                "applicationId": "1640924063709-rmJIxW0s",
-                "networkId": "1640924173420-BNg2lwo3",
-                "networkAddrs": [
-                    "800012ae",
-                    "8000257f",
-                    "800022f3"
-                ]
-            }
+    ```json
+    {
+        "data": {
+            "applicationId": "1640924063709-rmJIxW0s",
+            "networkId": "1640924173420-BNg2lwo3",
+            "networkAddrs": [
+                "800012ae",
+                "8000257f",
+                "800022f3"
+            ]
         }
+    }
+    ```
 
 #### Response
 
@@ -1455,17 +1521,19 @@ Notes:
 
 - **Example**
 
-        {
-            "data": {
-                "applicationId": "1640924063709-rmJIxW0s",
-                "networkId": "1640924173420-BNg2lwo3",
-                "networkAddrs": [
-                    "800012ae",
-                    "8000257f",
-                    "800022f3"
-                ]
-            }
+    ```json
+    {
+        "data": {
+            "applicationId": "1640924063709-rmJIxW0s",
+            "networkId": "1640924173420-BNg2lwo3",
+            "networkAddrs": [
+                "800012ae",
+                "8000257f",
+                "800022f3"
+            ]
         }
+    }
+    ```
 
 #### Response
 
@@ -1501,14 +1569,16 @@ Notes:
 
 - **Example**
 
-        {
-            "data": {
-                "applicationId": "1640924063709-rmJIxW0s",
-                "networkId": "1640924173420-BNg2lwo3",
-                "startAddr": "80001000",
-                "endAddr": "800013ff"
-            }
+    ```json
+    {
+        "data": {
+            "applicationId": "1640924063709-rmJIxW0s",
+            "networkId": "1640924173420-BNg2lwo3",
+            "startAddr": "80001000",
+            "endAddr": "800013ff"
         }
+    }
+    ```
 
 #### Response
 
@@ -1544,14 +1614,16 @@ Notes:
 
 - **Example**
 
-        {
-            "data": {
-                "applicationId": "1640924063709-rmJIxW0s",
-                "networkId": "1640924173420-BNg2lwo3",
-                "startAddr": "80001000",
-                "endAddr": "800013ff"
-            }
+    ```json
+    {
+        "data": {
+            "applicationId": "1640924063709-rmJIxW0s",
+            "networkId": "1640924173420-BNg2lwo3",
+            "startAddr": "80001000",
+            "endAddr": "800013ff"
         }
+    }
+    ```
 
 #### Response
 
@@ -1585,11 +1657,13 @@ Get device route list count.
 
     - **Example**
 
-            {
-                "data": {
-                    "count": 1
-                }
+        ```json
+        {
+            "data": {
+                "count": 1
             }
+        }
+        ```
 
 - **400 Bad Request**: the special error codes are:
     - `err_broker_unit_not_exist`: The unit does not exist.
@@ -1636,25 +1710,9 @@ Get device route list.
 
     - **Example**
 
-            {
-                "data": [
-                    {
-                        "routeId": "1640924308457-D455ZtkDW033",
-                        "unitId": "1640923958516-qvdFNpOV",
-                        "applicationId": "1640924063709-rmJIxW0s",
-                        "applicationCode": "tracker",
-                        "deviceId": "1640924274329-yESwHhKO",
-                        "networkId": "1640924173420-BNg2lwo3",
-                        "networkCode": "lora",
-                        "networkAddr": "800012ae",
-                        "createdAt": "2021-12-31T04:18:28.457Z"
-                    }
-                ]
-            }
-
-    - **Example (format=`array`)**
-
-            [
+        ```json
+        {
+            "data": [
                 {
                     "routeId": "1640924308457-D455ZtkDW033",
                     "unitId": "1640923958516-qvdFNpOV",
@@ -1667,6 +1725,26 @@ Get device route list.
                     "createdAt": "2021-12-31T04:18:28.457Z"
                 }
             ]
+        }
+        ```
+
+    - **Example (format=`array`)**
+
+        ```json
+        [
+            {
+                "routeId": "1640924308457-D455ZtkDW033",
+                "unitId": "1640923958516-qvdFNpOV",
+                "applicationId": "1640924063709-rmJIxW0s",
+                "applicationCode": "tracker",
+                "deviceId": "1640924274329-yESwHhKO",
+                "networkId": "1640924173420-BNg2lwo3",
+                "networkCode": "lora",
+                "networkAddr": "800012ae",
+                "createdAt": "2021-12-31T04:18:28.457Z"
+            }
+        ]
+        ```
 
 - **400 Bad Request**: the special error codes are:
     - `err_broker_unit_not_exist`: The unit does not exist.
@@ -1705,12 +1783,14 @@ Create an network route.
 
 - **Example**
 
-        {
-            "data": {
-                "networkId": "1640924173420-BNg2lwo3",
-                "applicationId": "1640924063709-rmJIxW0s"
-            }
+    ```json
+    {
+        "data": {
+            "networkId": "1640924173420-BNg2lwo3",
+            "applicationId": "1640924063709-rmJIxW0s"
         }
+    }
+    ```
 
 #### Response
 
@@ -1721,11 +1801,13 @@ Create an network route.
 
     - **Example**
 
-            {
-                "data": {
-                    "routeId": "1640924311420-po5HWJAyIZPY"
-                }
+        ```json
+        {
+            "data": {
+                "routeId": "1640924311420-po5HWJAyIZPY"
             }
+        }
+        ```
 
 - **400 Bad Request**: the special error codes are:
     - `err_broker_application_not_exist`: The application does not exist.
@@ -1755,11 +1837,13 @@ Get network route list count.
 
     - **Example**
 
-            {
-                "data": {
-                    "count": 1
-                }
+        ```json
+        {
+            "data": {
+                "count": 1
             }
+        }
+        ```
 
 - **400 Bad Request**: the special error codes are:
     - `err_broker_unit_not_exist`: The unit does not exist.
@@ -1802,23 +1886,9 @@ Get network route list.
 
     - **Example**
 
-            {
-                "data": [
-                    {
-                        "routeId": "1640924311420-po5HWJAyIZPY",
-                        "unitId": "1640923958516-qvdFNpOV",
-                        "applicationId": "1640924063709-rmJIxW0s",
-                        "applicationCode": "tracker",
-                        "networkId": "1640924173420-BNg2lwo3",
-                        "networkCode": "lora",
-                        "createdAt": "2021-12-31T04:18:31.420Z"
-                    }
-                ]
-            }
-
-    - **Example (format=`array`)**
-
-            [
+        ```json
+        {
+            "data": [
                 {
                     "routeId": "1640924311420-po5HWJAyIZPY",
                     "unitId": "1640923958516-qvdFNpOV",
@@ -1829,6 +1899,24 @@ Get network route list.
                     "createdAt": "2021-12-31T04:18:31.420Z"
                 }
             ]
+        }
+        ```
+
+    - **Example (format=`array`)**
+
+        ```json
+        [
+            {
+                "routeId": "1640924311420-po5HWJAyIZPY",
+                "unitId": "1640923958516-qvdFNpOV",
+                "applicationId": "1640924063709-rmJIxW0s",
+                "applicationCode": "tracker",
+                "networkId": "1640924173420-BNg2lwo3",
+                "networkCode": "lora",
+                "createdAt": "2021-12-31T04:18:31.420Z"
+            }
+        ]
+        ```
 
 - **400 Bad Request**: the special error codes are:
     - `err_broker_unit_not_exist`: The unit does not exist.
@@ -1873,11 +1961,13 @@ Get downlink data buffer list count.
 
     - **Example**
 
-            {
-                "data": {
-                    "count": 1
-                }
+        ```json
+        {
+            "data": {
+                "count": 1
             }
+        }
+        ```
 
 - **400 Bad Request**: the special error codes are:
     - `err_broker_unit_not_exist`: The unit does not exist.
@@ -1924,25 +2014,9 @@ Get downlink data buffer list.
 
     - **Example**
 
-            {
-                "data": [
-                    {
-                        "dataId": "1640924391768-DyyneusWeveV",
-                        "unitId": "1640923958516-qvdFNpOV",
-                        "applicationId": "1640924063709-rmJIxW0s",
-                        "applicationCode": "tracker",
-                        "deviceId": "1640924274329-yESwHhKO",
-                        "networkId": "1640924173420-BNg2lwo3",
-                        "networkAddr": "800012ae",
-                        "createdAt": "2021-12-31T04:19:51.768Z",
-                        "expiredAt": "2021-12-31T04:29:51.768Z"
-                    }
-                ]
-            }
-
-    - **Example (format=`array`)**
-
-            [
+        ```json
+        {
+            "data": [
                 {
                     "dataId": "1640924391768-DyyneusWeveV",
                     "unitId": "1640923958516-qvdFNpOV",
@@ -1955,6 +2029,26 @@ Get downlink data buffer list.
                     "expiredAt": "2021-12-31T04:29:51.768Z"
                 }
             ]
+        }
+        ```
+
+    - **Example (format=`array`)**
+
+        ```json
+        [
+            {
+                "dataId": "1640924391768-DyyneusWeveV",
+                "unitId": "1640923958516-qvdFNpOV",
+                "applicationId": "1640924063709-rmJIxW0s",
+                "applicationCode": "tracker",
+                "deviceId": "1640924274329-yESwHhKO",
+                "networkId": "1640924173420-BNg2lwo3",
+                "networkAddr": "800012ae",
+                "createdAt": "2021-12-31T04:19:51.768Z",
+                "expiredAt": "2021-12-31T04:29:51.768Z"
+            }
+        ]
+        ```
 
 - **400 Bad Request**: the special error codes are:
     - `err_broker_unit_not_exist`: The unit does not exist.

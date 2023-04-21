@@ -34,9 +34,11 @@ All API requests must have a **Authorization** header with a **Bearer** token.
 
 - **Example**
 
-        GET /auth/api/v1/user HTTP/1.1
-        Host: localhost
-        Authorization: Bearer 766f29fa8691c81b749c0f316a7af4b7d303e45bf4000fe5829365d37caec2a4
+    ```http
+    GET /auth/api/v1/user HTTP/1.1
+    Host: localhost
+    Authorization: Bearer 766f29fa8691c81b749c0f316a7af4b7d303e45bf4000fe5829365d37caec2a4
+    ```
 
 All APIs may respond one of the following status codes:
 
@@ -56,15 +58,17 @@ All error responses have the following parameters in JSON format string:
 
 - **Example**
 
-        HTTP/1.1 401 Unauthorized
-        Access-Control-Allow-Origin: *
-        Content-Type: application/json
-        Content-Length: 70
-        ETag: W/"43-Npr+dy47IJFtraEIw6D8mYLw7Ws"
-        Date: Thu, 13 Jan 2022 07:46:09 GMT
-        Connection: keep-alive
+    ```http
+    HTTP/1.1 401 Unauthorized
+    Access-Control-Allow-Origin: *
+    Content-Type: application/json
+    Content-Length: 70
+    ETag: W/"43-Npr+dy47IJFtraEIw6D8mYLw7Ws"
+    Date: Thu, 13 Jan 2022 07:46:09 GMT
+    Connection: keep-alive
 
-        {"code":"err_auth","message":"Invalid token: access token is invalid"}
+    {"code":"err_auth","message":"Invalid token: access token is invalid"}
+    ```
 
 ## <a name="errcode"></a>Common error codes
 
@@ -149,20 +153,22 @@ Get user self information.
 
     - **Example**
 
-            {
-                "data": {
-                    "account": "michael-johnson@example.com",
-                    "createdAt": "2022-01-01T02:23:47.053Z",
-                    "modifiedAt": "2022-01-02T05:17:27.129Z",
-                    "validated": "2022-01-01T02:26:52.210Z",
-                    "name": "Michael",
-                    "info": {
-                        "firstName": "Michael",
-                        "lastName": "Johnson",
-                        "phoneNumber": "0987654321"
-                    }
+        ```json
+        {
+            "data": {
+                "account": "michael-johnson@example.com",
+                "createdAt": "2022-01-01T02:23:47.053Z",
+                "modifiedAt": "2022-01-02T05:17:27.129Z",
+                "validated": "2022-01-01T02:26:52.210Z",
+                "name": "Michael",
+                "info": {
+                    "firstName": "Michael",
+                    "lastName": "Johnson",
+                    "phoneNumber": "0987654321"
                 }
             }
+        }
+        ```
 
 - **400, 401, 500, 503**: See [Notes](#notes).
 
@@ -187,17 +193,19 @@ Update user self information.
 
 - **Example**
 
-        {
-            "data": {
-                "name": "Michael",
-                "info": {
-                    "firstName": "Michael",
-                    "lastName": "Johnson",
-                    "address": "123, abc road, def city",
-                    "phoneNumber": "123456"
-                }
+    ```json
+    {
+        "data": {
+            "name": "Michael",
+            "info": {
+                "firstName": "Michael",
+                "lastName": "Johnson",
+                "address": "123, abc road, def city",
+                "phoneNumber": "123456"
             }
         }
+    }
+    ```
 
 #### Response
 
@@ -234,19 +242,21 @@ Create a user.
 
 - **Example**
 
-        {
-            "data": {
-                "account": "michael-johnson@example.com",
-                "password": "p@ssw0rD",
-                "name": "Michael",
-                "info": {
-                    "firstName": "Michael",
-                    "lastName": "Johnson",
-                    "phoneNumber": "0987654321"
-                }
-            },
-            "expiredAt": "2022-01-02T02:23:47.053Z"
-        }
+    ```json
+    {
+        "data": {
+            "account": "michael-johnson@example.com",
+            "password": "p@ssw0rD",
+            "name": "Michael",
+            "info": {
+                "firstName": "Michael",
+                "lastName": "Johnson",
+                "phoneNumber": "0987654321"
+            }
+        },
+        "expiredAt": "2022-01-02T02:23:47.053Z"
+    }
+    ```
 
 #### Response
 
@@ -257,11 +267,13 @@ Create a user.
 
     - **Example**
 
-            {
-                "data": {
-                    "userId": "1641003827053-c2e84RJO"
-                }
+        ```json
+        {
+            "data": {
+                "userId": "1641003827053-c2e84RJO"
             }
+        }
+        ```
 
 - **400 Bad Request**: the special error codes are:
     - `err_auth_user_exist`: The account has been used.
@@ -287,11 +299,13 @@ Get user list count.
 
     - **Example**
 
-            {
-                "data": {
-                    "count": 2
-                }
+        ```json
+        {
+            "data": {
+                "count": 2
             }
+        }
+        ```
 
 - **400, 401, 403, 500, 503**: See [Notes](#notes).
 
@@ -335,46 +349,9 @@ Get user list.
 
     - **Example**
 
-            {
-                "data": [
-                    {
-                        "userId": "1640921188987-x51FTVPD",
-                        "account": "admin@example.com",
-                        "createdAt": "2021-12-31T03:26:28.987Z",
-                        "modifiedAt": "2021-12-31T03:26:28.987Z",
-                        "verifiedAt": "2021-12-31T03:26:28.987Z",
-                        "expiredAt": null,
-                        "disabledAt": null,
-                        "roles": {
-                            "admin": true
-                        },
-                        "name": "System administrator",
-                        "info": {
-                            "phoneNumber": "1234567890"
-                        }
-                    },
-                    {
-                        "userId": "1641003827053-c2e84RJO",
-                        "account": "michael-johnson@example.com",
-                        "created": "2022-01-01T02:23:47.053Z",
-                        "modifiedAt": "2022-01-02T05:17:27.129Z",
-                        "validated": "2022-01-01T02:26:52.210Z",
-                        "expiredAt": null,
-                        "disabledAt": null,
-                        "roles": {},
-                        "name": "Michael",
-                        "info": {
-                            "firstName": "Michael",
-                            "lastName": "Johnson",
-                            "phoneNumber": "0987654321"
-                        }
-                    }
-                ]
-            }
-
-    - **Example (format=`array`)**
-
-            [
+        ```json
+        {
+            "data": [
                 {
                     "userId": "1640921188987-x51FTVPD",
                     "account": "admin@example.com",
@@ -390,8 +367,49 @@ Get user list.
                     "info": {
                         "phoneNumber": "1234567890"
                     }
+                },
+                {
+                    "userId": "1641003827053-c2e84RJO",
+                    "account": "michael-johnson@example.com",
+                    "created": "2022-01-01T02:23:47.053Z",
+                    "modifiedAt": "2022-01-02T05:17:27.129Z",
+                    "validated": "2022-01-01T02:26:52.210Z",
+                    "expiredAt": null,
+                    "disabledAt": null,
+                    "roles": {},
+                    "name": "Michael",
+                    "info": {
+                        "firstName": "Michael",
+                        "lastName": "Johnson",
+                        "phoneNumber": "0987654321"
+                    }
                 }
             ]
+        }
+        ```
+
+    - **Example (format=`array`)**
+
+        ```json
+        [
+            {
+                "userId": "1640921188987-x51FTVPD",
+                "account": "admin@example.com",
+                "createdAt": "2021-12-31T03:26:28.987Z",
+                "modifiedAt": "2021-12-31T03:26:28.987Z",
+                "verifiedAt": "2021-12-31T03:26:28.987Z",
+                "expiredAt": null,
+                "disabledAt": null,
+                "roles": {
+                    "admin": true
+                },
+                "name": "System administrator",
+                "info": {
+                    "phoneNumber": "1234567890"
+                }
+            }
+        ]
+        ```
 
 - **400, 401, 403, 500, 503**: See [Notes](#notes).
 
@@ -440,20 +458,22 @@ Update the specified user information.
 
 - **Example**
 
-        {
-            "data": {
-                "roles": {
-                    "developer": true
-                },
-                "info": {
-                    "firstName": "Michael",
-                    "lastName": "Johnson",
-                    "address": "123, abc road, def city",
-                    "phoneNumber": "123456"
-                }
+    ```json
+    {
+        "data": {
+            "roles": {
+                "developer": true
             },
-            "disable": false
-        }
+            "info": {
+                "firstName": "Michael",
+                "lastName": "Johnson",
+                "address": "123, abc road, def city",
+                "phoneNumber": "123456"
+            }
+        },
+        "disable": false
+    }
+    ```
 
 #### Response
 
@@ -509,11 +529,13 @@ Create a client.
 
     - **Example**
 
-            {
-                "data": {
-                    "clientId": "1641040728318-zyAnDK9I"
-                }
+        ```json
+        {
+            "data": {
+                "clientId": "1641040728318-zyAnDK9I"
             }
+        }
+        ```
 
 - **400 Bad Request**: the special error codes are:
     - `err_auth_user_not_exist`: The user ID does not exist.
@@ -537,11 +559,13 @@ Get client list count.
 
     - **Example**
 
-            {
-                "data": {
-                    "count": 2
-                }
+        ```json
+        {
+            "data": {
+                "count": 2
             }
+        }
+        ```
 
 - **400, 401, 403, 500, 503**: See [Notes](#notes).
 
@@ -582,33 +606,9 @@ Get client list.
 
     - **Example**
 
-            {
-                "data": [
-                    {
-                        "clientId": "1641040728318-zyAnDK9I",
-                        "createdAt": "2022-01-01T12:38:48.318Z",
-                        "modifiedAt": "2022-01-01T12:38:48.318Z",
-                        "clientSecret": "G3LCtKsJvB3nrkA4CnIH3IUVF+BKMHXHTXbzgNF6REU",
-                        "redirectUris": [ "https://localhost/oauth2/desktop" ],
-                        "scopes": [ "user.rw", "client.rw" ],
-                        "name": "OAuth2 App",
-                        "image": "https://localhost/oauth2/app.png"
-                    },
-                    {
-                        "clientId": "1641042262366-1HTBqdPg",
-                        "createdAt": "2022-01-01T13:04:22.366Z",
-                        "modifiedAt": "2022-01-02T07:52:38.129Z",
-                        "redirectUris": [ "https://exmaple.com/oauth2/redirect/uri" ],
-                        "scopes": [ "user.rw", "client.rw" ],
-                        "name": "OAuth2 Web",
-                        "image": "https://example.com/oauth2/web.png"
-                    }
-                ]
-            }
-
-    - **Example (format=`array`)**
-
-            [
+        ```json
+        {
+            "data": [
                 {
                     "clientId": "1641040728318-zyAnDK9I",
                     "createdAt": "2022-01-01T12:38:48.318Z",
@@ -618,8 +618,36 @@ Get client list.
                     "scopes": [ "user.rw", "client.rw" ],
                     "name": "OAuth2 App",
                     "image": "https://localhost/oauth2/app.png"
+                },
+                {
+                    "clientId": "1641042262366-1HTBqdPg",
+                    "createdAt": "2022-01-01T13:04:22.366Z",
+                    "modifiedAt": "2022-01-02T07:52:38.129Z",
+                    "redirectUris": [ "https://exmaple.com/oauth2/redirect/uri" ],
+                    "scopes": [ "user.rw", "client.rw" ],
+                    "name": "OAuth2 Web",
+                    "image": "https://example.com/oauth2/web.png"
                 }
             ]
+        }
+        ```
+
+    - **Example (format=`array`)**
+
+        ```json
+        [
+            {
+                "clientId": "1641040728318-zyAnDK9I",
+                "createdAt": "2022-01-01T12:38:48.318Z",
+                "modifiedAt": "2022-01-01T12:38:48.318Z",
+                "clientSecret": "G3LCtKsJvB3nrkA4CnIH3IUVF+BKMHXHTXbzgNF6REU",
+                "redirectUris": [ "https://localhost/oauth2/desktop" ],
+                "scopes": [ "user.rw", "client.rw" ],
+                "name": "OAuth2 App",
+                "image": "https://localhost/oauth2/app.png"
+            }
+        ]
+        ```
 
 - **400, 401, 403, 500, 503**: See [Notes](#notes).
 
@@ -665,11 +693,13 @@ Update the specified client information.
 
 - **Example**
 
-        {
-            "data": {
-                "name": "New client name"
-            }
+    ```json
+    {
+        "data": {
+            "name": "New client name"
         }
+    }
+    ```
 
 #### Response
 

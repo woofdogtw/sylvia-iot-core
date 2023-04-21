@@ -21,26 +21,28 @@ This module provides:
 
 You can simply mount sylvia-iot-auth into your Actix-Web App:
 
-    use actix_web::{self, App, HttpServer};
-    use clap::App as ClapApp;
-    use sylvia_iot_auth::{libs, routes};
+```rust
+use actix_web::{self, App, HttpServer};
+use clap::App as ClapApp;
+use sylvia_iot_auth::{libs, routes};
 
-    #[tokio::main]
-    async fn main() -> std::io::Result<()> {
-        let args = ClapApp::new("your-project-name").get_matches();
+#[tokio::main]
+async fn main() -> std::io::Result<()> {
+    let args = ClapApp::new("your-project-name").get_matches();
 
-        let conf = libs::config::read_args(&args);
-        let auth_state = match routes::new_state("/auth", &conf).await {
-            Err(e) => {
-                println!("Error: {}", e);
-                return Ok(());
-            },
-            Ok(state) => state,
-        };
-        HttpServer::new(move || App::new().service(routes::new_service(&auth_state)))
-            .bind("0.0.0.0:1080")?
-            .run()
-            .await
-    }
+    let conf = libs::config::read_args(&args);
+    let auth_state = match routes::new_state("/auth", &conf).await {
+        Err(e) => {
+            println!("Error: {}", e);
+            return Ok(());
+        },
+        Ok(state) => state,
+    };
+    HttpServer::new(move || App::new().service(routes::new_service(&auth_state)))
+        .bind("0.0.0.0:1080")?
+        .run()
+        .await
+}
+```
 
 Please see [`src/bin/sylvia-iot-auth.rs`](src/bin/sylvia-iot-auth.rs) to get the real world example.

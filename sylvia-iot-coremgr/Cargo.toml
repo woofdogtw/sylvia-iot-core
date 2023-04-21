@@ -19,7 +19,7 @@ async-stream = "0.3.5"
 async-trait = "0.1.68"
 base64 = "0.21.0"
 chrono = { version = "0.4.24", default-features = false, features = ["serde"] }
-clap = { version = "4.2.2", default-features = false, features = ["std", "help", "usage", "error-context"] }
+clap = { version = "4.2.4", default-features = false, features = ["std", "help", "usage", "error-context"] }
 csv = "1.2.1"
 futures = "0.3.28"
 futures-util = "0.3.28"

@@ -18,13 +18,13 @@ actix-web-prom = "0.6.0"
 async-stream = "0.3.5"
 async-trait = "0.1.68"
 chrono = { version = "0.4.24", default-features = false, features = ["serde"] }
-clap = { version = "4.2.2", default-features = false, features = ["std", "help", "usage", "error-context"] }
+clap = { version = "4.2.4", default-features = false, features = ["std", "help", "usage", "error-context"] }
 csv = "1.2.1"
 futures = "0.3.28"
 general-mq = { path="../general-mq" }
 json5 = "0.4.1"
 log = "0.4.17"
-mongodb = { version = "2.4.0", features = ["bson-chrono-0_4"] }
+mongodb = { version = "2.5.0", features = ["bson-chrono-0_4"] }
 reqwest = { version = "0.11.16", default-features = false, features = ["json", "rustls-tls"] }
 rustls = "0.20.8"
 rustls-pemfile = "1.0.2"

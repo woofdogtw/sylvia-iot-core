@@ -33,9 +33,11 @@ All API requests must have a **Authorization** header with a **Bearer** token.
 
 - **Example**
 
-        GET /coremgr/api/v1/user HTTP/1.1
-        Host: localhost
-        Authorization: Bearer 766f29fa8691c81b749c0f316a7af4b7d303e45bf4000fe5829365d37caec2a4
+    ```http
+    GET /coremgr/api/v1/user HTTP/1.1
+    Host: localhost
+    Authorization: Bearer 766f29fa8691c81b749c0f316a7af4b7d303e45bf4000fe5829365d37caec2a4
+    ```
 
 All APIs may respond one of the following status codes:
 
@@ -55,15 +57,17 @@ All error responses have the following parameters in JSON format string:
 
 - **Example**
 
-        HTTP/1.1 401 Unauthorized
-        Access-Control-Allow-Origin: *
-        Content-Type: application/json
-        Content-Length: 70
-        ETag: W/"43-Npr+dy47IJFtraEIw6D8mYLw7Ws"
-        Date: Thu, 13 Jan 2022 07:46:09 GMT
-        Connection: keep-alive
+    ```http
+    HTTP/1.1 401 Unauthorized
+    Access-Control-Allow-Origin: *
+    Content-Type: application/json
+    Content-Length: 70
+    ETag: W/"43-Npr+dy47IJFtraEIw6D8mYLw7Ws"
+    Date: Thu, 13 Jan 2022 07:46:09 GMT
+    Connection: keep-alive
 
-        {"code":"err_auth","message":"Invalid token: access token is invalid"}
+    {"code":"err_auth","message":"Invalid token: access token is invalid"}
+    ```
 
 ## <a name="errcode"></a>Common error codes
 
@@ -136,19 +140,21 @@ Create an application and get the default password.
 
 - **Example**
 
-        {
-            "data": {
-                "code": "tracker",
-                "unitId": "1640923958516-qvdFNpOV",
-                "hostUri": "amqp://localhost/sylvia",
-                "name": "Position tracker application",
-                "info": {
-                    "description": "This is the position tracker application with maps"
-                },
-                "ttl": 3600000,
-                "length": 10000
-            }
+    ```json
+    {
+        "data": {
+            "code": "tracker",
+            "unitId": "1640923958516-qvdFNpOV",
+            "hostUri": "amqp://localhost/sylvia",
+            "name": "Position tracker application",
+            "info": {
+                "description": "This is the position tracker application with maps"
+            },
+            "ttl": 3600000,
+            "length": 10000
         }
+    }
+    ```
 
 #### Response
 
@@ -161,12 +167,14 @@ Create an application and get the default password.
 
     - **Example**
 
-            {
-                "data": {
-                    "applicationId": "1640924063709-rmJIxW0s",
-                    "password": "Ihimdqjy"
-                }
+        ```json
+        {
+            "data": {
+                "applicationId": "1640924063709-rmJIxW0s",
+                "password": "Ihimdqjy"
             }
+        }
+        ```
 
 - **400 Bad Request**: the special error codes are:
     - `err_broker_unit_not_exist`: The unit does not exist.
@@ -193,11 +201,13 @@ Get application list count.
 
     - **Example**
 
-            {
-                "data": {
-                    "count": 2
-                }
+        ```json
+        {
+            "data": {
+                "count": 2
             }
+        }
+        ```
 
 - **400 Bad Request**: the special error codes are:
     - `err_broker_unit_not_exist`: The unit does not exist.
@@ -241,40 +251,9 @@ Get application list.
 
     - **Example**
 
-            {
-                "data": [
-                    {
-                        "applicationId": "1640924152438-eVJe8UhY",
-                        "code": "meter",
-                        "unitId": "1640923958516-qvdFNpOV",
-                        "unitCode": "sylvia",
-                        "createdAt": "2021-12-31T04:15:52.438Z",
-                        "modifiedAt": "2021-12-31T04:15:52.438Z",
-                        "hostUri": "amqp://localhost/sylvia",
-                        "name": "Meter application",
-                        "info": {
-                            "description": "This is the meter program"
-                        }
-                    },
-                    {
-                        "applicationId": "1640924063709-rmJIxW0s",
-                        "code": "tracker",
-                        "unitId": "1640923958516-qvdFNpOV",
-                        "unitCode": "sylvia",
-                        "createdAt": "2021-12-31T04:14:23.709Z",
-                        "modifiedAt": "2021-12-31T04:14:23.709Z",
-                        "hostUri": "amqp://localhost/sylvia",
-                        "name": "Position tracker application",
-                        "info": {
-                            "description": "This is the position tracker application with maps"
-                        }
-                    }
-                ]
-            }
-
-    - **Example (format=`array`)**
-
-            [
+        ```json
+        {
+            "data": [
                 {
                     "applicationId": "1640924152438-eVJe8UhY",
                     "code": "meter",
@@ -302,11 +281,48 @@ Get application list.
                     }
                 }
             ]
+        }
+        ```
+
+    - **Example (format=`array`)**
+
+        ```json
+        [
+            {
+                "applicationId": "1640924152438-eVJe8UhY",
+                "code": "meter",
+                "unitId": "1640923958516-qvdFNpOV",
+                "unitCode": "sylvia",
+                "createdAt": "2021-12-31T04:15:52.438Z",
+                "modifiedAt": "2021-12-31T04:15:52.438Z",
+                "hostUri": "amqp://localhost/sylvia",
+                "name": "Meter application",
+                "info": {
+                    "description": "This is the meter program"
+                }
+            },
+            {
+                "applicationId": "1640924063709-rmJIxW0s",
+                "code": "tracker",
+                "unitId": "1640923958516-qvdFNpOV",
+                "unitCode": "sylvia",
+                "createdAt": "2021-12-31T04:14:23.709Z",
+                "modifiedAt": "2021-12-31T04:14:23.709Z",
+                "hostUri": "amqp://localhost/sylvia",
+                "name": "Position tracker application",
+                "info": {
+                    "description": "This is the position tracker application with maps"
+                }
+            }
+        ]
+        ```
 
     - **Example (format=`csv`)**
 
-            applicationId,code,unitId,unitCode,createdAt,modifiedAt,hostUri,name,info
-            1640924152438-eVJe8UhY,meter,1640923958516-qvdFNpOV,sylvia,2021-12-31T04:15:52.438Z,2021-12-31T04:15:52.438Z,amqp://localhost/sylvia,Meter application,{"description":"This is the meter program"}
+        ```
+        applicationId,code,unitId,unitCode,createdAt,modifiedAt,hostUri,name,info
+        1640924152438-eVJe8UhY,meter,1640923958516-qvdFNpOV,sylvia,2021-12-31T04:15:52.438Z,2021-12-31T04:15:52.438Z,amqp://localhost/sylvia,Meter application,{"description":"This is the meter program"}
+        ```
 
 - **400 Bad Request**: the special error codes are:
     - `err_broker_unit_not_exist`: The unit does not exist.
@@ -357,17 +373,19 @@ Update the specified application information.
 
 - **Example**
 
-        {
-            "data": {
-                "hostUri": "amqp://192.168.1.1/sylvia",
-                "name": "The tracker v2 application",
-                "info": {
-                    "description": "The version 2 tracker application",
-                    "changelog": "add altitude"
-                },
-                "password": "new password"
-            }
+    ```json
+    {
+        "data": {
+            "hostUri": "amqp://192.168.1.1/sylvia",
+            "name": "The tracker v2 application",
+            "info": {
+                "description": "The version 2 tracker application",
+                "changelog": "add altitude"
+            },
+            "password": "new password"
         }
+    }
+    ```
 
 #### Response
 
@@ -436,12 +454,14 @@ Send downlink data to a device.
 
 - **Example**
 
-        {
-            "data": {
-                "deviceId": "1640924274329-yESwHhKO",
-                "data": "74657374"
-            }
+    ```json
+    {
+        "data": {
+            "deviceId": "1640924274329-yESwHhKO",
+            "data": "74657374"
         }
+    }
+    ```
 
 - **204 No content**
 - **400 Bad Request**: the special error codes are:
@@ -478,19 +498,21 @@ Create a network.
 
 - **Example**
 
-        {
-            "data": {
-                "code": "lora",
-                "unitId": "1640923958516-qvdFNpOV",
-                "hostUri": "amqp://localhost/sylvia",
-                "name": "Sylvia unit's private LoRa network",
-                "info": {
-                    "description": "This is the private LoRa network"
-                },
-                "ttl": 3600000,
-                "length": 10000
-            }
+    ```json
+    {
+        "data": {
+            "code": "lora",
+            "unitId": "1640923958516-qvdFNpOV",
+            "hostUri": "amqp://localhost/sylvia",
+            "name": "Sylvia unit's private LoRa network",
+            "info": {
+                "description": "This is the private LoRa network"
+            },
+            "ttl": 3600000,
+            "length": 10000
         }
+    }
+    ```
 
 #### Response
 
@@ -503,12 +525,14 @@ Create a network.
 
     - **Example**
 
-            {
-                "data": {
-                    "networkId": "1640924173420-BNg2lwo3",
-                    "password": "E4AaTD5H"
-                }
+        ```json
+        {
+            "data": {
+                "networkId": "1640924173420-BNg2lwo3",
+                "password": "E4AaTD5H"
             }
+        }
+        ```
 
 - **400 Bad Request**: the special error codes are:
     - `err_broker_unit_not_exist`: The unit does not exist.
@@ -536,11 +560,13 @@ Get network list count.
 
     - **Example**
 
-            {
-                "data": {
-                    "count": 2
-                }
+        ```json
+        {
+            "data": {
+                "count": 2
             }
+        }
+        ```
 
 - **400, 401, 403, 500, 503**: See [Notes](#notes).
 
@@ -583,40 +609,9 @@ Get network list.
 
     - **Example**
 
-            {
-                "data": [
-                    {
-                        "networkId": "1640924173420-BNg2lwo3",
-                        "code": "lora",
-                        "unitId": "1640923958516-qvdFNpOV",
-                        "unitCode": "sylvia",
-                        "createdAt": "2021-12-31T04:16:13.420Z",
-                        "modifiedAt": "2021-12-31T04:16:13.420Z",
-                        "hostUri": "amqp://localhost/sylvia",
-                        "name": "Sylvia unit's private LoRa network",
-                        "info": {
-                            "description": "This is the private LoRa network"
-                        }
-                    },
-                    {
-                        "networkId": "1640924213217-oDwwyNK3",
-                        "code": "zigbee",
-                        "unitId": null,
-                        "unitCode": null,
-                        "createdAt": "2021-12-31T04:16:53.217Z",
-                        "modifiedAt": "2021-12-31T04:16:53.217Z",
-                        "hostUri": "amqp://localhost/sylvia",
-                        "name": "Public Zigbee network",
-                        "info": {
-                            "description": "This is the public Zigbee network"
-                        }
-                    }
-                ]
-            }
-
-    - **Example (format=`array`)**
-
-            [
+        ```json
+        {
+            "data": [
                 {
                     "networkId": "1640924173420-BNg2lwo3",
                     "code": "lora",
@@ -644,11 +639,48 @@ Get network list.
                     }
                 }
             ]
+        }
+        ```
+
+    - **Example (format=`array`)**
+
+        ```json
+        [
+            {
+                "networkId": "1640924173420-BNg2lwo3",
+                "code": "lora",
+                "unitId": "1640923958516-qvdFNpOV",
+                "unitCode": "sylvia",
+                "createdAt": "2021-12-31T04:16:13.420Z",
+                "modifiedAt": "2021-12-31T04:16:13.420Z",
+                "hostUri": "amqp://localhost/sylvia",
+                "name": "Sylvia unit's private LoRa network",
+                "info": {
+                    "description": "This is the private LoRa network"
+                }
+            },
+            {
+                "networkId": "1640924213217-oDwwyNK3",
+                "code": "zigbee",
+                "unitId": null,
+                "unitCode": null,
+                "createdAt": "2021-12-31T04:16:53.217Z",
+                "modifiedAt": "2021-12-31T04:16:53.217Z",
+                "hostUri": "amqp://localhost/sylvia",
+                "name": "Public Zigbee network",
+                "info": {
+                    "description": "This is the public Zigbee network"
+                }
+            }
+        ]
+        ```
 
     - **Example (format=`csv`)**
 
-            networkId,code,unitId,unitCode,createdAt,modifiedAt,hostUri,name,info
-            1640924173420-BNg2lwo3,lora,1640923958516-qvdFNpOV,sylvia,2021-12-31T04:16:13.420Z,2021-12-31T04:16:13.420Z,amqp://localhost/sylvia,Sylvia unit's private LoRa network,{"description":"This is the private LoRa network"}
+        ```
+        networkId,code,unitId,unitCode,createdAt,modifiedAt,hostUri,name,info
+        1640924173420-BNg2lwo3,lora,1640923958516-qvdFNpOV,sylvia,2021-12-31T04:16:13.420Z,2021-12-31T04:16:13.420Z,amqp://localhost/sylvia,Sylvia unit's private LoRa network,{"description":"This is the private LoRa network"}
+        ```
 
 - **400 Bad Request**: the special error codes are:
     - `err_broker_unit_not_exist`: The unit does not exist.
@@ -699,15 +731,17 @@ Update the specified network information.
 
 - **Example**
 
-        {
-            "data": {
-                "hostUri": "amqp://192.168.1.1/sylvia",
-                "name": "The OpenLoRa network server",
-                "info": {
-                    "changelog": "upgrade LoRa network server"
-                }
+    ```json
+    {
+        "data": {
+            "hostUri": "amqp://192.168.1.1/sylvia",
+            "name": "The OpenLoRa network server",
+            "info": {
+                "changelog": "upgrade LoRa network server"
             }
         }
+    }
+    ```
 
 #### Response
 
@@ -766,12 +800,14 @@ Simulate uplink data from a device.
 
 - **Example**
 
-        {
-            "data": {
-                "deviceId": "1640924274329-yESwHhKO",
-                "data": "74657374"
-            }
+    ```json
+    {
+        "data": {
+            "deviceId": "1640924274329-yESwHhKO",
+            "data": "74657374"
         }
+    }
+    ```
 
 - **204 No content**
 - **400 Bad Request**: the special error codes are:

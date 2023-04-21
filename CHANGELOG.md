@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.0.7 - 2023-04-21
+
+### Changed
+
+- Update Rust to 1.68.2 with GitHub Actions runner image 20230417.1.
+- Replace `async-lock` with `tokio::sync`.
+- Update dependencies.
+
 ## 0.0.6 - 2023-03-31
 
 ### Changed

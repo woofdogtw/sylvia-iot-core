@@ -6,12 +6,12 @@ use std::{
     time::Duration,
 };
 
-use async_lock::Mutex as AsyncMutex;
 use async_trait::async_trait;
 use lapin::{
     uri::AMQPUri, Channel, Connection as LapinConnection, ConnectionProperties, Error as LapinError,
 };
 use tokio::{
+    sync::Mutex as AsyncMutex,
     task::{self, JoinHandle},
     time,
 };
@@ -101,7 +101,7 @@ impl AmqpConnection {
     pub(super) async fn create_channel(&self) -> Result<Channel, Box<dyn StdError + Send + Sync>> {
         match (*self.conn.lock().await).as_ref() {
             None => return Err(Box::new(Error::NotConnected)),
-            // TODO: this may cause lock too long.
+            // FIXME: this may cause lock too long.
             Some(conn) => match conn.create_channel().await {
                 Err(e) => Err(Box::new(e)),
                 Ok(channel) => Ok(channel),

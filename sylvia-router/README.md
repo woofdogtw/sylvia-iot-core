@@ -28,26 +28,28 @@ This project only support a JSON5 configuration file without parsing other comma
 
 You can simply mount sylvia-router into your Actix-Web App:
 
-    use actix_web::{self, App, HttpServer};
-    use clap::App as ClapApp;
-    use sylvia_router::{libs, routes};
+```rust
+use actix_web::{self, App, HttpServer};
+use clap::App as ClapApp;
+use sylvia_router::{libs, routes};
 
-    #[tokio::main]
-    async fn main() -> std::io::Result<()> {
-        let args = ClapApp::new("your-project-name").get_matches();
+#[tokio::main]
+async fn main() -> std::io::Result<()> {
+    let args = ClapApp::new("your-project-name").get_matches();
 
-        let conf = libs::config::read_args(&args);
-        let router_state = match routes::new_state("/router", &conf).await {
-            Err(e) => {
-                println!("Error: {}", e);
-                return Ok(());
-            },
-            Ok(state) => state,
-        };
-        HttpServer::new(move || App::new().service(routes::new_service(&router_state)))
-            .bind("0.0.0.0:1080")?
-            .run()
-            .await
-    }
+    let conf = libs::config::read_args(&args);
+    let router_state = match routes::new_state("/router", &conf).await {
+        Err(e) => {
+            println!("Error: {}", e);
+            return Ok(());
+        },
+        Ok(state) => state,
+    };
+    HttpServer::new(move || App::new().service(routes::new_service(&router_state)))
+        .bind("0.0.0.0:1080")?
+        .run()
+        .await
+}
+```
 
 Please see [`src/bin/sylvia-router.rs`](src/bin/sylvia-router.rs) to get the real world example.

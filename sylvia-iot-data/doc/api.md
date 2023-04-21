@@ -26,9 +26,11 @@ All API requests must have a **Authorization** header with a **Bearer** token.
 
 - **Example**
 
-        GET /data/api/v1/network/uldata HTTP/1.1
-        Host: localhost
-        Authorization: Bearer 766f29fa8691c81b749c0f316a7af4b7d303e45bf4000fe5829365d37caec2a4
+    ```http
+    GET /data/api/v1/network/uldata HTTP/1.1
+    Host: localhost
+    Authorization: Bearer 766f29fa8691c81b749c0f316a7af4b7d303e45bf4000fe5829365d37caec2a4
+    ```
 
 All APIs may respond one of the following status codes:
 
@@ -48,15 +50,17 @@ All error responses have the following parameters in JSON format string:
 
 - **Example**
 
-        HTTP/1.1 401 Unauthorized
-        Access-Control-Allow-Origin: *
-        Content-Type: application/json
-        Content-Length: 70
-        ETag: W/"43-Npr+dy47IJFtraEIw6D8mYLw7Ws"
-        Date: Thu, 13 Jan 2022 07:46:09 GMT
-        Connection: keep-alive
+    ```http
+    HTTP/1.1 401 Unauthorized
+    Access-Control-Allow-Origin: *
+    Content-Type: application/json
+    Content-Length: 70
+    ETag: W/"43-Npr+dy47IJFtraEIw6D8mYLw7Ws"
+    Date: Thu, 13 Jan 2022 07:46:09 GMT
+    Connection: keep-alive
 
-        {"code":"err_auth","message":"Invalid token: access token is invalid"}
+    {"code":"err_auth","message":"Invalid token: access token is invalid"}
+    ```
 
 ## <a name="errcode"></a>Common error codes
 
@@ -113,11 +117,13 @@ Get application uplink data list count.
 
     - **Example**
 
-            {
-                "data": {
-                    "count": 2
-                }
+        ```json
+        {
+            "data": {
+                "count": 2
             }
+        }
+        ```
 
 - **400 Bad Request**: the special error codes are:
     - `err_data_unit_not_exist`: The unit does not exist.
@@ -173,26 +179,28 @@ Get application uplink data list.
 
     - **Example**
 
-            {
-                "data": [
-                    {
-                        "dataId": "1665486661848-DTAjZX6JsTSH",
-                        "proc": "2022-10-11T11:11:01.848Z",
-                        "pub": "2022-10-11T11:11:02.043Z",
-                        "unitCode": "sylvia",
-                        "networkCode": "lora",
-                        "networkAddr": "800012ae",
-                        "unitId": "1640923958516-qvdFNpOV",
-                        "deviceId": "1640924274329-yESwHhKO",
-                        "time": "2022-10-11T11:10:48.768Z",
-                        "data": "74657374",
-                        "extension": {
-                            "latitude": "24.38349800818775",
-                            "longitude": "121.22999674970842"
-                        }
+        ```json
+        {
+            "data": [
+                {
+                    "dataId": "1665486661848-DTAjZX6JsTSH",
+                    "proc": "2022-10-11T11:11:01.848Z",
+                    "pub": "2022-10-11T11:11:02.043Z",
+                    "unitCode": "sylvia",
+                    "networkCode": "lora",
+                    "networkAddr": "800012ae",
+                    "unitId": "1640923958516-qvdFNpOV",
+                    "deviceId": "1640924274329-yESwHhKO",
+                    "time": "2022-10-11T11:10:48.768Z",
+                    "data": "74657374",
+                    "extension": {
+                        "latitude": "24.38349800818775",
+                        "longitude": "121.22999674970842"
                     }
-                ]
-            }
+                }
+            ]
+        }
+        ```
 
 - **400 Bad Request**: the special error codes are:
     - `err_data_unit_not_exist`: The unit does not exist.
@@ -228,11 +236,13 @@ Get application downlink data list count.
 
     - **Example**
 
-            {
-                "data": {
-                    "count": 2
-                }
+        ```json
+        {
+            "data": {
+                "count": 2
             }
+        }
+        ```
 
 - **400 Bad Request**: the special error codes are:
     - `err_data_unit_not_exist`: The unit does not exist.
@@ -287,24 +297,26 @@ Get application downlink data list.
 
     - **Example**
 
-            {
-                "data": [
-                    {
-                        "dataId": "1665486663768-jK6EnD3pcGDC",
-                        "proc": "2022-10-11T11:11:03.768Z",
-                        "resp": "2022-10-11T11:11:24.154Z",
-                        "status": 1,
-                        "unitId": "1640923958516-qvdFNpOV",
-                        "deviceId": "1640924274329-yESwHhKO",
-                        "networkCode": "lora",
-                        "networkAddr": "800012ae",
-                        "data": "74657374",
-                        "extension": {
-                            "schedule": "2022-10-12T00:00:00Z"
-                        }
+        ```json
+        {
+            "data": [
+                {
+                    "dataId": "1665486663768-jK6EnD3pcGDC",
+                    "proc": "2022-10-11T11:11:03.768Z",
+                    "resp": "2022-10-11T11:11:24.154Z",
+                    "status": 1,
+                    "unitId": "1640923958516-qvdFNpOV",
+                    "deviceId": "1640924274329-yESwHhKO",
+                    "networkCode": "lora",
+                    "networkAddr": "800012ae",
+                    "data": "74657374",
+                    "extension": {
+                        "schedule": "2022-10-12T00:00:00Z"
                     }
-                ]
-            }
+                }
+            ]
+        }
+        ```
 
 - **400 Bad Request**: the special error codes are:
     - `err_data_unit_not_exist`: The unit does not exist.
@@ -342,11 +354,13 @@ Get network uplink data list count.
 
     - **Example**
 
-            {
-                "data": {
-                    "count": 2
-                }
+        ```json
+        {
+            "data": {
+                "count": 2
             }
+        }
+        ```
 
 - **400 Bad Request**: the special error codes are:
     - `err_data_unit_not_exist`: The unit does not exist.
@@ -401,25 +415,27 @@ Get network uplink data list.
 
     - **Example**
 
-            {
-                "data": [
-                    {
-                        "dataId": "1665486661848-93r1JITdLaSw",
-                        "proc": "2022-10-11T11:11:01.848Z",
-                        "unitCode": "sylvia",
-                        "networkCode": "lora",
-                        "networkAddr": "800012ae",
-                        "unitId": "1640923958516-qvdFNpOV",
-                        "deviceId": "1640924274329-yESwHhKO",
-                        "time": "2022-10-11T11:10:48.768Z",
-                        "data": "74657374",
-                        "extension": {
-                            "latitude": "24.38349800818775",
-                            "longitude": "121.22999674970842"
-                        }
+        ```json
+        {
+            "data": [
+                {
+                    "dataId": "1665486661848-93r1JITdLaSw",
+                    "proc": "2022-10-11T11:11:01.848Z",
+                    "unitCode": "sylvia",
+                    "networkCode": "lora",
+                    "networkAddr": "800012ae",
+                    "unitId": "1640923958516-qvdFNpOV",
+                    "deviceId": "1640924274329-yESwHhKO",
+                    "time": "2022-10-11T11:10:48.768Z",
+                    "data": "74657374",
+                    "extension": {
+                        "latitude": "24.38349800818775",
+                        "longitude": "121.22999674970842"
                     }
-                ]
-            }
+                }
+            ]
+        }
+        ```
 
 - **400 Bad Request**: the special error codes are:
     - `err_data_unit_not_exist`: The unit does not exist.
@@ -455,11 +471,13 @@ Get network downlink data list count.
 
     - **Example**
 
-            {
-                "data": {
-                    "count": 2
-                }
+        ```json
+        {
+            "data": {
+                "count": 2
             }
+        }
+        ```
 
 - **400 Bad Request**: the special error codes are:
     - `err_data_unit_not_exist`: The unit does not exist.
@@ -515,25 +533,27 @@ Get network downlink data list.
 
     - **Example**
 
-            {
-                "data": [
-                    {
-                        "dataId": "1665486663768-JFlZbm7Od0Je",
-                        "proc": "2022-10-11T11:11:03.768Z",
-                        "pub": "2022-10-11T11:11:03.898Z",
-                        "resp": "2022-10-11T11:11:24.154Z",
-                        "status": 1,
-                        "unitId": "1640923958516-qvdFNpOV",
-                        "deviceId": "1640924274329-yESwHhKO",
-                        "networkCode": "lora",
-                        "networkAddr": "800012ae",
-                        "data": "74657374",
-                        "extension": {
-                            "schedule": "2022-10-12T00:00:00Z"
-                        }
+        ```json
+        {
+            "data": [
+                {
+                    "dataId": "1665486663768-JFlZbm7Od0Je",
+                    "proc": "2022-10-11T11:11:03.768Z",
+                    "pub": "2022-10-11T11:11:03.898Z",
+                    "resp": "2022-10-11T11:11:24.154Z",
+                    "status": 1,
+                    "unitId": "1640923958516-qvdFNpOV",
+                    "deviceId": "1640924274329-yESwHhKO",
+                    "networkCode": "lora",
+                    "networkAddr": "800012ae",
+                    "data": "74657374",
+                    "extension": {
+                        "schedule": "2022-10-12T00:00:00Z"
                     }
-                ]
-            }
+                }
+            ]
+        }
+        ```
 
 - **400 Bad Request**: the special error codes are:
     - `err_data_unit_not_exist`: The unit does not exist.
@@ -565,11 +585,13 @@ Get coremgr operation data list count.
 
     - **Example**
 
-            {
-                "data": {
-                    "count": 2
-                }
+        ```json
+        {
+            "data": {
+                "count": 2
             }
+        }
+        ```
 
 - **400 Bad Request**: the special error codes are:
     - `err_data_user_not_exist`: The user does not exist.
@@ -621,25 +643,27 @@ Get coremgr operation data list.
 
     - **Example**
 
-            {
-                "data": [
-                    {
-                        "dataId": "1665493184163-uplOitvHEc2u",
-                        "reqTime": "2022-10-11T12:59:44.163Z",
-                        "resTime": "2022-10-11T12:59:44.402Z",
-                        "latencyMs": 239,
-                        "status": 400,
-                        "sourceIp": "192.168.1.1",
-                        "method": "POST",
-                        "path": "/coremgr/api/v1/user",
-                        "body": {"account": ""},
-                        "userId": "1641003827053-c2e84RJO",
-                        "clientId": "1641040728318-zyAnDK9I",
-                        "errCode": "err_param",
-                        "errMessage": "empty `account`"
-                    }
-                ]
-            }
+        ```json
+        {
+            "data": [
+                {
+                    "dataId": "1665493184163-uplOitvHEc2u",
+                    "reqTime": "2022-10-11T12:59:44.163Z",
+                    "resTime": "2022-10-11T12:59:44.402Z",
+                    "latencyMs": 239,
+                    "status": 400,
+                    "sourceIp": "192.168.1.1",
+                    "method": "POST",
+                    "path": "/coremgr/api/v1/user",
+                    "body": {"account": ""},
+                    "userId": "1641003827053-c2e84RJO",
+                    "clientId": "1641040728318-zyAnDK9I",
+                    "errCode": "err_param",
+                    "errMessage": "empty `account`"
+                }
+            ]
+        }
+        ```
 
 - **400 Bad Request**: the special error codes are:
     - `err_data_user_not_exist`: The user does not exist.

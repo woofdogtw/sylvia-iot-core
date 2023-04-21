@@ -1,8 +1,8 @@
 use std::{error::Error as StdError, num::NonZeroUsize, sync::Arc};
 
-use async_lock::RwLock;
 use async_trait::async_trait;
 use lru::LruCache;
+use tokio::sync::RwLock;
 
 use super::super::{
     device::{QueryCond as DeviceQueryCond, QueryOneCond as DeviceQueryOneCond},

@@ -19,11 +19,11 @@ async-stream = "0.3.5"
 async-trait = "0.1.68"
 base64 = "0.21.0"
 chrono = { version = "0.4.24", default-features = false, features = ["serde"] }
-clap = { version = "4.2.2", default-features = false, features = ["std", "help", "usage", "error-context"] }
+clap = { version = "4.2.4", default-features = false, features = ["std", "help", "usage", "error-context"] }
 futures = "0.3.28"
 json5 = "0.4.1"
 log = "0.4.17"
-mongodb = { version = "2.4.0", features = ["bson-chrono-0_4"] }
+mongodb = { version = "2.5.0", features = ["bson-chrono-0_4"] }
 oxide-auth = "0.5.3"
 oxide-auth-async = "0.1.0"
 redis = { version = "0.23.0", features = ["tokio-comp"] }
