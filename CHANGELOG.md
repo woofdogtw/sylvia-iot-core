@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.0.8 - 2023-04-28
+
+### Changed
+
+- Update Rust to 1.69.0 with GitHub Actions runner image 20230426.1.
+- Update dependencies.
+
 ## 0.0.7 - 2023-04-21
 
 ### Changed

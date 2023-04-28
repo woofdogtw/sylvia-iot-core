@@ -1,6 +1,6 @@
 [package]
 name = "sylvia-iot-corelib"
-version = "0.0.7"
+version = "0.0.8"
 authors = ["Chien-Hong Chan"]
 description = "Common libraries of Sylvia-IoT core modules."
 edition = "2021"
@@ -12,14 +12,14 @@ repository = "https://github.com/woofdogtw/sylvia-iot-core.git"
 actix-web = { version = "4.3.1", default-features = false, features = ["rustls"] }
 anyhow = "1.0.70"
 chrono = { version = "0.4.24", default-features = false, features = ["serde"] }
-clap = { version = "4.2.4", default-features = false, features = ["std", "help", "usage", "error-context"] }
+clap = { version = "4.2.5", default-features = false, features = ["std", "help", "usage", "error-context"] }
 hex = "0.4.3"
 hmac = "0.12.1"
 log = "0.4.17"
 log4rs = "1.2.0"
 pbkdf2 = "0.12.1"
 rand = "0.8.5"
-regex = "1.8.0"
+regex = "1.8.1"
 serde = { version = "1.0.160", features = ["derive"] }
 serde_json = "1.0.96"
 sha2 = "0.10.6"
@@ -31,6 +31,7 @@ laboratory = "2.0.0"
 [profile.release]
 codegen-units = 1
 lto = true
+strip = true
 
 [profile.test]
 incremental = true

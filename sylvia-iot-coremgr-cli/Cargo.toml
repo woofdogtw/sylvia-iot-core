@@ -1,6 +1,6 @@
 [package]
 name = "sylvia-iot-coremgr-cli"
-version = "0.0.7"
+version = "0.0.8"
 authors = ["Chien-Hong Chan"]
 description = "The command-line tool for Sylvia-IoT core manager."
 edition = "2021"
@@ -10,7 +10,7 @@ repository = "https://github.com/woofdogtw/sylvia-iot-core.git"
 
 [dependencies]
 chrono = { version = "0.4.24", default-features = false, features = ["serde"] }
-clap = { version = "4.2.4", default-features = false, features = ["std", "help", "usage", "error-context"] }
+clap = { version = "4.2.5", default-features = false, features = ["std", "help", "usage", "error-context"] }
 dirs = "5.0.0"
 hex = "0.4.3"
 json5 = "0.4.1"
@@ -18,9 +18,9 @@ reqwest = { version = "0.11.16", default-features = false, features = ["json", "
 serde = { version = "1.0.160", features = ["derive"] }
 serde_json = "1.0.96"
 serde_urlencoded = "0.7.1"
-serde_with = { version = "2.3.2", features = ["json"] }
+serde_with = { version = "2.3.3", features = ["json"] }
 sylvia-iot-corelib = { path="../sylvia-iot-corelib" }
-tokio = { version = "1.27.0", features = ["io-util", "macros", "rt-multi-thread", "time"] }
+tokio = { version = "1.28.0", features = ["io-util", "macros", "rt-multi-thread", "time"] }
 url = "2.3.1"
 validators = "0.24.3"
 
@@ -30,6 +30,7 @@ laboratory = "2.0.0"
 [profile.release]
 codegen-units = 1
 lto = true
+strip = true
 
 [profile.test]
 incremental = true
