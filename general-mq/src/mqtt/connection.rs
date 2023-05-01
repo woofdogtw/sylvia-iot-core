@@ -86,6 +86,10 @@ struct InnerOptions {
     clean_session: bool,
 }
 
+/// Default connect timeout in milliseconds.
+const DEF_CONN_TIMEOUT_MS: u64 = 3000;
+/// Default reconnect time in milliseconds.
+const DEF_RECONN_TIMEOUT_MS: u64 = 1000;
 /// The accepted pattern of the client identifier.
 const CLIENT_ID_PATTERN: &'static str = "^[0-9A-Za-z-]{1,23}$";
 
@@ -98,11 +102,11 @@ impl MqttConnection {
             opts: InnerOptions {
                 uri,
                 connect_timeout_millis: match opts.connect_timeout_millis {
-                    0 => 3000,
+                    0 => DEF_CONN_TIMEOUT_MS,
                     _ => opts.connect_timeout_millis,
                 },
                 reconnect_millis: match opts.reconnect_millis {
-                    0 => 1000,
+                    0 => DEF_RECONN_TIMEOUT_MS,
                     _ => opts.reconnect_millis,
                 },
                 client_id: match opts.client_id {
@@ -212,8 +216,8 @@ impl Default for MqttConnectionOptions {
     fn default() -> Self {
         MqttConnectionOptions {
             uri: "mqtt://localhost".to_string(),
-            connect_timeout_millis: 3000,
-            reconnect_millis: 1000,
+            connect_timeout_millis: DEF_CONN_TIMEOUT_MS,
+            reconnect_millis: DEF_RECONN_TIMEOUT_MS,
             client_id: None,
             clean_session: true,
         }

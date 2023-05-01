@@ -1468,7 +1468,7 @@ fn test_stats(
     });
 
     runtime.block_on(async {
-        for _ in 0..100 {
+        for _ in 0..WAIT_COUNT {
             let req = TestRequest::get()
                 .uri(format!("/coremgr/api/v1/application/{}/stats", application_id).as_str())
                 .insert_header((header::AUTHORIZATION, format!("Bearer {}", TOKEN_MANAGER)))
@@ -1497,7 +1497,7 @@ fn test_stats(
             if is_rumqttd {
                 return Ok(());
             }
-            time::sleep(Duration::from_millis(100)).await;
+            time::sleep(Duration::from_millis(WAIT_TICK)).await;
             if stats.messages > 0 || stats.publish_rate > 0.0 {
                 return Ok(());
             }

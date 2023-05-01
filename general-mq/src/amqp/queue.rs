@@ -1,23 +1,20 @@
 use std::{
     error::Error as StdError,
-    future::Future,
-    pin::Pin,
     sync::{Arc, Mutex},
     time::Duration,
 };
 
-use amq_protocol_types::FieldTable;
-use async_trait::async_trait;
-use lapin::{
-    message::{Delivery, DeliveryResult},
-    options::{
-        BasicAckOptions, BasicConsumeOptions, BasicNackOptions, BasicPublishOptions,
-        BasicQosOptions, ConfirmSelectOptions, ExchangeDeclareOptions, QueueBindOptions,
-        QueueDeclareOptions,
+use amqprs::{
+    channel::{
+        BasicAckArguments, BasicConsumeArguments, BasicNackArguments, BasicPublishArguments,
+        BasicQosArguments, Channel, ConfirmSelectArguments, ExchangeDeclareArguments, ExchangeType,
+        QueueBindArguments, QueueDeclareArguments,
     },
-    protocol::basic::AMQPProperties,
-    Channel, ConsumerDelegate, Error as LapinError, ExchangeKind,
+    consumer::AsyncConsumer,
+    error::Error as AmqprsError,
+    BasicProperties, Deliver,
 };
+use async_trait::async_trait;
 use tokio::{
     task::{self, JoinHandle},
     time,
@@ -72,12 +69,16 @@ pub struct AmqpQueueOptions {
 
 /// The AMQP [`Message`] implementation.
 struct AmqpMessage {
-    /// Hold the [`lapin::message::Delivery`] instance.
-    delivery: Delivery,
+    /// Hold the consumer callback channel to operate ack/nack.
+    channel: Channel,
+    /// Hold the consumer callback deliver to operate ack/nack.
+    delivery_tag: u64,
+    /// Hold the consumer callback content.
+    content: Vec<u8>,
 }
 
-/// The [`lapin::ConsumerDelegate`] implementation.
-struct Delegate {
+/// The [`amqprs::consumer::AsyncConsumer`] implementation.
+struct Consumer {
     /// The associated [`AmqpQueue`].
     queue: Arc<AmqpQueue>,
 }
@@ -181,9 +182,9 @@ impl Queue for AmqpQueue {
 
         let channel = { self.channel.lock().unwrap().take() };
 
-        let mut result: Result<(), LapinError> = Ok(());
+        let mut result: Result<(), AmqprsError> = Ok(());
         if let Some(channel) = channel {
-            result = channel.close(0, "").await;
+            result = channel.close().await;
         }
 
         {
@@ -212,26 +213,21 @@ impl Queue for AmqpQueue {
             }
         };
 
-        let opts = match self.opts.reliable {
-            false => BasicPublishOptions::default(),
-            true => BasicPublishOptions {
+        let mut args = match self.opts.reliable {
+            false => BasicPublishArguments::default(),
+            true => BasicPublishArguments {
                 mandatory: true,
                 ..Default::default()
             },
         };
-        let prop = AMQPProperties::default();
-        let ex;
-        let rk;
         if self.opts.broadcast {
-            ex = self.opts.name.as_str();
-            rk = "";
+            args.exchange(self.opts.name.clone());
         } else {
-            ex = "";
-            rk = self.opts.name.as_str();
+            args.routing_key(self.opts.name.clone());
         }
 
         channel
-            .basic_publish(ex, rk, opts, payload.as_slice(), prop)
+            .basic_publish(BasicProperties::default(), payload, args)
             .await?;
         Ok(())
     }
@@ -253,43 +249,54 @@ impl Default for AmqpQueueOptions {
 #[async_trait]
 impl Message for AmqpMessage {
     fn payload(&self) -> &[u8] {
-        self.delivery.data.as_slice()
+        &self.content
     }
 
     async fn ack(&self) -> Result<(), Box<dyn StdError>> {
-        self.delivery.acker.ack(BasicAckOptions::default()).await?;
+        let args = BasicAckArguments {
+            delivery_tag: self.delivery_tag,
+            ..Default::default()
+        };
+        self.channel.basic_ack(args).await?;
         Ok(())
     }
 
     async fn nack(&self) -> Result<(), Box<dyn StdError>> {
-        let opts = BasicNackOptions {
+        let args = BasicNackArguments {
+            delivery_tag: self.delivery_tag,
             requeue: true,
             ..Default::default()
         };
-        self.delivery.acker.nack(opts).await?;
+        self.channel.basic_nack(args).await?;
         Ok(())
     }
 }
 
-impl ConsumerDelegate for Delegate {
-    fn on_new_delivery(
-        &self,
-        delivery: DeliveryResult,
-    ) -> Pin<Box<dyn Future<Output = ()> + Send>> {
+#[async_trait]
+impl AsyncConsumer for Consumer {
+    async fn consume(
+        &mut self,
+        channel: &Channel,
+        deliver: Deliver,
+        _basic_properties: BasicProperties,
+        content: Vec<u8>,
+    ) {
         let queue = self.queue.clone();
-        Box::pin(async move {
-            if let Ok(Some(delivery)) = delivery {
-                let handler = {
-                    match queue.handler().as_ref() {
-                        None => return (),
-                        Some(handler) => handler.clone(),
-                    }
-                };
-                handler
-                    .on_message(queue, Box::new(AmqpMessage { delivery }))
-                    .await;
+        let handler = {
+            match self.queue.handler().as_ref() {
+                None => return (),
+                Some(handler) => handler.clone(),
             }
-        })
+        };
+        let message = Box::new(AmqpMessage {
+            channel: channel.clone(),
+            delivery_tag: deliver.delivery_tag(),
+            content,
+        });
+
+        task::spawn(async move {
+            handler.on_message(queue, message).await;
+        });
     }
 }
 
@@ -306,18 +313,24 @@ fn create_event_loop(queue: &AmqpQueue) -> JoinHandle<()> {
                         continue;
                     }
 
-                    let conn = { this.conn.lock().unwrap().clone() };
-                    let channel = match conn.create_channel().await {
-                        Err(e) => {
-                            this.on_error(e);
-                            time::sleep(Duration::from_millis(this.opts.reconnect_millis)).await;
-                            continue;
+                    let raw_conn = { this.conn.lock().unwrap().get_raw_connection() };
+                    let channel = if let Some(raw_conn) = raw_conn {
+                        match raw_conn.open_channel(None).await {
+                            Err(e) => {
+                                this.on_error(Box::new(e));
+                                time::sleep(Duration::from_millis(this.opts.reconnect_millis))
+                                    .await;
+                                continue;
+                            }
+                            Ok(channel) => channel,
                         }
-                        Ok(channel) => channel,
+                    } else {
+                        time::sleep(Duration::from_millis(this.opts.reconnect_millis)).await;
+                        continue;
                     };
                     if this.opts.reliable {
-                        let opts = ConfirmSelectOptions::default();
-                        if let Err(e) = channel.confirm_select(opts).await {
+                        let args = ConfirmSelectArguments::default();
+                        if let Err(e) = channel.confirm_select(args).await {
                             this.on_error(Box::new(e));
                             time::sleep(Duration::from_millis(this.opts.reconnect_millis)).await;
                             continue;
@@ -325,104 +338,101 @@ fn create_event_loop(queue: &AmqpQueue) -> JoinHandle<()> {
                     }
 
                     let name = this.opts.name.as_str();
-                    let args = FieldTable::default();
                     if this.opts.broadcast {
-                        let opts = ExchangeDeclareOptions::default();
-                        if let Err(e) = channel
-                            .exchange_declare(name, ExchangeKind::Fanout, opts, args.clone())
-                            .await
-                        {
+                        let args = ExchangeDeclareArguments::of_type(name, ExchangeType::Fanout);
+                        if let Err(e) = channel.exchange_declare(args).await {
                             this.on_error(Box::new(e));
                             time::sleep(Duration::from_millis(this.opts.reconnect_millis)).await;
                             continue;
                         }
 
                         if this.opts.is_recv {
-                            let opts = QueueDeclareOptions {
-                                exclusive: true,
+                            let mut args = QueueDeclareArguments::default();
+                            args.exclusive(true);
+                            let queue_name = match channel.queue_declare(args).await {
+                                Err(e) => {
+                                    this.on_error(Box::new(e));
+                                    time::sleep(Duration::from_millis(this.opts.reconnect_millis))
+                                        .await;
+                                    continue;
+                                }
+                                Ok(Some((queue_name, _, _))) => queue_name,
+                                _ => {
+                                    this.on_error(Box::new(AmqprsError::ChannelUseError(
+                                        "unknown queue_declare error".to_string(),
+                                    )));
+                                    time::sleep(Duration::from_millis(this.opts.reconnect_millis))
+                                        .await;
+                                    continue;
+                                }
+                            };
+
+                            let args = QueueBindArguments {
+                                queue: queue_name.clone(),
+                                exchange: name.to_string(),
+                                routing_key: "".to_string(),
                                 ..Default::default()
                             };
-                            let queue = match channel.queue_declare("", opts, args.clone()).await {
-                                Err(e) => {
-                                    this.on_error(Box::new(e));
-                                    time::sleep(Duration::from_millis(this.opts.reconnect_millis))
-                                        .await;
-                                    continue;
-                                }
-                                Ok(queue) => queue,
-                            };
-                            let queue_name = queue.name().as_str();
-
-                            let opts = QueueBindOptions::default();
-                            if let Err(e) = channel
-                                .queue_bind(queue_name, name, "", opts, args.clone())
-                                .await
-                            {
+                            if let Err(e) = channel.queue_bind(args).await {
                                 this.on_error(Box::new(e));
                                 time::sleep(Duration::from_millis(this.opts.reconnect_millis))
                                     .await;
                                 continue;
                             }
 
-                            let opts = BasicQosOptions::default();
-                            if let Err(e) = channel.basic_qos(this.opts.prefetch, opts).await {
+                            let args = BasicQosArguments {
+                                prefetch_count: this.opts.prefetch,
+                                ..Default::default()
+                            };
+                            if let Err(e) = channel.basic_qos(args).await {
                                 this.on_error(Box::new(e));
                                 time::sleep(Duration::from_millis(this.opts.reconnect_millis))
                                     .await;
                                 continue;
                             }
 
-                            let opts = BasicConsumeOptions::default();
-                            let consumer = match channel
-                                .basic_consume(queue_name, "", opts, args)
-                                .await
-                            {
-                                Err(e) => {
-                                    this.on_error(Box::new(e));
-                                    time::sleep(Duration::from_millis(this.opts.reconnect_millis))
-                                        .await;
-                                    continue;
-                                }
-                                Ok(consumer) => consumer,
-                            };
-                            consumer.set_delegate(Delegate {
+                            let args = BasicConsumeArguments::new(&queue_name, "");
+                            let consumer = Consumer {
                                 queue: this.clone(),
-                            });
+                            };
+                            if let Err(e) = channel.basic_consume(consumer, args).await {
+                                this.on_error(Box::new(e));
+                                time::sleep(Duration::from_millis(this.opts.reconnect_millis))
+                                    .await;
+                                continue;
+                            }
                         }
                     } else {
-                        let args = FieldTable::default();
-                        let opts = QueueDeclareOptions {
-                            durable: true,
-                            ..Default::default()
-                        };
-                        if let Err(e) = channel.queue_declare(name, opts, args.clone()).await {
+                        let mut args = QueueDeclareArguments::new(name);
+                        args.durable(true);
+                        if let Err(e) = channel.queue_declare(args).await {
                             this.on_error(Box::new(e));
                             time::sleep(Duration::from_millis(this.opts.reconnect_millis)).await;
                             continue;
                         }
 
                         if this.opts.is_recv {
-                            let opts = BasicQosOptions::default();
-                            if let Err(e) = channel.basic_qos(this.opts.prefetch, opts).await {
+                            let args = BasicQosArguments {
+                                prefetch_count: this.opts.prefetch,
+                                ..Default::default()
+                            };
+                            if let Err(e) = channel.basic_qos(args).await {
                                 this.on_error(Box::new(e));
                                 time::sleep(Duration::from_millis(this.opts.reconnect_millis))
                                     .await;
                                 continue;
                             }
 
-                            let opts = BasicConsumeOptions::default();
-                            let consumer = match channel.basic_consume(name, "", opts, args).await {
-                                Err(e) => {
-                                    this.on_error(Box::new(e));
-                                    time::sleep(Duration::from_millis(this.opts.reconnect_millis))
-                                        .await;
-                                    continue;
-                                }
-                                Ok(consumer) => consumer,
-                            };
-                            consumer.set_delegate(Delegate {
+                            let args = BasicConsumeArguments::new(name, "");
+                            let consumer = Consumer {
                                 queue: this.clone(),
-                            });
+                            };
+                            if let Err(e) = channel.basic_consume(consumer, args).await {
+                                this.on_error(Box::new(e));
+                                time::sleep(Duration::from_millis(this.opts.reconnect_millis))
+                                    .await;
+                                continue;
+                            }
                         }
                     }
 
@@ -445,7 +455,7 @@ fn create_event_loop(queue: &AmqpQueue) -> JoinHandle<()> {
                     let mut to_disconnected = true;
                     {
                         if let Some(channel) = (*this.channel.lock().unwrap()).as_ref() {
-                            if channel.status().connected() {
+                            if channel.is_open() {
                                 to_disconnected = false;
                             }
                         }
