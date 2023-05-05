@@ -1,6 +1,6 @@
 [package]
 name = "stress-simple"
-version = "0.0.8"
+version = "0.0.9"
 authors = ["Chien-Hong Chan"]
 edition = "2021"
 description = "A very simple traffic generation program for testing Sylvia-IoT broker."
@@ -9,7 +9,7 @@ description = "A very simple traffic generation program for testing Sylvia-IoT b
 async-trait = "0.1.68"
 chrono = { version = "0.4.24" }
 general-mq = { path = "../general-mq" }
-serde = { version = "1.0.160", features = ["derive"] }
+serde = { version = "1.0.162", features = ["derive"] }
 serde_json = "1.0.96"
 tokio = { version = "1.28.0", features = ["io-util", "macros", "rt-multi-thread", "time"] }
 
