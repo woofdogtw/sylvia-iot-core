@@ -290,6 +290,12 @@ pub fn reg_args(cmd: Command) -> Command {
             .help("URL of `broker.data` channel")
             .num_args(1),
     )
+    .arg(
+        Arg::new("broker.api-scopes")
+            .long("broker.api-scopes")
+            .help("API scopes")
+            .num_args(0..),
+    )
 }
 
 /// To read input arguments from command-line arguments and environment variables.
@@ -359,7 +365,7 @@ pub fn read_args(args: &ArgMatches) -> Config {
             },
             memory: Some(MemoryCache {
                 device: match args.get_one::<u64>("broker.cache.memory.device") {
-                    None => match env::var("BROKER_MEMORY_DEVICE") {
+                    None => match env::var("BROKER_CACHE_MEMORY_DEVICE") {
                         Err(_) => None,
                         Ok(v) => match v.parse::<usize>() {
                             Err(_) => None,
@@ -369,7 +375,7 @@ pub fn read_args(args: &ArgMatches) -> Config {
                     Some(v) => Some(*v as usize),
                 },
                 device_route: match args.get_one::<u64>("broker.cache.memory.device-route") {
-                    None => match env::var("BROKER_MEMORY_DEVICE_ROUTE") {
+                    None => match env::var("BROKER_CACHE_MEMORY_DEVICE_ROUTE") {
                         Err(_) => None,
                         Ok(v) => match v.parse::<usize>() {
                             Err(_) => None,
@@ -379,7 +385,7 @@ pub fn read_args(args: &ArgMatches) -> Config {
                     Some(v) => Some(*v as usize),
                 },
                 network_route: match args.get_one::<u64>("broker.cache.memory.network-route") {
-                    None => match env::var("BROKER_MEMORY_NETWORK_ROUTE") {
+                    None => match env::var("BROKER_CACHE_MEMORY_NETWORK_ROUTE") {
                         Err(_) => None,
                         Ok(v) => match v.parse::<usize>() {
                             Err(_) => None,

@@ -40,8 +40,8 @@ struct DeviceRoute {
     created_at: String,
 }
 
-const CSV_FIELDS: &'static str =
-    "routeId,unitId,applicationId,applicationCode,deviceId,networkId,networkCode,networkAddr,createdAt\n";
+const CSV_FIELDS: &'static [u8] =
+    b"\xEF\xBB\xBFrouteId,unitId,applicationId,applicationCode,deviceId,networkId,networkCode,networkAddr,createdAt\n";
 
 pub fn new_service(scope_path: &str) -> impl HttpServiceFactory {
     web::scope(scope_path)
@@ -144,7 +144,6 @@ async fn get_device_route_list(mut req: HttpRequest, state: web::Data<State>) ->
 
     let mut resp_stream = api_resp.bytes_stream();
     let stream = async_stream::stream! {
-        yield Ok(Bytes::from(vec![0xEF, 0xBB, 0xBF])); // BOM
         yield Ok(Bytes::from(CSV_FIELDS));
 
         let mut buffer = BytesMut::new();

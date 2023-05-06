@@ -10,8 +10,6 @@ use super::{super::super::State, response};
 
 /// `GET /{base}/api/v1/sys/usage`
 pub async fn get_usage(state: web::Data<State>) -> impl Responder {
-    const FN_NAME: &'static str = "get_usage";
-
     let sys_info = state.sys_info.clone();
 
     let result = task::spawn_blocking(move || {
@@ -59,8 +57,6 @@ pub async fn get_usage(state: web::Data<State>) -> impl Responder {
 
 /// `GET /{base}/api/v1/sys/time`
 pub async fn get_time() -> impl Responder {
-    const FN_NAME: &'static str = "get_time";
-
     HttpResponse::Ok().json(response::GetTime {
         data: response::GetTimeData {
             time: strings::time_str(&Utc::now()),

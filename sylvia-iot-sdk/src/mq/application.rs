@@ -329,7 +329,7 @@ impl QueueEventHandler for MgrMqEventHandler {
 
     // Validate and decode data.
     async fn on_message(&self, queue: Arc<dyn Queue>, msg: Box<dyn Message>) {
-        const FN_NAME: &'static str = "ApplicationMgr.on_message";
+        const _FN_NAME: &'static str = "ApplicationMgr.on_message";
 
         let queue_name = queue.name();
         if queue_name.cmp(self.mgr.uldata.lock().unwrap().name()) == Ordering::Equal {

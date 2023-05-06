@@ -38,7 +38,8 @@ struct User {
     info_str: Option<String>,
 }
 
-const CSV_FIELDS: &'static str = "account,createdAt,modifiedAt,verifiedAt,roles,name,info\n";
+const CSV_FIELDS: &'static [u8] =
+    b"\xEF\xBB\xBFaccount,createdAt,modifiedAt,verifiedAt,roles,name,info\n";
 
 pub fn new_service(scope_path: &str) -> impl HttpServiceFactory {
     web::scope(scope_path)
@@ -113,7 +114,6 @@ async fn get_admin_user_list(mut req: HttpRequest, state: web::Data<State>) -> i
 
     let mut resp_stream = api_resp.bytes_stream();
     let stream = async_stream::stream! {
-        yield Ok(Bytes::from(vec![0xEF, 0xBB, 0xBF])); // BOM
         yield Ok(Bytes::from(CSV_FIELDS));
 
         let mut buffer = BytesMut::new();

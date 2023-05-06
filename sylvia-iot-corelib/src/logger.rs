@@ -30,13 +30,13 @@ pub struct Config {
 /// The log4rs encoder for JSON format.
 #[derive(Debug)]
 struct JsonEncoder {
-    proj_name: String,
+    _proj_name: String,
 }
 
 /// The log4rs encoder for log4j format.
 #[derive(Debug)]
 struct Log4jEncoder {
-    proj_name: String,
+    _proj_name: String,
 }
 
 /// Normal log information.
@@ -65,10 +65,16 @@ struct JsonEncoderHttpMsg {
 pub const ACTIX_LOGGER_FORMAT: &'static str = "%a %s %D %U %r";
 pub const ACTIX_LOGGER_NAME: &'static str = "actix_web::middleware::logger";
 
+pub const LEVEL_OFF: &'static str = "off";
+pub const LEVEL_ERROR: &'static str = "error";
+pub const LEVEL_WARN: &'static str = "warn";
+pub const LEVEL_INFO: &'static str = "info";
+pub const LEVEL_DEBUG: &'static str = "debug";
+
 pub const STYLE_JSON: &'static str = "json";
 pub const STYLE_LOG4J: &'static str = "log4j";
 
-pub const DEF_LEVEL: &'static str = "info";
+pub const DEF_LEVEL: &'static str = LEVEL_INFO;
 pub const DEF_STYLE: &'static str = STYLE_JSON;
 
 pub const FILTER_ONLY: [&'static str; 2] = ["/auth/oauth2/", "/api/"];
@@ -76,7 +82,7 @@ pub const FILTER_ONLY: [&'static str; 2] = ["/auth/oauth2/", "/api/"];
 impl JsonEncoder {
     pub fn new(proj_name: &str) -> Self {
         JsonEncoder {
-            proj_name: proj_name.to_string(),
+            _proj_name: proj_name.to_string(),
         }
     }
 }
@@ -84,7 +90,7 @@ impl JsonEncoder {
 impl Log4jEncoder {
     pub fn new(proj_name: &str) -> Self {
         Log4jEncoder {
-            proj_name: proj_name.to_string(),
+            _proj_name: proj_name.to_string(),
         }
     }
 }
@@ -194,11 +200,11 @@ pub fn init(proj_name: &str, conf: &Config) {
         Some(v) => v.as_str(),
     };
     let level = match level {
-        "off" => LevelFilter::Off,
-        "error" => LevelFilter::Error,
-        "warn" => LevelFilter::Warn,
-        "info" => LevelFilter::Info,
-        "debug" => LevelFilter::Debug,
+        LEVEL_OFF => LevelFilter::Off,
+        LEVEL_ERROR => LevelFilter::Error,
+        LEVEL_WARN => LevelFilter::Warn,
+        LEVEL_INFO => LevelFilter::Info,
+        LEVEL_DEBUG => LevelFilter::Debug,
         _ => LevelFilter::Info,
     };
     let style = match conf.style.as_ref() {
@@ -229,7 +235,7 @@ pub fn reg_args(cmd: Command) -> Command {
             .long("log.level")
             .help("log level")
             .num_args(1)
-            .value_parser(["off", "error", "warn", "info", "debug"]),
+            .value_parser([LEVEL_OFF, LEVEL_ERROR, LEVEL_WARN, LEVEL_INFO, LEVEL_DEBUG]),
     )
     .arg(
         Arg::new("log.style")

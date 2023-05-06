@@ -3,8 +3,9 @@ use std::{
     sync::{Arc, Mutex},
 };
 
-use actix_web::{dev::HttpServiceFactory, error, web};
+use actix_web::{dev::HttpServiceFactory, error, web, HttpResponse, Responder};
 use reqwest;
+use serde::{Deserialize, Serialize};
 use sylvia_iot_sdk::util::err::ErrResp;
 use sysinfo::{CpuRefreshKind, RefreshKind, System, SystemExt};
 
@@ -27,6 +28,26 @@ pub struct State {
     /// System information.
     pub sys_info: Arc<Mutex<System>>,
 }
+
+/// Query parameters for `GET /version`
+#[derive(Deserialize)]
+pub struct GetVersionQuery {
+    q: Option<String>,
+}
+
+#[derive(Serialize)]
+struct GetVersionRes<'a> {
+    data: GetVersionResData<'a>,
+}
+
+#[derive(Serialize)]
+struct GetVersionResData<'a> {
+    name: &'a str,
+    version: &'a str,
+}
+
+const SERV_NAME: &'static str = env!("CARGO_PKG_NAME");
+const SERV_VER: &'static str = env!("CARGO_PKG_VERSION");
 
 /// To create resources for the service.
 pub async fn new_state(
@@ -62,4 +83,21 @@ pub fn new_service(state: &State) -> impl HttpServiceFactory {
         .app_data(web::Data::new(state.clone()))
         .service(v1::sys::new_service("/api/v1/sys", state))
         .service(v1::net::new_service("/api/v1/net", state))
+}
+
+pub async fn get_version(query: web::Query<GetVersionQuery>) -> impl Responder {
+    if let Some(q) = query.q.as_ref() {
+        match q.as_str() {
+            "name" => return HttpResponse::Ok().body(SERV_NAME),
+            "version" => return HttpResponse::Ok().body(SERV_VER),
+            _ => (),
+        }
+    }
+
+    HttpResponse::Ok().json(GetVersionRes {
+        data: GetVersionResData {
+            name: SERV_NAME,
+            version: SERV_VER,
+        },
+    })
 }

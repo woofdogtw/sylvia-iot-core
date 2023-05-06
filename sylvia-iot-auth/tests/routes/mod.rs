@@ -1,6 +1,11 @@
 use std::{collections::HashMap, env, fs};
 
-use actix_web::{dev::ServiceResponse, http::header};
+use actix_web::{
+    dev::ServiceResponse,
+    http::{header, StatusCode},
+    test::{self, TestRequest},
+    web, App,
+};
 use laboratory::{describe, expect, SpecContext, Suite};
 use url::Url;
 
@@ -26,6 +31,7 @@ pub fn suite() -> Suite<TestState> {
         context.it("new_state", fn_new_state);
         context.it("new_service", fn_new_service);
         context.it("new_service with API scopes", fn_api_scopes);
+        context.it("GET /version", api_get_version);
 
         context.before_all(|state| {
             state.insert(STATE, new_state(None));
@@ -230,4 +236,53 @@ fn fn_api_scopes(context: &mut SpecContext<TestState>) -> Result<(), String> {
         return Err(format!("close model error: {}", e));
     }
     Ok(())
+}
+
+fn api_get_version(context: &mut SpecContext<TestState>) -> Result<(), String> {
+    let state = context.state.borrow();
+    let state = state.get(STATE).unwrap();
+    let runtime = state.runtime.as_ref().unwrap();
+
+    const SERV_NAME: &'static str = env!("CARGO_PKG_NAME");
+    const SERV_VER: &'static str = env!("CARGO_PKG_VERSION");
+
+    let mut app = runtime.block_on(async {
+        test::init_service(App::new().route("/version", web::get().to(routes::get_version))).await
+    });
+
+    // Default.
+    let req = TestRequest::get().uri("/version").to_request();
+    let resp = runtime.block_on(async { test::call_service(&mut app, req).await });
+    expect(resp.status()).to_equal(StatusCode::OK)?;
+    let body = runtime.block_on(async { test::read_body(resp).await });
+    let expect_body = format!(
+        "{{\"data\":{{\"name\":\"{}\",\"version\":\"{}\"}}}}",
+        SERV_NAME, SERV_VER
+    );
+    expect(body.as_ref()).to_equal(expect_body.as_str().as_bytes())?;
+
+    // Invalid query.
+    let req = TestRequest::get().uri("/version?q=test").to_request();
+    let resp = runtime.block_on(async { test::call_service(&mut app, req).await });
+    expect(resp.status()).to_equal(StatusCode::OK)?;
+    let body = runtime.block_on(async { test::read_body(resp).await });
+    let expect_body = format!(
+        "{{\"data\":{{\"name\":\"{}\",\"version\":\"{}\"}}}}",
+        SERV_NAME, SERV_VER
+    );
+    expect(body.as_ref()).to_equal(expect_body.as_str().as_bytes())?;
+
+    // Query service name.
+    let req = TestRequest::get().uri("/version?q=name").to_request();
+    let resp = runtime.block_on(async { test::call_service(&mut app, req).await });
+    expect(resp.status()).to_equal(StatusCode::OK)?;
+    let body = runtime.block_on(async { test::read_body(resp).await });
+    expect(body.as_ref()).to_equal(SERV_NAME.as_bytes())?;
+
+    // Query service version.
+    let req = TestRequest::get().uri("/version?q=version").to_request();
+    let resp = runtime.block_on(async { test::call_service(&mut app, req).await });
+    expect(resp.status()).to_equal(StatusCode::OK)?;
+    let body = runtime.block_on(async { test::read_body(resp).await });
+    expect(body.as_ref()).to_equal(SERV_VER.as_bytes())
 }

@@ -6,6 +6,8 @@ API - Data
 - [Notes](#notes)
 - [Common error codes](#errcode)
 - [Roles](#roles)
+- [Service APIs](#service)
+    - [`GET /version` Get service version](#get_version)
 - [Application data APIs](#application)
     - [`GET /data/api/v1/application-uldata/count` Application uplink data count](#get_application_uldata_count)
     - [`GET /data/api/v1/application-uldata/list` Application uplink data list](#get_application_uldata_list)
@@ -22,7 +24,7 @@ API - Data
 
 ## <a name="notes"></a>Notes
 
-All API requests must have a **Authorization** header with a **Bearer** token.
+All API requests (except `GET /version`) must have a **Authorization** header with a **Bearer** token.
 
 - **Example**
 
@@ -84,6 +86,50 @@ This system supports the following roles:
 - `service`: The web service.
 
 **Normal user** means users without any roles.
+
+# <a name="service"></a>Service APIs
+
+## <a name="get_version"></a>Get service version
+
+Get service name and version information.
+
+    GET /version?
+        q={query}
+
+- *string* `q`: (**optional**) To query the specific information **in plain text**. You can use:
+    - `name`: To query the service name.
+    - `version`: To query current version.
+
+#### Response
+
+- **200 OK**: Version information. Parameters are:
+
+    - *object* `data`:
+        - *string* `name`: The service name.
+        - *string* `version`: Current version.
+
+    - **Example**
+
+        ```json
+        {
+            "data": {
+                "name": "sylvia-iot-auth",
+                "version": "1.0.0"
+            }
+        }
+        ```
+
+    - **Example** when `q=name`:
+
+        ```
+        sylvia-iot-auth
+        ```
+
+    - **Example** when `q=version`:
+
+        ```
+        1.0.0
+        ```
 
 # <a name="application"></a>Application data APIs
 

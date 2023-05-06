@@ -1,8 +1,9 @@
 use std::{collections::HashMap, error::Error as StdError, sync::Arc};
 
-use actix_web::{dev::HttpServiceFactory, error, web};
+use actix_web::{dev::HttpServiceFactory, error, web, HttpResponse, Responder};
 use general_mq::Queue;
 use reqwest;
+use serde::{Deserialize, Serialize};
 
 use sylvia_iot_corelib::{constants::DbEngine, err::ErrResp};
 
@@ -46,6 +47,26 @@ pub struct State {
 
 /// The sylvia-iot module specific error codes in addition to standard [`ErrResp`].
 pub struct ErrReq;
+
+/// Query parameters for `GET /version`
+#[derive(Deserialize)]
+pub struct GetVersionQuery {
+    q: Option<String>,
+}
+
+#[derive(Serialize)]
+struct GetVersionRes<'a> {
+    data: GetVersionResData<'a>,
+}
+
+#[derive(Serialize)]
+struct GetVersionResData<'a> {
+    name: &'a str,
+    version: &'a str,
+}
+
+const SERV_NAME: &'static str = env!("CARGO_PKG_NAME");
+const SERV_VER: &'static str = env!("CARGO_PKG_VERSION");
 
 impl ErrReq {
     pub const UNIT_NOT_EXIST: (u16, &'static str) = (400, "err_data_unit_not_exist");
@@ -140,4 +161,21 @@ pub fn new_data_receivers(
     data_receivers.insert("coremgr.data".to_string(), q);
 
     Ok(data_receivers)
+}
+
+pub async fn get_version(query: web::Query<GetVersionQuery>) -> impl Responder {
+    if let Some(q) = query.q.as_ref() {
+        match q.as_str() {
+            "name" => return HttpResponse::Ok().body(SERV_NAME),
+            "version" => return HttpResponse::Ok().body(SERV_VER),
+            _ => (),
+        }
+    }
+
+    HttpResponse::Ok().json(GetVersionRes {
+        data: GetVersionResData {
+            name: SERV_NAME,
+            version: SERV_VER,
+        },
+    })
 }

@@ -10,7 +10,7 @@ use actix_cors::Cors;
 use actix_http::KeepAlive;
 use actix_web::{
     middleware::{Logger, NormalizePath},
-    App, HttpServer,
+    web, App, HttpServer,
 };
 use actix_web_prom::PrometheusMetricsBuilder;
 use clap::{Arg as ClapArg, Command};
@@ -82,6 +82,7 @@ async fn main() -> std::io::Result<()> {
             .wrap(NormalizePath::trim())
             .wrap(Cors::permissive())
             .service(routes::new_service(&broker_state))
+            .route("/version", web::get().to(routes::get_version))
     })
     .keep_alive(KeepAlive::Timeout(Duration::from_secs(60)));
     let ipv4_addr = Ipv4Addr::from([0u8; 4]);
