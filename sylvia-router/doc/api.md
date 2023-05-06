@@ -5,6 +5,8 @@ API - Router
 
 - [Notes](#notes)
 - [Common error codes](#errcode)
+- [Service APIs](#service)
+    - [`GET /version` Get service version](#get_version)
 - [System APIs](#sys)
     - [`GET /router/api/v1/sys/usage` Get resource usage](#get_sys_usage)
     - [`GET /router/api/v1/sys/time` Get system time](#get_sys_time)
@@ -22,7 +24,7 @@ API - Router
 
 ## <a name="notes"></a>Notes
 
-All API requests must have a **Authorization** header with a **Bearer** token.
+All API requests (except `GET /version`) must have a **Authorization** header with a **Bearer** token.
 
 - **Example**
 
@@ -74,6 +76,50 @@ The following are common error codes. The API specific error codes are listed in
 - **403** `err_perm`: Permission fail. This usually means that API requests with an invalid user role.
 - **503** `err_rsc`: Resource allocation error. Please try again later.
 - **500** `err_unknown`: Unknown error. This usually means that the server causes bugs or unexpected errors.
+
+# <a name="service"></a>Service APIs
+
+## <a name="get_version"></a>Get service version
+
+Get service name and version information.
+
+    GET /version?
+        q={query}
+
+- *string* `q`: (**optional**) To query the specific information **in plain text**. You can use:
+    - `name`: To query the service name.
+    - `version`: To query current version.
+
+#### Response
+
+- **200 OK**: Version information. Parameters are:
+
+    - *object* `data`:
+        - *string* `name`: The service name.
+        - *string* `version`: Current version.
+
+    - **Example**
+
+        ```json
+        {
+            "data": {
+                "name": "sylvia-iot-auth",
+                "version": "1.0.0"
+            }
+        }
+        ```
+
+    - **Example** when `q=name`:
+
+        ```
+        sylvia-iot-auth
+        ```
+
+    - **Example** when `q=version`:
+
+        ```
+        1.0.0
+        ```
 
 # <a name="sys"></a>System APIs
 

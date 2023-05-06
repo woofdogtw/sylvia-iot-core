@@ -5,7 +5,7 @@ use std::{
     sync::{Arc, Mutex},
 };
 
-use actix_web::{dev::HttpServiceFactory, error, web};
+use actix_web::{dev::HttpServiceFactory, error, web, HttpResponse, Responder};
 use async_trait::async_trait;
 use general_mq::{
     queue::{Event, EventHandler as QueueEventHandler, Message, Queue as MqQueue, Status},
@@ -13,6 +13,7 @@ use general_mq::{
 };
 use log::{error, info, warn};
 use reqwest;
+use serde::{Deserialize, Serialize};
 use url::Url;
 
 use sylvia_iot_corelib::{constants::MqEngine, err::ErrResp};
@@ -77,6 +78,26 @@ pub enum MqttState {
 pub struct ErrReq;
 
 struct DataSenderHandler;
+
+/// Query parameters for `GET /version`
+#[derive(Deserialize)]
+pub struct GetVersionQuery {
+    q: Option<String>,
+}
+
+#[derive(Serialize)]
+struct GetVersionRes<'a> {
+    data: GetVersionResData<'a>,
+}
+
+#[derive(Serialize)]
+struct GetVersionResData<'a> {
+    name: &'a str,
+    version: &'a str,
+}
+
+const SERV_NAME: &'static str = env!("CARGO_PKG_NAME");
+const SERV_VER: &'static str = env!("CARGO_PKG_VERSION");
 
 impl ErrReq {
     pub const UNIT_NOT_EXIST: (u16, &'static str) = (400, "err_broker_unit_not_exist");
@@ -197,4 +218,21 @@ fn new_data_sender(
         Err(e) => Err(Box::new(IoError::new(ErrorKind::InvalidInput, e))),
         Ok(q) => Ok(q),
     }
+}
+
+pub async fn get_version(query: web::Query<GetVersionQuery>) -> impl Responder {
+    if let Some(q) = query.q.as_ref() {
+        match q.as_str() {
+            "name" => return HttpResponse::Ok().body(SERV_NAME),
+            "version" => return HttpResponse::Ok().body(SERV_VER),
+            _ => (),
+        }
+    }
+
+    HttpResponse::Ok().json(GetVersionRes {
+        data: GetVersionResData {
+            name: SERV_NAME,
+            version: SERV_VER,
+        },
+    })
 }

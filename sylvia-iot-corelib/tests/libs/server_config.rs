@@ -15,7 +15,8 @@ pub fn reg_args(_context: &mut SpecContext<TestState>) -> Result<(), String> {
 
 /// Test [`server_config::read_args`].
 pub fn read_args(_context: &mut SpecContext<TestState>) -> Result<(), String> {
-    let args = Command::new("test").get_matches();
+    // Default.
+    let args = server_config::reg_args(Command::new("test")).get_matches_from(vec!["test"]);
     let conf = server_config::read_args(&args);
     expect(conf.http_port).to_equal(Some(server_config::DEF_HTTP_PORT))?;
     expect(conf.https_port).to_equal(Some(server_config::DEF_HTTPS_PORT))?;
@@ -24,6 +25,39 @@ pub fn read_args(_context: &mut SpecContext<TestState>) -> Result<(), String> {
     expect(conf.key_file).to_equal(None)?;
     expect(conf.static_path).to_equal(None)?;
 
+    // Modified default by command-line arguments.
+    let args = vec![
+        "test",
+        "--server.httpport",
+        "1082",
+        "--server.httpsport",
+        "1445",
+        "--server.cacertfile",
+        "cacert1",
+        "--server.certfile",
+        "cert1",
+        "--server.keyfile",
+        "key1",
+        "--server.static",
+        "static1",
+    ];
+    let args = server_config::reg_args(Command::new("test")).get_matches_from(args);
+    let conf = server_config::read_args(&args);
+    expect(conf.http_port).to_equal(Some(1082))?;
+    expect(conf.https_port).to_equal(Some(1445))?;
+    expect(conf.cacert_file.is_some()).to_equal(true)?;
+    expect(conf.cacert_file.as_ref().unwrap().as_str()).to_equal("cacert1")?;
+    expect(conf.cert_file.is_some()).to_equal(true)?;
+    expect(conf.cert_file.as_ref().unwrap().as_str()).to_equal("cert1")?;
+    expect(conf.key_file.is_some()).to_equal(true)?;
+    expect(conf.key_file.as_ref().unwrap().as_str()).to_equal("key1")?;
+    expect(conf.static_path.is_some()).to_equal(true)?;
+    expect(conf.static_path.as_ref().unwrap().as_str()).to_equal("static1")?;
+
+    // Clear command-line arguments.
+    let args = server_config::reg_args(Command::new("test")).get_matches_from(vec!["test"]);
+
+    // Modified default by environment variables.
     env::set_var(&OsStr::new("SERVER_HTTP_PORT"), "1081");
     env::set_var(&OsStr::new("SERVER_HTTPS_PORT"), "1444");
     env::set_var(&OsStr::new("SERVER_CACERT_FILE"), "cacert");
@@ -40,7 +74,42 @@ pub fn read_args(_context: &mut SpecContext<TestState>) -> Result<(), String> {
     expect(conf.key_file.is_some()).to_equal(true)?;
     expect(conf.key_file.as_ref().unwrap().as_str()).to_equal("key")?;
     expect(conf.static_path.is_some()).to_equal(true)?;
-    expect(conf.static_path.as_ref().unwrap().as_str()).to_equal("static")
+    expect(conf.static_path.as_ref().unwrap().as_str()).to_equal("static")?;
+
+    // Test command-line arguments overwrite environment variables.
+    let args = vec![
+        "test",
+        "--server.httpport",
+        "1083",
+        "--server.httpsport",
+        "1446",
+        "--server.cacertfile",
+        "cacert2",
+        "--server.certfile",
+        "cert2",
+        "--server.keyfile",
+        "key2",
+        "--server.static",
+        "static2",
+    ];
+    let args = server_config::reg_args(Command::new("test")).get_matches_from(args);
+    env::set_var(&OsStr::new("SERVER_HTTP_PORT"), "1084");
+    env::set_var(&OsStr::new("SERVER_HTTPS_PORT"), "1447");
+    env::set_var(&OsStr::new("SERVER_CACERT_FILE"), "cacert3");
+    env::set_var(&OsStr::new("SERVER_CERT_FILE"), "cert3");
+    env::set_var(&OsStr::new("SERVER_KEY_FILE"), "key3");
+    env::set_var(&OsStr::new("SERVER_STATIC_PATH"), "static3");
+    let conf = server_config::read_args(&args);
+    expect(conf.http_port).to_equal(Some(1083))?;
+    expect(conf.https_port).to_equal(Some(1446))?;
+    expect(conf.cacert_file.is_some()).to_equal(true)?;
+    expect(conf.cacert_file.as_ref().unwrap().as_str()).to_equal("cacert2")?;
+    expect(conf.cert_file.is_some()).to_equal(true)?;
+    expect(conf.cert_file.as_ref().unwrap().as_str()).to_equal("cert2")?;
+    expect(conf.key_file.is_some()).to_equal(true)?;
+    expect(conf.key_file.as_ref().unwrap().as_str()).to_equal("key2")?;
+    expect(conf.static_path.is_some()).to_equal(true)?;
+    expect(conf.static_path.as_ref().unwrap().as_str()).to_equal("static2")
 }
 
 /// Test [`server_config::apply_default`].

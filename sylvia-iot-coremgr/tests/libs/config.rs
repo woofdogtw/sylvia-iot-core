@@ -16,7 +16,8 @@ pub fn reg_args(_context: &mut SpecContext<TestState>) -> Result<(), String> {
 
 /// Test [`config::read_args`].
 pub fn read_args(_context: &mut SpecContext<TestState>) -> Result<(), String> {
-    let args = Command::new("test").get_matches();
+    // Default.
+    let args = config::reg_args(Command::new("test")).get_matches_from(vec!["test"]);
     let conf = config::read_args(&args);
     expect(conf.auth.is_some()).to_equal(true)?;
     expect(conf.auth.as_ref().unwrap().as_str()).to_equal(config::DEF_AUTH)?;
@@ -51,34 +52,156 @@ pub fn read_args(_context: &mut SpecContext<TestState>) -> Result<(), String> {
     let mq_channels_conf = conf.mq_channels.as_ref().unwrap();
     expect(mq_channels_conf.data.is_none()).to_equal(true)?;
 
-    env::set_var(&OsStr::new("COREMGR_AUTH"), "sylvia2");
-    env::set_var(&OsStr::new("COREMGR_BROKER"), "sylvia3");
-    env::set_var(&OsStr::new("COREMGR_MQ_ENGINE_AMQP"), "rabbitmq2");
-    env::set_var(&OsStr::new("COREMGR_MQ_ENGINE_MQTT"), MqEngine::RUMQTTD);
-    env::set_var(&OsStr::new("COREMGR_MQ_RABBITMQ_USERNAME"), "rabbituser");
-    env::set_var(&OsStr::new("COREMGR_MQ_RABBITMQ_PASSWORD"), "rabbitpass");
-    env::set_var(&OsStr::new("COREMGR_MQ_RABBITMQ_TTL"), "100");
-    env::set_var(&OsStr::new("COREMGR_MQ_RABBITMQ_LENGTH"), "1000");
-    env::set_var(
-        &OsStr::new("COREMGR_MQ_RABBITMQ_HOSTS"),
-        "local1,localhost1,false",
-    );
-    env::set_var(&OsStr::new("COREMGR_MQ_EMQX_API_KEY"), "emqxkey");
-    env::set_var(&OsStr::new("COREMGR_MQ_EMQX_API_SECRET"), "emqxsecret");
-    env::set_var(
-        &OsStr::new("COREMGR_MQ_EMQX_HOSTS"),
-        "local2,localhost2,false",
-    );
-    env::set_var(&OsStr::new("COREMGR_MQ_RUMQTTD_MQTT_PORT"), "1884");
-    env::set_var(&OsStr::new("COREMGR_MQ_RUMQTTD_MQTTS_PORT"), "8884");
-    env::set_var(&OsStr::new("COREMGR_MQ_RUMQTTD_CONSOLE_PORT"), "18084");
-    env::set_var(&OsStr::new("COREMGR_MQCHANNELS_DATA_URL"), "url9");
-    let args = Command::new("test").get_matches();
+    // Modified default by command-line arguments.
+    let args = vec![
+        "test",
+        "--coremgr.auth",
+        "sylvia11",
+        "--coremgr.broker",
+        "sylvia12",
+        "--coremgr.mq.engine.amqp",
+        "rabbitmq",
+        "--coremgr.mq.engine.mqtt",
+        "emqx",
+        "--coremgr.mq.rabbitmq.username",
+        "rabbituser1",
+        "--coremgr.mq.rabbitmq.password",
+        "rabbitpass1",
+        "--coremgr.mq.rabbitmq.ttl",
+        "11",
+        "--coremgr.mq.rabbitmq.length",
+        "12",
+        "--coremgr.mq.rabbitmq.hosts",
+        "[{\"name\":\"name11\",\"host\":\"host11\",\"external\":\"external11\",\"active\":true}]",
+        "--coremgr.mq.emqx.apikey",
+        "emqxkey1",
+        "--coremgr.mq.emqx.apisecret",
+        "emqxsecret1",
+        "--coremgr.mq.emqx.hosts",
+        "[{\"name\":\"name12\",\"host\":\"host12\",\"external\":\"external12\",\"active\":false}]",
+        "--coremgr.mq.rumqttd.mqtt-port",
+        "111",
+        "--coremgr.mq.rumqttd.mqtts-port",
+        "112",
+        "--coremgr.mq.rumqttd.console-port",
+        "113",
+        "--coremgr.mq-channels.data.url",
+        "url1",
+    ];
+    let args = config::reg_args(Command::new("test")).get_matches_from(args);
     let conf = config::read_args(&args);
     expect(conf.auth.is_some()).to_equal(true)?;
-    expect(conf.auth.as_ref().unwrap().as_str()).to_equal("sylvia2")?;
+    expect(conf.auth.as_ref().unwrap().as_str()).to_equal("sylvia11")?;
     expect(conf.broker.is_some()).to_equal(true)?;
-    expect(conf.broker.as_ref().unwrap().as_str()).to_equal("sylvia3")?;
+    expect(conf.broker.as_ref().unwrap().as_str()).to_equal("sylvia12")?;
+    expect(conf.mq.is_some()).to_equal(true)?;
+    expect(conf.mq.as_ref().unwrap().engine.is_some()).to_equal(true)?;
+    let engine = conf.mq.as_ref().unwrap().engine.as_ref().unwrap();
+    expect(engine.amqp.is_some()).to_equal(true)?;
+    expect(engine.amqp.as_ref().unwrap().as_str()).to_equal(MqEngine::RABBITMQ)?;
+    expect(engine.mqtt.is_some()).to_equal(true)?;
+    expect(engine.mqtt.as_ref().unwrap().as_str()).to_equal(MqEngine::EMQX)?;
+    expect(conf.mq.as_ref().unwrap().rabbitmq.is_some()).to_equal(true)?;
+    let rabbitmq = conf.mq.as_ref().unwrap().rabbitmq.as_ref().unwrap();
+    expect(rabbitmq.username.is_some()).to_equal(true)?;
+    expect(rabbitmq.username.as_ref().unwrap().as_str()).to_equal("rabbituser1")?;
+    expect(rabbitmq.password.is_some()).to_equal(true)?;
+    expect(rabbitmq.password.as_ref().unwrap().as_str()).to_equal("rabbitpass1")?;
+    expect(rabbitmq.ttl).to_equal(Some(11))?;
+    expect(rabbitmq.length).to_equal(Some(12))?;
+    expect(rabbitmq.hosts.is_some()).to_equal(true)?;
+    let hosts = rabbitmq.hosts.as_ref().unwrap();
+    expect(hosts.len()).to_equal(1)?;
+    expect(hosts[0].name.as_str()).to_equal("name11")?;
+    expect(hosts[0].host.as_str()).to_equal("host11")?;
+    expect(hosts[0].external.as_str()).to_equal("external11")?;
+    expect(hosts[0].active).to_equal(true)?;
+    let emqx = conf.mq.as_ref().unwrap().emqx.as_ref().unwrap();
+    expect(emqx.api_key.is_some()).to_equal(true)?;
+    expect(emqx.api_key.as_ref().unwrap().as_str()).to_equal("emqxkey1")?;
+    expect(emqx.api_secret.is_some()).to_equal(true)?;
+    expect(emqx.api_secret.as_ref().unwrap().as_str()).to_equal("emqxsecret1")?;
+    expect(emqx.hosts.is_some()).to_equal(true)?;
+    let hosts = emqx.hosts.as_ref().unwrap();
+    expect(hosts.len()).to_equal(1)?;
+    expect(hosts[0].name.as_str()).to_equal("name12")?;
+    expect(hosts[0].host.as_str()).to_equal("host12")?;
+    expect(hosts[0].external.as_str()).to_equal("external12")?;
+    expect(hosts[0].active).to_equal(false)?;
+    let rumqttd = conf.mq.as_ref().unwrap().rumqttd.as_ref().unwrap();
+    expect(rumqttd.mqtt_port).to_equal(Some(111))?;
+    expect(rumqttd.mqtts_port).to_equal(Some(112))?;
+    expect(rumqttd.console_port).to_equal(Some(113))?;
+    let mq_channels_conf = conf.mq_channels.as_ref().unwrap();
+    expect(mq_channels_conf.data.is_some()).to_equal(true)?;
+    let data_conf = mq_channels_conf.data.as_ref().unwrap();
+    expect(data_conf.url.is_some()).to_equal(true)?;
+    expect(data_conf.url.as_ref().unwrap().as_str()).to_equal("url1")?;
+
+    let args = vec![
+        "test",
+        "--coremgr.mq.rabbitmq.hosts",
+        "",
+        "--coremgr.mq.emqx.hosts",
+        "",
+    ];
+    let args = config::reg_args(Command::new("test")).get_matches_from(args);
+    let conf = config::read_args(&args);
+    expect(conf.mq.as_ref().unwrap().rabbitmq.is_some()).to_equal(true)?;
+    let rabbitmq = conf.mq.as_ref().unwrap().rabbitmq.as_ref().unwrap();
+    expect(rabbitmq.hosts.is_none()).to_equal(true)?;
+    expect(conf.mq.as_ref().unwrap().emqx.is_some()).to_equal(true)?;
+    let emqx = conf.mq.as_ref().unwrap().emqx.as_ref().unwrap();
+    expect(emqx.hosts.is_none()).to_equal(true)?;
+
+    // Test wrong command-line arguments.
+    let args = vec![
+        "test",
+        "--coremgr.mq.rabbitmq.hosts",
+        "{",
+        "--coremgr.mq.emqx.hosts",
+        "}",
+    ];
+    let args = config::reg_args(Command::new("test")).get_matches_from(args);
+    let conf = config::read_args(&args);
+    expect(conf.mq.as_ref().unwrap().rabbitmq.is_some()).to_equal(true)?;
+    let rabbitmq = conf.mq.as_ref().unwrap().rabbitmq.as_ref().unwrap();
+    expect(rabbitmq.hosts.is_none()).to_equal(true)?;
+    expect(conf.mq.as_ref().unwrap().emqx.is_some()).to_equal(true)?;
+    let emqx = conf.mq.as_ref().unwrap().emqx.as_ref().unwrap();
+    expect(emqx.hosts.is_none()).to_equal(true)?;
+
+    // Clear command-line arguments.
+    let args = config::reg_args(Command::new("test")).get_matches_from(vec!["test"]);
+
+    // Modified default by environment variables.
+    env::set_var(&OsStr::new("COREMGR_AUTH"), "sylvia21");
+    env::set_var(&OsStr::new("COREMGR_BROKER"), "sylvia22");
+    env::set_var(&OsStr::new("COREMGR_MQ_ENGINE_AMQP"), "rabbitmq");
+    env::set_var(&OsStr::new("COREMGR_MQ_ENGINE_MQTT"), "rumqttd");
+    env::set_var(&OsStr::new("COREMGR_MQ_RABBITMQ_USERNAME"), "rabbituser2");
+    env::set_var(&OsStr::new("COREMGR_MQ_RABBITMQ_PASSWORD"), "rabbitpass2");
+    env::set_var(&OsStr::new("COREMGR_MQ_RABBITMQ_TTL"), "21");
+    env::set_var(&OsStr::new("COREMGR_MQ_RABBITMQ_LENGTH"), "22");
+    env::set_var(
+        &OsStr::new("COREMGR_MQ_RABBITMQ_HOSTS"),
+        "[{\"name\":\"name21\",\"host\":\"host21\",\"external\":\"external21\",\"active\":false}]",
+    );
+    env::set_var(&OsStr::new("COREMGR_MQ_EMQX_APIKEY"), "emqxkey2");
+    env::set_var(&OsStr::new("COREMGR_MQ_EMQX_APISECRET"), "emqxsecret2");
+    env::set_var(
+        &OsStr::new("COREMGR_MQ_EMQX_HOSTS"),
+        "[{\"name\":\"name22\",\"host\":\"host22\",\"external\":\"external22\",\"active\":true}]",
+    );
+    env::set_var(&OsStr::new("COREMGR_MQ_RUMQTTD_MQTT_PORT"), "121");
+    env::set_var(&OsStr::new("COREMGR_MQ_RUMQTTD_MQTTS_PORT"), "122");
+    env::set_var(&OsStr::new("COREMGR_MQ_RUMQTTD_CONSOLE_PORT"), "123");
+    env::set_var(&OsStr::new("COREMGR_MQCHANNELS_DATA_URL"), "url2");
+    let conf = config::read_args(&args);
+    expect(conf.auth.is_some()).to_equal(true)?;
+    expect(conf.auth.as_ref().unwrap().as_str()).to_equal("sylvia21")?;
+    expect(conf.broker.is_some()).to_equal(true)?;
+    expect(conf.broker.as_ref().unwrap().as_str()).to_equal("sylvia22")?;
     expect(conf.mq.is_some()).to_equal(true)?;
     expect(conf.mq.as_ref().unwrap().engine.is_some()).to_equal(true)?;
     let engine = conf.mq.as_ref().unwrap().engine.as_ref().unwrap();
@@ -89,38 +212,189 @@ pub fn read_args(_context: &mut SpecContext<TestState>) -> Result<(), String> {
     expect(conf.mq.as_ref().unwrap().rabbitmq.is_some()).to_equal(true)?;
     let rabbitmq = conf.mq.as_ref().unwrap().rabbitmq.as_ref().unwrap();
     expect(rabbitmq.username.is_some()).to_equal(true)?;
-    expect(rabbitmq.username.as_ref().unwrap().as_str()).to_equal("rabbituser")?;
+    expect(rabbitmq.username.as_ref().unwrap().as_str()).to_equal("rabbituser2")?;
     expect(rabbitmq.password.is_some()).to_equal(true)?;
-    expect(rabbitmq.password.as_ref().unwrap().as_str()).to_equal("rabbitpass")?;
+    expect(rabbitmq.password.as_ref().unwrap().as_str()).to_equal("rabbitpass2")?;
     expect(rabbitmq.ttl.is_some()).to_equal(true)?;
-    expect(*rabbitmq.ttl.as_ref().unwrap()).to_equal(100)?;
+    expect(*rabbitmq.ttl.as_ref().unwrap()).to_equal(21)?;
     expect(rabbitmq.length.is_some()).to_equal(true)?;
-    expect(*rabbitmq.length.as_ref().unwrap()).to_equal(1000)?;
+    expect(*rabbitmq.length.as_ref().unwrap()).to_equal(22)?;
     expect(rabbitmq.hosts.is_some()).to_equal(true)?;
     let hosts = rabbitmq.hosts.as_ref().unwrap();
     expect(hosts.len()).to_equal(1)?;
-    expect(hosts[0].name.as_str()).to_equal("local1")?;
-    expect(hosts[0].host.as_str()).to_equal("localhost1")?;
+    expect(hosts[0].name.as_str()).to_equal("name21")?;
+    expect(hosts[0].host.as_str()).to_equal("host21")?;
+    expect(hosts[0].external.as_str()).to_equal("external21")?;
     expect(hosts[0].active).to_equal(false)?;
     let emqx = conf.mq.as_ref().unwrap().emqx.as_ref().unwrap();
     expect(emqx.api_key.is_some()).to_equal(true)?;
-    expect(emqx.api_key.as_ref().unwrap().as_str()).to_equal("emqxkey")?;
+    expect(emqx.api_key.as_ref().unwrap().as_str()).to_equal("emqxkey2")?;
     expect(emqx.api_secret.is_some()).to_equal(true)?;
-    expect(emqx.api_secret.as_ref().unwrap().as_str()).to_equal("emqxsecret")?;
+    expect(emqx.api_secret.as_ref().unwrap().as_str()).to_equal("emqxsecret2")?;
     expect(emqx.hosts.is_some()).to_equal(true)?;
     let hosts = emqx.hosts.as_ref().unwrap();
     expect(hosts.len()).to_equal(1)?;
-    expect(hosts[0].name.as_str()).to_equal("local2")?;
-    expect(hosts[0].host.as_str()).to_equal("localhost2")?;
-    expect(hosts[0].active).to_equal(false)?;
-    expect(rumqttd.mqtt_port).to_equal(Some(1884))?;
-    expect(rumqttd.mqtts_port).to_equal(Some(8884))?;
-    expect(rumqttd.console_port).to_equal(Some(18084))?;
+    expect(hosts[0].name.as_str()).to_equal("name22")?;
+    expect(hosts[0].host.as_str()).to_equal("host22")?;
+    expect(hosts[0].external.as_str()).to_equal("external22")?;
+    expect(hosts[0].active).to_equal(true)?;
+    let rumqttd = conf.mq.as_ref().unwrap().rumqttd.as_ref().unwrap();
+    expect(rumqttd.mqtt_port).to_equal(Some(121))?;
+    expect(rumqttd.mqtts_port).to_equal(Some(122))?;
+    expect(rumqttd.console_port).to_equal(Some(123))?;
     let mq_channels_conf = conf.mq_channels.as_ref().unwrap();
     expect(mq_channels_conf.data.is_some()).to_equal(true)?;
     let data_conf = mq_channels_conf.data.as_ref().unwrap();
     expect(data_conf.url.is_some()).to_equal(true)?;
-    expect(data_conf.url.as_ref().unwrap().as_str()).to_equal("url9")
+    expect(data_conf.url.as_ref().unwrap().as_str()).to_equal("url2")?;
+
+    env::set_var(&OsStr::new("COREMGR_MQ_RABBITMQ_HOSTS"), "");
+    env::set_var(&OsStr::new("COREMGR_MQ_EMQX_HOSTS"), "");
+    let conf = config::read_args(&args);
+    expect(conf.mq.as_ref().unwrap().rabbitmq.is_some()).to_equal(true)?;
+    let rabbitmq = conf.mq.as_ref().unwrap().rabbitmq.as_ref().unwrap();
+    expect(rabbitmq.hosts.is_none()).to_equal(true)?;
+    expect(conf.mq.as_ref().unwrap().emqx.is_some()).to_equal(true)?;
+    let emqx = conf.mq.as_ref().unwrap().emqx.as_ref().unwrap();
+    expect(emqx.hosts.is_none()).to_equal(true)?;
+
+    // Test wrong environment variables.
+    env::set_var(&OsStr::new("COREMGR_MQ_ENGINE_AMQP"), "rabbitmq1");
+    env::set_var(&OsStr::new("COREMGR_MQ_ENGINE_MQTT"), "emqx1");
+    env::set_var(&OsStr::new("COREMGR_MQ_RABBITMQ_TTL"), "12_000");
+    env::set_var(&OsStr::new("COREMGR_MQ_RABBITMQ_LENGTH"), "12_000");
+    env::set_var(&OsStr::new("COREMGR_MQ_RABBITMQ_HOSTS"), "}");
+    env::set_var(&OsStr::new("COREMGR_MQ_EMQX_HOSTS"), "{");
+    env::set_var(&OsStr::new("COREMGR_MQ_RUMQTTD_MQTT_PORT"), "12_000");
+    env::set_var(&OsStr::new("COREMGR_MQ_RUMQTTD_MQTTS_PORT"), "12_000");
+    env::set_var(&OsStr::new("COREMGR_MQ_RUMQTTD_CONSOLE_PORT"), "12_000");
+    let conf = config::read_args(&args);
+    expect(conf.mq.is_some()).to_equal(true)?;
+    expect(conf.mq.as_ref().unwrap().engine.is_some()).to_equal(true)?;
+    let engine = conf.mq.as_ref().unwrap().engine.as_ref().unwrap();
+    expect(engine.amqp.is_some()).to_equal(true)?;
+    expect(engine.amqp.as_ref().unwrap().as_str()).to_equal(config::DEF_ENGINE_AMQP)?;
+    expect(engine.mqtt.is_some()).to_equal(true)?;
+    expect(engine.mqtt.as_ref().unwrap().as_str()).to_equal(config::DEF_ENGINE_MQTT)?;
+    expect(conf.mq.as_ref().unwrap().rabbitmq.is_some()).to_equal(true)?;
+    let rabbitmq = conf.mq.as_ref().unwrap().rabbitmq.as_ref().unwrap();
+    expect(rabbitmq.ttl.is_none()).to_equal(true)?;
+    expect(rabbitmq.length.is_none()).to_equal(true)?;
+    expect(rabbitmq.hosts.is_none()).to_equal(true)?;
+    let emqx = conf.mq.as_ref().unwrap().emqx.as_ref().unwrap();
+    expect(emqx.hosts.is_none()).to_equal(true)?;
+    let rumqttd = conf.mq.as_ref().unwrap().rumqttd.as_ref().unwrap();
+    expect(rumqttd.mqtt_port).to_equal(Some(config::DEF_RUMQTTD_MQTT_PORT))?;
+    expect(rumqttd.mqtts_port).to_equal(Some(config::DEF_RUMQTTD_MQTTS_PORT))?;
+    expect(rumqttd.console_port).to_equal(Some(config::DEF_RUMQTTD_CONSOLE_PORT))?;
+
+    // Test command-line arguments overwrite environment variables.
+    let args = vec![
+        "test",
+        "--coremgr.auth",
+        "sylvia31",
+        "--coremgr.broker",
+        "sylvia32",
+        "--coremgr.mq.engine.amqp",
+        "rabbitmq",
+        "--coremgr.mq.engine.mqtt",
+        "emqx",
+        "--coremgr.mq.rabbitmq.username",
+        "rabbituser3",
+        "--coremgr.mq.rabbitmq.password",
+        "rabbitpass3",
+        "--coremgr.mq.rabbitmq.ttl",
+        "31",
+        "--coremgr.mq.rabbitmq.length",
+        "32",
+        "--coremgr.mq.rabbitmq.hosts",
+        "[{\"name\":\"name31\",\"host\":\"host31\",\"external\":\"external31\",\"active\":true}]",
+        "--coremgr.mq.emqx.apikey",
+        "emqxkey3",
+        "--coremgr.mq.emqx.apisecret",
+        "emqxsecret3",
+        "--coremgr.mq.emqx.hosts",
+        "[{\"name\":\"name32\",\"host\":\"host32\",\"external\":\"external32\",\"active\":false}]",
+        "--coremgr.mq.rumqttd.mqtt-port",
+        "131",
+        "--coremgr.mq.rumqttd.mqtts-port",
+        "132",
+        "--coremgr.mq.rumqttd.console-port",
+        "133",
+        "--coremgr.mq-channels.data.url",
+        "url3",
+    ];
+    env::set_var(&OsStr::new("COREMGR_AUTH"), "sylvia41");
+    env::set_var(&OsStr::new("COREMGR_BROKER"), "sylvia42");
+    env::set_var(&OsStr::new("COREMGR_MQ_ENGINE_AMQP"), "rabbitmq");
+    env::set_var(&OsStr::new("COREMGR_MQ_ENGINE_MQTT"), "rumqttd");
+    env::set_var(&OsStr::new("COREMGR_MQ_RABBITMQ_USERNAME"), "rabbituser4");
+    env::set_var(&OsStr::new("COREMGR_MQ_RABBITMQ_PASSWORD"), "rabbitpass4");
+    env::set_var(&OsStr::new("COREMGR_MQ_RABBITMQ_TTL"), "41");
+    env::set_var(&OsStr::new("COREMGR_MQ_RABBITMQ_LENGTH"), "42");
+    env::set_var(
+        &OsStr::new("COREMGR_MQ_RABBITMQ_HOSTS"),
+        "[{\"name\":\"name41\",\"host\":\"host41\",\"external\":\"external41\",\"active\":false}]",
+    );
+    env::set_var(&OsStr::new("COREMGR_MQ_EMQX_APIKEY"), "emqxkey4");
+    env::set_var(&OsStr::new("COREMGR_MQ_EMQX_APISECRET"), "emqxsecret4");
+    env::set_var(
+        &OsStr::new("COREMGR_MQ_EMQX_HOSTS"),
+        "[{\"name\":\"name42\",\"host\":\"host42\",\"external\":\"external42\",\"active\":true}]",
+    );
+    env::set_var(&OsStr::new("COREMGR_MQ_RUMQTTD_MQTT_PORT"), "141");
+    env::set_var(&OsStr::new("COREMGR_MQ_RUMQTTD_MQTTS_PORT"), "142");
+    env::set_var(&OsStr::new("COREMGR_MQ_RUMQTTD_CONSOLE_PORT"), "143");
+    env::set_var(&OsStr::new("COREMGR_MQCHANNELS_DATA_URL"), "url4");
+    let args = config::reg_args(Command::new("test")).get_matches_from(args);
+    let conf = config::read_args(&args);
+    expect(conf.auth.is_some()).to_equal(true)?;
+    expect(conf.auth.as_ref().unwrap().as_str()).to_equal("sylvia31")?;
+    expect(conf.broker.is_some()).to_equal(true)?;
+    expect(conf.broker.as_ref().unwrap().as_str()).to_equal("sylvia32")?;
+    expect(conf.mq.is_some()).to_equal(true)?;
+    expect(conf.mq.as_ref().unwrap().engine.is_some()).to_equal(true)?;
+    let engine = conf.mq.as_ref().unwrap().engine.as_ref().unwrap();
+    expect(engine.amqp.is_some()).to_equal(true)?;
+    expect(engine.amqp.as_ref().unwrap().as_str()).to_equal(MqEngine::RABBITMQ)?;
+    expect(engine.mqtt.is_some()).to_equal(true)?;
+    expect(engine.mqtt.as_ref().unwrap().as_str()).to_equal(MqEngine::EMQX)?;
+    expect(conf.mq.as_ref().unwrap().rabbitmq.is_some()).to_equal(true)?;
+    let rabbitmq = conf.mq.as_ref().unwrap().rabbitmq.as_ref().unwrap();
+    expect(rabbitmq.username.is_some()).to_equal(true)?;
+    expect(rabbitmq.username.as_ref().unwrap().as_str()).to_equal("rabbituser3")?;
+    expect(rabbitmq.password.is_some()).to_equal(true)?;
+    expect(rabbitmq.password.as_ref().unwrap().as_str()).to_equal("rabbitpass3")?;
+    expect(rabbitmq.ttl).to_equal(Some(31))?;
+    expect(rabbitmq.length).to_equal(Some(32))?;
+    expect(rabbitmq.hosts.is_some()).to_equal(true)?;
+    let hosts = rabbitmq.hosts.as_ref().unwrap();
+    expect(hosts.len()).to_equal(1)?;
+    expect(hosts[0].name.as_str()).to_equal("name31")?;
+    expect(hosts[0].host.as_str()).to_equal("host31")?;
+    expect(hosts[0].external.as_str()).to_equal("external31")?;
+    expect(hosts[0].active).to_equal(true)?;
+    let emqx = conf.mq.as_ref().unwrap().emqx.as_ref().unwrap();
+    expect(emqx.api_key.is_some()).to_equal(true)?;
+    expect(emqx.api_key.as_ref().unwrap().as_str()).to_equal("emqxkey3")?;
+    expect(emqx.api_secret.is_some()).to_equal(true)?;
+    expect(emqx.api_secret.as_ref().unwrap().as_str()).to_equal("emqxsecret3")?;
+    expect(emqx.hosts.is_some()).to_equal(true)?;
+    let hosts = emqx.hosts.as_ref().unwrap();
+    expect(hosts.len()).to_equal(1)?;
+    expect(hosts[0].name.as_str()).to_equal("name32")?;
+    expect(hosts[0].host.as_str()).to_equal("host32")?;
+    expect(hosts[0].external.as_str()).to_equal("external32")?;
+    expect(hosts[0].active).to_equal(false)?;
+    let rumqttd = conf.mq.as_ref().unwrap().rumqttd.as_ref().unwrap();
+    expect(rumqttd.mqtt_port).to_equal(Some(131))?;
+    expect(rumqttd.mqtts_port).to_equal(Some(132))?;
+    expect(rumqttd.console_port).to_equal(Some(133))?;
+    let mq_channels_conf = conf.mq_channels.as_ref().unwrap();
+    expect(mq_channels_conf.data.is_some()).to_equal(true)?;
+    let data_conf = mq_channels_conf.data.as_ref().unwrap();
+    expect(data_conf.url.is_some()).to_equal(true)?;
+    expect(data_conf.url.as_ref().unwrap().as_str()).to_equal("url3")
 }
 
 /// Test [`config::apply_default`].

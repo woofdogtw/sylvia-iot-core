@@ -23,7 +23,7 @@ pub fn integration_test() -> LabResult {
         context.describe("logger", |context| {
             context.it("apply_default", logger::apply_default);
             context.it("reg_args", logger::reg_args);
-            //context.it("read_args", logger::read_args);
+            context.it("read_args", logger::read_args);
         });
 
         context.describe("role", |context| {
@@ -33,7 +33,7 @@ pub fn integration_test() -> LabResult {
         context.describe("server_config", |context| {
             context.it("apply_default", server_config::apply_default);
             context.it("reg_args", server_config::reg_args);
-            //context.it("read_args", server_config::read_args);
+            context.it("read_args", server_config::read_args);
         });
 
         context.describe("strings", |context| {

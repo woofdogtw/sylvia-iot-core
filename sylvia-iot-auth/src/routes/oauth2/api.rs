@@ -333,7 +333,7 @@ pub async fn post_token(req: AccessTokenRequest, state: web::Data<State>) -> imp
                     .body(desc.to_json());
             }
             // TODO: handle this
-            AccessTokenError::Primitive(e) => return HttpResponse::ServiceUnavailable().finish(),
+            AccessTokenError::Primitive(_e) => return HttpResponse::ServiceUnavailable().finish(),
         },
         Ok(token) => token,
     };
@@ -464,7 +464,8 @@ async fn check_auth_params(
                         return Err(redirect_invalid_scope(&req.redirect_uri));
                     }
                     let req_scopes = match req.scope.as_ref().unwrap().parse::<Scope>() {
-                        Err(e) => {
+                        Err(_e) => {
+                            // TODO: handle this with the error reason.
                             return Err(redirect_invalid_scope(&req.redirect_uri));
                         }
                         Ok(scopes) => scopes,

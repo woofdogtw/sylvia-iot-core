@@ -173,7 +173,7 @@ pub fn reg_args(cmd: Command) -> Command {
     .arg(
         Arg::new("coremgr.mq.rabbitmq.length")
             .long("coremgr.mq.rabbitmq.length")
-            .help("RabbitMQ configurations: message length in milliseconds")
+            .help("RabbitMQ configurations: queue length")
             .num_args(1)
             .value_parser(RangedU64ValueParser::<u64>::new().range(1..=usize::MAX as u64)),
     )

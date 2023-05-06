@@ -8,6 +8,8 @@ API - Coremgr (Core Manager)
 - [Roles](#roles)
 - [API wrapping](#wrap)
 - [List API formats](#format)
+- [Service APIs](#service)
+    - [`GET /version` Get service version](#get_version)
 - [Application APIs](#application)
     - [`POST /coremgr/api/v1/application` Create application](#post_application)
     - [`GET /coremgr/api/v1/application/count` Application count](#get_application_count)
@@ -29,7 +31,7 @@ API - Coremgr (Core Manager)
 
 ## <a name="notes"></a>Notes
 
-All API requests must have a **Authorization** header with a **Bearer** token.
+All API requests (except `GET /version`) must have a **Authorization** header with a **Bearer** token.
 
 - **Example**
 
@@ -109,6 +111,50 @@ The special data types will be transformed:
 | `null`    | empty string   |
 | `object`  | JSON string    |
 | `array`   | JSON string    |
+
+# <a name="service"></a>Service APIs
+
+## <a name="get_version"></a>Get service version
+
+Get service name and version information.
+
+    GET /version?
+        q={query}
+
+- *string* `q`: (**optional**) To query the specific information **in plain text**. You can use:
+    - `name`: To query the service name.
+    - `version`: To query current version.
+
+#### Response
+
+- **200 OK**: Version information. Parameters are:
+
+    - *object* `data`:
+        - *string* `name`: The service name.
+        - *string* `version`: Current version.
+
+    - **Example**
+
+        ```json
+        {
+            "data": {
+                "name": "sylvia-iot-coremgr",
+                "version": "1.0.0"
+            }
+        }
+        ```
+
+    - **Example** when `q=name`:
+
+        ```
+        sylvia-iot-coremgr
+        ```
+
+    - **Example** when `q=version`:
+
+        ```
+        1.0.0
+        ```
 
 # <a name="application"></a>Application APIs
 

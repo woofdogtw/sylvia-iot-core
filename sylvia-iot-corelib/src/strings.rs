@@ -54,7 +54,7 @@ pub fn is_uri(uri: &str) -> bool {
 /// To hash the password.
 pub fn password_hash(password: &str, salt: &str) -> String {
     let mut res: [u8; 32] = [0; 32];
-    pbkdf2::pbkdf2::<Hmac<Sha256>>(
+    let _ = pbkdf2::pbkdf2::<Hmac<Sha256>>(
         password.as_bytes(),
         salt.as_bytes(),
         PASSWORD_ROUNDS,

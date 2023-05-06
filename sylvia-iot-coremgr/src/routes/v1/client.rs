@@ -42,8 +42,8 @@ struct Client {
     image: Option<String>,
 }
 
-const CSV_FIELDS: &'static str =
-    "clientId,createdAt,modifiedAt,clientSecret,redirectUris,scopes,userId,name,image\n";
+const CSV_FIELDS: &'static [u8] =
+    b"\xEF\xBB\xBFclientId,createdAt,modifiedAt,clientSecret,redirectUris,scopes,userId,name,image\n";
 
 pub fn new_service(scope_path: &str) -> impl HttpServiceFactory {
     web::scope(scope_path)
@@ -91,7 +91,6 @@ async fn get_client_list(mut req: HttpRequest, state: web::Data<State>) -> impl 
 
     let mut resp_stream = api_resp.bytes_stream();
     let stream = async_stream::stream! {
-        yield Ok(Bytes::from(vec![0xEF, 0xBB, 0xBF])); // BOM
         yield Ok(Bytes::from(CSV_FIELDS));
 
         let mut buffer = BytesMut::new();

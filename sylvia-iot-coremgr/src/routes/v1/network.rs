@@ -90,7 +90,8 @@ struct UlData {
     extension: Option<Map<String, Value>>,
 }
 
-const CSV_FIELDS: &'static str = "networkId,code,unitId,createdAt,modifiedAt,hostUri,name,info\n";
+const CSV_FIELDS: &'static [u8] =
+    b"\xEF\xBB\xBFnetworkId,code,unitId,createdAt,modifiedAt,hostUri,name,info\n";
 
 pub fn new_service(scope_path: &str) -> impl HttpServiceFactory {
     web::scope(scope_path)
@@ -304,10 +305,7 @@ async fn get_network_list(mut req: HttpRequest, state: web::Data<State>) -> impl
     let stream = async_stream::stream! {
         match list_format {
             ListFormat::Array => yield Ok(Bytes::from("[")),
-            ListFormat::Csv => {
-                yield Ok(Bytes::from(vec![0xEF, 0xBB, 0xBF])); // BOM
-                yield Ok(Bytes::from(CSV_FIELDS));
-            }
+            ListFormat::Csv => yield Ok(Bytes::from(CSV_FIELDS)),
             ListFormat::Data => yield Ok(Bytes::from("{\"data\":[")),
         }
         let mut first_sent = false;

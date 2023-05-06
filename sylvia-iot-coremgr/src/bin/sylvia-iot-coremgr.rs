@@ -11,7 +11,7 @@ use actix_files;
 use actix_http::KeepAlive;
 use actix_web::{
     middleware::{Logger, NormalizePath},
-    App, HttpServer,
+    web, App, HttpServer,
 };
 use actix_web_prom::PrometheusMetricsBuilder;
 use clap::{Arg as ClapArg, Command};
@@ -88,6 +88,7 @@ async fn main() -> std::io::Result<()> {
             .wrap(NormalizePath::trim())
             .wrap(Cors::permissive())
             .service(routes::new_service(&coremgr_state))
+            .route("/version", web::get().to(routes::get_version))
             .service(actix_files::Files::new("/", static_path).index_file("index.html"))
     })
     .keep_alive(KeepAlive::Timeout(Duration::from_secs(60)));

@@ -15,13 +15,53 @@ pub fn reg_args(_context: &mut SpecContext<TestState>) -> Result<(), String> {
 
 /// Test [`logger::read_args`].
 pub fn read_args(_context: &mut SpecContext<TestState>) -> Result<(), String> {
-    let args = Command::new("test").get_matches();
+    // Default.
+    let args = logger::reg_args(Command::new("test")).get_matches_from(vec!["test"]);
     let conf = logger::read_args(&args);
     expect(conf.level.is_some()).to_equal(true)?;
     expect(conf.level.as_ref().unwrap().as_str()).to_equal(logger::DEF_LEVEL)?;
     expect(conf.style.is_some()).to_equal(true)?;
     expect(conf.style.as_ref().unwrap().as_str()).to_equal(logger::DEF_STYLE)?;
 
+    // Modified default by command-line arguments.
+    let args = vec!["test", "--log.level", "off", "--log.style", "json"];
+    let args = logger::reg_args(Command::new("test")).get_matches_from(args);
+    let conf = logger::read_args(&args);
+    expect(conf.level.is_some()).to_equal(true)?;
+    expect(conf.level.as_ref().unwrap().as_str()).to_equal(logger::LEVEL_OFF)?;
+    expect(conf.style.is_some()).to_equal(true)?;
+    expect(conf.style.as_ref().unwrap().as_str()).to_equal(logger::STYLE_JSON)?;
+
+    let args = vec!["test", "--log.level", "error", "--log.style", "log4j"];
+    let args = logger::reg_args(Command::new("test")).get_matches_from(args);
+    let conf = logger::read_args(&args);
+    expect(conf.level.is_some()).to_equal(true)?;
+    expect(conf.level.as_ref().unwrap().as_str()).to_equal(logger::LEVEL_ERROR)?;
+    expect(conf.style.is_some()).to_equal(true)?;
+    expect(conf.style.as_ref().unwrap().as_str()).to_equal(logger::STYLE_LOG4J)?;
+
+    let args = vec!["test", "--log.level", "warn"];
+    let args = logger::reg_args(Command::new("test")).get_matches_from(args);
+    let conf = logger::read_args(&args);
+    expect(conf.level.is_some()).to_equal(true)?;
+    expect(conf.level.as_ref().unwrap().as_str()).to_equal(logger::LEVEL_WARN)?;
+
+    let args = vec!["test", "--log.level", "info"];
+    let args = logger::reg_args(Command::new("test")).get_matches_from(args);
+    let conf = logger::read_args(&args);
+    expect(conf.level.is_some()).to_equal(true)?;
+    expect(conf.level.as_ref().unwrap().as_str()).to_equal(logger::LEVEL_INFO)?;
+
+    let args = vec!["test", "--log.level", "debug"];
+    let args = logger::reg_args(Command::new("test")).get_matches_from(args);
+    let conf = logger::read_args(&args);
+    expect(conf.level.is_some()).to_equal(true)?;
+    expect(conf.level.as_ref().unwrap().as_str()).to_equal(logger::LEVEL_DEBUG)?;
+
+    // Clear command-line arguments.
+    let args = logger::reg_args(Command::new("test")).get_matches_from(vec!["test"]);
+
+    // Test wrong environment variables.
     env::set_var(&OsStr::new("LOG_LEVEL"), "level");
     env::set_var(&OsStr::new("LOG_STYLE"), "style");
     let conf = logger::read_args(&args);
@@ -30,19 +70,48 @@ pub fn read_args(_context: &mut SpecContext<TestState>) -> Result<(), String> {
     expect(conf.style.is_some()).to_equal(true)?;
     expect(conf.style.as_ref().unwrap().as_str()).to_equal(logger::DEF_STYLE)?;
 
+    // Modified default by environment variables.
     env::set_var(&OsStr::new("LOG_LEVEL"), "off");
     env::set_var(&OsStr::new("LOG_STYLE"), "json");
+    let conf = logger::read_args(&args);
     expect(conf.level.is_some()).to_equal(true)?;
-    expect(conf.level.as_ref().unwrap().as_str()).to_equal("off")?;
+    expect(conf.level.as_ref().unwrap().as_str()).to_equal(logger::LEVEL_OFF)?;
     expect(conf.style.is_some()).to_equal(true)?;
-    expect(conf.style.as_ref().unwrap().as_str()).to_equal("json")?;
+    expect(conf.style.as_ref().unwrap().as_str()).to_equal(logger::STYLE_JSON)?;
+
+    env::set_var(&OsStr::new("LOG_LEVEL"), "error");
+    env::set_var(&OsStr::new("LOG_STYLE"), "log4j");
+    let conf = logger::read_args(&args);
+    expect(conf.level.is_some()).to_equal(true)?;
+    expect(conf.level.as_ref().unwrap().as_str()).to_equal(logger::LEVEL_ERROR)?;
+    expect(conf.style.is_some()).to_equal(true)?;
+    expect(conf.style.as_ref().unwrap().as_str()).to_equal(logger::STYLE_LOG4J)?;
+
+    env::set_var(&OsStr::new("LOG_LEVEL"), "warn");
+    let conf = logger::read_args(&args);
+    expect(conf.level.is_some()).to_equal(true)?;
+    expect(conf.level.as_ref().unwrap().as_str()).to_equal(logger::LEVEL_WARN)?;
 
     env::set_var(&OsStr::new("LOG_LEVEL"), "info");
-    env::set_var(&OsStr::new("LOG_STYLE"), "log4j");
+    let conf = logger::read_args(&args);
     expect(conf.level.is_some()).to_equal(true)?;
-    expect(conf.level.as_ref().unwrap().as_str()).to_equal("info")?;
+    expect(conf.level.as_ref().unwrap().as_str()).to_equal(logger::LEVEL_INFO)?;
+
+    env::set_var(&OsStr::new("LOG_LEVEL"), "debug");
+    let conf = logger::read_args(&args);
+    expect(conf.level.is_some()).to_equal(true)?;
+    expect(conf.level.as_ref().unwrap().as_str()).to_equal(logger::LEVEL_DEBUG)?;
+
+    // Test command-line arguments overwrite environment variables.
+    let args = vec!["test", "--log.level", "warn", "--log.style", "log4j"];
+    env::set_var(&OsStr::new("LOG_LEVEL"), "debug");
+    env::set_var(&OsStr::new("LOG_STYLE"), "json");
+    let args = logger::reg_args(Command::new("test")).get_matches_from(args);
+    let conf = logger::read_args(&args);
+    expect(conf.level.is_some()).to_equal(true)?;
+    expect(conf.level.as_ref().unwrap().as_str()).to_equal(logger::LEVEL_WARN)?;
     expect(conf.style.is_some()).to_equal(true)?;
-    expect(conf.style.as_ref().unwrap().as_str()).to_equal("log4j")
+    expect(conf.style.as_ref().unwrap().as_str()).to_equal(logger::STYLE_LOG4J)
 }
 
 /// Test [`logger::apply_default`].

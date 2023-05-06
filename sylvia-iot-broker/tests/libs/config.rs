@@ -16,7 +16,8 @@ pub fn reg_args(_context: &mut SpecContext<TestState>) -> Result<(), String> {
 
 /// Test [`config::read_args`].
 pub fn read_args(_context: &mut SpecContext<TestState>) -> Result<(), String> {
-    let args = Command::new("test").get_matches();
+    // Default.
+    let args = config::reg_args(Command::new("test")).get_matches_from(vec!["test"]);
     let conf = config::read_args(&args);
     expect(conf.auth.is_some()).to_equal(true)?;
     expect(conf.auth.as_ref().unwrap().as_str()).to_equal(config::DEF_AUTH)?;
@@ -85,106 +86,493 @@ pub fn read_args(_context: &mut SpecContext<TestState>) -> Result<(), String> {
     expect(ctrl_conf.prefetch.is_some()).to_equal(true)?;
     expect(*ctrl_conf.prefetch.as_ref().unwrap()).to_equal(config::DEF_MQ_PREFETCH)?;
     expect(mq_channels_conf.data.is_none()).to_equal(true)?;
+    expect(conf.api_scopes.as_ref()).to_equal(Some(&HashMap::new()))?;
 
-    env::set_var(&OsStr::new("BROKER_AUTH"), "sylvia2");
-    env::set_var(&OsStr::new("BROKER_DB_ENGINE"), "test2");
-    env::set_var(&OsStr::new("BROKER_DB_MONGODB_URL"), "url2");
-    env::set_var(&OsStr::new("BROKER_DB_MONGODB_DATABASE"), "db2");
-    env::set_var(&OsStr::new("BROKER_DB_MONGODB_POOLSIZE"), "12");
-    env::set_var(&OsStr::new("BROKER_DB_SQLITE_PATH"), "path2");
-    env::set_var(&OsStr::new("BROKER_CACHE_ENGINE"), "test3");
-    env::set_var(&OsStr::new("BROKER_MEMORY_DEVICE"), "100");
-    env::set_var(&OsStr::new("BROKER_MEMORY_DEVICE_ROUTE"), "101");
-    env::set_var(&OsStr::new("BROKER_MEMORY_NETWORK_ROUTE"), "102");
-    env::set_var(&OsStr::new("BROKER_MQ_PREFETCH"), "10");
-    env::set_var(&OsStr::new("BROKER_MQ_SHAREDPREFIX"), "$shared/group/");
-    env::set_var(&OsStr::new("BROKER_MQCHANNELS_UNIT_URL"), "url3");
-    env::set_var(&OsStr::new("BROKER_MQCHANNELS_UNIT_PREFETCH"), "13");
-    env::set_var(&OsStr::new("BROKER_MQCHANNELS_APPLICATION_URL"), "url4");
-    env::set_var(&OsStr::new("BROKER_MQCHANNELS_APPLICATION_PREFETCH"), "14");
-    env::set_var(&OsStr::new("BROKER_MQCHANNELS_NETWORK_URL"), "url5");
-    env::set_var(&OsStr::new("BROKER_MQCHANNELS_NETWORK_PREFETCH"), "15");
-    env::set_var(&OsStr::new("BROKER_MQCHANNELS_DEVICE_URL"), "url6");
-    env::set_var(&OsStr::new("BROKER_MQCHANNELS_DEVICE_PREFETCH"), "16");
-    env::set_var(&OsStr::new("BROKER_MQCHANNELS_DEVICE_ROUTE_URL"), "url7");
-    env::set_var(&OsStr::new("BROKER_MQCHANNELS_DEVICE_ROUTE_PREFETCH"), "17");
-    env::set_var(&OsStr::new("BROKER_MQCHANNELS_NETWORK_ROUTE_URL"), "url8");
-    env::set_var(
-        &OsStr::new("BROKER_MQCHANNELS_NETWORK_ROUTE_PREFETCH"),
+    // Modified default by command-line arguments.
+    let args = vec![
+        "test",
+        "--broker.auth",
+        "sylvia1",
+        "--broker.db.engine",
+        "mongodb",
+        "--broker.db.mongodb.url",
+        "url11",
+        "--broker.db.mongodb.database",
+        "db1",
+        "--broker.db.mongodb.poolsize",
+        "11",
+        "--broker.db.sqlite.path",
+        "path1",
+        "--broker.cache.engine",
+        "memory",
+        "--broker.cache.memory.device",
+        "111",
+        "--broker.cache.memory.device-route",
+        "112",
+        "--broker.cache.memory.network-route",
+        "113",
+        "--broker.mq.prefetch",
+        "12",
+        "--broker.mq.sharedprefix",
+        "prefix1",
+        "--broker.mq-channels.unit.url",
+        "url13",
+        "--broker.mq-channels.unit.prefetch",
+        "13",
+        "--broker.mq-channels.application.url",
+        "url14",
+        "--broker.mq-channels.application.prefetch",
+        "14",
+        "--broker.mq-channels.network.url",
+        "url15",
+        "--broker.mq-channels.network.prefetch",
+        "15",
+        "--broker.mq-channels.device.url",
+        "url16",
+        "--broker.mq-channels.device.prefetch",
+        "16",
+        "--broker.mq-channels.device-route.url",
+        "url17",
+        "--broker.mq-channels.device-route.prefetch",
+        "17",
+        "--broker.mq-channels.network-route.url",
+        "url18",
+        "--broker.mq-channels.network-route.prefetch",
         "18",
-    );
-    env::set_var(&OsStr::new("BROKER_MQCHANNELS_DATA_URL"), "url9");
-    let args = Command::new("test").get_matches();
+        "--broker.mq-channels.data.url",
+        "url19",
+        "--broker.api-scopes",
+        "{\"key11\":[\"value11\"]}",
+    ];
+    let args = config::reg_args(Command::new("test")).get_matches_from(args);
     let conf = config::read_args(&args);
     expect(conf.auth.is_some()).to_equal(true)?;
-    expect(conf.auth.as_ref().unwrap().as_str()).to_equal("sylvia2")?;
+    expect(conf.auth.as_ref().unwrap().as_str()).to_equal("sylvia1")?;
     expect(conf.db.is_some()).to_equal(true)?;
     expect(conf.db.as_ref().unwrap().engine.as_ref().unwrap().as_str())
-        .to_equal(config::DEF_ENGINE)?;
+        .to_equal(DbEngine::MONGODB)?;
     expect(conf.db.as_ref().unwrap().mongodb.is_some()).to_equal(true)?;
     expect(conf.db.as_ref().unwrap().sqlite.is_some()).to_equal(true)?;
     let db_conf = conf.db.as_ref().unwrap().mongodb.as_ref().unwrap();
-    expect(db_conf.url.as_ref().unwrap().as_str()).to_equal("url2")?;
-    expect(db_conf.database.as_ref().unwrap().as_str()).to_equal("db2")?;
-    expect(db_conf.pool_size).to_equal(Some(12))?;
+    expect(db_conf.url.as_ref().unwrap().as_str()).to_equal("url11")?;
+    expect(db_conf.database.as_ref().unwrap().as_str()).to_equal("db1")?;
+    expect(db_conf.pool_size).to_equal(Some(11))?;
     let db_conf = conf.db.as_ref().unwrap().sqlite.as_ref().unwrap();
-    expect(db_conf.path.as_ref().unwrap().as_str()).to_equal("path2")?;
+    expect(db_conf.path.as_ref().unwrap().as_str()).to_equal("path1")?;
     expect(conf.cache.is_some()).to_equal(true)?;
     let cache_conf = conf.cache.as_ref().unwrap();
-    expect(cache_conf.engine.as_ref().unwrap().as_str()).to_equal(config::DEF_CACHE_ENGINE)?;
+    expect(cache_conf.engine.as_ref().unwrap().as_str()).to_equal(CacheEngine::MEMORY)?;
     expect(cache_conf.memory.is_some()).to_equal(true)?;
     let cache_conf = cache_conf.memory.as_ref().unwrap();
-    expect(cache_conf.device).to_equal(Some(100))?;
-    expect(cache_conf.device_route).to_equal(Some(101))?;
-    expect(cache_conf.network_route).to_equal(Some(102))?;
+    expect(cache_conf.device).to_equal(Some(111))?;
+    expect(cache_conf.device_route).to_equal(Some(112))?;
+    expect(cache_conf.network_route).to_equal(Some(113))?;
     expect(conf.mq.is_some()).to_equal(true)?;
     let mq_conf = conf.mq.as_ref().unwrap();
     expect(mq_conf.prefetch.is_some()).to_equal(true)?;
-    expect(*mq_conf.prefetch.as_ref().unwrap()).to_equal(10)?;
+    expect(*mq_conf.prefetch.as_ref().unwrap()).to_equal(12)?;
     expect(mq_conf.shared_prefix.is_some()).to_equal(true)?;
-    expect(mq_conf.shared_prefix.as_ref().unwrap().as_str()).to_equal("$shared/group/")?;
+    expect(mq_conf.shared_prefix.as_ref().unwrap().as_str()).to_equal("prefix1")?;
     expect(conf.mq_channels.is_some()).to_equal(true)?;
     let mq_channels_conf = conf.mq_channels.as_ref().unwrap();
+    expect(mq_channels_conf.unit.is_some()).to_equal(true)?;
+    let ctrl_conf = mq_channels_conf.unit.as_ref().unwrap();
+    expect(ctrl_conf.url.is_some()).to_equal(true)?;
+    expect(ctrl_conf.url.as_ref().unwrap().as_str()).to_equal("url13")?;
+    expect(ctrl_conf.prefetch.is_some()).to_equal(true)?;
+    expect(*ctrl_conf.prefetch.as_ref().unwrap()).to_equal(13)?;
     expect(mq_channels_conf.application.is_some()).to_equal(true)?;
     let ctrl_conf = mq_channels_conf.application.as_ref().unwrap();
     expect(ctrl_conf.url.is_some()).to_equal(true)?;
-    expect(ctrl_conf.url.as_ref().unwrap().as_str()).to_equal("url4")?;
+    expect(ctrl_conf.url.as_ref().unwrap().as_str()).to_equal("url14")?;
     expect(ctrl_conf.prefetch.is_some()).to_equal(true)?;
     expect(*ctrl_conf.prefetch.as_ref().unwrap()).to_equal(14)?;
     expect(mq_channels_conf.network.is_some()).to_equal(true)?;
     let ctrl_conf = mq_channels_conf.network.as_ref().unwrap();
     expect(ctrl_conf.url.is_some()).to_equal(true)?;
-    expect(ctrl_conf.url.as_ref().unwrap().as_str()).to_equal("url5")?;
+    expect(ctrl_conf.url.as_ref().unwrap().as_str()).to_equal("url15")?;
     expect(ctrl_conf.prefetch.is_some()).to_equal(true)?;
     expect(*ctrl_conf.prefetch.as_ref().unwrap()).to_equal(15)?;
     expect(mq_channels_conf.device.is_some()).to_equal(true)?;
     let ctrl_conf = mq_channels_conf.device.as_ref().unwrap();
     expect(ctrl_conf.url.is_some()).to_equal(true)?;
-    expect(ctrl_conf.url.as_ref().unwrap().as_str()).to_equal("url6")?;
+    expect(ctrl_conf.url.as_ref().unwrap().as_str()).to_equal("url16")?;
     expect(ctrl_conf.prefetch.is_some()).to_equal(true)?;
     expect(*ctrl_conf.prefetch.as_ref().unwrap()).to_equal(16)?;
     expect(mq_channels_conf.device_route.is_some()).to_equal(true)?;
     let ctrl_conf = mq_channels_conf.device_route.as_ref().unwrap();
     expect(ctrl_conf.url.is_some()).to_equal(true)?;
-    expect(ctrl_conf.url.as_ref().unwrap().as_str()).to_equal("url7")?;
+    expect(ctrl_conf.url.as_ref().unwrap().as_str()).to_equal("url17")?;
     expect(ctrl_conf.prefetch.is_some()).to_equal(true)?;
     expect(*ctrl_conf.prefetch.as_ref().unwrap()).to_equal(17)?;
     expect(mq_channels_conf.network_route.is_some()).to_equal(true)?;
     let ctrl_conf = mq_channels_conf.network_route.as_ref().unwrap();
     expect(ctrl_conf.url.is_some()).to_equal(true)?;
-    expect(ctrl_conf.url.as_ref().unwrap().as_str()).to_equal("url8")?;
+    expect(ctrl_conf.url.as_ref().unwrap().as_str()).to_equal("url18")?;
     expect(ctrl_conf.prefetch.is_some()).to_equal(true)?;
     expect(*ctrl_conf.prefetch.as_ref().unwrap()).to_equal(18)?;
     expect(mq_channels_conf.data.is_some()).to_equal(true)?;
     let data_conf = mq_channels_conf.data.as_ref().unwrap();
     expect(data_conf.url.is_some()).to_equal(true)?;
-    expect(data_conf.url.as_ref().unwrap().as_str()).to_equal("url9")?;
+    expect(data_conf.url.as_ref().unwrap().as_str()).to_equal("url19")?;
+    let mut map: HashMap<String, Vec<String>> = HashMap::new();
+    map.insert("key11".to_string(), vec!["value11".to_string()]);
+    expect(conf.api_scopes.as_ref()).to_equal(Some(&map))?;
 
+    let args = vec![
+        "test",
+        "--broker.db.engine",
+        "sqlite",
+        "--broker.cache.engine",
+        "none",
+        "--broker.mq.sharedprefix",
+        "",
+        "--broker.api-scopes",
+        "",
+    ];
+    let args = config::reg_args(Command::new("test")).get_matches_from(args);
+    let conf = config::read_args(&args);
+    expect(conf.db.is_some()).to_equal(true)?;
+    expect(conf.db.as_ref().unwrap().engine.as_ref().unwrap().as_str())
+        .to_equal(DbEngine::SQLITE)?;
+    expect(conf.cache.is_some()).to_equal(true)?;
+    let cache_conf = conf.cache.as_ref().unwrap();
+    expect(cache_conf.engine.as_ref().unwrap().as_str()).to_equal(CacheEngine::NONE)?;
+    expect(conf.mq.is_some()).to_equal(true)?;
+    let mq_conf = conf.mq.as_ref().unwrap();
+    expect(mq_conf.shared_prefix.as_ref().unwrap().as_str()).to_equal("")?;
+    expect(conf.api_scopes.as_ref()).to_equal(Some(&HashMap::new()))?;
+
+    // Test wrong command-line arguments.
+    let args = vec!["test", "--broker.api-scopes", "{"];
+    let args = config::reg_args(Command::new("test")).get_matches_from(args);
+    let conf = config::read_args(&args);
+    expect(conf.api_scopes.as_ref()).to_equal(Some(&HashMap::new()))?;
+
+    // Clear command-line arguments.
+    let args = config::reg_args(Command::new("test")).get_matches_from(vec!["test"]);
+
+    // Modified default by environment variables.
+    env::set_var(&OsStr::new("BROKER_AUTH"), "sylvia2");
+    env::set_var(&OsStr::new("BROKER_DB_ENGINE"), "mongodb");
+    env::set_var(&OsStr::new("BROKER_DB_MONGODB_URL"), "url21");
+    env::set_var(&OsStr::new("BROKER_DB_MONGODB_DATABASE"), "db2");
+    env::set_var(&OsStr::new("BROKER_DB_MONGODB_POOLSIZE"), "21");
+    env::set_var(&OsStr::new("BROKER_DB_SQLITE_PATH"), "path2");
+    env::set_var(&OsStr::new("BROKER_CACHE_ENGINE"), "memory");
+    env::set_var(&OsStr::new("BROKER_CACHE_MEMORY_DEVICE"), "121");
+    env::set_var(&OsStr::new("BROKER_CACHE_MEMORY_DEVICE_ROUTE"), "122");
+    env::set_var(&OsStr::new("BROKER_CACHE_MEMORY_NETWORK_ROUTE"), "123");
+    env::set_var(&OsStr::new("BROKER_MQ_PREFETCH"), "22");
+    env::set_var(&OsStr::new("BROKER_MQ_SHAREDPREFIX"), "prefix2");
+    env::set_var(&OsStr::new("BROKER_MQCHANNELS_UNIT_URL"), "url23");
+    env::set_var(&OsStr::new("BROKER_MQCHANNELS_UNIT_PREFETCH"), "23");
+    env::set_var(&OsStr::new("BROKER_MQCHANNELS_APPLICATION_URL"), "url24");
+    env::set_var(&OsStr::new("BROKER_MQCHANNELS_APPLICATION_PREFETCH"), "24");
+    env::set_var(&OsStr::new("BROKER_MQCHANNELS_NETWORK_URL"), "url25");
+    env::set_var(&OsStr::new("BROKER_MQCHANNELS_NETWORK_PREFETCH"), "25");
+    env::set_var(&OsStr::new("BROKER_MQCHANNELS_DEVICE_URL"), "url26");
+    env::set_var(&OsStr::new("BROKER_MQCHANNELS_DEVICE_PREFETCH"), "26");
+    env::set_var(&OsStr::new("BROKER_MQCHANNELS_DEVICE_ROUTE_URL"), "url27");
+    env::set_var(&OsStr::new("BROKER_MQCHANNELS_DEVICE_ROUTE_PREFETCH"), "27");
+    env::set_var(&OsStr::new("BROKER_MQCHANNELS_NETWORK_ROUTE_URL"), "url28");
+    env::set_var(
+        &OsStr::new("BROKER_MQCHANNELS_NETWORK_ROUTE_PREFETCH"),
+        "28",
+    );
+    env::set_var(&OsStr::new("BROKER_MQCHANNELS_DATA_URL"), "url29");
+    env::set_var(
+        &OsStr::new("BROKER_API_SCOPES"),
+        "{\"key21\":[\"value21\"]}",
+    );
+    let conf = config::read_args(&args);
+    expect(conf.auth.is_some()).to_equal(true)?;
+    expect(conf.auth.as_ref().unwrap().as_str()).to_equal("sylvia2")?;
+    expect(conf.db.is_some()).to_equal(true)?;
+    expect(conf.db.as_ref().unwrap().engine.as_ref().unwrap().as_str())
+        .to_equal(DbEngine::MONGODB)?;
+    expect(conf.db.as_ref().unwrap().mongodb.is_some()).to_equal(true)?;
+    expect(conf.db.as_ref().unwrap().sqlite.is_some()).to_equal(true)?;
+    let db_conf = conf.db.as_ref().unwrap().mongodb.as_ref().unwrap();
+    expect(db_conf.url.as_ref().unwrap().as_str()).to_equal("url21")?;
+    expect(db_conf.database.as_ref().unwrap().as_str()).to_equal("db2")?;
+    expect(db_conf.pool_size).to_equal(Some(21))?;
+    let db_conf = conf.db.as_ref().unwrap().sqlite.as_ref().unwrap();
+    expect(db_conf.path.as_ref().unwrap().as_str()).to_equal("path2")?;
+    expect(conf.cache.is_some()).to_equal(true)?;
+    let cache_conf = conf.cache.as_ref().unwrap();
+    expect(cache_conf.engine.as_ref().unwrap().as_str()).to_equal(CacheEngine::MEMORY)?;
+    expect(cache_conf.memory.is_some()).to_equal(true)?;
+    let cache_conf = cache_conf.memory.as_ref().unwrap();
+    expect(cache_conf.device).to_equal(Some(121))?;
+    expect(cache_conf.device_route).to_equal(Some(122))?;
+    expect(cache_conf.network_route).to_equal(Some(123))?;
+    expect(conf.mq.is_some()).to_equal(true)?;
+    let mq_conf = conf.mq.as_ref().unwrap();
+    expect(mq_conf.prefetch.is_some()).to_equal(true)?;
+    expect(*mq_conf.prefetch.as_ref().unwrap()).to_equal(22)?;
+    expect(mq_conf.shared_prefix.is_some()).to_equal(true)?;
+    expect(mq_conf.shared_prefix.as_ref().unwrap().as_str()).to_equal("prefix2")?;
+    expect(conf.mq_channels.is_some()).to_equal(true)?;
+    let mq_channels_conf = conf.mq_channels.as_ref().unwrap();
+    expect(mq_channels_conf.unit.is_some()).to_equal(true)?;
+    let ctrl_conf = mq_channels_conf.unit.as_ref().unwrap();
+    expect(ctrl_conf.url.is_some()).to_equal(true)?;
+    expect(ctrl_conf.url.as_ref().unwrap().as_str()).to_equal("url23")?;
+    expect(ctrl_conf.prefetch.is_some()).to_equal(true)?;
+    expect(*ctrl_conf.prefetch.as_ref().unwrap()).to_equal(23)?;
+    expect(mq_channels_conf.application.is_some()).to_equal(true)?;
+    let ctrl_conf = mq_channels_conf.application.as_ref().unwrap();
+    expect(ctrl_conf.url.is_some()).to_equal(true)?;
+    expect(ctrl_conf.url.as_ref().unwrap().as_str()).to_equal("url24")?;
+    expect(ctrl_conf.prefetch.is_some()).to_equal(true)?;
+    expect(*ctrl_conf.prefetch.as_ref().unwrap()).to_equal(24)?;
+    expect(mq_channels_conf.network.is_some()).to_equal(true)?;
+    let ctrl_conf = mq_channels_conf.network.as_ref().unwrap();
+    expect(ctrl_conf.url.is_some()).to_equal(true)?;
+    expect(ctrl_conf.url.as_ref().unwrap().as_str()).to_equal("url25")?;
+    expect(ctrl_conf.prefetch.is_some()).to_equal(true)?;
+    expect(*ctrl_conf.prefetch.as_ref().unwrap()).to_equal(25)?;
+    expect(mq_channels_conf.device.is_some()).to_equal(true)?;
+    let ctrl_conf = mq_channels_conf.device.as_ref().unwrap();
+    expect(ctrl_conf.url.is_some()).to_equal(true)?;
+    expect(ctrl_conf.url.as_ref().unwrap().as_str()).to_equal("url26")?;
+    expect(ctrl_conf.prefetch.is_some()).to_equal(true)?;
+    expect(*ctrl_conf.prefetch.as_ref().unwrap()).to_equal(26)?;
+    expect(mq_channels_conf.device_route.is_some()).to_equal(true)?;
+    let ctrl_conf = mq_channels_conf.device_route.as_ref().unwrap();
+    expect(ctrl_conf.url.is_some()).to_equal(true)?;
+    expect(ctrl_conf.url.as_ref().unwrap().as_str()).to_equal("url27")?;
+    expect(ctrl_conf.prefetch.is_some()).to_equal(true)?;
+    expect(*ctrl_conf.prefetch.as_ref().unwrap()).to_equal(27)?;
+    expect(mq_channels_conf.network_route.is_some()).to_equal(true)?;
+    let ctrl_conf = mq_channels_conf.network_route.as_ref().unwrap();
+    expect(ctrl_conf.url.is_some()).to_equal(true)?;
+    expect(ctrl_conf.url.as_ref().unwrap().as_str()).to_equal("url28")?;
+    expect(ctrl_conf.prefetch.is_some()).to_equal(true)?;
+    expect(*ctrl_conf.prefetch.as_ref().unwrap()).to_equal(28)?;
+    expect(mq_channels_conf.data.is_some()).to_equal(true)?;
+    let data_conf = mq_channels_conf.data.as_ref().unwrap();
+    expect(data_conf.url.is_some()).to_equal(true)?;
+    expect(data_conf.url.as_ref().unwrap().as_str()).to_equal("url29")?;
+    let mut map: HashMap<String, Vec<String>> = HashMap::new();
+    map.insert("key21".to_string(), vec!["value21".to_string()]);
+    expect(conf.api_scopes.as_ref()).to_equal(Some(&map))?;
+
+    env::set_var(&OsStr::new("BROKER_DB_ENGINE"), "sqlite");
+    env::set_var(&OsStr::new("BROKER_CACHE_ENGINE"), "none");
+    env::set_var(&OsStr::new("BROKER_API_SCOPES"), "");
+    let conf = config::read_args(&args);
+    expect(conf.db.is_some()).to_equal(true)?;
+    expect(conf.db.as_ref().unwrap().engine.as_ref().unwrap().as_str())
+        .to_equal(DbEngine::SQLITE)?;
+    expect(conf.cache.is_some()).to_equal(true)?;
+    let cache_conf = conf.cache.as_ref().unwrap();
+    expect(cache_conf.engine.as_ref().unwrap().as_str()).to_equal(CacheEngine::NONE)?;
+    expect(conf.api_scopes.as_ref()).to_equal(Some(&HashMap::new()))?;
+
+    // Test wrong environment variables.
+    env::set_var(&OsStr::new("BROKER_DB_ENGINE"), "test2");
+    env::set_var(&OsStr::new("BROKER_CACHE_ENGINE"), "test3");
     env::set_var(&OsStr::new("BROKER_DB_MONGODB_POOLSIZE"), "12_000");
-    let args = Command::new("test").get_matches();
+    env::set_var(&OsStr::new("BROKER_CACHE_MEMORY_DEVICE"), "12_000");
+    env::set_var(&OsStr::new("BROKER_CACHE_MEMORY_DEVICE_ROUTE"), "12_000");
+    env::set_var(&OsStr::new("BROKER_CACHE_MEMORY_NETWORK_ROUTE"), "12_000");
+    env::set_var(&OsStr::new("BROKER_MQ_PREFETCH"), "12_000");
+    env::set_var(&OsStr::new("BROKER_MQCHANNELS_UNIT_PREFETCH"), "12_000");
+    env::set_var(
+        &OsStr::new("BROKER_MQCHANNELS_APPLICATION_PREFETCH"),
+        "12_000",
+    );
+    env::set_var(&OsStr::new("BROKER_MQCHANNELS_NETWORK_PREFETCH"), "12_000");
+    env::set_var(&OsStr::new("BROKER_MQCHANNELS_DEVICE_PREFETCH"), "12_000");
+    env::set_var(
+        &OsStr::new("BROKER_MQCHANNELS_DEVICE_ROUTE_PREFETCH"),
+        "12_000",
+    );
+    env::set_var(
+        &OsStr::new("BROKER_MQCHANNELS_NETWORK_ROUTE_PREFETCH"),
+        "12_000",
+    );
+    env::set_var(&OsStr::new("BROKER_API_SCOPES"), "}");
+    let args = config::reg_args(Command::new("test")).get_matches_from(vec!["test"]);
     let conf = config::read_args(&args);
     let db_conf = conf.db.as_ref().unwrap().mongodb.as_ref().unwrap();
-    expect(db_conf.pool_size).to_equal(None)
+    expect(conf.db.as_ref().unwrap().engine.as_ref().unwrap().as_str())
+        .to_equal(config::DEF_ENGINE)?;
+    expect(db_conf.pool_size).to_equal(None)?;
+    expect(conf.cache.is_some()).to_equal(true)?;
+    let cache_conf = conf.cache.as_ref().unwrap();
+    expect(cache_conf.engine.as_ref().unwrap().as_str()).to_equal(CacheEngine::NONE)?;
+    expect(cache_conf.memory.is_some()).to_equal(true)?;
+    let cache_conf = cache_conf.memory.as_ref().unwrap();
+    expect(cache_conf.device).to_equal(Some(config::DEF_MEMORY_DEVICE))?;
+    expect(cache_conf.device_route).to_equal(Some(config::DEF_MEMORY_DEVICE_ROUTE))?;
+    expect(cache_conf.network_route).to_equal(Some(config::DEF_MEMORY_NETWORK_ROUTE))?;
+    expect(conf.api_scopes.as_ref()).to_equal(Some(&HashMap::new()))?;
+
+    // Test command-line arguments overwrite environment variables.
+    let args = vec![
+        "test",
+        "--broker.auth",
+        "sylvia3",
+        "--broker.db.engine",
+        "mongodb",
+        "--broker.db.mongodb.url",
+        "url31",
+        "--broker.db.mongodb.database",
+        "db3",
+        "--broker.db.mongodb.poolsize",
+        "31",
+        "--broker.db.sqlite.path",
+        "path3",
+        "--broker.cache.engine",
+        "memory",
+        "--broker.cache.memory.device",
+        "131",
+        "--broker.cache.memory.device-route",
+        "132",
+        "--broker.cache.memory.network-route",
+        "133",
+        "--broker.mq.prefetch",
+        "32",
+        "--broker.mq.sharedprefix",
+        "prefix3",
+        "--broker.mq-channels.unit.url",
+        "url33",
+        "--broker.mq-channels.unit.prefetch",
+        "33",
+        "--broker.mq-channels.application.url",
+        "url34",
+        "--broker.mq-channels.application.prefetch",
+        "34",
+        "--broker.mq-channels.network.url",
+        "url35",
+        "--broker.mq-channels.network.prefetch",
+        "35",
+        "--broker.mq-channels.device.url",
+        "url36",
+        "--broker.mq-channels.device.prefetch",
+        "36",
+        "--broker.mq-channels.device-route.url",
+        "url37",
+        "--broker.mq-channels.device-route.prefetch",
+        "37",
+        "--broker.mq-channels.network-route.url",
+        "url38",
+        "--broker.mq-channels.network-route.prefetch",
+        "38",
+        "--broker.mq-channels.data.url",
+        "url39",
+        "--broker.api-scopes",
+        "{\"key31\":[\"value31\"]}",
+    ];
+    env::set_var(&OsStr::new("BROKER_AUTH"), "sylvia4");
+    env::set_var(&OsStr::new("BROKER_DB_ENGINE"), "mongodb");
+    env::set_var(&OsStr::new("BROKER_DB_MONGODB_URL"), "url41");
+    env::set_var(&OsStr::new("BROKER_DB_MONGODB_DATABASE"), "db4");
+    env::set_var(&OsStr::new("BROKER_DB_MONGODB_POOLSIZE"), "41");
+    env::set_var(&OsStr::new("BROKER_DB_SQLITE_PATH"), "path4");
+    env::set_var(&OsStr::new("BROKER_CACHE_ENGINE"), "memory");
+    env::set_var(&OsStr::new("BROKER_CACHE_MEMORY_DEVICE"), "141");
+    env::set_var(&OsStr::new("BROKER_CACHE_MEMORY_DEVICE_ROUTE"), "142");
+    env::set_var(&OsStr::new("BROKER_CACHE_MEMORY_NETWORK_ROUTE"), "143");
+    env::set_var(&OsStr::new("BROKER_MQ_PREFETCH"), "42");
+    env::set_var(&OsStr::new("BROKER_MQ_SHAREDPREFIX"), "prefix4");
+    env::set_var(&OsStr::new("BROKER_MQCHANNELS_UNIT_URL"), "url43");
+    env::set_var(&OsStr::new("BROKER_MQCHANNELS_UNIT_PREFETCH"), "43");
+    env::set_var(&OsStr::new("BROKER_MQCHANNELS_APPLICATION_URL"), "url44");
+    env::set_var(&OsStr::new("BROKER_MQCHANNELS_APPLICATION_PREFETCH"), "44");
+    env::set_var(&OsStr::new("BROKER_MQCHANNELS_NETWORK_URL"), "url45");
+    env::set_var(&OsStr::new("BROKER_MQCHANNELS_NETWORK_PREFETCH"), "45");
+    env::set_var(&OsStr::new("BROKER_MQCHANNELS_DEVICE_URL"), "url46");
+    env::set_var(&OsStr::new("BROKER_MQCHANNELS_DEVICE_PREFETCH"), "46");
+    env::set_var(&OsStr::new("BROKER_MQCHANNELS_DEVICE_ROUTE_URL"), "url47");
+    env::set_var(&OsStr::new("BROKER_MQCHANNELS_DEVICE_ROUTE_PREFETCH"), "47");
+    env::set_var(&OsStr::new("BROKER_MQCHANNELS_NETWORK_ROUTE_URL"), "url48");
+    env::set_var(
+        &OsStr::new("BROKER_MQCHANNELS_NETWORK_ROUTE_PREFETCH"),
+        "48",
+    );
+    env::set_var(&OsStr::new("BROKER_MQCHANNELS_DATA_URL"), "url49");
+    env::set_var(
+        &OsStr::new("BROKER_API_SCOPES"),
+        "{\"key41\":[\"value41\"]}",
+    );
+    let args = config::reg_args(Command::new("test")).get_matches_from(args);
+    let conf = config::read_args(&args);
+    expect(conf.auth.is_some()).to_equal(true)?;
+    expect(conf.auth.as_ref().unwrap().as_str()).to_equal("sylvia3")?;
+    expect(conf.db.is_some()).to_equal(true)?;
+    expect(conf.db.as_ref().unwrap().engine.as_ref().unwrap().as_str())
+        .to_equal(DbEngine::MONGODB)?;
+    expect(conf.db.as_ref().unwrap().mongodb.is_some()).to_equal(true)?;
+    expect(conf.db.as_ref().unwrap().sqlite.is_some()).to_equal(true)?;
+    let db_conf = conf.db.as_ref().unwrap().mongodb.as_ref().unwrap();
+    expect(db_conf.url.as_ref().unwrap().as_str()).to_equal("url31")?;
+    expect(db_conf.database.as_ref().unwrap().as_str()).to_equal("db3")?;
+    expect(db_conf.pool_size).to_equal(Some(31))?;
+    let db_conf = conf.db.as_ref().unwrap().sqlite.as_ref().unwrap();
+    expect(db_conf.path.as_ref().unwrap().as_str()).to_equal("path3")?;
+    expect(conf.cache.is_some()).to_equal(true)?;
+    let cache_conf = conf.cache.as_ref().unwrap();
+    expect(cache_conf.engine.as_ref().unwrap().as_str()).to_equal(CacheEngine::MEMORY)?;
+    expect(cache_conf.memory.is_some()).to_equal(true)?;
+    let cache_conf = cache_conf.memory.as_ref().unwrap();
+    expect(cache_conf.device).to_equal(Some(131))?;
+    expect(cache_conf.device_route).to_equal(Some(132))?;
+    expect(cache_conf.network_route).to_equal(Some(133))?;
+    expect(conf.mq.is_some()).to_equal(true)?;
+    let mq_conf = conf.mq.as_ref().unwrap();
+    expect(mq_conf.prefetch.is_some()).to_equal(true)?;
+    expect(*mq_conf.prefetch.as_ref().unwrap()).to_equal(32)?;
+    expect(mq_conf.shared_prefix.is_some()).to_equal(true)?;
+    expect(mq_conf.shared_prefix.as_ref().unwrap().as_str()).to_equal("prefix3")?;
+    expect(conf.mq_channels.is_some()).to_equal(true)?;
+    let mq_channels_conf = conf.mq_channels.as_ref().unwrap();
+    expect(mq_channels_conf.unit.is_some()).to_equal(true)?;
+    let ctrl_conf = mq_channels_conf.unit.as_ref().unwrap();
+    expect(ctrl_conf.url.is_some()).to_equal(true)?;
+    expect(ctrl_conf.url.as_ref().unwrap().as_str()).to_equal("url33")?;
+    expect(ctrl_conf.prefetch.is_some()).to_equal(true)?;
+    expect(*ctrl_conf.prefetch.as_ref().unwrap()).to_equal(33)?;
+    expect(mq_channels_conf.application.is_some()).to_equal(true)?;
+    let ctrl_conf = mq_channels_conf.application.as_ref().unwrap();
+    expect(ctrl_conf.url.is_some()).to_equal(true)?;
+    expect(ctrl_conf.url.as_ref().unwrap().as_str()).to_equal("url34")?;
+    expect(ctrl_conf.prefetch.is_some()).to_equal(true)?;
+    expect(*ctrl_conf.prefetch.as_ref().unwrap()).to_equal(34)?;
+    expect(mq_channels_conf.network.is_some()).to_equal(true)?;
+    let ctrl_conf = mq_channels_conf.network.as_ref().unwrap();
+    expect(ctrl_conf.url.is_some()).to_equal(true)?;
+    expect(ctrl_conf.url.as_ref().unwrap().as_str()).to_equal("url35")?;
+    expect(ctrl_conf.prefetch.is_some()).to_equal(true)?;
+    expect(*ctrl_conf.prefetch.as_ref().unwrap()).to_equal(35)?;
+    expect(mq_channels_conf.device.is_some()).to_equal(true)?;
+    let ctrl_conf = mq_channels_conf.device.as_ref().unwrap();
+    expect(ctrl_conf.url.is_some()).to_equal(true)?;
+    expect(ctrl_conf.url.as_ref().unwrap().as_str()).to_equal("url36")?;
+    expect(ctrl_conf.prefetch.is_some()).to_equal(true)?;
+    expect(*ctrl_conf.prefetch.as_ref().unwrap()).to_equal(36)?;
+    expect(mq_channels_conf.device_route.is_some()).to_equal(true)?;
+    let ctrl_conf = mq_channels_conf.device_route.as_ref().unwrap();
+    expect(ctrl_conf.url.is_some()).to_equal(true)?;
+    expect(ctrl_conf.url.as_ref().unwrap().as_str()).to_equal("url37")?;
+    expect(ctrl_conf.prefetch.is_some()).to_equal(true)?;
+    expect(*ctrl_conf.prefetch.as_ref().unwrap()).to_equal(37)?;
+    expect(mq_channels_conf.network_route.is_some()).to_equal(true)?;
+    let ctrl_conf = mq_channels_conf.network_route.as_ref().unwrap();
+    expect(ctrl_conf.url.is_some()).to_equal(true)?;
+    expect(ctrl_conf.url.as_ref().unwrap().as_str()).to_equal("url38")?;
+    expect(ctrl_conf.prefetch.is_some()).to_equal(true)?;
+    expect(*ctrl_conf.prefetch.as_ref().unwrap()).to_equal(38)?;
+    expect(mq_channels_conf.data.is_some()).to_equal(true)?;
+    let data_conf = mq_channels_conf.data.as_ref().unwrap();
+    expect(data_conf.url.is_some()).to_equal(true)?;
+    expect(data_conf.url.as_ref().unwrap().as_str()).to_equal("url39")?;
+    let mut map: HashMap<String, Vec<String>> = HashMap::new();
+    map.insert("key31".to_string(), vec!["value31".to_string()]);
+    expect(conf.api_scopes.as_ref()).to_equal(Some(&map))
 }
 
 /// Test [`config::apply_default`].
