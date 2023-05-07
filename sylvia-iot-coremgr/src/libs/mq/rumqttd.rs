@@ -4,11 +4,9 @@ use std::{
     thread::{self, JoinHandle as ThreadHandle},
 };
 
-use librumqttd::{
-    async_locallink, rumqttlog::Config as RouterConfig, Config, ConnectionSettings,
-    ConsoleSettings, ServerCert, ServerSettings,
+use rumqttd::{
+    Broker, Config, ConnectionSettings, ConsoleSettings, RouterConfig, ServerSettings, TlsConfig,
 };
-use tokio::task::{self, JoinHandle as TaskHandle};
 
 use sylvia_iot_corelib::server_config::Config as SylviaServerConfig;
 
@@ -20,52 +18,56 @@ use super::super::config::{
 pub fn start_rumqttd(
     server_conf: &SylviaServerConfig,
     rumqttd_conf: &Rumqttd,
-) -> (ThreadHandle<()>, TaskHandle<()>) {
-    let mut config = Config {
-        id: 0,
-        router: RouterConfig::default(),
-        servers: HashMap::new(),
-        cluster: None,
-        replicator: None,
-        console: ConsoleSettings {
-            listen: match rumqttd_conf.console_port {
-                None => SocketAddr::new(
-                    IpAddr::V4(Ipv4Addr::new(0, 0, 0, 0)),
-                    DEF_RUMQTTD_CONSOLE_PORT,
-                ),
-                Some(port) => SocketAddr::new(IpAddr::V4(Ipv4Addr::new(0, 0, 0, 0)), port),
-            },
-        },
+) -> (ThreadHandle<()>, ThreadHandle<()>) {
+    let mut console_setting = ConsoleSettings::default();
+    console_setting.listen = match rumqttd_conf.console_port {
+        None => format!("0.0.0.0:{}", DEF_RUMQTTD_CONSOLE_PORT),
+        Some(port) => format!("0.0.0.0:{}", port),
     };
-    config.servers.insert(
+    let mut config = Config {
+        router: RouterConfig {
+            instant_ack: true,
+            max_segment_size: 104857600,
+            max_segment_count: 10,
+            max_read_len: 10240,
+            max_connections: 10000,
+            ..Default::default()
+        },
+        v4: HashMap::new(),
+        console: console_setting,
+        ..Default::default()
+    };
+    config.v4.insert(
         "mqtt".to_string(),
         ServerSettings {
+            name: "mqtt".to_string(),
             listen: match rumqttd_conf.mqtt_port {
                 None => {
                     SocketAddr::new(IpAddr::V4(Ipv4Addr::new(0, 0, 0, 0)), DEF_RUMQTTD_MQTT_PORT)
                 }
                 Some(port) => SocketAddr::new(IpAddr::V4(Ipv4Addr::new(0, 0, 0, 0)), port),
             },
-            cert: None,
+            tls: None,
             next_connection_delay_ms: 1,
             connections: ConnectionSettings {
                 connection_timeout_ms: 5000,
-                max_client_id_len: 256,
                 throttle_delay_ms: 0,
                 max_payload_size: 1 * 1024 * 1024,
                 max_inflight_count: 200,
                 max_inflight_size: 1024,
-                login_credentials: None,
+                auth: None,
+                dynamic_filters: true,
             },
         },
     );
     if let Some(cacert_file) = server_conf.cacert_file.as_ref() {
         if let Some(cert_file) = server_conf.cert_file.as_ref() {
             if let Some(key_file) = server_conf.key_file.as_ref() {
-                config.servers.insert(
+                config.v4.insert(
                     "mqtts".to_string(),
                     ServerSettings {
-                        listen: match rumqttd_conf.mqtts_port {
+                        name: "mqtts".to_string(),
+                        listen: match rumqttd_conf.mqtt_port {
                             None => SocketAddr::new(
                                 IpAddr::V4(Ipv4Addr::new(0, 0, 0, 0)),
                                 DEF_RUMQTTD_MQTTS_PORT,
@@ -74,20 +76,20 @@ pub fn start_rumqttd(
                                 SocketAddr::new(IpAddr::V4(Ipv4Addr::new(0, 0, 0, 0)), port)
                             }
                         },
-                        cert: Some(ServerCert::RustlsCert {
-                            ca_path: cacert_file.clone(),
-                            cert_path: cert_file.clone(),
-                            key_path: key_file.clone(),
+                        tls: Some(TlsConfig::Rustls {
+                            capath: cacert_file.clone(),
+                            certpath: cert_file.clone(),
+                            keypath: key_file.clone(),
                         }),
                         next_connection_delay_ms: 1,
                         connections: ConnectionSettings {
                             connection_timeout_ms: 5000,
-                            max_client_id_len: 256,
                             throttle_delay_ms: 0,
                             max_payload_size: 1 * 1024 * 1024,
                             max_inflight_count: 200,
                             max_inflight_size: 1024,
-                            login_credentials: None,
+                            auth: None,
+                            dynamic_filters: true,
                         },
                     },
                 );
@@ -95,15 +97,16 @@ pub fn start_rumqttd(
         }
     }
 
-    let (mut router, console, servers, _builder) = async_locallink::construct_broker(config);
+    let mut broker = Broker::new(config);
+    let (mut link_tx, mut link_rx) = broker.link("sylvia-iot-core").unwrap();
     let router_handle = thread::spawn(move || {
-        router.start().unwrap();
+        let _ = broker.start();
     });
-    let rumqttd_handle = task::spawn(async move {
-        let console_task = task::spawn(console);
-        servers.await;
-        console_task.await.unwrap();
+    let _ = link_tx.subscribe("#");
+    let rx_handle = thread::spawn(move || loop {
+        let _ = link_rx.id(); // XXX: add this line to prevent not ACK notifications.
+        let _ = link_rx.recv().unwrap();
     });
 
-    (router_handle, rumqttd_handle)
+    (router_handle, rx_handle)
 }

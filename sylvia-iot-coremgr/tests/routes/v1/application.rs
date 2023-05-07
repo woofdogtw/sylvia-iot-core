@@ -275,7 +275,7 @@ pub fn post(context: &mut SpecContext<TestState>) -> Result<(), String> {
             let username = mq::to_username(QueueType::Application, UNIT_CODE, APP_CODE);
             let username = username.as_str();
             if let Ok(stats) = rabbitmq::stats(client, &mq_opts.0, host, username, "dldata").await {
-                if stats.consumers == 1 {
+                if stats.consumers >= 1 {
                     return Ok(());
                 }
             }

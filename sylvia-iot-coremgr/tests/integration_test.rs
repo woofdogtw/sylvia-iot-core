@@ -4,10 +4,7 @@ use actix_web::dev::ServerHandle;
 use general_mq::{AmqpConnection, Queue};
 use laboratory::{describe, LabResult};
 use reqwest::Client;
-use tokio::{
-    runtime::Runtime,
-    task::{self, JoinHandle as TaskHandle},
-};
+use tokio::{runtime::Runtime, task};
 
 use sylvia_iot_auth::models::SqliteModel as AuthDbModel;
 use sylvia_iot_broker::models::SqliteModel as BrokerDbModel;
@@ -36,7 +33,7 @@ pub struct TestState {
     pub client: Option<Client>, // HTTP client.
     pub mq_opts: Option<(RabbitMqOpts, EmqxOpts, RumqttdOpts)>,
     pub amqp_conn: Option<Vec<AmqpConnection>>,
-    pub rumqttd_handles: Option<(ThreadHandle<()>, TaskHandle<()>)>,
+    pub rumqttd_handles: Option<(ThreadHandle<()>, ThreadHandle<()>)>,
     pub mq_conn: Option<Connection>,
     pub data_queue: Option<Queue>, // receive queue to test data channel.
 }
@@ -69,8 +66,6 @@ async fn integration_test() -> LabResult {
             context.describe_import(libs::suite());
             context.describe_import(libs::mq::suite());
             context.describe_import(routes::suite());
-            context.describe_import(routes::v1::suite(MqEngine::EMQX));
-            context.describe_import(routes::v1::suite(MqEngine::RUMQTTD));
             context.describe_import(routes::middleware::suite(
                 Some(MqEngine::EMQX),
                 TEST_AMQP_HOST_URI,
@@ -83,6 +78,8 @@ async fn integration_test() -> LabResult {
                 Some(MqEngine::RUMQTTD),
                 TEST_RUMQTTD_HOST_URI,
             ));
+            context.describe_import(routes::v1::suite(MqEngine::EMQX));
+            context.describe_import(routes::v1::suite(MqEngine::RUMQTTD));
         })
         .run()
     });
