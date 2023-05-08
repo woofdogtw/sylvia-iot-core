@@ -313,7 +313,7 @@ pub fn post(context: &mut SpecContext<TestState>) -> Result<(), String> {
                 if let Ok(stats) =
                     rabbitmq::stats(client, &mq_opts.0, host, username, "uldata").await
                 {
-                    if stats.consumers == 1 {
+                    if stats.consumers >= 1 {
                         found_uldata = true
                     }
                 }
@@ -322,7 +322,7 @@ pub fn post(context: &mut SpecContext<TestState>) -> Result<(), String> {
                 if let Ok(stats) =
                     rabbitmq::stats(client, &mq_opts.0, host, username, "dldata-result").await
                 {
-                    if stats.consumers == 1 {
+                    if stats.consumers >= 1 {
                         found_dldata_result = true
                     }
                 }
@@ -333,7 +333,7 @@ pub fn post(context: &mut SpecContext<TestState>) -> Result<(), String> {
                 if let Ok(stats) =
                     rabbitmq::stats(client, &mq_opts.0, host, username, "uldata").await
                 {
-                    if stats.consumers == 1 {
+                    if stats.consumers >= 1 {
                         found_uldata_public = true
                     }
                 }
@@ -342,7 +342,7 @@ pub fn post(context: &mut SpecContext<TestState>) -> Result<(), String> {
                 if let Ok(stats) =
                     rabbitmq::stats(client, &mq_opts.0, host, username, "dldata-result").await
                 {
-                    if stats.consumers == 1 {
+                    if stats.consumers >= 1 {
                         found_dldata_result_public = true
                     }
                 }

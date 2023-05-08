@@ -100,6 +100,7 @@ pub fn suite(mqtt_engine: Option<&'static str>, data_host: &'static str) -> Suit
 
 fn after_all_fn(state: &mut HashMap<&'static str, TestState>) -> () {
     let state = state.get_mut(STATE).unwrap();
+    let _ = state.rumqttd_handles.take();
     let runtime = state.runtime.as_ref().unwrap();
 
     if let Some(state) = state.routes_state.as_mut() {
