@@ -1,5 +1,27 @@
 # Changelog
 
+## 0.0.9 - 2023-05-12
+
+### Added
+
+- Add `GET /version` API for all services (auth, broker, coremgr, data, router).
+
+### Changed
+
+- Improve integration tests.
+    - Merge common test cases of MongoDB/SQLite. This reduces more than 16,000 lines to compile integration tests faster.
+    - Add test cases for configurations from command-line arguments (with clap) and environment variables.
+- Remove more compiler warning messages.
+- Update dependencies.
+- **coremgr**: Modify CSV UTF-8 BOM generation.
+- **coremgr**: Update `rumqttd` to 0.14.0.
+
+### Fixed
+
+- **broker**: Fix command-line argument that does not support `--broker.api-scopes`.
+- **broker**: Fix environment variables prefix from `BROKER_MEMORY_` to `BROKER_CACHE_MEMORY_`
+- **coremgr**: Fix integration test that middleware cases cannot be put before API cases.
+
 ## 0.0.8 - 2023-04-28
 
 ### Changed
