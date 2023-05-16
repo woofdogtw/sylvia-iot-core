@@ -17,16 +17,15 @@ pub struct DeviceRoute {
     pub network_id: String,
     pub network_code: String,
     pub network_addr: String,
+    pub profile: String,
     pub created_at: DateTime<Utc>,
+    pub modified_at: DateTime<Utc>,
 }
 
 // The device route cache item for uplink data.
 #[derive(Clone)]
 pub struct DeviceRouteCacheUlData {
     pub app_mgr_keys: Vec<String>,
-    pub unit_id: String,
-    pub application_id: String,
-    pub network_id: String,
 }
 
 // The device route cache item for downlink data.
@@ -37,11 +36,13 @@ pub struct DeviceRouteCacheDlData {
     pub network_id: String,
     pub network_addr: String,
     pub device_id: String,
+    pub profile: String,
 }
 
 /// The sort keys for the list operation.
 pub enum SortKey {
     CreatedAt,
+    ModifiedAt,
     ApplicationCode,
     NetworkCode,
     NetworkAddr,
@@ -141,6 +142,19 @@ pub struct DelCachePubQueryCond<'a> {
     pub device_id: Option<&'a str>,
 }
 
+/// The query condition for the update operation.
+pub struct UpdateQueryCond<'a> {
+    /// The specified device.
+    pub device_id: &'a str,
+}
+
+/// The update fields by using [`Some`]s.
+#[derive(Default)]
+pub struct Updates<'a> {
+    pub modified_at: Option<DateTime<Utc>>,
+    pub profile: Option<&'a str>,
+}
+
 /// Model operations.
 #[async_trait]
 pub trait DeviceRouteModel: Sync {
@@ -178,6 +192,13 @@ pub trait DeviceRouteModel: Sync {
 
     /// To delete one or more items.
     async fn del(&self, cond: &QueryCond) -> Result<(), Box<dyn StdError>>;
+
+    /// To update one or more items.
+    async fn update(
+        &self,
+        cond: &UpdateQueryCond,
+        updates: &Updates,
+    ) -> Result<(), Box<dyn StdError>>;
 }
 
 /// The operations for cursors.

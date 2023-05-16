@@ -19,7 +19,9 @@ const FIELDS: &'static [&'static str] = &[
     "network_id",
     "network_code",
     "network_addr",
+    "profile",
     "created_at",
+    "modified_at",
 ];
 
 pub fn after_each_fn(state: &mut HashMap<&'static str, TestState>) -> () {
@@ -62,6 +64,8 @@ pub fn get(context: &mut SpecContext<TestState>) -> Result<(), String> {
             quote("network_id_get"),
             quote("network_code_get"),
             quote("network_addr_get"),
+            quote("profile_get"),
+            now.timestamp_millis().to_string(),
             now.timestamp_millis().to_string(),
         ])
         .sql()
@@ -96,7 +100,10 @@ pub fn get(context: &mut SpecContext<TestState>) -> Result<(), String> {
     expect(route.device_id).to_equal("device_id_get".to_string())?;
     expect(route.network_id).to_equal("network_id_get".to_string())?;
     expect(route.network_code).to_equal("network_code_get".to_string())?;
-    expect(route.network_addr).to_equal("network_addr_get".to_string())
+    expect(route.network_addr).to_equal("network_addr_get".to_string())?;
+    expect(route.profile).to_equal("profile_get".to_string())?;
+    expect(route.created_at).to_equal(now)?;
+    expect(route.modified_at).to_equal(now)
 }
 
 /// Test `add()`.
@@ -207,6 +214,36 @@ pub fn del_by_network_addrs(context: &mut SpecContext<TestState>) -> Result<(), 
     let model = state.sqlite.as_ref().unwrap().device_route();
 
     common_test::del_by_network_addrs(runtime, model)
+}
+
+/// Test `update()`.
+pub fn update(context: &mut SpecContext<TestState>) -> Result<(), String> {
+    let state = context.state.borrow();
+    let state = state.get(STATE).unwrap();
+    let runtime = state.runtime.as_ref().unwrap();
+    let model = state.sqlite.as_ref().unwrap().device_route();
+
+    common_test::update(runtime, model)
+}
+
+/// Test `update()` with a non-exist condition.
+pub fn update_not_exist(context: &mut SpecContext<TestState>) -> Result<(), String> {
+    let state = context.state.borrow();
+    let state = state.get(STATE).unwrap();
+    let runtime = state.runtime.as_ref().unwrap();
+    let model = state.sqlite.as_ref().unwrap().device_route();
+
+    common_test::update_not_exist(runtime, model)
+}
+
+/// Test `update()` with invalid update content.
+pub fn update_invalid(context: &mut SpecContext<TestState>) -> Result<(), String> {
+    let state = context.state.borrow();
+    let state = state.get(STATE).unwrap();
+    let runtime = state.runtime.as_ref().unwrap();
+    let model = state.sqlite.as_ref().unwrap().device_route();
+
+    common_test::update_invalid(runtime, model)
 }
 
 /// Test `count()`.

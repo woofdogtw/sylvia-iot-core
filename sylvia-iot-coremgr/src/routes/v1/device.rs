@@ -36,6 +36,7 @@ struct Device {
     created_at: String,
     #[serde(rename = "modifiedAt")]
     modified_at: String,
+    profile: String,
     name: String,
     #[serde(skip_serializing)]
     info: Map<String, Value>,
@@ -44,7 +45,7 @@ struct Device {
 }
 
 const CSV_FIELDS: &'static [u8] =
-    b"\xEF\xBB\xBFdeviceId,unitId,unitCode,networkId,networkCode,networkAddr,createdAt,modifiedAt,name,info\n";
+    b"\xEF\xBB\xBFdeviceId,unitId,unitCode,networkId,networkCode,networkAddr,createdAt,modifiedAt,profile,name,info\n";
 
 pub fn new_service(scope_path: &str) -> impl HttpServiceFactory {
     web::scope(scope_path)

@@ -43,6 +43,7 @@ pub fn get(context: &mut SpecContext<TestState>) -> Result<(), String> {
         network_addr: "network_addr".to_string(),
         created_at: Utc::now(),
         modified_at: Utc::now(),
+        profile: "".to_string(),
         name: "".to_string(),
         info: Map::<String, Value>::new(),
     };
@@ -54,6 +55,7 @@ pub fn get(context: &mut SpecContext<TestState>) -> Result<(), String> {
     device.network_id = "network_id_pub".to_string();
     device.network_code = "network_code_pub".to_string();
     device.network_addr = "network_addr_pub".to_string();
+    device.profile = "pub".to_string();
     if let Err(e) = runtime.block_on(async { model.add(&device).await }) {
         return Err(format!("create device pub error: {}", e));
     }
@@ -70,6 +72,7 @@ pub fn get(context: &mut SpecContext<TestState>) -> Result<(), String> {
     expect(device.is_some()).to_equal(true)?;
     let device = device.unwrap();
     expect(device.device_id.as_str()).to_equal("device_id")?;
+    expect(device.profile.as_str()).to_equal("")?;
 
     // Fetch again to get data from cache.
     let device = match runtime.block_on(async { cache.get(&cond).await }) {
@@ -79,6 +82,7 @@ pub fn get(context: &mut SpecContext<TestState>) -> Result<(), String> {
     expect(device.is_some()).to_equal(true)?;
     let device = device.unwrap();
     expect(device.device_id.as_str()).to_equal("device_id")?;
+    expect(device.profile.as_str()).to_equal("")?;
 
     let cond = GetCacheQueryCond::CodeAddr(QueryOneCond {
         unit_code: None,
@@ -92,6 +96,7 @@ pub fn get(context: &mut SpecContext<TestState>) -> Result<(), String> {
     expect(device.is_some()).to_equal(true)?;
     let device = device.unwrap();
     expect(device.device_id.as_str()).to_equal("device_id_pub")?;
+    expect(device.profile.as_str()).to_equal("pub")?;
 
     // Fetch again to get data from cache.
     let device = match runtime.block_on(async { cache.get(&cond).await }) {
@@ -101,6 +106,7 @@ pub fn get(context: &mut SpecContext<TestState>) -> Result<(), String> {
     expect(device.is_some()).to_equal(true)?;
     let device = device.unwrap();
     expect(device.device_id.as_str()).to_equal("device_id_pub")?;
+    expect(device.profile.as_str()).to_equal("pub")?;
 
     let cond = GetCacheQueryCond::CodeAddr(QueryOneCond {
         unit_code: None,
@@ -136,6 +142,7 @@ pub fn del(context: &mut SpecContext<TestState>) -> Result<(), String> {
         network_addr: "network_addr1".to_string(),
         created_at: Utc::now(),
         modified_at: Utc::now(),
+        profile: "".to_string(),
         name: "".to_string(),
         info: Map::<String, Value>::new(),
     };

@@ -19,6 +19,7 @@ pub struct PostDeviceData {
     pub network_id: String,
     #[serde(rename = "networkAddr")]
     pub network_addr: String,
+    pub profile: Option<String>,
     pub name: Option<String>,
     pub info: Option<Map<String, Value>>,
 }
@@ -36,6 +37,7 @@ pub struct PostDeviceBulkData {
     pub network_id: String,
     #[serde(rename = "networkAddrs")]
     pub network_addrs: Vec<String>,
+    pub profile: Option<String>,
 }
 
 #[derive(Deserialize)]
@@ -53,6 +55,7 @@ pub struct PostDeviceRangeData {
     pub start_addr: String,
     #[serde(rename = "endAddr")]
     pub end_addr: String,
+    pub profile: Option<String>,
 }
 
 #[derive(Deserialize)]
@@ -60,6 +63,7 @@ pub struct GetDeviceCountQuery {
     pub unit: Option<String>,
     pub network: Option<String>,
     pub addr: Option<String>,
+    pub profile: Option<String>,
     pub contains: Option<String>,
 }
 
@@ -68,6 +72,7 @@ pub struct GetDeviceListQuery {
     pub unit: Option<String>,
     pub network: Option<String>,
     pub addr: Option<String>,
+    pub profile: Option<String>,
     pub contains: Option<String>,
     pub offset: Option<u64>,
     pub limit: Option<u64>,
@@ -82,6 +87,7 @@ pub struct PatchDeviceBody {
 
 #[derive(Deserialize)]
 pub struct PatchDeviceData {
+    pub profile: Option<String>,
     pub name: Option<String>,
     pub info: Option<Map<String, Value>>,
 }

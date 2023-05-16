@@ -34,6 +34,7 @@ pub struct GetListData {
     #[serde(rename = "deviceId")]
     pub device_id: String,
     pub time: String,
+    pub profile: String,
     pub data: String,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub extension: Option<Map<String, Value>>,
@@ -50,6 +51,7 @@ pub struct GetListCsvData {
     pub unit_id: String,
     pub device_id: String,
     pub time: String,
+    pub profile: String,
     pub data: String,
     pub extension: String,
 }

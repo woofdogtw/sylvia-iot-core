@@ -111,6 +111,7 @@ struct AppUlData {
     #[serde(rename = "deviceId")]
     _device_id: String,
     time: String,
+    profile: String,
     data: String,
     #[serde(rename = "extension")]
     _extension: Option<Map<String, Value>>,
@@ -132,6 +133,7 @@ struct AppDlData {
     network_code: Option<String>,
     #[serde(rename = "networkAddr")]
     network_addr: Option<String>,
+    profile: String,
     data: String,
     extension: Option<Map<String, Value>>,
 }
@@ -163,6 +165,7 @@ struct NetUlData {
     #[serde(rename = "deviceId")]
     _device_id: Option<String>,
     time: String,
+    profile: String,
     data: String,
     #[serde(rename = "extension")]
     _extension: Option<Map<String, Value>>,
@@ -186,6 +189,7 @@ struct NetDlData {
     network_code: String,
     #[serde(rename = "networkAddr")]
     network_addr: String,
+    profile: String,
     data: String,
     extension: Option<Map<String, Value>>,
 }
@@ -283,6 +287,7 @@ impl EventHandler for AppNetConsumerHandler {
 
 /// Create the following resources for testing data channel:
 /// - 1 unit, application, public/private network, public/private/not-route device, 2 device route
+///   - public device with "public" profile.
 /// - application side queues
 /// - network side queues
 /// - data channel receive queue
@@ -359,6 +364,7 @@ pub fn before_all_fn(state: &mut HashMap<&'static str, TestState>) -> () {
             unit_id: unit_id.clone(),
             network_id: network_id.clone(),
             network_addr: NET_ADDR_PRV.to_string(),
+            profile: None,
             name: None,
             info: None,
         },
@@ -379,6 +385,7 @@ pub fn before_all_fn(state: &mut HashMap<&'static str, TestState>) -> () {
         };
     device.data.network_id = public_network_id.clone();
     device.data.network_addr = NET_ADDR_PUB.to_string();
+    device.data.profile = Some("public".to_string());
     let public_device_id = match libs::create_device(runtime, routes_state, TOKEN_MANAGER, &device)
     {
         Err(e) => {
@@ -519,6 +526,7 @@ pub fn after_each_fn(state: &mut HashMap<&'static str, TestState>) -> () {
 /// Test the following cases:
 /// - send uplink data from 4 devices.
 /// - check data channel, only two routed device data should be received.
+///   - check public with "public" profile and private with "" profile.
 pub fn uplink(context: &mut SpecContext<TestState>) -> Result<(), String> {
     let mut state = context.state.borrow_mut();
     let state = state.get_mut(STATE).unwrap();
@@ -550,14 +558,16 @@ pub fn uplink(context: &mut SpecContext<TestState>) -> Result<(), String> {
             if let Some(data) = { rsc.data_recv_handler.recv_data.lock().unwrap().pop() } {
                 match data {
                     RecvDataMsg::NetUlData { data } => {
-                        if data.data.as_str().eq(payload_hex.as_str())
+                        if data.profile.as_str() == ""
+                            && data.data.as_str().eq(payload_hex.as_str())
                             && data.time.as_str().eq(time_str(&now).as_str())
                         {
                             is_net_recv = true;
                         }
                     }
                     RecvDataMsg::AppUlData { data } => {
-                        if data.data.as_str().eq(payload_hex.as_str())
+                        if data.profile.as_str() == ""
+                            && data.data.as_str().eq(payload_hex.as_str())
                             && data.time.as_str().eq(time_str(&now).as_str())
                         {
                             is_app_recv = true;
@@ -604,14 +614,16 @@ pub fn uplink(context: &mut SpecContext<TestState>) -> Result<(), String> {
             if let Some(data) = { rsc.data_recv_handler.recv_data.lock().unwrap().pop() } {
                 match data {
                     RecvDataMsg::NetUlData { data } => {
-                        if data.data.as_str().eq(payload_hex.as_str())
+                        if data.profile.as_str() == "public"
+                            && data.data.as_str().eq(payload_hex.as_str())
                             && data.time.as_str().eq(time_str(&now).as_str())
                         {
                             is_net_recv = true;
                         }
                     }
                     RecvDataMsg::AppUlData { data } => {
-                        if data.data.as_str().eq(payload_hex.as_str())
+                        if data.profile.as_str() == "public"
+                            && data.data.as_str().eq(payload_hex.as_str())
                             && data.time.as_str().eq(time_str(&now).as_str())
                         {
                             is_app_recv = true;
@@ -748,6 +760,7 @@ pub fn uplink(context: &mut SpecContext<TestState>) -> Result<(), String> {
 /// Test the following cases:
 /// - send data to 2 devices.
 /// - check data channel, only two routed device data should be received.
+///   - check public with "public" profile and private with "" profile.
 pub fn downlink(context: &mut SpecContext<TestState>) -> Result<(), String> {
     let mut state = context.state.borrow_mut();
     let state = state.get_mut(STATE).unwrap();
@@ -783,7 +796,8 @@ pub fn downlink(context: &mut SpecContext<TestState>) -> Result<(), String> {
             if let Some(data) = { rsc.data_recv_handler.recv_data.lock().unwrap().pop() } {
                 match data {
                     RecvDataMsg::NetDlData { data } => {
-                        if data.data.as_str().eq(payload_hex.as_str())
+                        if data.profile.as_str() == ""
+                            && data.data.as_str().eq(payload_hex.as_str())
                             && data.extension.is_none()
                             && data.network_code.as_str().eq(NET_CODE_PRV)
                             && data.network_addr.as_str().eq(NET_ADDR_PRV)
@@ -796,7 +810,8 @@ pub fn downlink(context: &mut SpecContext<TestState>) -> Result<(), String> {
                         is_net_result_recv = true;
                     }
                     RecvDataMsg::AppDlData { data } => {
-                        if data.data.as_str().eq(payload_hex.as_str())
+                        if data.profile.as_str() == ""
+                            && data.data.as_str().eq(payload_hex.as_str())
                             && data.extension.is_none()
                             && data.device_id.is_none()
                             && data.network_code.is_some()
@@ -853,7 +868,8 @@ pub fn downlink(context: &mut SpecContext<TestState>) -> Result<(), String> {
             if let Some(data) = { rsc.data_recv_handler.recv_data.lock().unwrap().pop() } {
                 match data {
                     RecvDataMsg::NetDlData { data } => {
-                        if data.data.as_str().eq(payload_hex.as_str())
+                        if data.profile.as_str() == "public"
+                            && data.data.as_str().eq(payload_hex.as_str())
                             && data.extension.is_none()
                             && data.network_code.as_str().eq(NET_CODE_PUB)
                             && data.network_addr.as_str().eq(NET_ADDR_PUB)
@@ -866,7 +882,8 @@ pub fn downlink(context: &mut SpecContext<TestState>) -> Result<(), String> {
                         is_net_result_recv = true;
                     }
                     RecvDataMsg::AppDlData { data } => {
-                        if data.data.as_str().eq(payload_hex.as_str())
+                        if data.profile.as_str() == "public"
+                            && data.data.as_str().eq(payload_hex.as_str())
                             && data.extension.is_none()
                             && data.device_id.is_some()
                             && data.network_code.is_none()

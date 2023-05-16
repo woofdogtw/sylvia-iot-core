@@ -89,12 +89,9 @@ impl DeviceRouteCache for Cache {
                 for r in routes.iter() {
                     routes_data.push(format!("{}.{}", r.unit_code, r.application_code))
                 }
-                let route = routes.pop().unwrap();
+                let _ = routes.pop().unwrap();
                 Some(DeviceRouteCacheUlData {
                     app_mgr_keys: routes_data,
-                    unit_id: route.unit_id,
-                    application_id: route.application_id,
-                    network_id: route.network_id,
                 })
             }
         };
@@ -160,6 +157,7 @@ impl DeviceRouteCache for Cache {
                     network_id: device.network_id,
                     network_addr: device.network_addr,
                     device_id: device.device_id,
+                    profile: device.profile,
                 }),
             },
         };
@@ -254,12 +252,14 @@ impl DeviceRouteCache for Cache {
                     network_id: device.network_id,
                     network_addr: device.network_addr,
                     device_id: device.device_id,
+                    profile: device.profile,
                 }),
                 Some(unit_code) => Some(DeviceRouteCacheDlData {
                     net_mgr_key: format!("{}.{}", unit_code, device.network_code),
                     network_id: device.network_id,
                     network_addr: device.network_addr,
                     device_id: device.device_id,
+                    profile: device.profile,
                 }),
             },
         };

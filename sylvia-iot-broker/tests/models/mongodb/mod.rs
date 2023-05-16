@@ -105,6 +105,12 @@ pub fn suite() -> Suite<TestState> {
                 context.it("del() by network_id", device_route::del_by_network_id);
                 context.it("del() by device_id", device_route::del_by_device_id);
                 context.it("del() by network_addrs", device_route::del_by_network_addrs);
+                context.it("update()", device_route::update);
+                context.it("update() not exist", device_route::update_not_exist);
+                context.it(
+                    "update() with invalid options",
+                    device_route::update_invalid,
+                );
                 context.it("count()", device_route::count);
                 context.it("list()", device_route::list);
                 context.it("list() sort", device_route::list_sort);

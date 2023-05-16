@@ -572,6 +572,7 @@ pub fn get_list_offset_limit(context: &mut SpecContext<TestState>) -> Result<(),
         "manager",
         "manager",
         false,
+        "",
     )?;
 
     let now = Utc::now();
@@ -751,6 +752,7 @@ pub fn get_list_format_array(context: &mut SpecContext<TestState>) -> Result<(),
         "manager",
         "manager",
         false,
+        "",
     )?;
 
     for i in 100..302 {
@@ -887,7 +889,15 @@ pub fn delete(context: &mut SpecContext<TestState>) -> Result<(), String> {
     add_unit_model(runtime, routes_state, "manager", vec![], "manager")?;
     add_application_model(runtime, routes_state, "manager", "manager", "amqp://host")?;
     add_network_model(runtime, routes_state, "manager", "manager", "amqp://host")?;
-    add_device_model(runtime, &routes_state, "manager", "manager", "addr", false)?;
+    add_device_model(
+        runtime,
+        &routes_state,
+        "manager",
+        "manager",
+        "addr",
+        false,
+        "",
+    )?;
     add_dldata_buffer_model(
         runtime,
         &routes_state,
@@ -1211,11 +1221,27 @@ fn count_list_dataset(runtime: &Runtime, state: &routes::State) -> Result<(), St
     add_network_model(runtime, state, "manager", "manager", "amqp://host")?;
     add_network_model(runtime, state, "owner1", "owner1", "amqp://host")?;
     add_network_model(runtime, state, "owner2", "owner2", "amqp://host")?;
-    add_device_model(runtime, state, "manager", "public", "manager-public", true)?;
-    add_device_model(runtime, state, "manager", "manager", "manager", false)?;
-    add_device_model(runtime, state, "owner1", "public", "owner1-public", true)?;
-    add_device_model(runtime, state, "owner1", "owner1", "owner1", false)?;
-    add_device_model(runtime, state, "owner2", "owner2", "owner2", false)?;
+    add_device_model(
+        runtime,
+        state,
+        "manager",
+        "public",
+        "manager-public",
+        true,
+        "",
+    )?;
+    add_device_model(runtime, state, "manager", "manager", "manager", false, "")?;
+    add_device_model(
+        runtime,
+        state,
+        "owner1",
+        "public",
+        "owner1-public",
+        true,
+        "",
+    )?;
+    add_device_model(runtime, state, "owner1", "owner1", "owner1", false, "")?;
+    add_device_model(runtime, state, "owner2", "owner2", "owner2", false, "")?;
     let now = Utc::now();
 
     let mut data = create_dldata_buffer(

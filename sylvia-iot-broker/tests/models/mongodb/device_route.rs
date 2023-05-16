@@ -30,8 +30,11 @@ struct Schema {
     network_code: String,
     #[serde(rename = "networkAddr")]
     network_addr: String,
+    profile: String,
     #[serde(rename = "createdAt")]
     created_at: DateTime,
+    #[serde(rename = "modifiedAt")]
+    modified_at: DateTime,
 }
 
 const COL_NAME: &'static str = "deviceRoute";
@@ -77,7 +80,9 @@ pub fn get(context: &mut SpecContext<TestState>) -> Result<(), String> {
         network_id: "network_id_get".to_string(),
         network_code: "network_code_get".to_string(),
         network_addr: "network_addr_get".to_string(),
+        profile: "profile_get".to_string(),
         created_at: now.into(),
+        modified_at: now.into(),
     };
     if let Err(e) = runtime.block_on(async {
         conn.collection::<Schema>(COL_NAME)
@@ -110,7 +115,10 @@ pub fn get(context: &mut SpecContext<TestState>) -> Result<(), String> {
     expect(route.device_id).to_equal("device_id_get".to_string())?;
     expect(route.network_id).to_equal("network_id_get".to_string())?;
     expect(route.network_code).to_equal("network_code_get".to_string())?;
-    expect(route.network_addr).to_equal("network_addr_get".to_string())
+    expect(route.network_addr).to_equal("network_addr_get".to_string())?;
+    expect(route.profile).to_equal("profile_get".to_string())?;
+    expect(route.created_at).to_equal(now)?;
+    expect(route.modified_at).to_equal(now)
 }
 
 /// Test `add()`.
@@ -221,6 +229,36 @@ pub fn del_by_network_addrs(context: &mut SpecContext<TestState>) -> Result<(), 
     let model = state.mongodb.as_ref().unwrap().device_route();
 
     common_test::del_by_network_addrs(runtime, model)
+}
+
+/// Test `update()`.
+pub fn update(context: &mut SpecContext<TestState>) -> Result<(), String> {
+    let state = context.state.borrow();
+    let state = state.get(STATE).unwrap();
+    let runtime = state.runtime.as_ref().unwrap();
+    let model = state.mongodb.as_ref().unwrap().device_route();
+
+    common_test::update(runtime, model)
+}
+
+/// Test `update()` with a non-exist condition.
+pub fn update_not_exist(context: &mut SpecContext<TestState>) -> Result<(), String> {
+    let state = context.state.borrow();
+    let state = state.get(STATE).unwrap();
+    let runtime = state.runtime.as_ref().unwrap();
+    let model = state.mongodb.as_ref().unwrap().device_route();
+
+    common_test::update_not_exist(runtime, model)
+}
+
+/// Test `update()` with invalid update content.
+pub fn update_invalid(context: &mut SpecContext<TestState>) -> Result<(), String> {
+    let state = context.state.borrow();
+    let state = state.get(STATE).unwrap();
+    let runtime = state.runtime.as_ref().unwrap();
+    let model = state.mongodb.as_ref().unwrap().device_route();
+
+    common_test::update_invalid(runtime, model)
 }
 
 /// Test `count()`.

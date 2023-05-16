@@ -257,6 +257,13 @@ pub async fn post_device(
             "`networkAddr` must with at least one character".to_string(),
         )));
     }
+    if let Some(profile) = body.data.profile.as_ref() {
+        if profile.len() > 0 && !strings::is_code(profile.as_str()) {
+            return Err(ErrResp::ErrParam(Some(
+                "`profile` must be [A-Za-z0-9]{1}[A-Za-z0-9-_]*".to_string(),
+            )));
+        }
+    }
     let unit_id = body.data.unit_id.as_str();
     let unit = match check_unit(FN_NAME, user_id, &roles, unit_id, true, &state).await? {
         None => {
@@ -305,6 +312,10 @@ pub async fn post_device(
         network_addr: body.data.network_addr.to_lowercase(),
         created_at: now,
         modified_at: now,
+        profile: match body.data.profile.as_ref() {
+            None => "".to_string(),
+            Some(profile) => profile.clone(),
+        },
         name: match body.data.name.as_ref() {
             None => "".to_string(),
             Some(name) => name.clone(),
@@ -369,6 +380,13 @@ pub async fn post_device_bulk(
             BULK_MAX
         ))));
     }
+    if let Some(profile) = body.data.profile.as_ref() {
+        if profile.len() > 0 && !strings::is_code(profile.as_str()) {
+            return Err(ErrResp::ErrParam(Some(
+                "`profile` must be [A-Za-z0-9]{1}[A-Za-z0-9-_]*".to_string(),
+            )));
+        }
+    }
     let mut addrs = vec![];
     for addr in body.data.network_addrs.iter() {
         if addr.len() == 0 {
@@ -417,6 +435,10 @@ pub async fn post_device_bulk(
             network_addr: network_addr.clone(),
             created_at: now,
             modified_at: now,
+            profile: match body.data.profile.as_ref() {
+                None => "".to_string(),
+                Some(profile) => profile.clone(),
+            },
             name: network_addr.to_lowercase(),
             info: Map::new(),
         };
@@ -536,6 +558,13 @@ pub async fn post_device_range(
             "`startAddr` and `endAddr` must have the same length".to_string(),
         )));
     }
+    if let Some(profile) = body.data.profile.as_ref() {
+        if profile.len() > 0 && !strings::is_code(profile.as_str()) {
+            return Err(ErrResp::ErrParam(Some(
+                "`profile` must be [A-Za-z0-9]{1}[A-Za-z0-9-_]*".to_string(),
+            )));
+        }
+    }
     let start_addr = match hex_addr_to_u128(body.data.start_addr.as_str()) {
         Err(e) => return Err(ErrResp::ErrParam(Some(e.to_string()))),
         Ok(addr) => addr,
@@ -596,6 +625,10 @@ pub async fn post_device_range(
             network_addr: network_addr.clone(),
             created_at: now,
             modified_at: now,
+            profile: match body.data.profile.as_ref() {
+                None => "".to_string(),
+                Some(profile) => profile.clone(),
+            },
             name: network_addr,
             info: Map::new(),
         };
@@ -700,6 +733,7 @@ pub async fn post_device_range_del(
         unit_id: body.data.unit_id.clone(),
         network_id: body.data.network_id.clone(),
         network_addrs,
+        profile: None,
     };
 
     del_device_rsc_bulk(FN_NAME, &rm_cond, &network, &state).await?;
@@ -765,6 +799,13 @@ pub async fn get_device_count(
             Some(addr) => match addr.len() {
                 0 => None,
                 _ => Some(addr.as_ref()),
+            },
+        },
+        profile: match query.profile.as_ref() {
+            None => None,
+            Some(profile) => match profile.len() {
+                0 => None,
+                _ => Some(profile.as_str()),
             },
         },
         name_contains: name_contains_cond,
@@ -839,6 +880,13 @@ pub async fn get_device_list(
             Some(addr) => match addr.len() {
                 0 => None,
                 _ => Some(addr.as_ref()),
+            },
+        },
+        profile: match query.profile.as_ref() {
+            None => None,
+            Some(profile) => match profile.len() {
+                0 => None,
+                _ => Some(profile.as_str()),
             },
         },
         name_contains: name_contains_cond,
@@ -977,15 +1025,23 @@ pub async fn patch_device(
 ) -> impl Responder {
     const FN_NAME: &'static str = "patch_device";
 
+    if let Some(profile) = body.data.profile.as_ref() {
+        if profile.len() > 0 && !strings::is_code(profile.as_str()) {
+            return Err(ErrResp::ErrParam(Some(
+                "`profile` must be [A-Za-z0-9]{1}[A-Za-z0-9-_]*".to_string(),
+            )));
+        }
+    }
+
     let (user_id, roles) = get_token_id_roles(FN_NAME, &req)?;
     let user_id = user_id.as_str();
     let device_id = param.device_id.as_str();
 
     // To check if the device is for the user.
-    match check_device(FN_NAME, device_id, user_id, true, &roles, &state).await? {
+    let device = match check_device(FN_NAME, device_id, user_id, true, &roles, &state).await? {
         None => return Err(ErrResp::ErrNotFound(None)),
-        Some(_) => (),
-    }
+        Some(device) => device,
+    };
 
     let updates = get_updates(&mut body.data).await?;
     let cond = UpdateQueryCond { device_id };
@@ -993,6 +1049,35 @@ pub async fn patch_device(
         error!("[{}] update error: {}", FN_NAME, e);
         return Err(ErrResp::ErrDb(Some(e.to_string())));
     }
+    if let Some(profile) = updates.profile {
+        let cond = device_route::UpdateQueryCond { device_id };
+        let updates = device_route::Updates {
+            profile: Some(profile),
+            modified_at: Some(Utc::now()),
+            ..Default::default()
+        };
+        if let Err(e) = state.model.device_route().update(&cond, &updates).await {
+            error!("[{}] update device route error: {}", FN_NAME, e);
+            return Err(ErrResp::ErrDb(Some(e.to_string())));
+        }
+    }
+
+    // Delete device cache to update profile.
+    if state.cache.is_some() {
+        let msg = SendCtrlMsg::DelDevice {
+            operation: CtrlMsgOp::DEL_DEVICE.to_string(),
+            new: CtrlDelDevice {
+                unit_id: device.unit_id,
+                unit_code: device.unit_code,
+                network_id: device.network_id,
+                network_code: device.network_code,
+                network_addr: device.network_addr,
+                device_id: device.device_id,
+            },
+        };
+        send_del_ctrl_message(FN_NAME, &msg, &state).await?;
+    }
+
     Ok(HttpResponse::NoContent().finish())
 }
 
@@ -1061,6 +1146,7 @@ fn get_sort_cond(sort_args: &Option<String>) -> Result<Vec<SortCond>, ErrResp> {
                         "addr" => SortKey::NetworkAddr,
                         "created" => SortKey::CreatedAt,
                         "modified" => SortKey::ModifiedAt,
+                        "profile" => SortKey::Profile,
                         "name" => SortKey::Name,
                         _ => {
                             return Err(ErrResp::ErrParam(Some(format!(
@@ -1100,6 +1186,10 @@ async fn get_updates<'a>(body: &'a mut request::PatchDeviceData) -> Result<Updat
         ..Default::default()
     };
     let mut count = 0;
+    if let Some(profile) = body.profile.as_ref() {
+        updates.profile = Some(profile.as_str());
+        count += 1;
+    }
     if let Some(name) = body.name.as_ref() {
         updates.name = Some(name.as_str());
         count += 1;
@@ -1251,6 +1341,7 @@ fn device_transform(device: &Device) -> response::GetDeviceData {
         network_addr: device.network_addr.clone(),
         created_at: time_str(&device.created_at),
         modified_at: time_str(&device.modified_at),
+        profile: device.profile.clone(),
         name: device.name.clone(),
         info: device.info.clone(),
     }

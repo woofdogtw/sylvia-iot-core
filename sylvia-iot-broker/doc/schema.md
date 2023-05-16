@@ -58,6 +58,7 @@
         networkId: string,              // the associated network ID
         networkCode: string,            // the associated network code
         networkAddr: string,            // the unique address of the associated network
+        profile: string,                // the device profile that is used for application servers
         createdAt: Date,                // creation time
         modifiedAt: Date,               // modification time
         name: string,                   // display name
@@ -79,7 +80,9 @@
         networkId: string,              // the network ID of the device
         networkCode: string,            // the network code of the device
         networkAddr: string             // the address of the network
+        profile: string,                // the device profile
         createdAt: Date,                // creation time
+        modifiedAt: Date                // modification time
     }
 
 - Unique keys:

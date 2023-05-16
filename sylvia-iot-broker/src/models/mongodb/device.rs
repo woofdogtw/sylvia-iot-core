@@ -48,6 +48,7 @@ struct Schema {
     created_at: DateTime,
     #[serde(rename = "modifiedAt")]
     modified_at: DateTime,
+    profile: String,
     name: String,
     info: Document,
 }
@@ -80,6 +81,7 @@ impl DeviceModel for Model {
             doc! {"name": "networkAddr_1", "key": {"networkAddr": 1}},
             doc! {"name": "createdAt_1", "key": {"createdAt": 1}},
             doc! {"name": "modifiedAt_1", "key": {"modifiedAt": 1}},
+            doc! {"name": "profile_1", "key": {"profile": 1}},
             doc! {"name": "name_1", "key": {"name": 1}},
         ];
         let command = doc! {
@@ -150,6 +152,7 @@ impl DeviceModel for Model {
                 network_addr: item.network_addr,
                 created_at: item.created_at.into(),
                 modified_at: item.modified_at.into(),
+                profile: item.profile,
                 name: item.name,
                 info: bson::from_document(item.info)?,
             }));
@@ -167,6 +170,7 @@ impl DeviceModel for Model {
             network_addr: device.network_addr.clone(),
             created_at: device.created_at.into(),
             modified_at: device.modified_at.into(),
+            profile: device.profile.clone(),
             name: device.name.clone(),
             info: bson::to_document(&device.info)?,
         };
@@ -189,6 +193,7 @@ impl DeviceModel for Model {
                 network_addr: device.network_addr.clone(),
                 created_at: device.created_at.into(),
                 modified_at: device.modified_at.into(),
+                profile: device.profile.clone(),
                 name: device.name.clone(),
                 info: bson::to_document(&device.info)?,
             });
@@ -255,6 +260,7 @@ impl Cursor for DbCursor {
                 network_addr: item.network_addr,
                 created_at: item.created_at.into(),
                 modified_at: item.modified_at.into(),
+                profile: item.profile,
                 name: item.name,
                 info: bson::from_document(item.info)?,
             }));
@@ -318,6 +324,9 @@ fn get_list_query_filter(cond: &ListQueryCond) -> Document {
         in_cond.insert("$in", value);
         filter.insert("networkAddr", in_cond);
     }
+    if let Some(value) = cond.profile {
+        filter.insert("profile", value);
+    }
     if let Some(value) = cond.name_contains {
         filter.insert(
             "name",
@@ -350,6 +359,7 @@ fn get_find_options(opts: &ListOptions) -> FindOptions {
                     SortKey::ModifiedAt => "modifiedAt",
                     SortKey::NetworkCode => "networkCode",
                     SortKey::NetworkAddr => "networkAddr",
+                    SortKey::Profile => "profile",
                     SortKey::Name => "name",
                 };
                 if cond.asc {
@@ -378,6 +388,10 @@ fn get_update_doc(updates: &Updates) -> Option<Document> {
             "modifiedAt",
             DateTime::from_millis(value.timestamp_millis()),
         );
+        count += 1;
+    }
+    if let Some(value) = updates.profile {
+        document.insert("profile", value);
         count += 1;
     }
     if let Some(value) = updates.name {

@@ -43,6 +43,7 @@ struct Schema {
     pub network_code: String,
     /// use empty string as NULL.
     pub network_addr: String,
+    pub profile: String,
     pub data: String,
     /// use empty string as NULL.
     pub extension: String,
@@ -66,6 +67,7 @@ const FIELDS: &'static [&'static str] = &[
     "device_id",
     "network_code",
     "network_addr",
+    "profile",
     "data",
     "extension",
 ];
@@ -80,6 +82,7 @@ const TABLE_INIT_SQL: &'static str = "\
     device_id TEXT NOT NULL,\
     network_code TEXT NOT NULL,\
     network_addr TEXT NOT NULL,\
+    profile TEXT NOT NULL,\
     data TEXT NOT NULL,\
     extension TEXT NOT NULL,\
     PRIMARY KEY (data_id))";
@@ -165,6 +168,7 @@ impl NetworkDlDataModel for Model {
                 device_id: row.device_id,
                 network_code: row.network_code,
                 network_addr: row.network_addr,
+                profile: row.profile,
                 data: row.data,
                 extension: match row.extension.len() {
                     0 => None,
@@ -212,6 +216,7 @@ impl NetworkDlDataModel for Model {
             quote(data.device_id.as_str()),
             quote(data.network_code.as_str()),
             quote(data.network_addr.as_str()),
+            quote(data.profile.as_str()),
             quote(data.data.as_str()),
             extension,
         ];
@@ -302,6 +307,9 @@ fn build_list_where<'a>(
     }
     if let Some(value) = cond.network_addr {
         builder.and_where_eq("network_addr", quote(value));
+    }
+    if let Some(value) = cond.profile {
+        builder.and_where_eq("profile", quote(value));
     }
     if let Some(value) = cond.proc_gte {
         builder.and_where_ge("proc", value.timestamp_millis());

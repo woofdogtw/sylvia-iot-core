@@ -50,6 +50,7 @@ pub fn post(context: &mut SpecContext<TestState>) -> Result<(), String> {
             unit_id: "manager".to_string(),
             network_id: "public".to_string(),
             network_addr: "addr".to_string(),
+            profile: Some("".to_string()),
             name: Some("manager".to_string()),
             info: Some(info),
         },
@@ -69,6 +70,7 @@ pub fn post(context: &mut SpecContext<TestState>) -> Result<(), String> {
             unit_id: "manager".to_string(),
             network_id: "manager".to_string(),
             network_addr: "addr".to_string(),
+            profile: Some("profile".to_string()),
             name: None,
             info: None,
         },
@@ -88,6 +90,7 @@ pub fn post(context: &mut SpecContext<TestState>) -> Result<(), String> {
             unit_id: "owner".to_string(),
             network_id: "public".to_string(),
             network_addr: "owner-addr".to_string(),
+            profile: None,
             name: None,
             info: None,
         },
@@ -107,6 +110,7 @@ pub fn post(context: &mut SpecContext<TestState>) -> Result<(), String> {
             unit_id: "owner".to_string(),
             network_id: "owner".to_string(),
             network_addr: "addr-Owner".to_string(),
+            profile: None,
             name: None,
             info: None,
         },
@@ -126,6 +130,7 @@ pub fn post(context: &mut SpecContext<TestState>) -> Result<(), String> {
             unit_id: "owner".to_string(),
             network_id: "owner".to_string(),
             network_addr: "addr".to_string(),
+            profile: None,
             name: None,
             info: None,
         },
@@ -156,6 +161,7 @@ pub fn post_dup(context: &mut SpecContext<TestState>) -> Result<(), String> {
             unit_id: "manager".to_string(),
             network_id: "public".to_string(),
             network_addr: "addr".to_string(),
+            profile: None,
             name: None,
             info: None,
         },
@@ -175,6 +181,7 @@ pub fn post_dup(context: &mut SpecContext<TestState>) -> Result<(), String> {
             unit_id: "manager".to_string(),
             network_id: "public".to_string(),
             network_addr: "addr".to_string(),
+            profile: None,
             name: None,
             info: None,
         },
@@ -194,6 +201,7 @@ pub fn post_dup(context: &mut SpecContext<TestState>) -> Result<(), String> {
             unit_id: "manager".to_string(),
             network_id: "manager".to_string(),
             network_addr: "addr".to_string(),
+            profile: None,
             name: None,
             info: None,
         },
@@ -213,6 +221,7 @@ pub fn post_dup(context: &mut SpecContext<TestState>) -> Result<(), String> {
             unit_id: "manager".to_string(),
             network_id: "manager".to_string(),
             network_addr: "addr".to_string(),
+            profile: None,
             name: None,
             info: None,
         },
@@ -245,6 +254,7 @@ pub fn post_not_exist(context: &mut SpecContext<TestState>) -> Result<(), String
             unit_id: "id".to_string(),
             network_id: "public".to_string(),
             network_addr: "addr".to_string(),
+            profile: None,
             name: None,
             info: None,
         },
@@ -264,6 +274,7 @@ pub fn post_not_exist(context: &mut SpecContext<TestState>) -> Result<(), String
             unit_id: "manager".to_string(),
             network_id: "manager".to_string(),
             network_addr: "addr".to_string(),
+            profile: None,
             name: None,
             info: None,
         },
@@ -283,6 +294,7 @@ pub fn post_not_exist(context: &mut SpecContext<TestState>) -> Result<(), String
             unit_id: "manager".to_string(),
             network_id: "id".to_string(),
             network_addr: "addr".to_string(),
+            profile: None,
             name: None,
             info: None,
         },
@@ -302,6 +314,7 @@ pub fn post_not_exist(context: &mut SpecContext<TestState>) -> Result<(), String
             unit_id: "owner".to_string(),
             network_id: "public".to_string(),
             network_addr: "addr".to_string(),
+            profile: None,
             name: None,
             info: None,
         },
@@ -321,6 +334,7 @@ pub fn post_not_exist(context: &mut SpecContext<TestState>) -> Result<(), String
             unit_id: "owner".to_string(),
             network_id: "manager".to_string(),
             network_addr: "addr".to_string(),
+            profile: None,
             name: None,
             info: None,
         },
@@ -351,6 +365,7 @@ pub fn post_invalid_param(context: &mut SpecContext<TestState>) -> Result<(), St
             unit_id: "".to_string(),
             network_id: "manager".to_string(),
             network_addr: "addr".to_string(),
+            profile: None,
             name: None,
             info: None,
         },
@@ -362,6 +377,7 @@ pub fn post_invalid_param(context: &mut SpecContext<TestState>) -> Result<(), St
             unit_id: "manager".to_string(),
             network_id: "".to_string(),
             network_addr: "addr".to_string(),
+            profile: None,
             name: None,
             info: None,
         },
@@ -373,6 +389,19 @@ pub fn post_invalid_param(context: &mut SpecContext<TestState>) -> Result<(), St
             unit_id: "manager".to_string(),
             network_id: "manager".to_string(),
             network_addr: "".to_string(),
+            profile: None,
+            name: None,
+            info: None,
+        },
+    };
+    test_post_invalid_param(runtime, &routes_state, TOKEN_MANAGER, Some(&param))?;
+
+    let param = request::PostDevice {
+        data: request::PostDeviceData {
+            unit_id: "manager".to_string(),
+            network_id: "manager".to_string(),
+            network_addr: "addr".to_string(),
+            profile: Some("-profile".to_string()),
             name: None,
             info: None,
         },
@@ -401,15 +430,19 @@ pub fn post_bulk(context: &mut SpecContext<TestState>) -> Result<(), String> {
     add_network_model(runtime, routes_state, "", "public", "amqp://host")?;
     add_network_model(runtime, routes_state, "owner", "owner", "amqp://host")?;
 
+    // Expect 0..1024.
     let mut network_addrs1 = vec![];
+    let mut profiles = vec![];
     for i in 0..1024 {
         network_addrs1.push(strings::u128_to_addr(i, 32));
+        profiles.push("".to_string());
     }
     let mut param = request::PostDeviceBulk {
         data: request::PostDeviceBulkData {
             unit_id: "manager".to_string(),
             network_id: "public".to_string(),
             network_addrs: network_addrs1.clone(),
+            profile: None,
         },
     };
     test_post_bulk(
@@ -422,14 +455,18 @@ pub fn post_bulk(context: &mut SpecContext<TestState>) -> Result<(), String> {
         None,
         "public",
         &param.data.network_addrs,
+        &profiles,
     )?;
 
+    // Expect 0..1025.
     let mut network_addrs2 = vec![];
     for i in 1..1025 {
         network_addrs2.push(strings::u128_to_addr(i, 32));
     }
     network_addrs1.push(strings::u128_to_addr(1024, 32));
+    profiles.push("".to_string());
     param.data.network_addrs = network_addrs2.clone();
+    param.data.profile = Some("".to_string());
     test_post_bulk(
         runtime,
         routes_state,
@@ -440,12 +477,19 @@ pub fn post_bulk(context: &mut SpecContext<TestState>) -> Result<(), String> {
         None,
         "public",
         &network_addrs1,
+        &profiles,
     )?;
 
+    // Expect 0..1024.
     network_addrs1.pop();
+    profiles = vec![];
+    for _ in 0..1024 {
+        profiles.push("profile".to_string());
+    }
     param.data.unit_id = "owner".to_string();
     param.data.network_id = "owner".to_string();
     param.data.network_addrs = network_addrs1.clone();
+    param.data.profile = Some("profile".to_string());
     test_post_bulk(
         runtime,
         routes_state,
@@ -456,10 +500,14 @@ pub fn post_bulk(context: &mut SpecContext<TestState>) -> Result<(), String> {
         Some("owner"),
         "owner",
         &network_addrs1,
+        &profiles,
     )?;
 
+    // Expect 0..1025.
     param.data.network_addrs = network_addrs2;
     network_addrs1.push(strings::u128_to_addr(1024, 32));
+    profiles.push("".to_string());
+    param.data.profile = None;
     test_post_bulk(
         runtime,
         routes_state,
@@ -470,6 +518,7 @@ pub fn post_bulk(context: &mut SpecContext<TestState>) -> Result<(), String> {
         Some("owner"),
         "owner",
         &network_addrs1,
+        &profiles,
     )
 }
 
@@ -490,6 +539,7 @@ pub fn post_bulk_not_exist(context: &mut SpecContext<TestState>) -> Result<(), S
             unit_id: "id".to_string(),
             network_id: "public".to_string(),
             network_addrs: vec!["0000".to_string()],
+            profile: None,
         },
     };
     test_post_bulk(
@@ -502,6 +552,7 @@ pub fn post_bulk_not_exist(context: &mut SpecContext<TestState>) -> Result<(), S
         None,
         "public",
         &vec!["0000".to_string()],
+        &vec!["".to_string()],
     )?;
 
     let param = request::PostDeviceBulk {
@@ -509,6 +560,7 @@ pub fn post_bulk_not_exist(context: &mut SpecContext<TestState>) -> Result<(), S
             unit_id: "manager".to_string(),
             network_id: "manager".to_string(),
             network_addrs: vec!["0000".to_string()],
+            profile: None,
         },
     };
     test_post_bulk(
@@ -521,6 +573,7 @@ pub fn post_bulk_not_exist(context: &mut SpecContext<TestState>) -> Result<(), S
         Some("manager"),
         "manager",
         &vec!["0000".to_string()],
+        &vec!["".to_string()],
     )?;
 
     let param = request::PostDeviceBulk {
@@ -528,6 +581,7 @@ pub fn post_bulk_not_exist(context: &mut SpecContext<TestState>) -> Result<(), S
             unit_id: "manager".to_string(),
             network_id: "id".to_string(),
             network_addrs: vec!["0000".to_string()],
+            profile: None,
         },
     };
     test_post_bulk(
@@ -540,6 +594,7 @@ pub fn post_bulk_not_exist(context: &mut SpecContext<TestState>) -> Result<(), S
         None,
         "public",
         &vec!["0000".to_string()],
+        &vec!["".to_string()],
     )?;
 
     let param = request::PostDeviceBulk {
@@ -547,6 +602,7 @@ pub fn post_bulk_not_exist(context: &mut SpecContext<TestState>) -> Result<(), S
             unit_id: "owner".to_string(),
             network_id: "public".to_string(),
             network_addrs: vec!["0000".to_string()],
+            profile: None,
         },
     };
     test_post_bulk(
@@ -559,6 +615,7 @@ pub fn post_bulk_not_exist(context: &mut SpecContext<TestState>) -> Result<(), S
         None,
         "public",
         &vec!["0000".to_string()],
+        &vec!["".to_string()],
     )?;
 
     let param = request::PostDeviceBulk {
@@ -566,6 +623,7 @@ pub fn post_bulk_not_exist(context: &mut SpecContext<TestState>) -> Result<(), S
             unit_id: "owner".to_string(),
             network_id: "manager".to_string(),
             network_addrs: vec!["0000".to_string()],
+            profile: None,
         },
     };
     test_post_bulk(
@@ -578,6 +636,7 @@ pub fn post_bulk_not_exist(context: &mut SpecContext<TestState>) -> Result<(), S
         None,
         "public",
         &vec!["0000".to_string()],
+        &vec!["".to_string()],
     )
 }
 
@@ -596,6 +655,7 @@ pub fn post_bulk_invalid_param(context: &mut SpecContext<TestState>) -> Result<(
             unit_id: "".to_string(),
             network_id: "manager".to_string(),
             network_addrs: vec!["0000".to_string()],
+            profile: None,
         },
     };
     test_post_bulk_invalid_param(runtime, &routes_state, TOKEN_MANAGER, true, Some(&param))?;
@@ -605,6 +665,7 @@ pub fn post_bulk_invalid_param(context: &mut SpecContext<TestState>) -> Result<(
             unit_id: "manager".to_string(),
             network_id: "".to_string(),
             network_addrs: vec!["0000".to_string()],
+            profile: None,
         },
     };
     test_post_bulk_invalid_param(runtime, &routes_state, TOKEN_MANAGER, true, Some(&param))?;
@@ -614,6 +675,7 @@ pub fn post_bulk_invalid_param(context: &mut SpecContext<TestState>) -> Result<(
             unit_id: "manager".to_string(),
             network_id: "manager".to_string(),
             network_addrs: vec![],
+            profile: None,
         },
     };
     test_post_bulk_invalid_param(runtime, &routes_state, TOKEN_MANAGER, true, Some(&param))?;
@@ -627,6 +689,7 @@ pub fn post_bulk_invalid_param(context: &mut SpecContext<TestState>) -> Result<(
             unit_id: "manager".to_string(),
             network_id: "manager".to_string(),
             network_addrs,
+            profile: None,
         },
     };
     test_post_bulk_invalid_param(runtime, &routes_state, TOKEN_MANAGER, true, Some(&param))?;
@@ -636,6 +699,17 @@ pub fn post_bulk_invalid_param(context: &mut SpecContext<TestState>) -> Result<(
             unit_id: "manager".to_string(),
             network_id: "manager".to_string(),
             network_addrs: vec!["".to_string()],
+            profile: None,
+        },
+    };
+    test_post_bulk_invalid_param(runtime, &routes_state, TOKEN_MANAGER, true, Some(&param))?;
+
+    let param = request::PostDeviceBulk {
+        data: request::PostDeviceBulkData {
+            unit_id: "manager".to_string(),
+            network_id: "manager".to_string(),
+            network_addrs: vec!["0000".to_string()],
+            profile: Some("-profile".to_string()),
         },
     };
     test_post_bulk_invalid_param(runtime, &routes_state, TOKEN_MANAGER, true, Some(&param))
@@ -663,14 +737,17 @@ pub fn post_bulk_del(context: &mut SpecContext<TestState>) -> Result<(), String>
     add_network_model(runtime, routes_state, "owner", "owner", "amqp://host")?;
 
     let mut network_addrs1 = vec![];
+    let mut profiles = vec![];
     for i in 0..1024 {
         network_addrs1.push(strings::u128_to_addr(i, 32));
+        profiles.push("".to_string());
     }
     let mut param = request::PostDeviceBulk {
         data: request::PostDeviceBulkData {
             unit_id: "manager".to_string(),
             network_id: "public".to_string(),
             network_addrs: network_addrs1.clone(),
+            profile: None,
         },
     };
     test_post_bulk(
@@ -683,9 +760,11 @@ pub fn post_bulk_del(context: &mut SpecContext<TestState>) -> Result<(), String>
         None,
         "public",
         &network_addrs1,
+        &profiles,
     )?;
     param.data.network_addrs = vec![strings::u128_to_addr(1024, 32)];
     network_addrs1.push(strings::u128_to_addr(1024, 32));
+    profiles.push("".to_string());
     test_post_bulk(
         runtime,
         routes_state,
@@ -696,8 +775,10 @@ pub fn post_bulk_del(context: &mut SpecContext<TestState>) -> Result<(), String>
         None,
         "public",
         &network_addrs1,
+        &profiles,
     )?;
     network_addrs1.pop();
+    profiles.pop();
     param.data.unit_id = "owner".to_string();
     param.data.network_id = "owner".to_string();
     param.data.network_addrs = network_addrs1.clone();
@@ -711,9 +792,11 @@ pub fn post_bulk_del(context: &mut SpecContext<TestState>) -> Result<(), String>
         Some("owner"),
         "owner",
         &network_addrs1,
+        &profiles,
     )?;
     param.data.network_addrs = vec![strings::u128_to_addr(1024, 32)];
     network_addrs1.push(strings::u128_to_addr(1024, 32));
+    profiles.push("".to_string());
     test_post_bulk(
         runtime,
         routes_state,
@@ -724,6 +807,7 @@ pub fn post_bulk_del(context: &mut SpecContext<TestState>) -> Result<(), String>
         Some("owner"),
         "owner",
         &network_addrs1,
+        &profiles,
     )?;
 
     let mut network_addrs1 = vec![];
@@ -735,6 +819,7 @@ pub fn post_bulk_del(context: &mut SpecContext<TestState>) -> Result<(), String>
             unit_id: "manager".to_string(),
             network_id: "public".to_string(),
             network_addrs: network_addrs1.clone(),
+            profile: None,
         },
     };
     test_post_bulk(
@@ -747,6 +832,7 @@ pub fn post_bulk_del(context: &mut SpecContext<TestState>) -> Result<(), String>
         None,
         "public",
         &vec![strings::u128_to_addr(1024, 32)],
+        &vec!["".to_string()],
     )?;
 
     param.data.unit_id = "owner".to_string();
@@ -761,6 +847,7 @@ pub fn post_bulk_del(context: &mut SpecContext<TestState>) -> Result<(), String>
         Some("owner"),
         "owner",
         &vec![strings::u128_to_addr(1024, 32)],
+        &vec!["".to_string()],
     )
 }
 
@@ -781,6 +868,7 @@ pub fn post_bulk_del_not_exist(context: &mut SpecContext<TestState>) -> Result<(
             unit_id: "id".to_string(),
             network_id: "public".to_string(),
             network_addrs: vec!["0000".to_string()],
+            profile: None,
         },
     };
     test_post_bulk(
@@ -793,6 +881,7 @@ pub fn post_bulk_del_not_exist(context: &mut SpecContext<TestState>) -> Result<(
         None,
         "public",
         &vec!["0000".to_string()],
+        &vec!["".to_string()],
     )?;
 
     let param = request::PostDeviceBulk {
@@ -800,6 +889,7 @@ pub fn post_bulk_del_not_exist(context: &mut SpecContext<TestState>) -> Result<(
             unit_id: "manager".to_string(),
             network_id: "manager".to_string(),
             network_addrs: vec!["0000".to_string()],
+            profile: None,
         },
     };
     test_post_bulk(
@@ -812,6 +902,7 @@ pub fn post_bulk_del_not_exist(context: &mut SpecContext<TestState>) -> Result<(
         Some("manager"),
         "manager",
         &vec!["0000".to_string()],
+        &vec!["".to_string()],
     )?;
 
     let param = request::PostDeviceBulk {
@@ -819,6 +910,7 @@ pub fn post_bulk_del_not_exist(context: &mut SpecContext<TestState>) -> Result<(
             unit_id: "manager".to_string(),
             network_id: "id".to_string(),
             network_addrs: vec!["0000".to_string()],
+            profile: None,
         },
     };
     test_post_bulk(
@@ -831,6 +923,7 @@ pub fn post_bulk_del_not_exist(context: &mut SpecContext<TestState>) -> Result<(
         None,
         "public",
         &vec!["0000".to_string()],
+        &vec!["".to_string()],
     )?;
 
     let param = request::PostDeviceBulk {
@@ -838,6 +931,7 @@ pub fn post_bulk_del_not_exist(context: &mut SpecContext<TestState>) -> Result<(
             unit_id: "owner".to_string(),
             network_id: "public".to_string(),
             network_addrs: vec!["0000".to_string()],
+            profile: None,
         },
     };
     test_post_bulk(
@@ -850,6 +944,7 @@ pub fn post_bulk_del_not_exist(context: &mut SpecContext<TestState>) -> Result<(
         None,
         "public",
         &vec!["0000".to_string()],
+        &vec!["".to_string()],
     )?;
 
     let param = request::PostDeviceBulk {
@@ -857,6 +952,7 @@ pub fn post_bulk_del_not_exist(context: &mut SpecContext<TestState>) -> Result<(
             unit_id: "owner".to_string(),
             network_id: "manager".to_string(),
             network_addrs: vec!["0000".to_string()],
+            profile: None,
         },
     };
     test_post_bulk(
@@ -869,6 +965,7 @@ pub fn post_bulk_del_not_exist(context: &mut SpecContext<TestState>) -> Result<(
         None,
         "public",
         &vec!["0000".to_string()],
+        &vec!["".to_string()],
     )
 }
 
@@ -887,6 +984,7 @@ pub fn post_bulk_del_invalid_param(context: &mut SpecContext<TestState>) -> Resu
             unit_id: "".to_string(),
             network_id: "manager".to_string(),
             network_addrs: vec!["0000".to_string()],
+            profile: None,
         },
     };
     test_post_bulk_invalid_param(runtime, &routes_state, TOKEN_MANAGER, false, Some(&param))?;
@@ -896,6 +994,7 @@ pub fn post_bulk_del_invalid_param(context: &mut SpecContext<TestState>) -> Resu
             unit_id: "manager".to_string(),
             network_id: "".to_string(),
             network_addrs: vec!["0000".to_string()],
+            profile: None,
         },
     };
     test_post_bulk_invalid_param(runtime, &routes_state, TOKEN_MANAGER, false, Some(&param))?;
@@ -905,6 +1004,7 @@ pub fn post_bulk_del_invalid_param(context: &mut SpecContext<TestState>) -> Resu
             unit_id: "manager".to_string(),
             network_id: "manager".to_string(),
             network_addrs: vec![],
+            profile: None,
         },
     };
     test_post_bulk_invalid_param(runtime, &routes_state, TOKEN_MANAGER, false, Some(&param))?;
@@ -918,6 +1018,7 @@ pub fn post_bulk_del_invalid_param(context: &mut SpecContext<TestState>) -> Resu
             unit_id: "manager".to_string(),
             network_id: "manager".to_string(),
             network_addrs,
+            profile: None,
         },
     };
     test_post_bulk_invalid_param(runtime, &routes_state, TOKEN_MANAGER, false, Some(&param))?;
@@ -927,6 +1028,7 @@ pub fn post_bulk_del_invalid_param(context: &mut SpecContext<TestState>) -> Resu
             unit_id: "manager".to_string(),
             network_id: "manager".to_string(),
             network_addrs: vec!["".to_string()],
+            profile: None,
         },
     };
     test_post_bulk_invalid_param(runtime, &routes_state, TOKEN_MANAGER, false, Some(&param))
@@ -953,9 +1055,12 @@ pub fn post_range(context: &mut SpecContext<TestState>) -> Result<(), String> {
     add_network_model(runtime, routes_state, "", "public", "amqp://host")?;
     add_network_model(runtime, routes_state, "owner", "owner", "amqp://host")?;
 
+    // Expect 0..1024.
     let mut network_addrs1 = vec![];
+    let mut profiles = vec![];
     for i in 0..1024 {
         network_addrs1.push(strings::u128_to_addr(i, 32));
+        profiles.push("".to_string());
     }
     let mut param = request::PostDeviceRange {
         data: request::PostDeviceRangeData {
@@ -963,6 +1068,7 @@ pub fn post_range(context: &mut SpecContext<TestState>) -> Result<(), String> {
             network_id: "public".to_string(),
             start_addr: strings::u128_to_addr(0, 32),
             end_addr: strings::u128_to_addr(1023, 32),
+            profile: None,
         },
     };
     test_post_range(
@@ -975,11 +1081,15 @@ pub fn post_range(context: &mut SpecContext<TestState>) -> Result<(), String> {
         None,
         "public",
         &network_addrs1,
+        &profiles,
     )?;
 
+    // Expect 0..1025.
     network_addrs1.push(strings::u128_to_addr(1024, 32));
+    profiles.push("".to_string());
     param.data.start_addr = strings::u128_to_addr(1, 32);
     param.data.end_addr = strings::u128_to_addr(1024, 32);
+    param.data.profile = Some("".to_string());
     test_post_range(
         runtime,
         routes_state,
@@ -990,13 +1100,20 @@ pub fn post_range(context: &mut SpecContext<TestState>) -> Result<(), String> {
         None,
         "public",
         &network_addrs1,
+        &profiles,
     )?;
 
+    // Expect 0..1024.
     network_addrs1.pop();
+    profiles = vec![];
+    for _ in 0..1024 {
+        profiles.push("profile".to_string());
+    }
     param.data.unit_id = "owner".to_string();
     param.data.network_id = "owner".to_string();
     param.data.start_addr = strings::u128_to_addr(0, 32);
     param.data.end_addr = strings::u128_to_addr(1023, 32);
+    param.data.profile = Some("profile".to_string());
     test_post_range(
         runtime,
         routes_state,
@@ -1007,11 +1124,15 @@ pub fn post_range(context: &mut SpecContext<TestState>) -> Result<(), String> {
         Some("owner"),
         "owner",
         &network_addrs1,
+        &profiles,
     )?;
 
+    // Expect 0..1025.
     param.data.start_addr = strings::u128_to_addr(1, 32);
     param.data.end_addr = strings::u128_to_addr(1024, 32);
     network_addrs1.push(strings::u128_to_addr(1024, 32));
+    profiles.push("".to_string());
+    param.data.profile = None;
     test_post_range(
         runtime,
         routes_state,
@@ -1022,6 +1143,7 @@ pub fn post_range(context: &mut SpecContext<TestState>) -> Result<(), String> {
         Some("owner"),
         "owner",
         &network_addrs1,
+        &profiles,
     )
 }
 
@@ -1043,6 +1165,7 @@ pub fn post_range_not_exist(context: &mut SpecContext<TestState>) -> Result<(), 
             network_id: "public".to_string(),
             start_addr: "0000".to_string(),
             end_addr: "0000".to_string(),
+            profile: None,
         },
     };
     test_post_range(
@@ -1055,6 +1178,7 @@ pub fn post_range_not_exist(context: &mut SpecContext<TestState>) -> Result<(), 
         None,
         "public",
         &vec!["0000".to_string()],
+        &vec!["".to_string()],
     )?;
 
     let param = request::PostDeviceRange {
@@ -1063,6 +1187,7 @@ pub fn post_range_not_exist(context: &mut SpecContext<TestState>) -> Result<(), 
             network_id: "manager".to_string(),
             start_addr: "0000".to_string(),
             end_addr: "0000".to_string(),
+            profile: None,
         },
     };
     test_post_range(
@@ -1075,6 +1200,7 @@ pub fn post_range_not_exist(context: &mut SpecContext<TestState>) -> Result<(), 
         Some("manager"),
         "manager",
         &vec!["0000".to_string()],
+        &vec!["".to_string()],
     )?;
 
     let param = request::PostDeviceRange {
@@ -1083,6 +1209,7 @@ pub fn post_range_not_exist(context: &mut SpecContext<TestState>) -> Result<(), 
             network_id: "id".to_string(),
             start_addr: "0000".to_string(),
             end_addr: "0000".to_string(),
+            profile: None,
         },
     };
     test_post_range(
@@ -1095,6 +1222,7 @@ pub fn post_range_not_exist(context: &mut SpecContext<TestState>) -> Result<(), 
         None,
         "public",
         &vec!["0000".to_string()],
+        &vec!["".to_string()],
     )?;
 
     let param = request::PostDeviceRange {
@@ -1103,6 +1231,7 @@ pub fn post_range_not_exist(context: &mut SpecContext<TestState>) -> Result<(), 
             network_id: "public".to_string(),
             start_addr: "0000".to_string(),
             end_addr: "0000".to_string(),
+            profile: None,
         },
     };
     test_post_range(
@@ -1115,6 +1244,7 @@ pub fn post_range_not_exist(context: &mut SpecContext<TestState>) -> Result<(), 
         None,
         "public",
         &vec!["0000".to_string()],
+        &vec!["".to_string()],
     )?;
 
     let param = request::PostDeviceRange {
@@ -1123,6 +1253,7 @@ pub fn post_range_not_exist(context: &mut SpecContext<TestState>) -> Result<(), 
             network_id: "manager".to_string(),
             start_addr: "0000".to_string(),
             end_addr: "0000".to_string(),
+            profile: None,
         },
     };
     test_post_range(
@@ -1135,6 +1266,7 @@ pub fn post_range_not_exist(context: &mut SpecContext<TestState>) -> Result<(), 
         None,
         "public",
         &vec!["0000".to_string()],
+        &vec!["".to_string()],
     )
 }
 
@@ -1154,6 +1286,7 @@ pub fn post_range_invalid_param(context: &mut SpecContext<TestState>) -> Result<
             network_id: "manager".to_string(),
             start_addr: "0000".to_string(),
             end_addr: "0000".to_string(),
+            profile: None,
         },
     };
     test_post_range_invalid_param(runtime, &routes_state, TOKEN_MANAGER, true, Some(&param))?;
@@ -1164,6 +1297,7 @@ pub fn post_range_invalid_param(context: &mut SpecContext<TestState>) -> Result<
             network_id: "".to_string(),
             start_addr: "0000".to_string(),
             end_addr: "0000".to_string(),
+            profile: None,
         },
     };
     test_post_range_invalid_param(runtime, &routes_state, TOKEN_MANAGER, true, Some(&param))?;
@@ -1174,6 +1308,7 @@ pub fn post_range_invalid_param(context: &mut SpecContext<TestState>) -> Result<
             network_id: "manager".to_string(),
             start_addr: "".to_string(),
             end_addr: "0000".to_string(),
+            profile: None,
         },
     };
     test_post_range_invalid_param(runtime, &routes_state, TOKEN_MANAGER, true, Some(&param))?;
@@ -1184,6 +1319,7 @@ pub fn post_range_invalid_param(context: &mut SpecContext<TestState>) -> Result<
             network_id: "manager".to_string(),
             start_addr: "0000".to_string(),
             end_addr: "".to_string(),
+            profile: None,
         },
     };
     test_post_range_invalid_param(runtime, &routes_state, TOKEN_MANAGER, true, Some(&param))?;
@@ -1194,6 +1330,7 @@ pub fn post_range_invalid_param(context: &mut SpecContext<TestState>) -> Result<
             network_id: "manager".to_string(),
             start_addr: "000g".to_string(),
             end_addr: "0000".to_string(),
+            profile: None,
         },
     };
     test_post_range_invalid_param(runtime, &routes_state, TOKEN_MANAGER, true, Some(&param))?;
@@ -1204,6 +1341,7 @@ pub fn post_range_invalid_param(context: &mut SpecContext<TestState>) -> Result<
             network_id: "manager".to_string(),
             start_addr: "0000".to_string(),
             end_addr: "000g".to_string(),
+            profile: None,
         },
     };
     test_post_range_invalid_param(runtime, &routes_state, TOKEN_MANAGER, true, Some(&param))?;
@@ -1214,6 +1352,7 @@ pub fn post_range_invalid_param(context: &mut SpecContext<TestState>) -> Result<
             network_id: "manager".to_string(),
             start_addr: "0000".to_string(),
             end_addr: "000000".to_string(),
+            profile: None,
         },
     };
     test_post_range_invalid_param(runtime, &routes_state, TOKEN_MANAGER, true, Some(&param))?;
@@ -1224,6 +1363,7 @@ pub fn post_range_invalid_param(context: &mut SpecContext<TestState>) -> Result<
             network_id: "manager".to_string(),
             start_addr: "0000".to_string(),
             end_addr: "0400".to_string(),
+            profile: None,
         },
     };
     test_post_range_invalid_param(runtime, &routes_state, TOKEN_MANAGER, true, Some(&param))?;
@@ -1234,6 +1374,7 @@ pub fn post_range_invalid_param(context: &mut SpecContext<TestState>) -> Result<
             network_id: "manager".to_string(),
             start_addr: "0001".to_string(),
             end_addr: "0000".to_string(),
+            profile: None,
         },
     };
     test_post_range_invalid_param(runtime, &routes_state, TOKEN_MANAGER, true, Some(&param))?;
@@ -1244,6 +1385,18 @@ pub fn post_range_invalid_param(context: &mut SpecContext<TestState>) -> Result<
             network_id: "manager".to_string(),
             start_addr: "0000000000000000000000000000000000".to_string(),
             end_addr: "0000000000000000000000000000000000".to_string(),
+            profile: None,
+        },
+    };
+    test_post_range_invalid_param(runtime, &routes_state, TOKEN_MANAGER, true, Some(&param))?;
+
+    let param = request::PostDeviceRange {
+        data: request::PostDeviceRangeData {
+            unit_id: "manager".to_string(),
+            network_id: "manager".to_string(),
+            start_addr: "0000".to_string(),
+            end_addr: "0000".to_string(),
+            profile: Some("-profile".to_string()),
         },
     };
     test_post_range_invalid_param(runtime, &routes_state, TOKEN_MANAGER, true, Some(&param))
@@ -1271,8 +1424,10 @@ pub fn post_range_del(context: &mut SpecContext<TestState>) -> Result<(), String
     add_network_model(runtime, routes_state, "owner", "owner", "amqp://host")?;
 
     let mut network_addrs1 = vec![];
+    let mut profiles = vec![];
     for i in 0..1024 {
         network_addrs1.push(strings::u128_to_addr(i, 32));
+        profiles.push("".to_string());
     }
     let mut param = request::PostDeviceRange {
         data: request::PostDeviceRangeData {
@@ -1280,6 +1435,7 @@ pub fn post_range_del(context: &mut SpecContext<TestState>) -> Result<(), String
             network_id: "public".to_string(),
             start_addr: strings::u128_to_addr(0, 32),
             end_addr: strings::u128_to_addr(1023, 32),
+            profile: None,
         },
     };
     test_post_range(
@@ -1292,10 +1448,12 @@ pub fn post_range_del(context: &mut SpecContext<TestState>) -> Result<(), String
         None,
         "public",
         &network_addrs1,
+        &profiles,
     )?;
     network_addrs1.push(strings::u128_to_addr(1024, 32));
     param.data.start_addr = strings::u128_to_addr(1024, 32);
     param.data.end_addr = strings::u128_to_addr(1024, 32);
+    profiles.push("".to_string());
     test_post_range(
         runtime,
         routes_state,
@@ -1306,8 +1464,10 @@ pub fn post_range_del(context: &mut SpecContext<TestState>) -> Result<(), String
         None,
         "public",
         &network_addrs1,
+        &profiles,
     )?;
     network_addrs1.pop();
+    profiles.pop();
     param.data.unit_id = "owner".to_string();
     param.data.network_id = "owner".to_string();
     param.data.start_addr = strings::u128_to_addr(0, 32);
@@ -1322,10 +1482,12 @@ pub fn post_range_del(context: &mut SpecContext<TestState>) -> Result<(), String
         Some("owner"),
         "owner",
         &network_addrs1,
+        &profiles,
     )?;
     param.data.start_addr = strings::u128_to_addr(1024, 32);
     param.data.end_addr = strings::u128_to_addr(1024, 32);
     network_addrs1.push(strings::u128_to_addr(1024, 32));
+    profiles.push("".to_string());
     test_post_range(
         runtime,
         routes_state,
@@ -1336,6 +1498,7 @@ pub fn post_range_del(context: &mut SpecContext<TestState>) -> Result<(), String
         Some("owner"),
         "owner",
         &network_addrs1,
+        &profiles,
     )?;
 
     let mut param = request::PostDeviceRange {
@@ -1344,6 +1507,7 @@ pub fn post_range_del(context: &mut SpecContext<TestState>) -> Result<(), String
             network_id: "public".to_string(),
             start_addr: strings::u128_to_addr(0, 32),
             end_addr: strings::u128_to_addr(1023, 32),
+            profile: None,
         },
     };
     test_post_range(
@@ -1356,6 +1520,7 @@ pub fn post_range_del(context: &mut SpecContext<TestState>) -> Result<(), String
         None,
         "public",
         &vec![strings::u128_to_addr(1024, 32)],
+        &vec!["".to_string()],
     )?;
 
     param.data.unit_id = "owner".to_string();
@@ -1370,6 +1535,7 @@ pub fn post_range_del(context: &mut SpecContext<TestState>) -> Result<(), String
         Some("owner"),
         "owner",
         &vec![strings::u128_to_addr(1024, 32)],
+        &vec!["".to_string()],
     )
 }
 
@@ -1391,6 +1557,7 @@ pub fn post_range_del_not_exist(context: &mut SpecContext<TestState>) -> Result<
             network_id: "public".to_string(),
             start_addr: "0000".to_string(),
             end_addr: "0000".to_string(),
+            profile: None,
         },
     };
     test_post_range(
@@ -1403,6 +1570,7 @@ pub fn post_range_del_not_exist(context: &mut SpecContext<TestState>) -> Result<
         None,
         "public",
         &vec!["0000".to_string()],
+        &vec!["".to_string()],
     )?;
 
     let param = request::PostDeviceRange {
@@ -1411,6 +1579,7 @@ pub fn post_range_del_not_exist(context: &mut SpecContext<TestState>) -> Result<
             network_id: "manager".to_string(),
             start_addr: "0000".to_string(),
             end_addr: "0000".to_string(),
+            profile: None,
         },
     };
     test_post_range(
@@ -1423,6 +1592,7 @@ pub fn post_range_del_not_exist(context: &mut SpecContext<TestState>) -> Result<
         Some("manager"),
         "manager",
         &vec!["0000".to_string()],
+        &vec!["".to_string()],
     )?;
 
     let param = request::PostDeviceRange {
@@ -1431,6 +1601,7 @@ pub fn post_range_del_not_exist(context: &mut SpecContext<TestState>) -> Result<
             network_id: "id".to_string(),
             start_addr: "0000".to_string(),
             end_addr: "0000".to_string(),
+            profile: None,
         },
     };
     test_post_range(
@@ -1443,6 +1614,7 @@ pub fn post_range_del_not_exist(context: &mut SpecContext<TestState>) -> Result<
         None,
         "public",
         &vec!["0000".to_string()],
+        &vec!["".to_string()],
     )?;
 
     let param = request::PostDeviceRange {
@@ -1451,6 +1623,7 @@ pub fn post_range_del_not_exist(context: &mut SpecContext<TestState>) -> Result<
             network_id: "public".to_string(),
             start_addr: "0000".to_string(),
             end_addr: "0000".to_string(),
+            profile: None,
         },
     };
     test_post_range(
@@ -1463,6 +1636,7 @@ pub fn post_range_del_not_exist(context: &mut SpecContext<TestState>) -> Result<
         None,
         "public",
         &vec!["0000".to_string()],
+        &vec!["".to_string()],
     )?;
 
     let param = request::PostDeviceRange {
@@ -1471,6 +1645,7 @@ pub fn post_range_del_not_exist(context: &mut SpecContext<TestState>) -> Result<
             network_id: "manager".to_string(),
             start_addr: "0000".to_string(),
             end_addr: "0000".to_string(),
+            profile: None,
         },
     };
     test_post_range(
@@ -1483,6 +1658,7 @@ pub fn post_range_del_not_exist(context: &mut SpecContext<TestState>) -> Result<
         None,
         "public",
         &vec!["0000".to_string()],
+        &vec!["".to_string()],
     )
 }
 
@@ -1502,6 +1678,7 @@ pub fn post_range_del_invalid_param(context: &mut SpecContext<TestState>) -> Res
             network_id: "manager".to_string(),
             start_addr: "0000".to_string(),
             end_addr: "0000".to_string(),
+            profile: None,
         },
     };
     test_post_range_invalid_param(runtime, &routes_state, TOKEN_MANAGER, false, Some(&param))?;
@@ -1512,6 +1689,7 @@ pub fn post_range_del_invalid_param(context: &mut SpecContext<TestState>) -> Res
             network_id: "".to_string(),
             start_addr: "0000".to_string(),
             end_addr: "0000".to_string(),
+            profile: None,
         },
     };
     test_post_range_invalid_param(runtime, &routes_state, TOKEN_MANAGER, false, Some(&param))?;
@@ -1522,6 +1700,7 @@ pub fn post_range_del_invalid_param(context: &mut SpecContext<TestState>) -> Res
             network_id: "manager".to_string(),
             start_addr: "".to_string(),
             end_addr: "0000".to_string(),
+            profile: None,
         },
     };
     test_post_range_invalid_param(runtime, &routes_state, TOKEN_MANAGER, false, Some(&param))?;
@@ -1532,6 +1711,7 @@ pub fn post_range_del_invalid_param(context: &mut SpecContext<TestState>) -> Res
             network_id: "manager".to_string(),
             start_addr: "0000".to_string(),
             end_addr: "".to_string(),
+            profile: None,
         },
     };
     test_post_range_invalid_param(runtime, &routes_state, TOKEN_MANAGER, false, Some(&param))?;
@@ -1542,6 +1722,7 @@ pub fn post_range_del_invalid_param(context: &mut SpecContext<TestState>) -> Res
             network_id: "manager".to_string(),
             start_addr: "000g".to_string(),
             end_addr: "0000".to_string(),
+            profile: None,
         },
     };
     test_post_range_invalid_param(runtime, &routes_state, TOKEN_MANAGER, false, Some(&param))?;
@@ -1552,6 +1733,7 @@ pub fn post_range_del_invalid_param(context: &mut SpecContext<TestState>) -> Res
             network_id: "manager".to_string(),
             start_addr: "0000".to_string(),
             end_addr: "000g".to_string(),
+            profile: None,
         },
     };
     test_post_range_invalid_param(runtime, &routes_state, TOKEN_MANAGER, false, Some(&param))?;
@@ -1562,6 +1744,7 @@ pub fn post_range_del_invalid_param(context: &mut SpecContext<TestState>) -> Res
             network_id: "manager".to_string(),
             start_addr: "0000".to_string(),
             end_addr: "000000".to_string(),
+            profile: None,
         },
     };
     test_post_range_invalid_param(runtime, &routes_state, TOKEN_MANAGER, false, Some(&param))?;
@@ -1572,6 +1755,7 @@ pub fn post_range_del_invalid_param(context: &mut SpecContext<TestState>) -> Res
             network_id: "manager".to_string(),
             start_addr: "0000".to_string(),
             end_addr: "0400".to_string(),
+            profile: None,
         },
     };
     test_post_range_invalid_param(runtime, &routes_state, TOKEN_MANAGER, false, Some(&param))?;
@@ -1582,6 +1766,7 @@ pub fn post_range_del_invalid_param(context: &mut SpecContext<TestState>) -> Res
             network_id: "manager".to_string(),
             start_addr: "0001".to_string(),
             end_addr: "0000".to_string(),
+            profile: None,
         },
     };
     test_post_range_invalid_param(runtime, &routes_state, TOKEN_MANAGER, false, Some(&param))?;
@@ -1592,6 +1777,7 @@ pub fn post_range_del_invalid_param(context: &mut SpecContext<TestState>) -> Res
             network_id: "manager".to_string(),
             start_addr: "0000000000000000000000000000000000".to_string(),
             end_addr: "0000000000000000000000000000000000".to_string(),
+            profile: None,
         },
     };
     test_post_range_invalid_param(runtime, &routes_state, TOKEN_MANAGER, false, Some(&param))
@@ -1633,6 +1819,7 @@ pub fn get_count(context: &mut SpecContext<TestState>) -> Result<(), String> {
         unit: Some("".to_string()),
         network: Some("".to_string()),
         addr: Some("".to_string()),
+        profile: Some("".to_string()),
         ..Default::default()
     };
     test_get_count(
@@ -1694,6 +1881,20 @@ pub fn get_count(context: &mut SpecContext<TestState>) -> Result<(), String> {
         Some(&param),
         data_size.2,
     )?;
+
+    let param = request::GetDeviceCount {
+        profile: Some("owner1".to_string()),
+        ..Default::default()
+    };
+    test_get_count(runtime, &routes_state, TOKEN_MANAGER, Some(&param), 5)?;
+
+    let param = request::GetDeviceCount {
+        unit: Some("owner1".to_string()),
+        profile: Some("owner1".to_string()),
+        ..Default::default()
+    };
+    test_get_count(runtime, &routes_state, TOKEN_MANAGER, Some(&param), 3)?;
+    test_get_count(runtime, &routes_state, TOKEN_OWNER, Some(&param), 3)?;
 
     let param = request::GetDeviceCount {
         contains: Some("2".to_string()),
@@ -1907,6 +2108,7 @@ pub fn get_list(context: &mut SpecContext<TestState>) -> Result<(), String> {
         unit: Some("".to_string()),
         network: Some("".to_string()),
         addr: Some("".to_string()),
+        profile: Some("".to_string()),
         ..Default::default()
     };
     test_get_list(
@@ -1968,6 +2170,20 @@ pub fn get_list(context: &mut SpecContext<TestState>) -> Result<(), String> {
         Some(&param),
         data_size.2,
     )?;
+
+    let param = request::GetDeviceList {
+        profile: Some("owner1".to_string()),
+        ..Default::default()
+    };
+    test_get_list(runtime, &routes_state, TOKEN_MANAGER, Some(&param), 5)?;
+
+    let param = request::GetDeviceList {
+        unit: Some("owner1".to_string()),
+        profile: Some("owner1".to_string()),
+        ..Default::default()
+    };
+    test_get_list(runtime, &routes_state, TOKEN_MANAGER, Some(&param), 3)?;
+    test_get_list(runtime, &routes_state, TOKEN_OWNER, Some(&param), 3)?;
 
     let param = request::GetDeviceList {
         contains: Some("2".to_string()),
@@ -2362,6 +2578,7 @@ pub fn get_list_offset_limit(context: &mut SpecContext<TestState>) -> Result<(),
             network_id,
             format!("device_{}", i).as_str(),
             false,
+            "",
         )?;
     }
 
@@ -2486,6 +2703,7 @@ pub fn get_list_offset_limit(context: &mut SpecContext<TestState>) -> Result<(),
             "public",
             format!("device_{}", i).as_str(),
             true,
+            "",
         )?;
     }
 
@@ -2539,6 +2757,7 @@ pub fn get_list_format_array(context: &mut SpecContext<TestState>) -> Result<(),
             network_id,
             format!("device_{}", i).as_str(),
             false,
+            "profile",
         )?;
     }
 
@@ -2667,6 +2886,7 @@ pub fn get(context: &mut SpecContext<TestState>) -> Result<(), String> {
         "public",
         "manager-public",
         true,
+        "profile",
     )?;
     add_device_model(
         runtime,
@@ -2675,6 +2895,7 @@ pub fn get(context: &mut SpecContext<TestState>) -> Result<(), String> {
         "manager",
         "manager",
         false,
+        "",
     )?;
     add_device_model(
         runtime,
@@ -2683,9 +2904,26 @@ pub fn get(context: &mut SpecContext<TestState>) -> Result<(), String> {
         "public",
         "owner-public",
         true,
+        "",
     )?;
-    add_device_model(runtime, routes_state, "owner1", "owner1", "owner1", false)?;
-    add_device_model(runtime, routes_state, "owner2", "owner2", "owner2", false)?;
+    add_device_model(
+        runtime,
+        routes_state,
+        "owner1",
+        "owner1",
+        "owner1",
+        false,
+        "",
+    )?;
+    add_device_model(
+        runtime,
+        routes_state,
+        "owner2",
+        "owner2",
+        "owner2",
+        false,
+        "",
+    )?;
 
     test_get(runtime, routes_state, TOKEN_MANAGER, "manager-public")?;
     test_get(runtime, routes_state, TOKEN_MANAGER, "manager")?;
@@ -2719,6 +2957,7 @@ pub fn get_wrong_id(context: &mut SpecContext<TestState>) -> Result<(), String> 
         "public",
         "manager-public",
         true,
+        "",
     )?;
     add_device_model(
         runtime,
@@ -2727,6 +2966,7 @@ pub fn get_wrong_id(context: &mut SpecContext<TestState>) -> Result<(), String> 
         "manager",
         "manager",
         false,
+        "",
     )?;
     add_device_model(
         runtime,
@@ -2735,9 +2975,26 @@ pub fn get_wrong_id(context: &mut SpecContext<TestState>) -> Result<(), String> 
         "public",
         "owner-public",
         true,
+        "",
     )?;
-    add_device_model(runtime, routes_state, "owner1", "owner1", "owner1", false)?;
-    add_device_model(runtime, routes_state, "owner2", "owner2", "owner2", false)?;
+    add_device_model(
+        runtime,
+        routes_state,
+        "owner1",
+        "owner1",
+        "owner1",
+        false,
+        "",
+    )?;
+    add_device_model(
+        runtime,
+        routes_state,
+        "owner2",
+        "owner2",
+        "owner2",
+        false,
+        "",
+    )?;
 
     test_get_wrong_id(runtime, routes_state, TOKEN_MANAGER, "manager1")?;
     test_get_wrong_id(runtime, routes_state, TOKEN_OWNER, "manager-public")?;
@@ -2824,6 +3081,7 @@ pub fn patch_wrong_id(context: &mut SpecContext<TestState>) -> Result<(), String
         "public",
         "manager-public",
         true,
+        "",
     )?;
     add_device_model(
         runtime,
@@ -2832,6 +3090,7 @@ pub fn patch_wrong_id(context: &mut SpecContext<TestState>) -> Result<(), String
         "manager",
         "manager",
         false,
+        "",
     )?;
     add_device_model(
         runtime,
@@ -2840,8 +3099,9 @@ pub fn patch_wrong_id(context: &mut SpecContext<TestState>) -> Result<(), String
         "public",
         "owner-public",
         true,
+        "",
     )?;
-    add_device_model(runtime, routes_state, "owner", "public", "owner", true)?;
+    add_device_model(runtime, routes_state, "owner", "public", "owner", true, "")?;
 
     test_patch_wrong_id(runtime, routes_state, TOKEN_MANAGER, "manager1")?;
     test_patch_wrong_id(runtime, routes_state, TOKEN_OWNER, "manager-public")?;
@@ -2867,6 +3127,7 @@ pub fn patch_invalid_param(context: &mut SpecContext<TestState>) -> Result<(), S
         "manager",
         "manager",
         false,
+        "",
     )?;
 
     test_patch_invalid_param(runtime, routes_state, TOKEN_MANAGER, "manager", None)?;
@@ -2884,6 +3145,22 @@ pub fn patch_invalid_param(context: &mut SpecContext<TestState>) -> Result<(), S
 
     let param = request::PatchDevice {
         data: request::PatchDeviceData {
+            ..Default::default()
+        },
+    };
+    test_patch_invalid_param(
+        runtime,
+        routes_state,
+        TOKEN_MANAGER,
+        "manager",
+        Some(&param),
+    )?;
+
+    let mut info = Map::<String, Value>::new();
+    info.insert("".to_string(), Value::String("value".to_string()));
+    let param = request::PatchDevice {
+        data: request::PatchDeviceData {
+            profile: Some("-profile".to_string()),
             ..Default::default()
         },
     };
@@ -2940,6 +3217,7 @@ pub fn delete(context: &mut SpecContext<TestState>) -> Result<(), String> {
         "public",
         "manager-public",
         true,
+        "",
     )?;
     add_device_model(
         runtime,
@@ -2948,6 +3226,7 @@ pub fn delete(context: &mut SpecContext<TestState>) -> Result<(), String> {
         "manager",
         "manager",
         false,
+        "",
     )?;
     add_device_model(
         runtime,
@@ -2956,6 +3235,7 @@ pub fn delete(context: &mut SpecContext<TestState>) -> Result<(), String> {
         "public",
         "owner-public",
         true,
+        "",
     )?;
     add_device_model(
         runtime,
@@ -2964,9 +3244,10 @@ pub fn delete(context: &mut SpecContext<TestState>) -> Result<(), String> {
         "public",
         "owner-public2",
         true,
+        "",
     )?;
-    add_device_model(runtime, routes_state, "owner", "owner", "owner", false)?;
-    add_device_model(runtime, routes_state, "owner", "owner", "owner2", false)?;
+    add_device_model(runtime, routes_state, "owner", "owner", "owner", false, "")?;
+    add_device_model(runtime, routes_state, "owner", "owner", "owner2", false, "")?;
 
     let mut app = runtime.block_on(async {
         test::init_service(
@@ -3302,6 +3583,10 @@ fn test_post(
     expect(device_info.created_at.le(&time_after)).to_equal(true)?;
     expect(device_info.modified_at.ge(&time_before)).to_equal(true)?;
     expect(device_info.modified_at.le(&time_after)).to_equal(true)?;
+    match param.data.profile.as_ref() {
+        None => expect(device_info.profile.len()).to_equal(0)?,
+        Some(profile) => expect(device_info.profile.as_str()).to_equal(profile.as_str())?,
+    }
     match param.data.name.as_ref() {
         None => expect(device_info.name.len()).to_equal(0)?,
         Some(name) => expect(device_info.name.as_str()).to_equal(name.as_str())?,
@@ -3353,6 +3638,7 @@ fn test_post_bulk(
     expect_unit_code: Option<&str>,
     expect_network_code: &str,
     expect_network_addrs: &Vec<String>,
+    expect_profiles: &Vec<String>,
 ) -> Result<(), String> {
     let mut app = runtime.block_on(async {
         test::init_service(
@@ -3421,6 +3707,7 @@ fn test_post_bulk(
         }
         expect(device.network_code.as_str()).to_equal(expect_network_code)?;
         expect(device.network_addr.as_str()).to_equal(expect_network_addrs[i].as_str())?;
+        expect(device.profile.as_str()).to_equal(expect_profiles[i].as_str())?;
     }
 
     Ok(())
@@ -3469,6 +3756,7 @@ fn test_post_range(
     expect_unit_code: Option<&str>,
     expect_network_code: &str,
     expect_network_addrs: &Vec<String>,
+    expect_profiles: &Vec<String>,
 ) -> Result<(), String> {
     let mut app = runtime.block_on(async {
         test::init_service(
@@ -3537,6 +3825,7 @@ fn test_post_range(
         }
         expect(device.network_code.as_str()).to_equal(expect_network_code)?;
         expect(device.network_addr.as_str()).to_equal(expect_network_addrs[i].as_str())?;
+        expect(device.profile.as_str()).to_equal(expect_profiles[i].as_str())?;
     }
 
     Ok(())
@@ -3862,6 +4151,7 @@ fn test_get(
             .timestamp_millis(),
     )
     .to_equal(device_info.modified_at.timestamp_millis())?;
+    expect(body.data.profile.as_str()).to_equal(device_info.profile.as_str())?;
     expect(body.data.name.as_str()).to_equal(device_info.name.as_str())?;
     expect(body.data.info).to_equal(device_info.info)
 }
@@ -3900,7 +4190,9 @@ fn test_patch(
     device_id: &str,
     is_public: bool,
 ) -> Result<(), String> {
-    add_device_model(runtime, state, unit_id, network_id, device_id, is_public)?;
+    add_device_model(
+        runtime, state, unit_id, network_id, device_id, is_public, "profile",
+    )?;
 
     let mut app = runtime.block_on(async {
         test::init_service(
@@ -3919,6 +4211,7 @@ fn test_patch(
     );
     let body = request::PatchDevice {
         data: request::PatchDeviceData {
+            profile: Some("profile-changes".to_string()),
             name: Some("name changes".to_string()),
             info: Some(info.clone()),
         },
@@ -3935,11 +4228,13 @@ fn test_patch(
     let device_info = get_device_model(runtime, state, device_id, true)?.unwrap();
     expect(device_info.modified_at.ge(&time_before)).to_equal(true)?;
     expect(device_info.modified_at.le(&time_after)).to_equal(true)?;
+    expect(device_info.profile.as_str()).to_equal("profile-changes")?;
     expect(device_info.name.as_str()).to_equal("name changes")?;
     expect(device_info.info).to_equal(info)?;
 
     let body = request::PatchDevice {
         data: request::PatchDeviceData {
+            profile: Some("".to_string()),
             name: Some("".to_string()),
             info: Some(Map::<String, Value>::new()),
             ..Default::default()
@@ -3954,6 +4249,7 @@ fn test_patch(
     expect(resp.status()).to_equal(StatusCode::NO_CONTENT)?;
 
     let device_info = get_device_model(runtime, state, device_id, true)?.unwrap();
+    expect(device_info.profile.as_str()).to_equal("")?;
     expect(device_info.name.as_str()).to_equal("")?;
     expect(device_info.info).to_equal(Map::<String, Value>::new())
 }
@@ -4037,7 +4333,7 @@ fn count_list_dataset(
     add_network_model(runtime, state, "owner2", "owner2", "amqp://host")?;
     let now = Utc::now();
 
-    let mut device = create_device("manager", "public", "manager-public", true);
+    let mut device = create_device("manager", "public", "manager-public", true, "owner1");
     device.created_at = now - Duration::milliseconds(2);
     device.modified_at = now - Duration::milliseconds(2);
     runtime.block_on(async {
@@ -4047,7 +4343,7 @@ fn count_list_dataset(
         Ok(())
     })?;
 
-    let mut device = create_device("owner1", "public", "owner-public", true);
+    let mut device = create_device("owner1", "public", "owner-public", true, "public");
     device.created_at = now - Duration::milliseconds(1);
     device.modified_at = now - Duration::milliseconds(1);
     runtime.block_on(async {
@@ -4057,7 +4353,7 @@ fn count_list_dataset(
         Ok(())
     })?;
 
-    let mut device = create_device("manager", "manager", "manager", true);
+    let mut device = create_device("manager", "manager", "manager", true, "");
     device.created_at = now;
     device.modified_at = now + Duration::milliseconds(5);
     runtime.block_on(async {
@@ -4067,7 +4363,7 @@ fn count_list_dataset(
         Ok(())
     })?;
 
-    let mut device = create_device("owner1", "owner1", "owner1-1", true);
+    let mut device = create_device("owner1", "owner1", "owner1-1", true, "owner1");
     device.created_at = now + Duration::milliseconds(1);
     device.modified_at = now + Duration::milliseconds(4);
     runtime.block_on(async {
@@ -4077,7 +4373,7 @@ fn count_list_dataset(
         Ok(())
     })?;
 
-    let mut device = create_device("owner1", "owner1", "owner1-2", true);
+    let mut device = create_device("owner1", "owner1", "owner1-2", true, "owner1");
     device.created_at = now + Duration::milliseconds(2);
     device.modified_at = now + Duration::milliseconds(3);
     runtime.block_on(async {
@@ -4087,7 +4383,7 @@ fn count_list_dataset(
         Ok(())
     })?;
 
-    let mut device = create_device("owner1", "owner1", "owner1-3", true);
+    let mut device = create_device("owner1", "owner1", "owner1-3", true, "owner1");
     device.created_at = now + Duration::milliseconds(3);
     device.modified_at = now + Duration::milliseconds(2);
     runtime.block_on(async {
@@ -4097,7 +4393,7 @@ fn count_list_dataset(
         Ok(())
     })?;
 
-    let mut device = create_device("owner2", "owner2", "owner2-1", true);
+    let mut device = create_device("owner2", "owner2", "owner2-1", true, "owner1");
     device.created_at = now + Duration::milliseconds(4);
     device.modified_at = now + Duration::milliseconds(1);
     device.name = "owner2-2".to_string();
@@ -4108,7 +4404,7 @@ fn count_list_dataset(
         Ok(())
     })?;
 
-    let mut device = create_device("owner2", "owner2", "owner2-2", true);
+    let mut device = create_device("owner2", "owner2", "owner2-2", true, "owner2");
     device.created_at = now + Duration::milliseconds(5);
     device.modified_at = now;
     device.name = "owner2-1".to_string();
@@ -4135,7 +4431,7 @@ fn count_list_extra_dataset(
     add_network_model(runtime, state, "manager", "manager", "amqp://host")?;
     add_network_model(runtime, state, "owner", "owner", "amqp://host")?;
 
-    let mut device = create_device("manager", "public", "manager-addr", true);
+    let mut device = create_device("manager", "public", "manager-addr", true, "");
     device.device_id = "manager-addr-public".to_string();
     runtime.block_on(async {
         if let Err(e) = state.model.device().add(&device).await {
@@ -4144,7 +4440,7 @@ fn count_list_extra_dataset(
         Ok(())
     })?;
 
-    let device = create_device("manager", "manager", "manager-addr", true);
+    let device = create_device("manager", "manager", "manager-addr", true, "");
     runtime.block_on(async {
         if let Err(e) = state.model.device().add(&device).await {
             return Err(format!("add device {} error: {}", device.device_id, e));
@@ -4152,7 +4448,7 @@ fn count_list_extra_dataset(
         Ok(())
     })?;
 
-    let device = create_device("manager", "manager", "manager-addr2", true);
+    let device = create_device("manager", "manager", "manager-addr2", true, "");
     runtime.block_on(async {
         if let Err(e) = state.model.device().add(&device).await {
             return Err(format!("add device {} error: {}", device.device_id, e));
@@ -4160,7 +4456,7 @@ fn count_list_extra_dataset(
         Ok(())
     })?;
 
-    let mut device = create_device("manager", "manager", "same-addr", true);
+    let mut device = create_device("manager", "manager", "same-addr", true, "");
     device.device_id = "same-addr-manager".to_string();
     runtime.block_on(async {
         if let Err(e) = state.model.device().add(&device).await {
@@ -4169,7 +4465,7 @@ fn count_list_extra_dataset(
         Ok(())
     })?;
 
-    let mut device = create_device("owner", "public", "owner-addr", true);
+    let mut device = create_device("owner", "public", "owner-addr", true, "");
     device.device_id = "owner-addr-public".to_string();
     runtime.block_on(async {
         if let Err(e) = state.model.device().add(&device).await {
@@ -4178,7 +4474,7 @@ fn count_list_extra_dataset(
         Ok(())
     })?;
 
-    let device = create_device("owner", "owner", "owner-addr", true);
+    let device = create_device("owner", "owner", "owner-addr", true, "");
     runtime.block_on(async {
         if let Err(e) = state.model.device().add(&device).await {
             return Err(format!("add device {} error: {}", device.device_id, e));
@@ -4186,7 +4482,7 @@ fn count_list_extra_dataset(
         Ok(())
     })?;
 
-    let mut device = create_device("owner", "owner", "same-addr", true);
+    let mut device = create_device("owner", "owner", "same-addr", true, "");
     device.device_id = "same-addr-owner".to_string();
     runtime.block_on(async {
         if let Err(e) = state.model.device().add(&device).await {

@@ -12,6 +12,7 @@ use serde::{Deserialize, Serialize};
 
 use super::super::device_route::{
     Cursor, DeviceRoute, DeviceRouteModel, ListOptions, ListQueryCond, QueryCond, SortKey,
+    UpdateQueryCond, Updates,
 };
 
 /// Model instance.
@@ -49,8 +50,11 @@ struct Schema {
     network_code: String,
     #[serde(rename = "networkAddr")]
     network_addr: String,
+    profile: String,
     #[serde(rename = "createdAt")]
     created_at: DateTime,
+    #[serde(rename = "modifiedAt")]
+    modified_at: DateTime,
 }
 
 const COL_NAME: &'static str = "deviceRoute";
@@ -149,7 +153,9 @@ impl DeviceRouteModel for Model {
                 network_id: route.network_id,
                 network_code: route.network_code,
                 network_addr: route.network_addr,
+                profile: route.profile,
                 created_at: route.created_at.into(),
+                modified_at: route.modified_at.into(),
             }));
         }
         Ok(None)
@@ -166,7 +172,9 @@ impl DeviceRouteModel for Model {
             network_id: route.network_id.clone(),
             network_code: route.network_code.clone(),
             network_addr: route.network_addr.clone(),
+            profile: route.profile.clone(),
             created_at: route.created_at.into(),
+            modified_at: route.modified_at.into(),
         };
         self.conn
             .collection::<Schema>(COL_NAME)
@@ -188,7 +196,9 @@ impl DeviceRouteModel for Model {
                 network_id: route.network_id.clone(),
                 network_code: route.network_code.clone(),
                 network_addr: route.network_addr.clone(),
+                profile: route.profile.clone(),
                 created_at: route.created_at.into(),
+                modified_at: route.modified_at.into(),
             });
         }
         let opts = InsertManyOptions::builder().ordered(Some(false)).build();
@@ -215,6 +225,21 @@ impl DeviceRouteModel for Model {
             .await?;
         Ok(())
     }
+
+    async fn update(
+        &self,
+        cond: &UpdateQueryCond,
+        updates: &Updates,
+    ) -> Result<(), Box<dyn StdError>> {
+        let filter = get_update_query_filter(cond);
+        if let Some(updates) = get_update_doc(updates) {
+            self.conn
+                .collection::<Schema>(COL_NAME)
+                .update_many(filter, updates, None)
+                .await?;
+        }
+        return Ok(());
+    }
 }
 
 impl DbCursor {
@@ -239,7 +264,9 @@ impl Cursor for DbCursor {
                 network_id: item.network_id,
                 network_code: item.network_code,
                 network_addr: item.network_addr,
+                profile: item.profile,
                 created_at: item.created_at.into(),
+                modified_at: item.modified_at.into(),
             }));
         }
         Ok(None)
@@ -331,6 +358,7 @@ fn get_find_options(opts: &ListOptions) -> FindOptions {
             for cond in sort_list.iter() {
                 let key = match cond.key {
                     SortKey::CreatedAt => "createdAt",
+                    SortKey::ModifiedAt => "modifiedAt",
                     SortKey::ApplicationCode => "applicationCode",
                     SortKey::NetworkCode => "networkCode",
                     SortKey::NetworkAddr => "networkAddr",
@@ -345,4 +373,30 @@ fn get_find_options(opts: &ListOptions) -> FindOptions {
         }
     }
     options
+}
+
+/// Transforms query conditions to the MongoDB document.
+fn get_update_query_filter(cond: &UpdateQueryCond) -> Document {
+    doc! {"deviceId": cond.device_id}
+}
+
+/// Transforms the model object to the MongoDB document.
+fn get_update_doc(updates: &Updates) -> Option<Document> {
+    let mut count = 0;
+    let mut document = Document::new();
+    if let Some(value) = updates.modified_at.as_ref() {
+        document.insert(
+            "modifiedAt",
+            DateTime::from_millis(value.timestamp_millis()),
+        );
+        count += 1;
+    }
+    if let Some(value) = updates.profile {
+        document.insert("profile", value);
+        count += 1;
+    }
+    if count == 0 {
+        return None;
+    }
+    Some(doc! {"$set": document})
 }

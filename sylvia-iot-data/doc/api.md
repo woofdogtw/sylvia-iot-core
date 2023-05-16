@@ -142,6 +142,7 @@ Get application uplink data list count.
         device={deviceId}&
         network={networkCode}&
         addr={networkAddr}&
+        profile={deviceProfile}&
         tfield={timeFieldFilter}&
         tstart={startTimeMs}&
         tend={endTimeMs}
@@ -150,6 +151,7 @@ Get application uplink data list count.
 - *string* `device`: (**optional**) To search data of the specified device ID.
 - *string* `network`: (**optional**) To search data of the specified device network code.
 - *string* `addr`: (**optional**) To search data of the specified device network address.
+- *string* `profile`: (**optional**) To search data of the specified device/data profile.
 - *string* `tfield`: (**required for tstart and tend**) Time field to filter data. **proc**, **pub**, **time** are available.
 - *number* `tstart`: (**optional**) The start time in milliseconds to filter data.
 - *number* `tend`: (**optional**) The end time in milliseconds to filter data.
@@ -184,6 +186,7 @@ Get application uplink data list.
         device={deviceId}&
         network={networkCode}&
         addr={networkAddr}&
+        profile={deviceProfile}&
         tfield={timeFieldFilter}&
         tstart={startTimeMs}&
         tend={endTimeMs}&
@@ -196,6 +199,7 @@ Get application uplink data list.
 - *string* `device`: (**optional**) To search data of the specified device ID.
 - *string* `network`: (**optional**) To search data of the specified device network code.
 - *string* `addr`: (**optional**) To search data of the specified device network address.
+- *string* `profile`: (**optional**) To search data of the specified device/data profile.
 - *string* `tfield`: (**required for tstart and tend**) Time field to filter data. **proc**, **pub**, **time** are available.
 - *number* `tstart`: (**optional**) The start time in milliseconds to filter data.
 - *number* `tend`: (**optional**) The end time in milliseconds to filter data.
@@ -220,6 +224,7 @@ Get application uplink data list.
         - *string* `unitId`: Device's unit ID.
         - *string* `deviceId`: Device ID.
         - *string* `time`: Device time in ISO 8601 format.
+        - *string* `profile`: Device/data profile.
         - *string* `data`: Data in hexadecimal format.
         - *object* `extension`: (**optional**) Extensions from the network to application(s).
 
@@ -238,6 +243,7 @@ Get application uplink data list.
                     "unitId": "1640923958516-qvdFNpOV",
                     "deviceId": "1640924274329-yESwHhKO",
                     "time": "2022-10-11T11:10:48.768Z",
+                    "profile": "tracker",
                     "data": "74657374",
                     "extension": {
                         "latitude": "24.38349800818775",
@@ -261,6 +267,7 @@ Get application downlink data list count.
         device={deviceId}&
         network={networkCode}&
         addr={networkAddr}&
+        profile={deviceProfile}&
         tfield={timeFieldFilter}&
         tstart={startTimeMs}&
         tend={endTimeMs}
@@ -269,6 +276,7 @@ Get application downlink data list count.
 - *string* `device`: (**optional**) To search data of the specified device ID.
 - *string* `network`: (**optional**) To search data of the specified device network code.
 - *string* `addr`: (**optional**) To search data of the specified device network address.
+- *string* `profile`: (**optional**) To search data of the specified device/data profile.
 - *string* `tfield`: (**required for tstart and tend**) Time field to filter data. **proc**, **resp** are available.
 - *number* `tstart`: (**optional**) The start time in milliseconds to filter data.
 - *number* `tend`: (**optional**) The end time in milliseconds to filter data.
@@ -303,6 +311,7 @@ Get application downlink data list.
         device={deviceId}&
         network={networkCode}&
         addr={networkAddr}&
+        profile={deviceProfile}&
         tfield={timeFieldFilter}&
         tstart={startTimeMs}&
         tend={endTimeMs}&
@@ -315,6 +324,7 @@ Get application downlink data list.
 - *string* `device`: (**optional**) To search data of the specified device ID.
 - *string* `network`: (**optional**) To search data of the specified device network code.
 - *string* `addr`: (**optional**) To search data of the specified device network address.
+- *string* `profile`: (**optional**) To search data of the specified device/data profile.
 - *string* `tfield`: (**required for tstart and tend**) Time field to filter data. **proc**, **resp** are available.
 - *number* `tstart`: (**optional**) The start time in milliseconds to filter data.
 - *number* `tend`: (**optional**) The end time in milliseconds to filter data.
@@ -338,6 +348,7 @@ Get application downlink data list.
         - *string* `deviceId`: (**optional**) Device ID from the source data of the application.
         - *string* `networkCode`: (**optional**) Device network code from the source data of the application.
         - *string* `networkAddr`: (**optional**) Device network address from the source data of the application.
+        - *string* `profile`: Device/data profile.
         - *string* `data`: Data in hexadecimal format.
         - *object* `extension`: (**optional**) Extensions from the application to the network.
 
@@ -355,6 +366,7 @@ Get application downlink data list.
                     "deviceId": "1640924274329-yESwHhKO",
                     "networkCode": "lora",
                     "networkAddr": "800012ae",
+                    "profile": "tracker",
                     "data": "74657374",
                     "extension": {
                         "schedule": "2022-10-12T00:00:00Z"
@@ -379,6 +391,7 @@ Get network uplink data list count.
         device={deviceId}&
         network={networkCode}&
         addr={networkAddr}&
+        profile={deviceProfile}&
         tfield={timeFieldFilter}&
         tstart={startTimeMs}&
         tend={endTimeMs}
@@ -387,6 +400,7 @@ Get network uplink data list count.
 - *string* `device`: (**optional**) To search data of the specified device ID.
 - *string* `network`: (**optional**) To search data of the specified device network code.
 - *string* `addr`: (**optional**) To search data of the specified device network address.
+- *string* `profile`: (**optional**) To search data of the specified device/data profile.
 - *string* `tfield`: (**required for tstart and tend**) Time field to filter data. **proc**, **time** are available.
 - *number* `tstart`: (**optional**) The start time in milliseconds to filter data.
 - *number* `tend`: (**optional**) The end time in milliseconds to filter data.
@@ -421,6 +435,7 @@ Get network uplink data list.
         device={deviceId}&
         network={networkCode}&
         addr={networkAddr}&
+        profile={deviceProfile}&
         tfield={timeFieldFilter}&
         tstart={startTimeMs}&
         tend={endTimeMs}&
@@ -433,6 +448,7 @@ Get network uplink data list.
 - *string* `device`: (**optional**) To search data of the specified device ID.
 - *string* `network`: (**optional**) To search data of the specified device network code.
 - *string* `addr`: (**optional**) To search data of the specified device network address.
+- *string* `profile`: (**optional**) To search data of the specified device/data profile.
 - *string* `tfield`: (**required for tstart and tend**) Time field to filter data. **proc**, **time** are available.
 - *number* `tstart`: (**optional**) The start time in milliseconds to filter data.
 - *number* `tend`: (**optional**) The end time in milliseconds to filter data.
@@ -456,6 +472,7 @@ Get network uplink data list.
         - *string* `unitId`: (**optional**) Network's unit ID.
         - *string* `deviceId`: (**optional**) Device ID.
         - *string* `time`: Device time in ISO 8601 format.
+        - *string* `profile`: Device/data profile.
         - *string* `data`: Data in hexadecimal format.
         - *object* `extension`: (**optional**) Extensions from the network to network(s).
 
@@ -473,6 +490,7 @@ Get network uplink data list.
                     "unitId": "1640923958516-qvdFNpOV",
                     "deviceId": "1640924274329-yESwHhKO",
                     "time": "2022-10-11T11:10:48.768Z",
+                    "profile": "tracker",
                     "data": "74657374",
                     "extension": {
                         "latitude": "24.38349800818775",
@@ -496,6 +514,7 @@ Get network downlink data list count.
         device={deviceId}&
         network={networkCode}&
         addr={networkAddr}&
+        profile={deviceProfile}&
         tfield={timeFieldFilter}&
         tstart={startTimeMs}&
         tend={endTimeMs}
@@ -504,6 +523,7 @@ Get network downlink data list count.
 - *string* `device`: (**optional**) To search data of the specified device ID.
 - *string* `network`: (**optional**) To search data of the specified device network code.
 - *string* `addr`: (**optional**) To search data of the specified device network address.
+- *string* `profile`: (**optional**) To search data of the specified device/data profile.
 - *string* `tfield`: (**required for tstart and tend**) Time field to filter data. **proc**, **pub**, **resp** are available.
 - *number* `tstart`: (**optional**) The start time in milliseconds to filter data.
 - *number* `tend`: (**optional**) The end time in milliseconds to filter data.
@@ -538,6 +558,7 @@ Get network downlink data list.
         device={deviceId}&
         network={networkCode}&
         addr={networkAddr}&
+        profile={deviceProfile}&
         tfield={timeFieldFilter}&
         tstart={startTimeMs}&
         tend={endTimeMs}&
@@ -550,6 +571,7 @@ Get network downlink data list.
 - *string* `device`: (**optional**) To search data of the specified device ID.
 - *string* `network`: (**optional**) To search data of the specified device network code.
 - *string* `addr`: (**optional**) To search data of the specified device network address.
+- *string* `profile`: (**optional**) To search data of the specified device/data profile.
 - *string* `tfield`: (**required for tstart and tend**) Time field to filter data. **proc**, **pub**, **resp** are available.
 - *number* `tstart`: (**optional**) The start time in milliseconds to filter data.
 - *number* `tend`: (**optional**) The end time in milliseconds to filter data.
@@ -574,6 +596,7 @@ Get network downlink data list.
         - *string* `deviceId`: Device ID.
         - *string* `networkCode`: Device network code.
         - *string* `networkAddr`: Device network address.
+        - *string* `profile`: Device/data profile.
         - *string* `data`: Data in hexadecimal format.
         - *object* `extension`: (**optional**) Extensions from the network to the network.
 
@@ -592,6 +615,7 @@ Get network downlink data list.
                     "deviceId": "1640924274329-yESwHhKO",
                     "networkCode": "lora",
                     "networkAddr": "800012ae",
+                    "profile": "tracker",
                     "data": "74657374",
                     "extension": {
                         "schedule": "2022-10-12T00:00:00Z"

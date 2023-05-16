@@ -31,6 +31,7 @@ pub struct GetListData {
     pub network_code: Option<String>,
     #[serde(rename = "networkAddr")]
     pub network_addr: Option<String>,
+    pub profile: String,
     pub data: String,
     pub extension: Option<Map<String, Value>>,
 }

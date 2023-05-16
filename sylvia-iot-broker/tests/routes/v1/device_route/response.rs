@@ -44,6 +44,9 @@ pub struct GetDeviceRouteListData {
     pub network_code: String,
     #[serde(rename = "networkAddr")]
     pub network_addr: String,
+    pub profile: String,
     #[serde(rename = "createdAt")]
     pub created_at: String,
+    #[serde(rename = "modifiedAt")]
+    pub modified_at: String,
 }

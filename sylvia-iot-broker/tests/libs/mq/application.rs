@@ -56,6 +56,7 @@ pub struct AppUlData {
     pub network_addr: String,
     #[serde(rename = "isPublic")]
     pub is_public: bool,
+    pub profile: String,
     pub data: String,
     pub extension: Option<Map<String, Value>>,
 }
@@ -514,6 +515,7 @@ pub fn uldata(context: &mut SpecContext<TestState>) -> Result<(), String> {
             network_code: "network_code1".to_string(),
             network_addr: "network_addr1".to_string(),
             is_public: true,
+            profile: "".to_string(),
             data: "da01".to_string(),
             extension: None,
         };
@@ -531,6 +533,7 @@ pub fn uldata(context: &mut SpecContext<TestState>) -> Result<(), String> {
             network_code: "network_code2".to_string(),
             network_addr: "network_addr2".to_string(),
             is_public: false,
+            profile: "profile".to_string(),
             data: "da02".to_string(),
             extension: Some(ext),
         };
@@ -546,6 +549,7 @@ pub fn uldata(context: &mut SpecContext<TestState>) -> Result<(), String> {
             network_code: "network_code3".to_string(),
             network_addr: "network_addr3".to_string(),
             is_public: true,
+            profile: "".to_string(),
             data: "".to_string(),
             extension: None,
         };
@@ -580,6 +584,7 @@ pub fn uldata(context: &mut SpecContext<TestState>) -> Result<(), String> {
                 expect(data.network_code.as_str()).equals(data1.network_code.as_str())?;
                 expect(data.network_addr.as_str()).equals(data1.network_addr.as_str())?;
                 expect(data.is_public).equals(data1.is_public)?;
+                expect(data.profile.as_str()).equals(data1.profile.as_str())?;
                 expect(data.data.as_str()).equals(data1.data.as_str())?;
                 expect(data.extension.as_ref()).equals(data1.extension.as_ref())?;
             } else if data_id == "2" {
@@ -590,6 +595,7 @@ pub fn uldata(context: &mut SpecContext<TestState>) -> Result<(), String> {
                 expect(data.network_code.as_str()).equals(data2.network_code.as_str())?;
                 expect(data.network_addr.as_str()).equals(data2.network_addr.as_str())?;
                 expect(data.is_public).equals(data2.is_public)?;
+                expect(data.profile.as_str()).equals(data2.profile.as_str())?;
                 expect(data.data.as_str()).equals(data2.data.as_str())?;
                 expect(data.extension.as_ref()).equals(data2.extension.as_ref())?;
             } else if data_id == "3" {
@@ -600,6 +606,7 @@ pub fn uldata(context: &mut SpecContext<TestState>) -> Result<(), String> {
                 expect(data.network_code.as_str()).equals(data3.network_code.as_str())?;
                 expect(data.network_addr.as_str()).equals(data3.network_addr.as_str())?;
                 expect(data.is_public).equals(data3.is_public)?;
+                expect(data.profile.as_str()).equals(data3.profile.as_str())?;
                 expect(data.data.as_str()).equals(data3.data.as_str())?;
                 expect(data.extension.as_ref()).equals(data3.extension.as_ref())?;
             } else {

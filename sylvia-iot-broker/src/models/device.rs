@@ -17,6 +17,7 @@ pub struct Device {
     pub network_addr: String,
     pub created_at: DateTime<Utc>,
     pub modified_at: DateTime<Utc>,
+    pub profile: String,
     pub name: String,
     pub info: Map<String, Value>,
 }
@@ -25,6 +26,7 @@ pub struct Device {
 #[derive(Clone)]
 pub struct DeviceCacheItem {
     pub device_id: String,
+    pub profile: String,
 }
 
 /// The sort keys for the list operation.
@@ -33,6 +35,7 @@ pub enum SortKey {
     ModifiedAt,
     NetworkCode,
     NetworkAddr,
+    Profile,
     Name,
 }
 
@@ -107,6 +110,8 @@ pub struct ListQueryCond<'a> {
     pub network_addr: Option<&'a str>,
     /// To get devices of the specified network addresses.
     pub network_addrs: Option<&'a Vec<&'a str>>,
+    /// To get devices with the specified profile.
+    pub profile: Option<&'a str>,
     /// To get unit that their **name** contains the specified (partial) word.
     pub name_contains: Option<&'a str>,
 }
@@ -121,6 +126,7 @@ pub struct UpdateQueryCond<'a> {
 #[derive(Default)]
 pub struct Updates<'a> {
     pub modified_at: Option<DateTime<Utc>>,
+    pub profile: Option<&'a str>,
     pub name: Option<&'a str>,
     pub info: Option<&'a Map<String, Value>>,
 }

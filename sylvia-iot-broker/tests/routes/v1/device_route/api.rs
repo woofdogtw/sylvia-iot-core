@@ -52,6 +52,7 @@ pub fn post(context: &mut SpecContext<TestState>) -> Result<(), String> {
         "public",
         "manager-public",
         true,
+        "",
     )?;
     add_device_model(
         runtime,
@@ -60,6 +61,7 @@ pub fn post(context: &mut SpecContext<TestState>) -> Result<(), String> {
         "manager",
         "manager",
         false,
+        "",
     )?;
     add_device_model(
         runtime,
@@ -68,6 +70,7 @@ pub fn post(context: &mut SpecContext<TestState>) -> Result<(), String> {
         "public",
         "owner-public",
         true,
+        "",
     )?;
     add_device_model(
         runtime,
@@ -76,9 +79,10 @@ pub fn post(context: &mut SpecContext<TestState>) -> Result<(), String> {
         "public",
         "owner-public2",
         true,
+        "",
     )?;
-    add_device_model(runtime, routes_state, "owner", "owner", "owner", false)?;
-    add_device_model(runtime, routes_state, "owner", "owner", "owner2", false)?;
+    add_device_model(runtime, routes_state, "owner", "owner", "owner", false, "")?;
+    add_device_model(runtime, routes_state, "owner", "owner", "owner2", false, "")?;
 
     let param = request::PostDeviceRoute {
         data: request::PostDeviceRouteData {
@@ -146,6 +150,7 @@ pub fn post_dup(context: &mut SpecContext<TestState>) -> Result<(), String> {
         "public",
         "manager-public",
         true,
+        "",
     )?;
     add_device_model(
         runtime,
@@ -154,6 +159,7 @@ pub fn post_dup(context: &mut SpecContext<TestState>) -> Result<(), String> {
         "manager",
         "manager",
         false,
+        "",
     )?;
 
     let param = request::PostDeviceRoute {
@@ -221,6 +227,7 @@ pub fn post_not_exist(context: &mut SpecContext<TestState>) -> Result<(), String
         "public",
         "manager-public",
         true,
+        "",
     )?;
     add_device_model(
         runtime,
@@ -229,8 +236,9 @@ pub fn post_not_exist(context: &mut SpecContext<TestState>) -> Result<(), String
         "manager",
         "manager",
         false,
+        "",
     )?;
-    add_device_model(runtime, routes_state, "owner", "owner", "owner", false)?;
+    add_device_model(runtime, routes_state, "owner", "owner", "owner", false, "")?;
 
     let param = request::PostDeviceRoute {
         data: request::PostDeviceRouteData {
@@ -321,8 +329,9 @@ pub fn post_not_match_unit(context: &mut SpecContext<TestState>) -> Result<(), S
         "manager",
         "manager",
         false,
+        "",
     )?;
-    add_device_model(runtime, routes_state, "owner", "owner", "owner", false)?;
+    add_device_model(runtime, routes_state, "owner", "owner", "owner", false, "")?;
 
     let param = request::PostDeviceRoute {
         data: request::PostDeviceRouteData {
@@ -412,6 +421,7 @@ pub fn post_bulk(context: &mut SpecContext<TestState>) -> Result<(), String> {
         "public",
         &network_addrs,
         true,
+        "",
     )?;
     let mut network_addrs1 = vec![];
     for i in 0..1024 {
@@ -458,6 +468,7 @@ pub fn post_bulk(context: &mut SpecContext<TestState>) -> Result<(), String> {
         "owner",
         &network_addrs,
         true,
+        "",
     )?;
     let mut network_addrs1 = vec![];
     for i in 0..1024 {
@@ -517,6 +528,7 @@ pub fn post_bulk_not_exist(context: &mut SpecContext<TestState>) -> Result<(), S
         "public",
         &vec!["0000".to_string()],
         true,
+        "",
     )?;
     add_device_bulk_model(
         runtime,
@@ -525,6 +537,7 @@ pub fn post_bulk_not_exist(context: &mut SpecContext<TestState>) -> Result<(), S
         "owner",
         &vec!["0001".to_string()],
         true,
+        "",
     )?;
 
     let param = request::PostDeviceRouteBulk {
@@ -723,6 +736,7 @@ pub fn post_bulk_del(context: &mut SpecContext<TestState>) -> Result<(), String>
         "public",
         &network_addrs,
         true,
+        "",
     )?;
     let mut network_addrs1 = vec![];
     for i in 0..1024 {
@@ -790,6 +804,7 @@ pub fn post_bulk_del(context: &mut SpecContext<TestState>) -> Result<(), String>
         "owner",
         &network_addrs,
         true,
+        "",
     )?;
     let mut network_addrs1 = vec![];
     for i in 0..1024 {
@@ -1023,6 +1038,7 @@ pub fn post_range(context: &mut SpecContext<TestState>) -> Result<(), String> {
         "public",
         &network_addrs,
         true,
+        "",
     )?;
     let mut network_addrs1 = vec![];
     for i in 0..1024 {
@@ -1067,6 +1083,7 @@ pub fn post_range(context: &mut SpecContext<TestState>) -> Result<(), String> {
         "owner",
         &network_addrs,
         true,
+        "",
     )?;
     network_addrs1.pop();
     let mut param = request::PostDeviceRouteRange {
@@ -1121,6 +1138,7 @@ pub fn post_range_not_exist(context: &mut SpecContext<TestState>) -> Result<(), 
         "public",
         &vec!["0000".to_string()],
         true,
+        "",
     )?;
     add_device_bulk_model(
         runtime,
@@ -1129,6 +1147,7 @@ pub fn post_range_not_exist(context: &mut SpecContext<TestState>) -> Result<(), 
         "owner",
         &vec!["0001".to_string()],
         true,
+        "",
     )?;
 
     let param = request::PostDeviceRouteRange {
@@ -1384,6 +1403,7 @@ pub fn post_range_del(context: &mut SpecContext<TestState>) -> Result<(), String
         "public",
         &network_addrs,
         true,
+        "",
     )?;
     let mut network_addrs1 = vec![];
     for i in 0..1024 {
@@ -1446,6 +1466,7 @@ pub fn post_range_del(context: &mut SpecContext<TestState>) -> Result<(), String
         "owner",
         &network_addrs,
         true,
+        "",
     )?;
     network_addrs1.pop();
     let mut param = request::PostDeviceRouteRange {
@@ -1517,6 +1538,7 @@ pub fn post_range_del_not_exist(context: &mut SpecContext<TestState>) -> Result<
         "public",
         &vec!["0000".to_string()],
         true,
+        "",
     )?;
     add_device_bulk_model(
         runtime,
@@ -1525,6 +1547,7 @@ pub fn post_range_del_not_exist(context: &mut SpecContext<TestState>) -> Result<
         "owner",
         &vec!["0001".to_string()],
         true,
+        "",
     )?;
 
     let param = request::PostDeviceRouteRange {
@@ -2258,6 +2281,37 @@ pub fn get_list_sort(context: &mut SpecContext<TestState>) -> Result<(), String>
             "manager-manager",
             "manager-public-manager",
         ],
+    )?;
+
+    param.sort_vec = Some(vec![("modified", true)]);
+    test_get_list_sort(
+        runtime,
+        &routes_state,
+        TOKEN_MANAGER,
+        &mut param,
+        &[
+            "owner2-1-owner2",
+            "owner1-1-1-owner1-1",
+            "owner1-public-owner1-2",
+            "owner1-public-owner1-1",
+            "manager-manager",
+            "manager-public-manager",
+        ],
+    )?;
+    param.sort_vec = Some(vec![("modified", false)]);
+    test_get_list_sort(
+        runtime,
+        &routes_state,
+        TOKEN_MANAGER,
+        &mut param,
+        &[
+            "manager-public-manager",
+            "manager-manager",
+            "owner1-public-owner1-1",
+            "owner1-public-owner1-2",
+            "owner1-1-1-owner1-1",
+            "owner2-1-owner2",
+        ],
     )
 }
 
@@ -2280,6 +2334,7 @@ pub fn get_list_offset_limit(context: &mut SpecContext<TestState>) -> Result<(),
             "manager",
             addr.as_str(),
             false,
+            "",
         )?;
         add_device_route_model(
             runtime,
@@ -2289,6 +2344,7 @@ pub fn get_list_offset_limit(context: &mut SpecContext<TestState>) -> Result<(),
             "manager",
             "manager",
             addr.as_str(),
+            "",
         )?;
     }
 
@@ -2455,6 +2511,7 @@ pub fn get_list_format_array(context: &mut SpecContext<TestState>) -> Result<(),
             "manager",
             addr.as_str(),
             false,
+            "",
         )?;
         add_device_route_model(
             runtime,
@@ -2464,6 +2521,7 @@ pub fn get_list_format_array(context: &mut SpecContext<TestState>) -> Result<(),
             "manager",
             "manager",
             addr.as_str(),
+            "",
         )?;
     }
 
@@ -2581,8 +2639,24 @@ pub fn delete(context: &mut SpecContext<TestState>) -> Result<(), String> {
     add_unit_model(runtime, routes_state, "manager", vec![], "manager")?;
     add_application_model(runtime, routes_state, "manager", "manager", "amqp://host")?;
     add_network_model(runtime, routes_state, "manager", "manager", "amqp://host")?;
-    add_device_model(runtime, &routes_state, "manager", "manager", "addr1", false)?;
-    add_device_model(runtime, &routes_state, "manager", "manager", "addr2", false)?;
+    add_device_model(
+        runtime,
+        &routes_state,
+        "manager",
+        "manager",
+        "addr1",
+        false,
+        "",
+    )?;
+    add_device_model(
+        runtime,
+        &routes_state,
+        "manager",
+        "manager",
+        "addr2",
+        false,
+        "",
+    )?;
     add_device_route_model(
         runtime,
         &routes_state,
@@ -2591,6 +2665,7 @@ pub fn delete(context: &mut SpecContext<TestState>) -> Result<(), String> {
         "manager",
         "manager",
         "addr1",
+        "",
     )?;
     add_device_route_model(
         runtime,
@@ -2600,6 +2675,7 @@ pub fn delete(context: &mut SpecContext<TestState>) -> Result<(), String> {
         "manager",
         "manager",
         "addr2",
+        "",
     )?;
 
     let mut app = runtime.block_on(async {
@@ -3248,11 +3324,35 @@ fn count_list_dataset(runtime: &Runtime, state: &routes::State) -> Result<(), St
     add_network_model(runtime, state, "owner1", "owner1-1", "amqp://host")?;
     add_network_model(runtime, state, "owner1", "owner1-2", "amqp://host")?;
     add_network_model(runtime, state, "owner2", "owner2", "amqp://host")?;
-    add_device_model(runtime, state, "manager", "public", "manager-public", true)?;
-    add_device_model(runtime, state, "manager", "manager", "manager", false)?;
-    add_device_model(runtime, state, "owner1", "public", "owner1-public", true)?;
-    add_device_model(runtime, state, "owner1", "owner1-1", "owner1-1-1", false)?;
-    add_device_model(runtime, state, "owner2", "owner2", "owner2-1", false)?;
+    add_device_model(
+        runtime,
+        state,
+        "manager",
+        "public",
+        "manager-public",
+        true,
+        "",
+    )?;
+    add_device_model(runtime, state, "manager", "manager", "manager", false, "")?;
+    add_device_model(
+        runtime,
+        state,
+        "owner1",
+        "public",
+        "owner1-public",
+        true,
+        "",
+    )?;
+    add_device_model(
+        runtime,
+        state,
+        "owner1",
+        "owner1-1",
+        "owner1-1-1",
+        false,
+        "",
+    )?;
+    add_device_model(runtime, state, "owner2", "owner2", "owner2-1", false, "")?;
     let now = Utc::now();
 
     let mut route = create_device_route(
@@ -3261,8 +3361,10 @@ fn count_list_dataset(runtime: &Runtime, state: &routes::State) -> Result<(), St
         "manager",
         "public",
         "manager-public",
+        "",
     );
     route.created_at = now;
+    route.modified_at = now + Duration::milliseconds(5);
     runtime.block_on(async {
         if let Err(e) = state.model.device_route().add(&route).await {
             return Err(format!("add device route {} error: {}", route.route_id, e));
@@ -3276,8 +3378,10 @@ fn count_list_dataset(runtime: &Runtime, state: &routes::State) -> Result<(), St
         "manager",
         "manager",
         "manager",
+        "",
     );
     route.created_at = now + Duration::milliseconds(1);
+    route.modified_at = now + Duration::milliseconds(4);
     runtime.block_on(async {
         if let Err(e) = state.model.device_route().add(&route).await {
             return Err(format!("add device route {} error: {}", route.route_id, e));
@@ -3291,8 +3395,10 @@ fn count_list_dataset(runtime: &Runtime, state: &routes::State) -> Result<(), St
         "owner1-1",
         "public",
         "owner1-public",
+        "",
     );
     route.created_at = now + Duration::milliseconds(2);
+    route.modified_at = now + Duration::milliseconds(3);
     runtime.block_on(async {
         if let Err(e) = state.model.device_route().add(&route).await {
             return Err(format!("add device route {} error: {}", route.route_id, e));
@@ -3306,8 +3412,10 @@ fn count_list_dataset(runtime: &Runtime, state: &routes::State) -> Result<(), St
         "owner1-2",
         "public",
         "owner1-public",
+        "",
     );
     route.created_at = now + Duration::milliseconds(3);
+    route.modified_at = now + Duration::milliseconds(2);
     runtime.block_on(async {
         if let Err(e) = state.model.device_route().add(&route).await {
             return Err(format!("add device route {} error: {}", route.route_id, e));
@@ -3321,8 +3429,10 @@ fn count_list_dataset(runtime: &Runtime, state: &routes::State) -> Result<(), St
         "owner1-1",
         "owner1-1",
         "owner1-1-1",
+        "",
     );
     route.created_at = now + Duration::milliseconds(4);
+    route.modified_at = now + Duration::milliseconds(1);
     runtime.block_on(async {
         if let Err(e) = state.model.device_route().add(&route).await {
             return Err(format!("add device route {} error: {}", route.route_id, e));
@@ -3330,9 +3440,16 @@ fn count_list_dataset(runtime: &Runtime, state: &routes::State) -> Result<(), St
         Ok(())
     })?;
 
-    let mut route =
-        create_device_route("owner2-1-owner2", "owner2", "owner2", "owner2", "owner2-1");
+    let mut route = create_device_route(
+        "owner2-1-owner2",
+        "owner2",
+        "owner2",
+        "owner2",
+        "owner2-1",
+        "",
+    );
     route.created_at = now + Duration::milliseconds(5);
+    route.modified_at = now;
     runtime.block_on(async {
         if let Err(e) = state.model.device_route().add(&route).await {
             return Err(format!("add device route {} error: {}", route.route_id, e));

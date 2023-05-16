@@ -147,7 +147,13 @@ pub fn create_network(name: &str, host: &str, unit_id: &str) -> Network {
     }
 }
 
-pub fn create_device(unit: &str, network: &str, addr: &str, is_public: bool) -> Device {
+pub fn create_device(
+    unit: &str,
+    network: &str,
+    addr: &str,
+    is_public: bool,
+    profile: &str,
+) -> Device {
     let now = Utc::now();
     Device {
         device_id: addr.to_string(),
@@ -161,6 +167,7 @@ pub fn create_device(unit: &str, network: &str, addr: &str, is_public: bool) -> 
         network_addr: addr.to_string(),
         created_at: now,
         modified_at: now,
+        profile: profile.to_string(),
         name: addr.to_string(),
         info: Map::<String, Value>::new(),
     }
@@ -172,6 +179,7 @@ pub fn create_device_route(
     application: &str,
     network: &str,
     addr: &str,
+    profile: &str,
 ) -> DeviceRoute {
     let now = Utc::now();
     DeviceRoute {
@@ -184,7 +192,9 @@ pub fn create_device_route(
         network_code: network.to_string(),
         device_id: addr.to_string(),
         network_addr: addr.to_string(),
+        profile: profile.to_string(),
         created_at: now,
+        modified_at: now,
     }
 }
 
@@ -287,9 +297,10 @@ pub fn add_device_model(
     network_id: &str,
     network_addr: &str,
     is_public: bool,
+    profile: &str,
 ) -> Result<(), String> {
     match runtime.block_on(async {
-        let device = create_device(unit_id, network_id, network_addr, is_public);
+        let device = create_device(unit_id, network_id, network_addr, is_public, profile);
         state.model.device().add(&device).await
     }) {
         Err(e) => Err(format!("add device model info error: {}", e)),
@@ -304,11 +315,18 @@ pub fn add_device_bulk_model(
     network_id: &str,
     network_addrs: &Vec<String>,
     is_public: bool,
+    profile: &str,
 ) -> Result<(), String> {
     match runtime.block_on(async {
         let mut devices = vec![];
         for addr in network_addrs.iter() {
-            devices.push(create_device(unit_id, network_id, addr.as_str(), is_public));
+            devices.push(create_device(
+                unit_id,
+                network_id,
+                addr.as_str(),
+                is_public,
+                profile,
+            ));
         }
         state.model.device().add_bulk(&devices).await
     }) {
@@ -347,9 +365,17 @@ pub fn add_device_route_model(
     application_id: &str,
     network_id: &str,
     network_addr: &str,
+    profile: &str,
 ) -> Result<(), String> {
     match runtime.block_on(async {
-        let route = create_device_route(id, unit_id, application_id, network_id, network_addr);
+        let route = create_device_route(
+            id,
+            unit_id,
+            application_id,
+            network_id,
+            network_addr,
+            profile,
+        );
         state.model.device_route().add(&route).await
     }) {
         Err(e) => Err(format!("add device route model info error: {}", e)),
@@ -400,11 +426,19 @@ pub fn add_delete_rsc(runtime: &Runtime, state: &routes::State) -> Result<(), St
     add_network_model(runtime, state, "", "public", "amqp://host")?;
     add_network_model(runtime, state, "manager", "manager", "amqp://host")?;
     add_network_model(runtime, state, "owner", "owner", "amqp://host")?;
-    add_device_model(runtime, state, "manager", "public", "manager-public", true)?;
-    add_device_model(runtime, state, "manager", "manager", "manager", false)?;
-    add_device_model(runtime, state, "owner", "public", "owner-public", true)?;
-    add_device_model(runtime, state, "owner", "owner", "owner1", false)?;
-    add_device_model(runtime, state, "owner", "owner", "owner2", true)?;
+    add_device_model(
+        runtime,
+        state,
+        "manager",
+        "public",
+        "manager-public",
+        true,
+        "",
+    )?;
+    add_device_model(runtime, state, "manager", "manager", "manager", false, "")?;
+    add_device_model(runtime, state, "owner", "public", "owner-public", true, "")?;
+    add_device_model(runtime, state, "owner", "owner", "owner1", false, "")?;
+    add_device_model(runtime, state, "owner", "owner", "owner2", true, "")?;
     add_network_route_model(
         runtime,
         state,
@@ -430,6 +464,7 @@ pub fn add_delete_rsc(runtime: &Runtime, state: &routes::State) -> Result<(), St
         "manager",
         "public",
         "manager-public",
+        "",
     )?;
     add_device_route_model(
         runtime,
@@ -439,6 +474,7 @@ pub fn add_delete_rsc(runtime: &Runtime, state: &routes::State) -> Result<(), St
         "manager",
         "manager",
         "manager",
+        "",
     )?;
     add_device_route_model(
         runtime,
@@ -448,6 +484,7 @@ pub fn add_delete_rsc(runtime: &Runtime, state: &routes::State) -> Result<(), St
         "owner",
         "public",
         "owner-public",
+        "",
     )?;
     add_device_route_model(
         runtime,
@@ -457,6 +494,7 @@ pub fn add_delete_rsc(runtime: &Runtime, state: &routes::State) -> Result<(), St
         "owner",
         "owner",
         "owner1",
+        "",
     )?;
     add_device_route_model(
         runtime,
@@ -466,6 +504,7 @@ pub fn add_delete_rsc(runtime: &Runtime, state: &routes::State) -> Result<(), St
         "owner",
         "owner",
         "owner2",
+        "",
     )?;
     add_dldata_buffer_model(
         runtime,

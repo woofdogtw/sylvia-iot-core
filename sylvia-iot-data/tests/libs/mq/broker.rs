@@ -56,6 +56,7 @@ struct AppUlData {
     #[serde(rename = "deviceId")]
     device_id: String,
     time: String,
+    profile: String,
     data: String,
     #[serde(skip_serializing_if = "Option::is_none")]
     extension: Option<Map<String, Value>>,
@@ -75,6 +76,7 @@ struct AppDlData {
     network_code: Option<String>,
     #[serde(rename = "networkAddr", skip_serializing_if = "Option::is_none")]
     network_addr: Option<String>,
+    profile: String,
     data: String,
     #[serde(skip_serializing_if = "Option::is_none")]
     extension: Option<Map<String, Value>>,
@@ -104,6 +106,7 @@ struct NetUlData {
     #[serde(rename = "deviceId", skip_serializing_if = "Option::is_none")]
     device_id: Option<String>,
     time: String,
+    profile: String,
     data: String,
     #[serde(skip_serializing_if = "Option::is_none")]
     extension: Option<Map<String, Value>>,
@@ -125,6 +128,7 @@ struct NetDlData {
     network_code: String,
     #[serde(rename = "networkAddr")]
     network_addr: String,
+    profile: String,
     data: String,
     #[serde(skip_serializing_if = "Option::is_none")]
     extension: Option<Map<String, Value>>,
@@ -438,6 +442,7 @@ pub fn application_uldata(context: &mut SpecContext<TestState>) -> Result<(), St
                 unit_id: "unit_id1".to_string(),
                 device_id: "device_id1".to_string(),
                 time: strings::time_str(&(Utc.timestamp_nanos(now.timestamp_nanos() + 2000000))),
+                profile: "profile1".to_string(),
                 data: "01".to_string(),
                 extension: None,
             },
@@ -462,6 +467,7 @@ pub fn application_uldata(context: &mut SpecContext<TestState>) -> Result<(), St
                 unit_id: "unit_id2".to_string(),
                 device_id: "device_id2".to_string(),
                 time: strings::time_str(&(Utc.timestamp_nanos(now.timestamp_nanos() + 2000000))),
+                profile: "profile2".to_string(),
                 data: "02".to_string(),
                 extension: Some(Map::new()),
             },
@@ -525,6 +531,7 @@ pub fn application_uldata_wrong(context: &mut SpecContext<TestState>) -> Result<
             unit_id: "unit_id".to_string(),
             device_id: "device_id".to_string(),
             time: strings::time_str(&now),
+            profile: "profile".to_string(),
             data: "00".to_string(),
             extension: None,
         };
@@ -594,6 +601,7 @@ pub fn application_dldata(context: &mut SpecContext<TestState>) -> Result<(), St
                 device_id: Some("device_id1".to_string()),
                 network_code: None,
                 network_addr: None,
+                profile: "profile1".to_string(),
                 data: "01".to_string(),
                 extension: None,
             },
@@ -631,6 +639,7 @@ pub fn application_dldata(context: &mut SpecContext<TestState>) -> Result<(), St
                 device_id: None,
                 network_code: Some("network_code2".to_string()),
                 network_addr: Some("network_addr2".to_string()),
+                profile: "profile2".to_string(),
                 data: "02".to_string(),
                 extension: Some(Map::new()),
             },
@@ -708,6 +717,7 @@ pub fn application_dldata_wrong(context: &mut SpecContext<TestState>) -> Result<
                 device_id: None,
                 network_code: None,
                 network_addr: None,
+                profile: "profile".to_string(),
                 data: "00".to_string(),
                 extension: None,
             },
@@ -763,6 +773,7 @@ pub fn network_uldata(context: &mut SpecContext<TestState>) -> Result<(), String
                 unit_id: None,
                 device_id: None,
                 time: strings::time_str(&(Utc.timestamp_nanos(now.timestamp_nanos() + 2000000))),
+                profile: "profile1".to_string(),
                 data: "01".to_string(),
                 extension: None,
             },
@@ -786,6 +797,7 @@ pub fn network_uldata(context: &mut SpecContext<TestState>) -> Result<(), String
                 unit_id: Some("unit_id2".to_string()),
                 device_id: Some("device_id2".to_string()),
                 time: strings::time_str(&(Utc.timestamp_nanos(now.timestamp_nanos() + 2000000))),
+                profile: "profile2".to_string(),
                 data: "02".to_string(),
                 extension: Some(Map::new()),
             },
@@ -848,6 +860,7 @@ pub fn network_uldata_wrong(context: &mut SpecContext<TestState>) -> Result<(), 
             unit_id: None,
             device_id: None,
             time: strings::time_str(&now),
+            profile: "profile".to_string(),
             data: "00".to_string(),
             extension: None,
         };
@@ -904,6 +917,7 @@ pub fn network_dldata(context: &mut SpecContext<TestState>) -> Result<(), String
                 device_id: "device_id1".to_string(),
                 network_code: "network_code1".to_string(),
                 network_addr: "network_addr1".to_string(),
+                profile: "profile1".to_string(),
                 data: "01".to_string(),
                 extension: None,
             },
@@ -942,6 +956,7 @@ pub fn network_dldata(context: &mut SpecContext<TestState>) -> Result<(), String
                 device_id: "device_id2".to_string(),
                 network_code: "network_code2".to_string(),
                 network_addr: "network_addr2".to_string(),
+                profile: "profile2".to_string(),
                 data: "02".to_string(),
                 extension: None,
             },
@@ -1019,6 +1034,7 @@ pub fn network_dldata_wrong(context: &mut SpecContext<TestState>) -> Result<(), 
             device_id: "device_id".to_string(),
             network_code: "network_code".to_string(),
             network_addr: "network_addr".to_string(),
+            profile: "profile".to_string(),
             data: "00".to_string(),
             extension: None,
         };

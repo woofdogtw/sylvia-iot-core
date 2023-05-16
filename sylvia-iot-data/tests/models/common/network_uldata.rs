@@ -32,6 +32,7 @@ pub fn add(runtime: &Runtime, model: &dyn NetworkUlDataModel, db: &dyn Db) -> Re
         unit_id: Some("unit_id1".to_string()),
         device_id: Some("device_id1".to_string()),
         time: now + Duration::milliseconds(2),
+        profile: "profile1".to_string(),
         data: "data1".to_string(),
         extension: Some(extension),
     };
@@ -57,6 +58,7 @@ pub fn add(runtime: &Runtime, model: &dyn NetworkUlDataModel, db: &dyn Db) -> Re
         unit_id: Some("unit_id2".to_string()),
         device_id: Some("device_public".to_string()),
         time: now + Duration::milliseconds(2),
+        profile: "profile2".to_string(),
         data: "data2".to_string(),
         extension: None,
     };
@@ -85,6 +87,7 @@ pub fn add_dup(runtime: &Runtime, model: &dyn NetworkUlDataModel) -> Result<(), 
         unit_id: Some("unit_id".to_string()),
         device_id: Some("device_id".to_string()),
         time: now,
+        profile: "profile".to_string(),
         data: "data".to_string(),
         extension: None,
     };
@@ -113,6 +116,7 @@ pub fn del_by_unit(
         unit_id: Some("unit_id1".to_string()),
         device_id: Some("device_id1_1".to_string()),
         time: now,
+        profile: "profile".to_string(),
         data: "data".to_string(),
         extension: None,
     };
@@ -169,6 +173,7 @@ pub fn del_twice(runtime: &Runtime, model: &dyn NetworkUlDataModel) -> Result<()
         unit_id: Some("unit_id1".to_string()),
         device_id: Some("device_id1_1".to_string()),
         time: now,
+        profile: "profile".to_string(),
         data: "data".to_string(),
         extension: None,
     };
@@ -202,6 +207,7 @@ pub fn del_by_device_id(
         unit_id: Some("unit_id1".to_string()),
         device_id: Some("device_id1".to_string()),
         time: now,
+        profile: "profile".to_string(),
         data: "data".to_string(),
         extension: None,
     };
@@ -259,6 +265,7 @@ pub fn del_by_proc(
         unit_id: Some("unit_id".to_string()),
         device_id: Some("device_id".to_string()),
         time: now,
+        profile: "profile".to_string(),
         data: "data".to_string(),
         extension: None,
     };
@@ -324,6 +331,7 @@ pub fn count(runtime: &Runtime, model: &dyn NetworkUlDataModel) -> Result<(), St
         network_code: "network_code1_1".to_string(),
         network_addr: "network_addr1_1".to_string(),
         time: now + Duration::milliseconds(5),
+        profile: "profile1".to_string(),
         data: "data".to_string(),
         extension: None,
     };
@@ -346,6 +354,7 @@ pub fn count(runtime: &Runtime, model: &dyn NetworkUlDataModel) -> Result<(), St
         data.device_id = None;
         data.network_code = "network_code2".to_string();
         data.network_addr = "network_addr2".to_string();
+        data.profile = "profile2".to_string();
         model.add(&data).await?;
         data.data_id = "data_id5".to_string();
         data.unit_code = None;
@@ -355,6 +364,7 @@ pub fn count(runtime: &Runtime, model: &dyn NetworkUlDataModel) -> Result<(), St
         data.device_id = Some("device_id3".to_string());
         data.network_code = "network_code3".to_string();
         data.network_addr = "network_addr3".to_string();
+        data.profile = "profile3".to_string();
         data.extension = Some(Map::new());
         model.add(&data).await
     }) {
@@ -402,6 +412,16 @@ pub fn count(runtime: &Runtime, model: &dyn NetworkUlDataModel) -> Result<(), St
     expect(count).to_equal(2)?;
 
     let cond = ListQueryCond {
+        profile: Some("profile1"),
+        ..Default::default()
+    };
+    let count = match runtime.block_on(async { model.count(&cond).await }) {
+        Err(e) => return Err(format!("count profile result error: {}", e)),
+        Ok(count) => count,
+    };
+    expect(count).to_equal(3)?;
+
+    let cond = ListQueryCond {
         proc_gte: Some(now + Duration::milliseconds(1)),
         proc_lte: Some(now + Duration::milliseconds(3)),
         ..Default::default()
@@ -447,6 +467,7 @@ pub fn list(runtime: &Runtime, model: &dyn NetworkUlDataModel) -> Result<(), Str
         network_code: "network_code1_1".to_string(),
         network_addr: "network_addr1_1".to_string(),
         time: now + Duration::milliseconds(5),
+        profile: "profile1".to_string(),
         data: "data".to_string(),
         extension: None,
     };
@@ -469,6 +490,7 @@ pub fn list(runtime: &Runtime, model: &dyn NetworkUlDataModel) -> Result<(), Str
         data.device_id = None;
         data.network_code = "network_code2".to_string();
         data.network_addr = "network_addr2".to_string();
+        data.profile = "profile2".to_string();
         model.add(&data).await?;
         data.data_id = "data_id5".to_string();
         data.unit_code = None;
@@ -478,6 +500,7 @@ pub fn list(runtime: &Runtime, model: &dyn NetworkUlDataModel) -> Result<(), Str
         data.device_id = Some("device_id3".to_string());
         data.network_code = "network_code3".to_string();
         data.network_addr = "network_addr3".to_string();
+        data.profile = "profile3".to_string();
         data.extension = Some(Map::new());
         model.add(&data).await
     }) {
@@ -535,6 +558,17 @@ pub fn list(runtime: &Runtime, model: &dyn NetworkUlDataModel) -> Result<(), Str
     expect(list.len()).to_equal(2)?;
 
     let cond = ListQueryCond {
+        profile: Some("profile1"),
+        ..Default::default()
+    };
+    opts.cond = &cond;
+    let list = match runtime.block_on(async { model.list(&opts, None).await }) {
+        Err(e) => return Err(format!("list profile result error: {}", e)),
+        Ok((list, _)) => list,
+    };
+    expect(list.len()).to_equal(3)?;
+
+    let cond = ListQueryCond {
         proc_gte: Some(now + Duration::milliseconds(1)),
         proc_lte: Some(now + Duration::milliseconds(3)),
         ..Default::default()
@@ -583,6 +617,7 @@ pub fn list_sort(runtime: &Runtime, model: &dyn NetworkUlDataModel) -> Result<()
         network_code: "network_code1_1".to_string(),
         network_addr: "network_addr1_1".to_string(),
         time: now + Duration::milliseconds(5),
+        profile: "profile".to_string(),
         data: "data".to_string(),
         extension: None,
     };
@@ -832,6 +867,7 @@ pub fn list_offset_limit(runtime: &Runtime, model: &dyn NetworkUlDataModel) -> R
         network_code: "network_code1_1".to_string(),
         network_addr: "network_addr1_1".to_string(),
         time: now + Duration::milliseconds(5),
+        profile: "profile".to_string(),
         data: "data".to_string(),
         extension: None,
     };
@@ -951,6 +987,7 @@ pub fn list_cursor(runtime: &Runtime, model: &dyn NetworkUlDataModel) -> Result<
         network_code: "network_code1_1".to_string(),
         network_addr: "network_addr1_1".to_string(),
         time: now + Duration::milliseconds(5),
+        profile: "profile".to_string(),
         data: "data".to_string(),
         extension: None,
     };

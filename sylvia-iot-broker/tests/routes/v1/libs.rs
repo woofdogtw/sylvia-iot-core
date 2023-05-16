@@ -244,6 +244,40 @@ pub fn create_device(
     Ok(body.data.device_id)
 }
 
+pub fn patch_device(
+    runtime: &Runtime,
+    state: &routes::State,
+    token: &str,
+    device_id: &str,
+    param: &device::request::PatchDevice,
+) -> Result<(), String> {
+    let mut app = runtime.block_on(async {
+        test::init_service(
+            App::new()
+                .wrap(NormalizePath::trim())
+                .service(routes::new_service(state)),
+        )
+        .await
+    });
+
+    let req = TestRequest::patch()
+        .uri(format!("/broker/api/v1/device/{}", device_id).as_str())
+        .insert_header((header::AUTHORIZATION, format!("Bearer {}", token)))
+        .set_json(param)
+        .to_request();
+    let resp = runtime.block_on(async { test::call_service(&mut app, req).await });
+    if resp.status() != StatusCode::NO_CONTENT {
+        let status = resp.status();
+        let body = runtime.block_on(async { test::read_body(resp).await });
+        return Err(format!(
+            "patch device resp status {}, body: {:?}",
+            status, body
+        ));
+    }
+
+    Ok(())
+}
+
 pub fn create_device_route(
     runtime: &Runtime,
     state: &routes::State,

@@ -15,6 +15,8 @@ pub struct PostDeviceData {
     #[serde(rename = "networkAddr")]
     pub network_addr: String,
     #[serde(skip_serializing_if = "Option::is_none")]
+    pub profile: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub name: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub info: Option<Map<String, Value>>,
@@ -33,6 +35,8 @@ pub struct PostDeviceBulkData {
     pub network_id: String,
     #[serde(rename = "networkAddrs")]
     pub network_addrs: Vec<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub profile: Option<String>,
 }
 
 #[derive(Debug, Serialize)]
@@ -50,6 +54,8 @@ pub struct PostDeviceRangeData {
     pub start_addr: String,
     #[serde(rename = "endAddr")]
     pub end_addr: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub profile: Option<String>,
 }
 
 #[derive(Debug, Default, Serialize)]
@@ -60,6 +66,8 @@ pub struct GetDeviceCount {
     pub network: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub addr: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub profile: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub contains: Option<String>,
 }
@@ -72,6 +80,8 @@ pub struct GetDeviceList {
     pub network: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub addr: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub profile: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub contains: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -93,6 +103,8 @@ pub struct PatchDevice {
 
 #[derive(Debug, Default, Serialize)]
 pub struct PatchDeviceData {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub profile: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub name: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]

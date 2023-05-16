@@ -32,6 +32,7 @@ struct Schema {
     created_at: DateTime,
     #[serde(rename = "modifiedAt")]
     modified_at: DateTime,
+    profile: String,
     name: String,
     info: Document,
 }
@@ -78,6 +79,7 @@ pub fn get_by_device_id(context: &mut SpecContext<TestState>) -> Result<(), Stri
         network_addr: "network_addr_get_none".to_string(),
         created_at: now.into(),
         modified_at: now.into(),
+        profile: "".to_string(),
         name: "".to_string(),
         info: Document::new(),
     };
@@ -120,6 +122,7 @@ pub fn get_by_device_id(context: &mut SpecContext<TestState>) -> Result<(), Stri
     expect(device.network_addr).to_equal("network_addr_get_none".to_string())?;
     expect(device.created_at).to_equal(now)?;
     expect(device.modified_at).to_equal(now)?;
+    expect(device.profile).to_equal("".to_string())?;
     expect(device.name).to_equal("".to_string())?;
     expect(device.info).to_equal(Map::<String, Value>::new())?;
 
@@ -132,6 +135,7 @@ pub fn get_by_device_id(context: &mut SpecContext<TestState>) -> Result<(), Stri
         network_addr: "network_addr_get_some".to_string(),
         created_at: now.into(),
         modified_at: now.into(),
+        profile: "profile_get".to_string(),
         name: "name_get".to_string(),
         info: doc! {
             "boolean": false,
@@ -169,6 +173,7 @@ pub fn get_by_device_id(context: &mut SpecContext<TestState>) -> Result<(), Stri
     expect(device.network_addr).to_equal("network_addr_get_some".to_string())?;
     expect(device.created_at).to_equal(now)?;
     expect(device.modified_at).to_equal(now)?;
+    expect(device.profile).to_equal("profile_get".to_string())?;
     expect(device.name).to_equal("name_get".to_string())?;
 
     match device.info.get("boolean") {
@@ -239,6 +244,7 @@ pub fn get_by_unit_device(context: &mut SpecContext<TestState>) -> Result<(), St
         network_addr: "network_addr_get".to_string(),
         created_at: now.into(),
         modified_at: now.into(),
+        profile: "profile_get".to_string(),
         name: "name_get".to_string(),
         info: Document::new(),
     };
@@ -258,6 +264,7 @@ pub fn get_by_unit_device(context: &mut SpecContext<TestState>) -> Result<(), St
         network_addr: "network_addr_not_get".to_string(),
         created_at: now.into(),
         modified_at: now.into(),
+        profile: "profile_get".to_string(),
         name: "name_get".to_string(),
         info: Document::new(),
     };
@@ -277,6 +284,7 @@ pub fn get_by_unit_device(context: &mut SpecContext<TestState>) -> Result<(), St
         network_addr: "network_addr_get_other".to_string(),
         created_at: now.into(),
         modified_at: now.into(),
+        profile: "profile_get".to_string(),
         name: "name_get".to_string(),
         info: Document::new(),
     };
@@ -340,6 +348,7 @@ pub fn get_by_network_device(context: &mut SpecContext<TestState>) -> Result<(),
         network_addr: "network_addr_get".to_string(),
         created_at: now.into(),
         modified_at: now.into(),
+        profile: "profile_get".to_string(),
         name: "name_get".to_string(),
         info: Document::new(),
     };
@@ -359,6 +368,7 @@ pub fn get_by_network_device(context: &mut SpecContext<TestState>) -> Result<(),
         network_addr: "network_addr_not_get".to_string(),
         created_at: now.into(),
         modified_at: now.into(),
+        profile: "profile_get".to_string(),
         name: "name_get".to_string(),
         info: Document::new(),
     };
@@ -378,6 +388,7 @@ pub fn get_by_network_device(context: &mut SpecContext<TestState>) -> Result<(),
         network_addr: "network_addr_get_other".to_string(),
         created_at: now.into(),
         modified_at: now.into(),
+        profile: "profile_get".to_string(),
         name: "name_get".to_string(),
         info: Document::new(),
     };
@@ -440,6 +451,7 @@ pub fn get_by_unit_network(context: &mut SpecContext<TestState>) -> Result<(), S
         network_addr: "network_addr_get_none".to_string(),
         created_at: now.into(),
         modified_at: now.into(),
+        profile: "profile_get".to_string(),
         name: "name_get".to_string(),
         info: Document::new(),
     };
@@ -459,6 +471,7 @@ pub fn get_by_unit_network(context: &mut SpecContext<TestState>) -> Result<(), S
         network_addr: "network_addr_get_some".to_string(),
         created_at: now.into(),
         modified_at: now.into(),
+        profile: "profile_get".to_string(),
         name: "name_get".to_string(),
         info: Document::new(),
     };

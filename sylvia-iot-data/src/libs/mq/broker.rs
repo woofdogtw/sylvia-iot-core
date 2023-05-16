@@ -71,6 +71,7 @@ struct AppUlData {
     #[serde(rename = "deviceId")]
     device_id: String,
     time: String,
+    profile: String,
     data: String,
     extension: Option<Map<String, Value>>,
 }
@@ -89,6 +90,7 @@ struct AppDlData {
     network_code: Option<String>,
     #[serde(rename = "networkAddr")]
     network_addr: Option<String>,
+    profile: String,
     data: String,
     extension: Option<Map<String, Value>>,
 }
@@ -117,6 +119,7 @@ struct NetUlData {
     #[serde(rename = "deviceId")]
     device_id: Option<String>,
     time: String,
+    profile: String,
     data: String,
     extension: Option<Map<String, Value>>,
 }
@@ -137,6 +140,7 @@ struct NetDlData {
     network_code: String,
     #[serde(rename = "networkAddr")]
     network_addr: String,
+    profile: String,
     data: String,
     extension: Option<Map<String, Value>>,
 }
@@ -220,6 +224,7 @@ impl EventHandler for DataHandler {
                     device_id: data.device_id,
                     network_code: data.network_code,
                     network_addr: data.network_addr,
+                    profile: data.profile,
                     data: data.data,
                     extension: data.extension,
                 };
@@ -330,6 +335,7 @@ impl EventHandler for DataHandler {
                         }
                         Ok(time) => time.into(),
                     },
+                    profile: data.profile,
                     data: data.data,
                     extension: data.extension,
                 };
@@ -384,6 +390,7 @@ impl EventHandler for DataHandler {
                     device_id: data.device_id,
                     network_code: data.network_code,
                     network_addr: data.network_addr,
+                    profile: data.profile,
                     data: data.data,
                     extension: data.extension,
                 };
@@ -476,6 +483,7 @@ impl EventHandler for DataHandler {
                         }
                         Ok(time) => time.into(),
                     },
+                    profile: data.profile,
                     data: data.data,
                     extension: data.extension,
                 };

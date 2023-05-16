@@ -48,6 +48,7 @@ pub struct AppUlData {
     pub network_addr: String,
     #[serde(rename = "isPublic")]
     pub is_public: bool,
+    pub profile: String,
     pub data: String,
     pub extension: Option<Map<String, Value>>,
 }
@@ -330,6 +331,7 @@ pub fn before_all_fn(state: &mut HashMap<&'static str, TestState>) -> () {
             unit_id: manager_unit_id.clone(),
             network_id: manager_network_id.clone(),
             network_addr: "manager".to_string(),
+            profile: None,
             name: None,
             info: None,
         },
@@ -1217,6 +1219,115 @@ pub fn uplink_route_on_off(context: &mut SpecContext<TestState>) -> Result<(), S
         }
         Ok(())
     })?;
+
+    Ok(())
+}
+
+/// Run the following steps:
+/// - add routes (use the device "owner2", see [`before_all_fn`] description).
+/// - send data and check the profile in data.
+/// - change device profile.
+/// - send data and check where the profile is changed.
+///
+/// **Note**: because this test case changes the device profile, this should be put as the last test
+/// case in the suite.
+pub fn uplink_route_profile(context: &mut SpecContext<TestState>) -> Result<(), String> {
+    let mut state = context.state.borrow_mut();
+    let state = state.get_mut(STATE).unwrap();
+
+    let resources = create_connections(state)?;
+    let rsc = &resources;
+    let runtime = state.runtime.as_ref().unwrap();
+    let routes_state = state.routes_state.as_ref().unwrap();
+    let routing_values = state.routing_values.as_ref().unwrap();
+
+    // Add route and send data.
+    let route = device_route::request::PostDeviceRoute {
+        data: device_route::request::PostDeviceRouteData {
+            device_id: routing_values.get(OWNER_DEV2_ID).unwrap().clone(),
+            application_id: routing_values.get(OWNER_APP_ID).unwrap().clone(),
+        },
+    };
+    let _ = libs::create_device_route(runtime, routes_state, TOKEN_MANAGER, &route)?;
+    runtime.block_on(async move {
+        const CASE: &'static str = "case route";
+
+        let data = NetUlData {
+            time: strings::time_str(&Utc::now()),
+            network_addr: "owner2".to_string(),
+            data: "05".to_string(),
+            extension: None,
+        };
+        let payload = match serde_json::to_vec(&data) {
+            Err(e) => return Err(format!("{} generate payload 05 error: {}", CASE, e)),
+            Ok(payload) => payload,
+        };
+        if let Err(e) = rsc.owner_network_uldata.send_msg(payload).await {
+            return Err(format!("{} send error: {}", CASE, e));
+        }
+        let mut found = false;
+        for _ in 0..WAIT_COUNT {
+            if let Some(d) = { rsc.owner_app_handler.recv_uldata.lock().unwrap().pop() } {
+                expect(d.profile.as_str()).to_equal("")?;
+                expect(d.data.as_str()).to_equal("05")?;
+                found = true;
+                break;
+            }
+            time::sleep(Duration::from_millis(WAIT_TICK)).await;
+        }
+        if !found {
+            return Err(format!("{} should receive data 05", CASE));
+        }
+        Ok(())
+    })?;
+
+    // Patch device profile and send another data.
+    let mut updates = device::request::PatchDevice {
+        data: device::request::PatchDeviceData {
+            profile: Some("profile-update".to_string()),
+            ..Default::default()
+        },
+    };
+    let device_id = routing_values.get(OWNER_DEV2_ID).unwrap().clone();
+    let device_id = device_id.as_str();
+    let _ = libs::patch_device(runtime, routes_state, TOKEN_MANAGER, device_id, &updates)?;
+    runtime.block_on(async move {
+        const CASE: &'static str = "case route";
+
+        // Wait for control channel updating cache.
+        time::sleep(Duration::from_secs(1)).await;
+
+        let data = NetUlData {
+            time: strings::time_str(&Utc::now()),
+            network_addr: "owner2".to_string(),
+            data: "06".to_string(),
+            extension: None,
+        };
+        let payload = match serde_json::to_vec(&data) {
+            Err(e) => return Err(format!("{} generate payload 06 error: {}", CASE, e)),
+            Ok(payload) => payload,
+        };
+        if let Err(e) = rsc.owner_network_uldata.send_msg(payload).await {
+            return Err(format!("{} send error: {}", CASE, e));
+        }
+        let mut found = false;
+        for _ in 0..WAIT_COUNT {
+            if let Some(d) = { rsc.owner_app_handler.recv_uldata.lock().unwrap().pop() } {
+                expect(d.profile.as_str()).to_equal("profile-update")?;
+                expect(d.data.as_str()).to_equal("06")?;
+                found = true;
+                break;
+            }
+            time::sleep(Duration::from_millis(WAIT_TICK)).await;
+        }
+        if !found {
+            return Err(format!("{} should receive data 06", CASE));
+        }
+        Ok(())
+    })?;
+
+    updates.data.profile = Some("".to_string());
+    let _ = libs::patch_device(runtime, routes_state, TOKEN_MANAGER, device_id, &updates)?;
 
     Ok(())
 }

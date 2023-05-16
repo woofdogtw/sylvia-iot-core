@@ -11,6 +11,7 @@
         networkCode: string,            // device's network code
         networkAddr: string,            // device network address
         isPublic: bool,                 // the network is public or private
+        profile: string,                // the device profile of data
         data: string,                   // data in hexadecimal format
         extension: object               // (optional) extensions for application
     }
@@ -62,6 +63,8 @@
     }
 
 ## Control Channel
+
+The messages of control channel is used for operating cache.
 
     broker.ctrl.[function]: {           // function such as `application`, `network`, ...
         operation: string,              // operation 
@@ -177,6 +180,7 @@
         - *string* `unitId`: routed data's unit ID.
         - *string* `deviceId`: device ID.
         - *string* `time`: data time in ISO 8601 format from the device.
+        - *string* `profile`: device profile.
         - *string* `data`: data in hexadecimal format.
         - *object* `extension`: (**optional**) extensions.
 
@@ -191,6 +195,7 @@
         - *string* `deviceId`: (**optional**) device ID.
         - *string* `networkCode`: (**optional**) device network code.
         - *string* `networkAddr`: (**optional**) device network address.
+        - *string* `profile`: device profile.
         - *string* `data`: data in hexadecimal format.
         - *object* `extension`: (**optional**) extensions.
 
@@ -214,6 +219,7 @@
         - *string* `unitId`: (**present for private network**) network's unit ID.
         - *string* `deviceId`: (**present if the device exist**) device ID.
         - *string* `time`: data time in ISO 8601 format from the device.
+        - *string* `profile`: (**present if the device exist**) device profile.
         - *string* `data`: data in hexadecimal format.
         - *object* `extension`: (**optional**) extensions.
 
@@ -229,6 +235,7 @@
         - *string* `deviceId`: device ID.
         - *string* `networkCode`: device network code.
         - *string* `networkAddr`: device network address.
+        - *string* `profile`: device profile.
         - *string* `data`: data in hexadecimal format.
         - *object* `extension`: (**optional**) extensions.
 

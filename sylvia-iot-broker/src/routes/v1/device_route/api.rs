@@ -301,7 +301,9 @@ pub async fn post_device_route(
         network_id: device.network_id,
         network_code: device.network_code,
         network_addr: device.network_addr,
+        profile: device.profile,
         created_at: now,
+        modified_at: now,
     };
     if let Err(e) = state.model.device_route().add(&route).await {
         error!("[{}] add error: {}", FN_NAME, e);
@@ -432,7 +434,9 @@ pub async fn post_device_route_bulk(
             network_code: network.code.clone(),
             network_addr: device.network_addr.clone(),
             device_id: device.device_id.clone(),
+            profile: device.profile.clone(),
             created_at: now,
+            modified_at: now,
         };
         routes.push(route);
     }
@@ -682,7 +686,9 @@ pub async fn post_device_route_range(
             network_code: network.code.clone(),
             network_addr: device.network_addr.clone(),
             device_id: device.device_id.clone(),
+            profile: device.profile.clone(),
             created_at: now,
+            modified_at: now,
         };
         routes.push(route);
     }
@@ -1137,6 +1143,7 @@ fn get_sort_cond(sort_args: &Option<String>) -> Result<Vec<SortCond>, ErrResp> {
                         "network" => SortKey::NetworkCode,
                         "addr" => SortKey::NetworkAddr,
                         "created" => SortKey::CreatedAt,
+                        "modified" => SortKey::ModifiedAt,
                         _ => {
                             return Err(ErrResp::ErrParam(Some(format!(
                                 "invalid sort key {}",
@@ -1256,7 +1263,9 @@ fn route_transform(route: &DeviceRoute) -> response::GetDeviceRouteData {
         network_id: route.network_id.clone(),
         network_code: route.network_code.clone(),
         network_addr: route.network_addr.clone(),
+        profile: route.profile.clone(),
         created_at: time_str(&route.created_at),
+        modified_at: time_str(&route.modified_at),
     }
 }
 

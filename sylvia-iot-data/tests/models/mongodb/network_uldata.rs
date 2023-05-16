@@ -34,6 +34,7 @@ struct Schema {
     #[serde(rename = "deviceId")]
     pub device_id: Option<String>,
     pub time: DateTime,
+    pub profile: String,
     pub data: String,
     pub extension: Option<Document>,
 }
@@ -196,6 +197,7 @@ impl<'a> common_test::Db for Db<'a> {
                 unit_id: item.unit_id,
                 device_id: item.device_id,
                 time: item.time.into(),
+                profile: item.profile,
                 data: item.data,
                 extension: match item.extension {
                     None => None,

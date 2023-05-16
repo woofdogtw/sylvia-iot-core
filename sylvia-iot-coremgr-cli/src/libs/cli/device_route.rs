@@ -130,8 +130,11 @@ struct GetResData {
     network_code: String,
     #[serde(rename = "networkAddr")]
     network_addr: String,
+    profile: String,
     #[serde(rename = "createdAt")]
     created_at: String,
+    #[serde(rename = "modifiedAt")]
+    modified_at: String,
 }
 
 pub fn reg_args(cmd: Command) -> Command {

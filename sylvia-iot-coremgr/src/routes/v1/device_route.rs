@@ -36,12 +36,15 @@ struct DeviceRoute {
     network_code: String,
     #[serde(rename = "networkAddr")]
     network_addr: String,
+    profile: String,
     #[serde(rename = "createdAt")]
     created_at: String,
+    #[serde(rename = "modifiedAt")]
+    modified_at: String,
 }
 
 const CSV_FIELDS: &'static [u8] =
-    b"\xEF\xBB\xBFrouteId,unitId,applicationId,applicationCode,deviceId,networkId,networkCode,networkAddr,createdAt\n";
+    b"\xEF\xBB\xBFrouteId,unitId,applicationId,applicationCode,deviceId,networkId,networkCode,networkAddr,profile,createdAt,modifiedAt\n";
 
 pub fn new_service(scope_path: &str) -> impl HttpServiceFactory {
     web::scope(scope_path)

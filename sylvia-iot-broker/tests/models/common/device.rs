@@ -20,6 +20,7 @@ pub fn add(runtime: &Runtime, model: &dyn DeviceModel) -> Result<(), String> {
         network_addr: "network_addr_get_none".to_string(),
         created_at: now,
         modified_at: now,
+        profile: "profile_get_none".to_string(),
         name: "name_get".to_string(),
         info: Map::<String, Value>::new(),
     };
@@ -57,6 +58,7 @@ pub fn add(runtime: &Runtime, model: &dyn DeviceModel) -> Result<(), String> {
         network_addr: "network_addr_get_some".to_string(),
         created_at: now,
         modified_at: now,
+        profile: "profile_get_some".to_string(),
         name: "name_get".to_string(),
         info: Map::<String, Value>::new(),
     };
@@ -90,6 +92,7 @@ pub fn add_dup(runtime: &Runtime, model: &dyn DeviceModel) -> Result<(), String>
         network_addr: "network_addr_add".to_string(),
         created_at: now,
         modified_at: now,
+        profile: "profile_add".to_string(),
         name: "name_add".to_string(),
         info: Map::<String, Value>::new(),
     };
@@ -142,6 +145,7 @@ pub fn add_bulk(runtime: &Runtime, model: &dyn DeviceModel) -> Result<(), String
             network_addr: format!("network_addr_bulk{:#03}", i),
             created_at: now,
             modified_at: now,
+            profile: format!("profile_add{:#03}", i),
             name: format!("name_add{:#03}", i),
             info: Map::<String, Value>::new(),
         };
@@ -173,6 +177,7 @@ pub fn add_bulk(runtime: &Runtime, model: &dyn DeviceModel) -> Result<(), String
         network_addr: "network_addr_bulk100".to_string(),
         created_at: now,
         modified_at: now,
+        profile: "profile_add100".to_string(),
         name: "name_add100".to_string(),
         info: Map::<String, Value>::new(),
     });
@@ -201,7 +206,9 @@ pub fn add_bulk(runtime: &Runtime, model: &dyn DeviceModel) -> Result<(), String
         Ok((items, _)) => {
             let mut i = 0;
             for item in items.iter() {
-                if !item.name.eq(&format!("name_add{:#03}", i)) {
+                if !item.profile.eq(&format!("profile_add{:#03}", i))
+                    || !item.name.eq(&format!("name_add{:#03}", i))
+                {
                     return Err(format!("model.add_bulk() content error"));
                 }
                 i += 1;
@@ -226,6 +233,7 @@ pub fn del_by_device_id(runtime: &Runtime, model: &dyn DeviceModel) -> Result<()
         network_addr: "network_addr_del".to_string(),
         created_at: now,
         modified_at: now,
+        profile: "profile_del".to_string(),
         name: "name_del".to_string(),
         info: Map::<String, Value>::new(),
     };
@@ -272,6 +280,7 @@ pub fn del_twice(runtime: &Runtime, model: &dyn DeviceModel) -> Result<(), Strin
         network_addr: "network_addr_del".to_string(),
         created_at: now,
         modified_at: now,
+        profile: "profile_del".to_string(),
         name: "name_del".to_string(),
         info: Map::<String, Value>::new(),
     };
@@ -305,6 +314,7 @@ pub fn del_by_unit_id(runtime: &Runtime, model: &dyn DeviceModel) -> Result<(), 
         network_addr: "network_addr_del1".to_string(),
         created_at: now,
         modified_at: now,
+        profile: "profile_del".to_string(),
         name: "name_del".to_string(),
         info: Map::<String, Value>::new(),
     };
@@ -379,6 +389,7 @@ pub fn del_by_unit_device(runtime: &Runtime, model: &dyn DeviceModel) -> Result<
         network_addr: "network_addr_del1".to_string(),
         created_at: now,
         modified_at: now,
+        profile: "profile_del".to_string(),
         name: "name_del".to_string(),
         info: Map::<String, Value>::new(),
     };
@@ -429,6 +440,7 @@ pub fn del_by_network_id(runtime: &Runtime, model: &dyn DeviceModel) -> Result<(
         network_addr: "network_addr_del1".to_string(),
         created_at: now,
         modified_at: now,
+        profile: "profile_del".to_string(),
         name: "name_del".to_string(),
         info: Map::<String, Value>::new(),
     };
@@ -503,6 +515,7 @@ pub fn del_by_network_addrs(runtime: &Runtime, model: &dyn DeviceModel) -> Resul
             network_addr: format!("network_del{:#03}", i),
             created_at: now,
             modified_at: now,
+            profile: "profile_del".to_string(),
             name: format!("name_del{:#03}", i),
             info: Map::<String, Value>::new(),
         };
@@ -588,6 +601,7 @@ pub fn update(runtime: &Runtime, model: &dyn DeviceModel) -> Result<(), String> 
         network_addr: "network_addr_update".to_string(),
         created_at: now,
         modified_at: now,
+        profile: "profile_update".to_string(),
         name: "name_update".to_string(),
         info: Map::<String, Value>::new(),
     };
@@ -628,6 +642,7 @@ pub fn update(runtime: &Runtime, model: &dyn DeviceModel) -> Result<(), String> 
     expect(get_device.network_addr.as_str()).to_equal(device.network_addr.as_str())?;
     expect(get_device.created_at).to_equal(device.created_at)?;
     expect(get_device.modified_at).to_equal(now)?;
+    expect(get_device.profile.as_str()).to_equal(device.profile.as_str())?;
     expect(get_device.name.as_str()).to_equal(device.name.as_str())?;
     expect(get_device.info).to_equal(device.info.clone())?;
 
@@ -637,6 +652,7 @@ pub fn update(runtime: &Runtime, model: &dyn DeviceModel) -> Result<(), String> 
     info.insert("key".to_string(), Value::String("value".to_string()));
     let updates = Updates {
         modified_at: Some(now),
+        profile: Some("profile_update_all"),
         name: Some("name_update_all"),
         info: Some(&info),
     };
@@ -658,6 +674,7 @@ pub fn update(runtime: &Runtime, model: &dyn DeviceModel) -> Result<(), String> 
     expect(get_device.network_addr.as_str()).to_equal(device.network_addr.as_str())?;
     expect(get_device.created_at).to_equal(device.created_at)?;
     expect(get_device.modified_at).to_equal(now)?;
+    expect(get_device.profile.as_str()).to_equal("profile_update_all")?;
     expect(get_device.name.as_str()).to_equal("name_update_all")?;
     expect(get_device.info).to_equal(info)?;
 
@@ -666,6 +683,7 @@ pub fn update(runtime: &Runtime, model: &dyn DeviceModel) -> Result<(), String> 
     let info = Map::<String, Value>::new();
     let updates = Updates {
         modified_at: Some(now),
+        profile: Some(""),
         name: Some(""),
         info: Some(&info),
     };
@@ -687,6 +705,7 @@ pub fn update(runtime: &Runtime, model: &dyn DeviceModel) -> Result<(), String> 
     expect(get_device.network_addr.as_str()).to_equal(device.network_addr.as_str())?;
     expect(get_device.created_at).to_equal(device.created_at)?;
     expect(get_device.modified_at).to_equal(now)?;
+    expect(get_device.profile.as_str()).to_equal("")?;
     expect(get_device.name.as_str()).to_equal("")?;
     expect(get_device.info).to_equal(info)
 }
@@ -713,6 +732,7 @@ pub fn update_invalid(runtime: &Runtime, model: &dyn DeviceModel) -> Result<(), 
     };
     let updates = Updates {
         modified_at: None,
+        profile: None,
         name: None,
         info: None,
     };
@@ -734,6 +754,7 @@ pub fn count(runtime: &Runtime, model: &dyn DeviceModel) -> Result<(), String> {
         network_addr: "network_addr_count1_1".to_string(),
         created_at: now,
         modified_at: now,
+        profile: "profile_count_1".to_string(),
         name: "name_count_1".to_string(),
         info: Map::<String, Value>::new(),
     };
@@ -747,6 +768,7 @@ pub fn count(runtime: &Runtime, model: &dyn DeviceModel) -> Result<(), String> {
         device.network_id = "network_id_count2".to_string();
         device.network_code = "network_code_count2".to_string();
         device.network_addr = "network_addr_count2_1".to_string();
+        device.profile = "profile_count_2".to_string();
         device.name = "name_count2_1".to_string();
         model.add(&device).await?;
         device.device_id = "device_id_count3_1".to_string();
@@ -754,6 +776,7 @@ pub fn count(runtime: &Runtime, model: &dyn DeviceModel) -> Result<(), String> {
         device.network_id = "network_id_count3".to_string();
         device.network_code = "network_code_count3".to_string();
         device.network_addr = "network_addr_count3_1".to_string();
+        device.profile = "profile_count_1".to_string();
         device.name = "name_count_1".to_string();
         model.add(&device).await
     }) {
@@ -902,6 +925,16 @@ pub fn count(runtime: &Runtime, model: &dyn DeviceModel) -> Result<(), String> {
     expect(count).to_equal(0)?;
 
     let cond = ListQueryCond {
+        profile: Some("profile_count_1"),
+        ..Default::default()
+    };
+    let count = match runtime.block_on(async { model.count(&cond).await }) {
+        Err(e) => return Err(format!("count profile result error: {}", e)),
+        Ok(count) => count,
+    };
+    expect(count).to_equal(3)?;
+
+    let cond = ListQueryCond {
         name_contains: Some("count_1"),
         ..Default::default()
     };
@@ -946,6 +979,7 @@ pub fn list(runtime: &Runtime, model: &dyn DeviceModel) -> Result<(), String> {
         network_addr: "network_addr_list1_1".to_string(),
         created_at: now,
         modified_at: now,
+        profile: "profile_list_1".to_string(),
         name: "name_list_1".to_string(),
         info: Map::<String, Value>::new(),
     };
@@ -959,6 +993,7 @@ pub fn list(runtime: &Runtime, model: &dyn DeviceModel) -> Result<(), String> {
         device.network_id = "network_id_list2".to_string();
         device.network_code = "network_code_list2".to_string();
         device.network_addr = "network_addr_list2_1".to_string();
+        device.profile = "profile_list_2".to_string();
         device.name = "name_list2_1".to_string();
         model.add(&device).await?;
         device.device_id = "device_id_list3_1".to_string();
@@ -967,6 +1002,7 @@ pub fn list(runtime: &Runtime, model: &dyn DeviceModel) -> Result<(), String> {
         device.network_id = "network_id_list3".to_string();
         device.network_code = "network_code_list3".to_string();
         device.network_addr = "network_addr_list3_1".to_string();
+        device.profile = "profile_list_1".to_string();
         device.name = "name\\\\%%''_list_1".to_string();
         model.add(&device).await
     }) {
@@ -1134,6 +1170,17 @@ pub fn list(runtime: &Runtime, model: &dyn DeviceModel) -> Result<(), String> {
     expect(list.len()).to_equal(0)?;
 
     let cond = ListQueryCond {
+        profile: Some("profile_list_1"),
+        ..Default::default()
+    };
+    opts.cond = &cond;
+    let list = match runtime.block_on(async { model.list(&opts, None).await }) {
+        Err(e) => return Err(format!("list profile result error: {}", e)),
+        Ok((list, _)) => list,
+    };
+    expect(list.len()).to_equal(3)?;
+
+    let cond = ListQueryCond {
         name_contains: Some("list_1"),
         ..Default::default()
     };
@@ -1203,6 +1250,7 @@ pub fn list_sort(runtime: &Runtime, model: &dyn DeviceModel) -> Result<(), Strin
         network_addr: "network_addr_list1_1".to_string(),
         created_at: now,
         modified_at: now,
+        profile: "profile_list1_1".to_string(),
         name: "name_list1_1".to_string(),
         info: Map::<String, Value>::new(),
     };
@@ -1213,6 +1261,7 @@ pub fn list_sort(runtime: &Runtime, model: &dyn DeviceModel) -> Result<(), Strin
         device.network_addr = "network_addr_list1_2".to_string();
         device.created_at = now;
         device.modified_at = now;
+        device.profile = "profile_list1_2".to_string();
         device.name = "name_list1_2".to_string();
         model.add(&device).await?;
         now = now + Duration::seconds(1);
@@ -1222,6 +1271,7 @@ pub fn list_sort(runtime: &Runtime, model: &dyn DeviceModel) -> Result<(), Strin
         device.network_addr = "network_addr_list2_1".to_string();
         device.created_at = now;
         device.modified_at = now;
+        device.profile = "profile_list2_1".to_string();
         device.name = "name_list2_1".to_string();
         model.add(&device).await?;
         now = now + Duration::seconds(1);
@@ -1232,6 +1282,7 @@ pub fn list_sort(runtime: &Runtime, model: &dyn DeviceModel) -> Result<(), Strin
         device.network_addr = "network_addr_list3_1".to_string();
         device.created_at = now;
         device.modified_at = now;
+        device.profile = "profile_list1_3".to_string();
         device.name = "name_list2_1".to_string();
         model.add(&device).await
     }) {
@@ -1328,6 +1379,36 @@ pub fn list_sort(runtime: &Runtime, model: &dyn DeviceModel) -> Result<(), Strin
     expect(list.len()).to_equal(4)?;
     expect(list[0].device_id.as_str()).to_equal("device_id_list3_1")?;
     expect(list[1].device_id.as_str()).to_equal("device_id_list2_1")?;
+    expect(list[2].device_id.as_str()).to_equal("device_id_list1_2")?;
+    expect(list[3].device_id.as_str()).to_equal("device_id_list1_1")?;
+
+    let sort_cond = vec![SortCond {
+        key: SortKey::Profile,
+        asc: true,
+    }];
+    opts.sort = Some(sort_cond.as_slice());
+    let list = match runtime.block_on(async { model.list(&opts, None).await }) {
+        Err(e) => return Err(format!("list profile-asc result error: {}", e)),
+        Ok((list, _)) => list,
+    };
+    expect(list.len()).to_equal(4)?;
+    expect(list[0].device_id.as_str()).to_equal("device_id_list1_1")?;
+    expect(list[1].device_id.as_str()).to_equal("device_id_list1_2")?;
+    expect(list[2].device_id.as_str()).to_equal("device_id_list3_1")?;
+    expect(list[3].device_id.as_str()).to_equal("device_id_list2_1")?;
+
+    let sort_cond = vec![SortCond {
+        key: SortKey::Profile,
+        asc: false,
+    }];
+    opts.sort = Some(sort_cond.as_slice());
+    let list = match runtime.block_on(async { model.list(&opts, None).await }) {
+        Err(e) => return Err(format!("list profile-desc result error: {}", e)),
+        Ok((list, _)) => list,
+    };
+    expect(list.len()).to_equal(4)?;
+    expect(list[0].device_id.as_str()).to_equal("device_id_list2_1")?;
+    expect(list[1].device_id.as_str()).to_equal("device_id_list3_1")?;
     expect(list[2].device_id.as_str()).to_equal("device_id_list1_2")?;
     expect(list[3].device_id.as_str()).to_equal("device_id_list1_1")?;
 
@@ -1484,6 +1565,7 @@ pub fn list_offset_limit(runtime: &Runtime, model: &dyn DeviceModel) -> Result<(
         network_addr: "network_addr_list1_1".to_string(),
         created_at: now,
         modified_at: now,
+        profile: "profile_list_1".to_string(),
         name: "name_list_1".to_string(),
         info: Map::<String, Value>::new(),
     };
@@ -1580,6 +1662,7 @@ pub fn list_cursor(runtime: &Runtime, model: &dyn DeviceModel) -> Result<(), Str
         network_addr: "network_addr_list1_1".to_string(),
         created_at: now,
         modified_at: now,
+        profile: "profile_list".to_string(),
         name: "name_list".to_string(),
         info: Map::<String, Value>::new(),
     };

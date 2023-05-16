@@ -43,6 +43,7 @@ pub fn get_uldata(context: &mut SpecContext<TestState>) -> Result<(), String> {
     let model = state.cache_model.as_ref().unwrap().device_route();
     let cache = state.cache.as_ref().unwrap().device_route();
 
+    let now = Utc::now();
     let mut route = DeviceRoute {
         route_id: "route_id1".to_string(),
         unit_id: "unit_id".to_string(),
@@ -53,7 +54,9 @@ pub fn get_uldata(context: &mut SpecContext<TestState>) -> Result<(), String> {
         network_code: "network_code".to_string(),
         network_addr: "network_addr".to_string(),
         device_id: "device_id".to_string(),
-        created_at: Utc::now(),
+        profile: "".to_string(),
+        created_at: now,
+        modified_at: now,
     };
     if let Err(e) = runtime.block_on(async { model.add(&route).await }) {
         return Err(format!("create device_route 1 error: {}", e));
@@ -118,6 +121,7 @@ pub fn del_uldata(context: &mut SpecContext<TestState>) -> Result<(), String> {
     let model = state.cache_model.as_ref().unwrap().device_route();
     let cache = state.cache.as_ref().unwrap().device_route();
 
+    let now = Utc::now();
     let mut route = DeviceRoute {
         route_id: "route_id1".to_string(),
         unit_id: "unit_id".to_string(),
@@ -128,7 +132,9 @@ pub fn del_uldata(context: &mut SpecContext<TestState>) -> Result<(), String> {
         network_code: "network_code".to_string(),
         network_addr: "network_addr".to_string(),
         device_id: "device_id".to_string(),
-        created_at: Utc::now(),
+        profile: "".to_string(),
+        created_at: now,
+        modified_at: now,
     };
     if let Err(e) = runtime.block_on(async { model.add(&route).await }) {
         return Err(format!("create device_route 1 error: {}", e));
@@ -197,6 +203,7 @@ pub fn get_dldata(context: &mut SpecContext<TestState>) -> Result<(), String> {
         network_addr: "network_addr".to_string(),
         created_at: Utc::now(),
         modified_at: Utc::now(),
+        profile: "".to_string(),
         name: "".to_string(),
         info: Map::<String, Value>::new(),
     };
@@ -220,6 +227,7 @@ pub fn get_dldata(context: &mut SpecContext<TestState>) -> Result<(), String> {
     expect(route.network_id.as_str()).to_equal("network_id")?;
     expect(route.network_addr.as_str()).to_equal("network_addr")?;
     expect(route.device_id.as_str()).to_equal("device_id")?;
+    expect(route.profile.as_str()).to_equal("")?;
 
     // Fetch again to get data from cache.
     let route = match runtime.block_on(async { cache.get_dldata(&cond).await }) {
@@ -232,6 +240,7 @@ pub fn get_dldata(context: &mut SpecContext<TestState>) -> Result<(), String> {
     expect(route.network_id.as_str()).to_equal("network_id")?;
     expect(route.network_addr.as_str()).to_equal("network_addr")?;
     expect(route.device_id.as_str()).to_equal("device_id")?;
+    expect(route.profile.as_str()).to_equal("")?;
 
     // Fetch data from database.
     let cond = GetCacheQueryCond {
@@ -270,6 +279,7 @@ pub fn del_dldata(context: &mut SpecContext<TestState>) -> Result<(), String> {
         network_addr: "network_addr".to_string(),
         created_at: Utc::now(),
         modified_at: Utc::now(),
+        profile: "".to_string(),
         name: "".to_string(),
         info: Map::<String, Value>::new(),
     };
@@ -351,6 +361,7 @@ pub fn get_dldata_pub(context: &mut SpecContext<TestState>) -> Result<(), String
         network_addr: "network_addr".to_string(),
         created_at: Utc::now(),
         modified_at: Utc::now(),
+        profile: "".to_string(),
         name: "".to_string(),
         info: Map::<String, Value>::new(),
     };
@@ -362,6 +373,7 @@ pub fn get_dldata_pub(context: &mut SpecContext<TestState>) -> Result<(), String
     device.network_id = "network_id_pub".to_string();
     device.network_code = "network_code_pub".to_string();
     device.network_addr = "network_addr_pub".to_string();
+    device.profile = "pub".to_string();
     if let Err(e) = runtime.block_on(async { model.add(&device).await }) {
         return Err(format!("create device 2 error: {}", e));
     }
@@ -381,6 +393,7 @@ pub fn get_dldata_pub(context: &mut SpecContext<TestState>) -> Result<(), String
     expect(route.network_id.as_str()).to_equal("network_id")?;
     expect(route.network_addr.as_str()).to_equal("network_addr")?;
     expect(route.device_id.as_str()).to_equal("device_id")?;
+    expect(route.profile.as_str()).to_equal("")?;
 
     // Fetch again to get data from cache.
     let route = match runtime.block_on(async { cache.get_dldata_pub(&cond).await }) {
@@ -393,6 +406,7 @@ pub fn get_dldata_pub(context: &mut SpecContext<TestState>) -> Result<(), String
     expect(route.network_id.as_str()).to_equal("network_id")?;
     expect(route.network_addr.as_str()).to_equal("network_addr")?;
     expect(route.device_id.as_str()).to_equal("device_id")?;
+    expect(route.profile.as_str()).to_equal("")?;
 
     // Fetch data from database.
     let cond = GetCachePubQueryCond {
@@ -409,6 +423,7 @@ pub fn get_dldata_pub(context: &mut SpecContext<TestState>) -> Result<(), String
     expect(route.network_id.as_str()).to_equal("network_id_pub")?;
     expect(route.network_addr.as_str()).to_equal("network_addr_pub")?;
     expect(route.device_id.as_str()).to_equal("device_id_pub")?;
+    expect(route.profile.as_str()).to_equal("pub")?;
 
     // Fetch again to get data from cache.
     let route = match runtime.block_on(async { cache.get_dldata_pub(&cond).await }) {
@@ -426,6 +441,7 @@ pub fn get_dldata_pub(context: &mut SpecContext<TestState>) -> Result<(), String
     expect(route.network_id.as_str()).to_equal("network_id_pub")?;
     expect(route.network_addr.as_str()).to_equal("network_addr_pub")?;
     expect(route.device_id.as_str()).to_equal("device_id_pub")?;
+    expect(route.profile.as_str()).to_equal("pub")?;
 
     // Fetch data from database.
     let cond = GetCachePubQueryCond {
@@ -463,6 +479,7 @@ pub fn del_dldata_pub(context: &mut SpecContext<TestState>) -> Result<(), String
         network_addr: "network_addr".to_string(),
         created_at: Utc::now(),
         modified_at: Utc::now(),
+        profile: "".to_string(),
         name: "".to_string(),
         info: Map::<String, Value>::new(),
     };

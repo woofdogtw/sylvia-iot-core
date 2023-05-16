@@ -8,6 +8,7 @@ use sqlx::SqlitePool;
 
 use super::super::device_route::{
     Cursor, DeviceRoute, DeviceRouteModel, ListOptions, ListQueryCond, QueryCond, SortKey,
+    UpdateQueryCond, Updates,
 };
 
 /// Model instance.
@@ -35,8 +36,11 @@ struct Schema {
     network_id: String,
     network_code: String,
     network_addr: String,
+    profile: String,
     /// i64 as time tick from Epoch in milliseconds.
     created_at: i64,
+    /// i64 as time tick from Epoch in milliseconds.
+    modified_at: i64,
 }
 
 /// Use "COUNT(*)" instead of "COUNT(fields...)" to simplify the implementation.
@@ -57,7 +61,9 @@ const FIELDS: &'static [&'static str] = &[
     "network_id",
     "network_code",
     "network_addr",
+    "profile",
     "created_at",
+    "modified_at",
 ];
 const TABLE_INIT_SQL: &'static str = "\
     CREATE TABLE IF NOT EXISTS device_route (\
@@ -70,7 +76,9 @@ const TABLE_INIT_SQL: &'static str = "\
     network_id TEXT NOT NULL,\
     network_code TEXT NOT NULL,\
     network_addr TEXT NOT NULL,\
+    profile TEXT NOT NULL,\
     created_at INTEGER NOT NULL,\
+    modified_at INTEGER NOT NULL,\
     UNIQUE (application_id,device_id),\
     PRIMARY KEY (route_id))";
 
@@ -152,7 +160,9 @@ impl DeviceRouteModel for Model {
                 network_id: row.network_id,
                 network_code: row.network_code,
                 network_addr: row.network_addr,
+                profile: row.profile,
                 created_at: Utc.timestamp_nanos(row.created_at * 1000000),
+                modified_at: Utc.timestamp_nanos(row.modified_at * 1000000),
             });
             if let Some(limit) = opts_limit {
                 if limit > 0 && cursor.offset() >= limit {
@@ -202,7 +212,9 @@ impl DeviceRouteModel for Model {
             network_id: row.network_id,
             network_code: row.network_code,
             network_addr: row.network_addr,
+            profile: row.profile,
             created_at: Utc.timestamp_nanos(row.created_at * 1000000),
+            modified_at: Utc.timestamp_nanos(row.modified_at * 1000000),
         }))
     }
 
@@ -217,7 +229,9 @@ impl DeviceRouteModel for Model {
             quote(route.network_id.as_str()),
             quote(route.network_code.as_str()),
             quote(route.network_addr.as_str()),
+            quote(route.profile.as_str()),
             route.created_at.timestamp_millis().to_string(),
+            route.modified_at.timestamp_millis().to_string(),
         ];
         let sql = SqlBuilder::insert_into(TABLE_NAME)
             .fields(FIELDS)
@@ -244,7 +258,9 @@ impl DeviceRouteModel for Model {
                 quote(route.network_id.as_str()),
                 quote(route.network_code.as_str()),
                 quote(route.network_addr.as_str()),
+                quote(route.profile.as_str()),
                 route.created_at.timestamp_millis().to_string(),
+                route.modified_at.timestamp_millis().to_string(),
             ]);
         }
         let sql = builder.sql()?.replace(");", ") ON CONFLICT DO NOTHING;");
@@ -256,6 +272,22 @@ impl DeviceRouteModel for Model {
 
     async fn del(&self, cond: &QueryCond) -> Result<(), Box<dyn StdError>> {
         let sql = build_where(&mut SqlBuilder::delete_from(TABLE_NAME), cond).sql()?;
+        let _ = sqlx::query(sql.as_str())
+            .execute(self.conn.as_ref())
+            .await?;
+        Ok(())
+    }
+
+    async fn update(
+        &self,
+        cond: &UpdateQueryCond,
+        updates: &Updates,
+    ) -> Result<(), Box<dyn StdError>> {
+        let sql = match build_update_where(&mut SqlBuilder::update_table(TABLE_NAME), cond, updates)
+        {
+            None => return Ok(()),
+            Some(builder) => builder.sql()?,
+        };
         let _ = sqlx::query(sql.as_str())
             .execute(self.conn.as_ref())
             .await?;
@@ -368,6 +400,7 @@ fn build_sort<'a>(builder: &'a mut SqlBuilder, opts: &ListOptions) -> &'a mut Sq
         for cond in sort_cond.iter() {
             let key = match cond.key {
                 SortKey::CreatedAt => "created_at",
+                SortKey::ModifiedAt => "modified_at",
                 SortKey::ApplicationCode => "application_code",
                 SortKey::NetworkCode => "network_code",
                 SortKey::NetworkAddr => "network_addr",
@@ -376,4 +409,27 @@ fn build_sort<'a>(builder: &'a mut SqlBuilder, opts: &ListOptions) -> &'a mut Sq
         }
     }
     builder
+}
+
+/// Transforms query conditions and the model object to the SQL builder.
+fn build_update_where<'a>(
+    builder: &'a mut SqlBuilder,
+    cond: &UpdateQueryCond<'a>,
+    updates: &Updates,
+) -> Option<&'a mut SqlBuilder> {
+    let mut count = 0;
+    if let Some(value) = updates.modified_at.as_ref() {
+        builder.set("modified_at", value.timestamp_millis());
+        count += 1;
+    }
+    if let Some(value) = updates.profile.as_ref() {
+        builder.set("profile", quote(value));
+        count += 1;
+    }
+    if count == 0 {
+        return None;
+    }
+
+    builder.and_where_eq("device_id", quote(cond.device_id));
+    Some(builder)
 }
