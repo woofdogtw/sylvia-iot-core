@@ -46,6 +46,7 @@ struct Schema {
     pub network_code: String,
     #[serde(rename = "networkAddr")]
     pub network_addr: String,
+    pub profile: String,
     pub data: String,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub extension: Option<Document>,
@@ -72,6 +73,7 @@ impl NetworkDlDataModel for Model {
             doc! {"name": "deviceId_1", "key": {"deviceId": 1}},
             doc! {"name": "networkCode_1", "key": {"networkCode": 1}},
             doc! {"name": "networkAddr_1", "key": {"networkAddr": 1}},
+            doc! {"name": "profile_1", "key": {"profile": 1}},
             doc! {"name": "proc_1", "key": {"proc": 1}, "expireAfterSeconds": EXPIRES},
             doc! {"name": "pub_1", "key": {"pub": 1}},
             doc! {"name": "resp_1", "key": {"resp": 1}},
@@ -141,6 +143,7 @@ impl NetworkDlDataModel for Model {
             device_id: data.device_id.clone(),
             network_code: data.network_code.clone(),
             network_addr: data.network_addr.clone(),
+            profile: data.profile.clone(),
             data: data.data.clone(),
             extension: match data.extension.as_ref() {
                 None => None,
@@ -204,6 +207,7 @@ impl Cursor for DbCursor {
                 device_id: item.device_id,
                 network_code: item.network_code,
                 network_addr: item.network_addr,
+                profile: item.profile,
                 data: item.data,
                 extension: match item.extension {
                     None => None,
@@ -255,6 +259,9 @@ fn get_list_query_filter(cond: &ListQueryCond) -> Document {
     }
     if let Some(value) = cond.network_addr {
         filter.insert("networkAddr", value);
+    }
+    if let Some(value) = cond.profile {
+        filter.insert("profile", value);
     }
     let mut time_doc = Document::new();
     if let Some(value) = cond.proc_gte {

@@ -24,6 +24,8 @@ struct PostReqData<'a> {
     #[serde(rename = "networkAddr")]
     network_addr: &'a str,
     #[serde(skip_serializing_if = "Option::is_none")]
+    profile: Option<&'a str>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     name: Option<&'a str>,
     #[serde(skip_serializing_if = "Option::is_none")]
     info: Option<Map<String, Value>>,
@@ -53,6 +55,8 @@ struct PostBulkReqData<'a> {
     network_id: &'a str,
     #[serde(rename = "networkAddrs")]
     network_addrs: Vec<&'a str>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    profile: Option<&'a str>,
 }
 
 #[derive(Serialize)]
@@ -70,6 +74,8 @@ struct PostRangeReqData<'a> {
     start_addr: &'a str,
     #[serde(rename = "endAddr")]
     end_addr: &'a str,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    profile: Option<&'a str>,
 }
 
 #[derive(Serialize)]
@@ -80,6 +86,8 @@ struct GetCountReq<'a> {
     network: Option<&'a str>,
     #[serde(skip_serializing_if = "Option::is_none")]
     addr: Option<&'a str>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    profile: Option<&'a str>,
     #[serde(skip_serializing_if = "Option::is_none")]
     contains: Option<&'a str>,
 }
@@ -111,6 +119,8 @@ struct GetListReq<'a> {
     #[serde(skip_serializing_if = "Option::is_none")]
     addr: Option<&'a str>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    profile: Option<&'a str>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     contains: Option<&'a str>,
 }
 
@@ -131,6 +141,8 @@ struct PatchReq<'a> {
 
 #[derive(Serialize)]
 struct PatchReqData<'a> {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    profile: Option<&'a str>,
     #[serde(skip_serializing_if = "Option::is_none")]
     name: Option<&'a str>,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -155,6 +167,7 @@ struct GetResData {
     created_at: String,
     #[serde(rename = "modifiedAt")]
     modified_at: String,
+    profile: String,
     name: String,
     info: Map<String, Value>,
 }
@@ -186,6 +199,13 @@ pub fn reg_args(cmd: Command) -> Command {
                         .help("Network address")
                         .num_args(1)
                         .required(true),
+                )
+                .arg(
+                    Arg::new("profile")
+                        .short('p')
+                        .long("profile")
+                        .help("Device profile")
+                        .num_args(1),
                 )
                 .arg(
                     Arg::new("name")
@@ -228,6 +248,13 @@ pub fn reg_args(cmd: Command) -> Command {
                         .help("Network addresses")
                         .num_args(1..=1024)
                         .required(true),
+                )
+                .arg(
+                    Arg::new("profile")
+                        .short('p')
+                        .long("profile")
+                        .help("Device profile")
+                        .num_args(1),
                 ),
         )
         .subcommand(
@@ -261,6 +288,13 @@ pub fn reg_args(cmd: Command) -> Command {
                         .long("end")
                         .help("End network address")
                         .required(true),
+                )
+                .arg(
+                    Arg::new("profile")
+                        .short('p')
+                        .long("profile")
+                        .help("Device profile")
+                        .num_args(1),
                 ),
         )
         .subcommand(
@@ -282,6 +316,13 @@ pub fn reg_args(cmd: Command) -> Command {
                     Arg::new("address")
                         .long("address")
                         .help("The specified network address")
+                        .num_args(1),
+                )
+                .arg(
+                    Arg::new("profile")
+                        .short('p')
+                        .long("profile")
+                        .help("Device profile")
                         .num_args(1),
                 )
                 .arg(
@@ -355,6 +396,13 @@ pub fn reg_args(cmd: Command) -> Command {
                         .num_args(1),
                 )
                 .arg(
+                    Arg::new("profile")
+                        .short('p')
+                        .long("profile")
+                        .help("Device profile")
+                        .num_args(1),
+                )
+                .arg(
                     Arg::new("contains")
                         .long("contains")
                         .help("The partial word of device name (case insensitive)")
@@ -383,6 +431,13 @@ pub fn reg_args(cmd: Command) -> Command {
                         .help("Device ID")
                         .num_args(1)
                         .required(true),
+                )
+                .arg(
+                    Arg::new("profile")
+                        .short('p')
+                        .long("profile")
+                        .help("Device profile")
+                        .num_args(1),
                 )
                 .arg(
                     Arg::new("name")
@@ -535,6 +590,10 @@ async fn add(config: &Config, args: &ArgMatches) -> Result<PostResData, ErrResp>
             unit_id: args.get_one::<String>("unitid").unwrap().as_str(),
             network_id: args.get_one::<String>("netid").unwrap().as_str(),
             network_addr: args.get_one::<String>("address").unwrap().as_str(),
+            profile: match args.get_one::<String>("profile") {
+                None => None,
+                Some(v) => Some(v.as_str()),
+            },
             name: match args.get_one::<String>("name") {
                 None => None,
                 Some(v) => Some(v.as_str()),
@@ -615,6 +674,10 @@ async fn add_bulk(config: &Config, args: &ArgMatches) -> Result<(), ErrResp> {
                 .unwrap()
                 .map(|x| x.as_str())
                 .collect(),
+            profile: match args.get_one::<String>("profile") {
+                None => None,
+                Some(v) => Some(v.as_str()),
+            },
         },
     };
     let client = Client::new();
@@ -678,6 +741,10 @@ async fn add_range(config: &Config, args: &ArgMatches) -> Result<(), ErrResp> {
             network_id: args.get_one::<String>("netid").unwrap().as_str(),
             start_addr: args.get_one::<String>("start").unwrap().as_str(),
             end_addr: args.get_one::<String>("end").unwrap().as_str(),
+            profile: match args.get_one::<String>("profile") {
+                None => None,
+                Some(v) => Some(v.as_str()),
+            },
         },
     };
     let client = Client::new();
@@ -745,6 +812,10 @@ async fn count(config: &Config, args: &ArgMatches) -> Result<GetCountResData, Er
             Some(v) => Some(v.as_str()),
         },
         addr: match args.get_one::<String>("address") {
+            None => None,
+            Some(v) => Some(v.as_str()),
+        },
+        profile: match args.get_one::<String>("profile") {
             None => None,
             Some(v) => Some(v.as_str()),
         },
@@ -848,6 +919,10 @@ async fn list(config: &Config, args: &ArgMatches) -> Result<Vec<GetResData>, Err
             Some(v) => Some(v.as_str()),
         },
         addr: match args.get_one::<String>("address") {
+            None => None,
+            Some(v) => Some(v.as_str()),
+        },
+        profile: match args.get_one::<String>("profile") {
             None => None,
             Some(v) => Some(v.as_str()),
         },
@@ -1010,6 +1085,10 @@ async fn update(config: &Config, args: &ArgMatches) -> Result<(), ErrResp> {
 
     let body = PatchReq {
         data: PatchReqData {
+            profile: match args.get_one::<String>("profile") {
+                None => None,
+                Some(v) => Some(v.as_str()),
+            },
             name: match args.get_one::<String>("name") {
                 None => None,
                 Some(v) => Some(v.as_str()),
@@ -1146,6 +1225,7 @@ async fn delete_bulk(config: &Config, args: &ArgMatches) -> Result<(), ErrResp> 
                 .unwrap()
                 .map(|x| x.as_str())
                 .collect(),
+            profile: None,
         },
     };
     let client = Client::new();
@@ -1209,6 +1289,7 @@ async fn delete_range(config: &Config, args: &ArgMatches) -> Result<(), ErrResp>
             network_id: args.get_one::<String>("netid").unwrap().as_str(),
             start_addr: args.get_one::<String>("start").unwrap().as_str(),
             end_addr: args.get_one::<String>("end").unwrap().as_str(),
+            profile: None,
         },
     };
     let client = Client::new();

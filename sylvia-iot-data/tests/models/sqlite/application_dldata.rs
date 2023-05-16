@@ -30,6 +30,7 @@ struct Schema {
     pub network_code: String,
     /// use empty string as NULL.
     pub network_addr: String,
+    pub profile: String,
     pub data: String,
     pub extension: String,
 }
@@ -44,6 +45,7 @@ const FIELDS: &'static [&'static str] = &[
     "device_id",
     "network_code",
     "network_addr",
+    "profile",
     "data",
     "extension",
 ];
@@ -275,6 +277,7 @@ impl<'a> common_test::Db for Db<'a> {
                 0 => None,
                 _ => Some(row.network_addr),
             },
+            profile: row.profile,
             data: row.data,
             extension: match row.extension.len() {
                 0 => None,

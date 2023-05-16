@@ -73,6 +73,7 @@ impl DeviceCache for Cache {
             None => None,
             Some(device) => Some(DeviceCacheItem {
                 device_id: device.device_id,
+                profile: device.profile,
             }),
         };
         let _ = self.set(cond, item.as_ref()).await;

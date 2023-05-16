@@ -31,6 +31,7 @@ struct Schema {
     /// i64 as time tick from Epoch in milliseconds.
     pub time: i64,
     pub data: String,
+    pub profile: String,
     pub extension: String,
 }
 
@@ -44,6 +45,7 @@ const FIELDS: &'static [&'static str] = &[
     "unit_id",
     "device_id",
     "time",
+    "profile",
     "data",
     "extension",
 ];
@@ -218,6 +220,7 @@ impl<'a> common_test::Db for Db<'a> {
                 _ => Some(row.device_id),
             },
             time: Utc.timestamp_nanos(row.time * 1000000),
+            profile: row.profile,
             data: row.data,
             extension: match row.extension.len() {
                 0 => None,

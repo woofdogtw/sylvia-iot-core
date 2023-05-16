@@ -33,6 +33,7 @@ struct Schema {
     pub network_code: Option<String>,
     #[serde(rename = "networkAddr")]
     pub network_addr: Option<String>,
+    pub profile: String,
     pub data: String,
     pub extension: Option<Document>,
 }
@@ -252,6 +253,7 @@ impl<'a> common_test::Db for Db<'a> {
                 device_id: item.device_id,
                 network_code: item.network_code,
                 network_addr: item.network_addr,
+                profile: item.profile,
                 data: item.data,
                 extension: match item.extension {
                     None => None,

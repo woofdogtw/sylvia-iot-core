@@ -24,7 +24,7 @@ use crate::models::network_uldata::{ListOptions, ListQueryCond, NetworkUlData, S
 const LIST_LIMIT_DEFAULT: u64 = 100;
 const LIST_CURSOR_MAX: u64 = 100;
 const CSV_FIELDS: &'static str =
-    "dataId,proc,unitCode,networkCode,networkAddr,unitId,deviceId,time,data,extension\n";
+    "dataId,proc,unitCode,networkCode,networkAddr,unitId,deviceId,time,profile,data,extension\n";
 
 /// `GET /{base}/api/v1/network-uldata/count`
 pub async fn get_count(
@@ -80,6 +80,7 @@ pub async fn get_list(
             None => None,
             Some(addr) => Some(addr.to_lowercase()),
         },
+        profile: query.profile.clone(),
         tfield: query.tfield.clone(),
         tstart: query.tstart,
         tend: query.tend,
@@ -155,6 +156,7 @@ pub async fn get_list(
             device: query.device.clone(),
             network: query.network.clone(),
             addr: query.addr.clone(),
+            profile: query.profile.clone(),
             tfield: query.tfield.clone(),
             tstart: query.tstart,
             tend: query.tend,
@@ -227,6 +229,11 @@ async fn get_list_cond<'a>(
     if let Some(network_addr) = query.addr.as_ref() {
         if network_addr.len() > 0 {
             cond.network_addr = Some(network_addr.as_str());
+        }
+    }
+    if let Some(profile) = query.profile.as_ref() {
+        if profile.len() > 0 {
+            cond.profile = Some(profile.as_str());
         }
     }
     if let Some(start) = query.tstart.as_ref() {
@@ -433,6 +440,7 @@ fn data_transform(data: &NetworkUlData) -> response::GetListData {
         unit_id: data.unit_id.clone(),
         device_id: data.device_id.clone(),
         time: strings::time_str(&data.time),
+        profile: data.profile.clone(),
         data: data.data.clone(),
         extension: data.extension.clone(),
     }
@@ -457,6 +465,7 @@ fn data_transform_csv(data: &NetworkUlData) -> response::GetListCsvData {
             Some(device_id) => device_id.clone(),
         },
         time: strings::time_str(&data.time),
+        profile: data.profile.clone(),
         data: data.data.clone(),
         extension: match data.extension.as_ref() {
             None => "".to_string(),

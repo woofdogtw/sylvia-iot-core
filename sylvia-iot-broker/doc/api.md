@@ -997,6 +997,7 @@ Create a device.
     - *string* `unitId`: The associated unit ID.
     - *string* `networkId`: The associated network ID. The public network can be assigned by **admin** or **manager**.
     - *string* `networkAddr`: The network address of the specified network. This will be transformed to lowercase.
+    - *string* `profile`: (**optional**) Device profile that is used for application servers to identify data content. The pattern is empty or `[A-Za-z0-9]{1}[A-Za-z0-9-_]*`.
     - *string* `name`: (**optional**) Display name.
     - *object* `info`: (**optional**) Other information.
 
@@ -1008,6 +1009,7 @@ Create a device.
             "unitId": "1640923958516-qvdFNpOV",
             "networkId": "1640924173420-BNg2lwo3",
             "networkAddr": "800012ae",
+            "profile": "tracker",
             "name": "Mt. Sylvia tracker",
             "info": {
                 "latitude": "24.38349800818775",
@@ -1061,6 +1063,7 @@ Notes:
     - *string* `unitId`: The associated unit ID.
     - *string* `networkId`: The associated network ID. The public network can be assigned by **admin** or **manager**.
     - *string[]* `networkAddrs`: The network addresses of the specified network. This will be transformed to lowercase.
+    - *string* `profile`: (**optional**) Device profile that is used for application servers to identify data content. The pattern is empty or `[A-Za-z0-9]{1}[A-Za-z0-9-_]*`.
 
 - **Example**
 
@@ -1073,7 +1076,8 @@ Notes:
                 "800012ae",
                 "8000257f",
                 "800022f3"
-            ]
+            ],
+            "profile": ""
         }
     }
     ```
@@ -1154,6 +1158,7 @@ Notes:
     - *string* `networkId`: The associated network ID. The public network can be assigned by **admin** or **manager**.
     - *string* `startAddr`: The start network address of the specified network.
     - *string* `endAddr`: The end network address of the specified network.
+    - *string* `profile`: (**optional**) The device profile that is used for application servers to identify data content. The pattern is empty or `[A-Za-z0-9]{1}[A-Za-z0-9-_]*`.
 
 - **Example**
 
@@ -1163,7 +1168,8 @@ Notes:
             "unitId": "1640923958516-qvdFNpOV",
             "networkId": "1640924173420-BNg2lwo3",
             "startAddr": "80001000",
-            "endAddr": "800013ff"
+            "endAddr": "800013ff",
+            "profile": "tracker"
         }
     }
     ```
@@ -1228,11 +1234,13 @@ Get device list count.
         unit={specifiedUnitId}&
         network={specifiedNetworkId}&
         addr={specifiedNetworkAddr}&
+        profile={specifiedProfile}&
         contains={word}
 
 - *string* `unit`: (**required for normal user**) To search devices of the specified unit ID.
 - *string* `network`: (**optional**) To search devices of the specified network ID.
 - *string* `addr`: (**optional**) To search devices of the specified network address.
+- *string* `profile`: (**optional**) To search devices of the specified profile.
 - *string* `contains`: (**optional**) To search names which contain the specified word. This is case insensitive.
 
 #### Response
@@ -1264,6 +1272,7 @@ Get device list.
         unit={specifiedUnitId}&
         network={specifiedNetworkId}&
         addr={specifiedNetworkAddr}&
+        profile={specifiedProfile}&
         contains={word}&
         offset={offset}&
         limit={limit}&
@@ -1273,10 +1282,11 @@ Get device list.
 - *string* `unit`: (**required for normal user**) To search devices of the specified unit ID.
 - *string* `network`: (**optional**) To search devices of the specified network ID.
 - *string* `addr`: (**optional**) To search devices of the specified network address.
+- *string* `profile`: (**optional**) To search devices of the specified profile.
 - *string* `contains`: (**optional**) To search names which contain the specified word. This is case insensitive.
 - *number* `offset`: (**optional**) Data offset. Default is **0**.
 - *number* `limit`: (**optional**) Number of items to list. **0** to list all data. Default is **100**.
-- *string* `sort`: (**optional**) To sort the result. Format is `key:[asc|desc]`. The key can be **network**, **addr**, **created**, **modified**, **name**. Default is **network:asc,addr:asc**.
+- *string* `sort`: (**optional**) To sort the result. Format is `key:[asc|desc]`. The key can be **network**, **addr**, **created**, **modified**, **profile**, **name**. Default is **network:asc,addr:asc**.
 - *string* `format`: (**optional**) Response body format. Default is array in the **data** field.
     - **array**: The response body is JSON array, not an object.
 
@@ -1293,6 +1303,7 @@ Get device list.
         - *string* `networkAddr`: The associated network address.
         - *string* `createdAt`: Creation time in ISO 8601 format.
         - *string* `modifiedAt`: Modification time in ISO 8601 format.
+        - *string* `profile`: The device profile that is used for application servers to identify data content.
         - *string* `name`: Display name.
         - *object* `info`: Other information.
 
@@ -1310,6 +1321,7 @@ Get device list.
                     "networkAddr": "800012ae",
                     "createdAt": "2021-12-31T04:17:54.329Z",
                     "modifiedAt": "2021-12-31T04:17:54.329Z",
+                    "profile": "tracker",
                     "name": "Mt. Sylvia tracker",
                     "info": {
                         "latitude": "24.38349800818775",
@@ -1324,6 +1336,7 @@ Get device list.
                     "networkAddr": "13a2",
                     "createdAt": "2021-12-31T04:17:43.290Z",
                     "modifiedAt": "2021-12-31T04:17:43.290Z",
+                    "profile": "",
                     "name": "Mt. Sylvia meter",
                     "info": {
                         "latitude": "24.38349800818775",
@@ -1347,6 +1360,7 @@ Get device list.
                 "networkAddr": "800012ae",
                 "createdAt": "2021-12-31T04:17:54.329Z",
                 "modifiedAt": "2021-12-31T04:17:54.329Z",
+                "profile": "tracker",
                 "name": "Mt. Sylvia tracker",
                 "info": {
                     "latitude": "24.38349800818775",
@@ -1362,6 +1376,7 @@ Get device list.
                 "networkAddr": "13a2",
                 "createdAt": "2021-12-31T04:17:43.290Z",
                 "modifiedAt": "2021-12-31T04:17:43.290Z",
+                "profile": "",
                 "name": "Mt. Sylvia meter",
                 "info": {
                     "latitude": "24.38349800818775",
@@ -1407,6 +1422,7 @@ Update the specified device information.
 #### Parameters
 
 - *object* `data`:
+    - *string* `profile`: (**optional**) The device profile. The pattern is empty or `[A-Za-z0-9]{1}[A-Za-z0-9-_]*`.
     - *string* `name`: (**optional**) The display name.
     - *object* `info`: (**optional**) Other information. You must provide full of fields, or all fields will be replaced with the new value.
 
@@ -1417,6 +1433,7 @@ Update the specified device information.
     ```json
     {
         "data": {
+            "profile": "e-meter",
             "name": "Mt. Sylvia e-meter",
             "info": {
                 "latitude": "24.38349800818775",
@@ -1735,7 +1752,7 @@ Get device route list.
 - *string* `device`: (**optional**) To search device routes of the specified device ID.
 - *number* `offset`: (**optional**) Data offset. Default is **0**.
 - *number* `limit`: (**optional**) Number of items to list. **0** to list all data. Default is **100**.
-- *string* `sort`: (**optional**) To sort the result. Format is `key:[asc|desc]`. The key can be **application**, **network**, **addr**, **created**. Default is **network:asc,addr:asc,created:desc**.
+- *string* `sort`: (**optional**) To sort the result. Format is `key:[asc|desc]`. The key can be **application**, **network**, **addr**, **created**, **modified**. Default is **network:asc,addr:asc,created:desc**.
 - *string* `format`: (**optional**) Response body format. Default is array in the **data** field.
     - **array**: The response body is JSON array, not an object.
 
@@ -1752,7 +1769,9 @@ Get device route list.
         - *string* `networkId`: The network ID of the device.
         - *string* `networkCode`: The network code of the device.
         - *string* `networkAddr`: The network address of the device.
+        - *string* `profile`: The device profile.
         - *string* `createdAt`: Creation time in ISO 8601 format.
+        - *string* `modifiedAt`: Modification time in ISO 8601 format.
 
     - **Example**
 
@@ -1768,7 +1787,9 @@ Get device route list.
                     "networkId": "1640924173420-BNg2lwo3",
                     "networkCode": "lora",
                     "networkAddr": "800012ae",
-                    "createdAt": "2021-12-31T04:18:28.457Z"
+                    "profile": "tracker",
+                    "createdAt": "2021-12-31T04:18:28.457Z",
+                    "modifiedAt": "2021-12-31T04:18:28.457Z"
                 }
             ]
         }
@@ -1787,7 +1808,9 @@ Get device route list.
                 "networkId": "1640924173420-BNg2lwo3",
                 "networkCode": "lora",
                 "networkAddr": "800012ae",
-                "createdAt": "2021-12-31T04:18:28.457Z"
+                "profile": "tracker",
+                "createdAt": "2021-12-31T04:18:28.457Z",
+                "modifiedAt": "2021-12-31T04:18:28.457Z"
             }
         ]
         ```

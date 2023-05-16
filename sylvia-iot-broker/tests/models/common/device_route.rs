@@ -4,6 +4,7 @@ use tokio::runtime::Runtime;
 
 use sylvia_iot_broker::models::device_route::{
     DeviceRoute, DeviceRouteModel, ListOptions, ListQueryCond, QueryCond, SortCond, SortKey,
+    UpdateQueryCond, Updates,
 };
 
 /// Test `add()`.
@@ -19,7 +20,9 @@ pub fn add(runtime: &Runtime, model: &dyn DeviceRouteModel) -> Result<(), String
         network_id: "network_id_add".to_string(),
         network_code: "network_code_add".to_string(),
         network_addr: "network_addr_add".to_string(),
+        profile: "profile_add".to_string(),
         created_at: now,
+        modified_at: now,
     };
     if let Err(e) = runtime.block_on(async { model.add(&route).await }) {
         return Err(format!("model.add() error: {}", e));
@@ -48,7 +51,9 @@ pub fn add_dup(runtime: &Runtime, model: &dyn DeviceRouteModel) -> Result<(), St
         network_id: "network_id_add".to_string(),
         network_code: "network_code_add".to_string(),
         network_addr: "network_addr_add".to_string(),
+        profile: "profile_add".to_string(),
         created_at: now,
+        modified_at: now,
     };
     if let Err(e) = runtime.block_on(async { model.add(&route).await }) {
         return Err(format!("model.add() error: {}", e));
@@ -82,7 +87,9 @@ pub fn add_bulk(runtime: &Runtime, model: &dyn DeviceRouteModel) -> Result<(), S
             network_id: "network_id_bulk".to_string(),
             network_code: "network_code_bulk".to_string(),
             network_addr: format!("network_addr_bulk{:#03}", i),
+            profile: "profile_bulk".to_string(),
             created_at: now,
+            modified_at: now,
         };
         routes.push(route);
     }
@@ -113,7 +120,9 @@ pub fn add_bulk(runtime: &Runtime, model: &dyn DeviceRouteModel) -> Result<(), S
         network_id: "network_id_bulk".to_string(),
         network_code: "network_code_bulk".to_string(),
         network_addr: format!("network_addr_bulk100"),
+        profile: "profile_bulk".to_string(),
         created_at: now,
+        modified_at: now,
     });
     if let Err(e) = runtime.block_on(async { model.add_bulk(&routes).await }) {
         return Err(format!("model.add_bulk() with duplicate error: {}", e));
@@ -166,7 +175,9 @@ pub fn del_by_route_id(runtime: &Runtime, model: &dyn DeviceRouteModel) -> Resul
         network_id: "network_id_del".to_string(),
         network_code: "network_code_del".to_string(),
         network_addr: "network_addr_del".to_string(),
+        profile: "profile_del".to_string(),
         created_at: now,
+        modified_at: now,
     };
     let cond = QueryCond {
         route_id: Some(route_id_del),
@@ -212,7 +223,9 @@ pub fn del_twice(runtime: &Runtime, model: &dyn DeviceRouteModel) -> Result<(), 
         network_id: "network_id_del".to_string(),
         network_code: "network_code_del".to_string(),
         network_addr: "network_addr_del".to_string(),
+        profile: "profile_del".to_string(),
         created_at: now,
+        modified_at: now,
     };
     let cond = QueryCond {
         route_id: Some(route_id_del),
@@ -245,7 +258,9 @@ pub fn del_by_unit_id(runtime: &Runtime, model: &dyn DeviceRouteModel) -> Result
         network_id: "network_id_del".to_string(),
         network_code: "network_code_del".to_string(),
         network_addr: "network_addr_del".to_string(),
+        profile: "profile_del".to_string(),
         created_at: now,
+        modified_at: now,
     };
     let cond = QueryCond {
         unit_id: Some("unit_id_del"),
@@ -313,7 +328,9 @@ pub fn del_by_unit_route(runtime: &Runtime, model: &dyn DeviceRouteModel) -> Res
         network_id: "network_id_del".to_string(),
         network_code: "network_code_del".to_string(),
         network_addr: "network_addr_del".to_string(),
+        profile: "profile_del".to_string(),
         created_at: now,
+        modified_at: now,
     };
     let cond = QueryCond {
         unit_id: Some("unit_id_del"),
@@ -365,7 +382,9 @@ pub fn del_by_application_id(
         network_id: "network_id_del".to_string(),
         network_code: "network_code_del".to_string(),
         network_addr: "network_addr_del".to_string(),
+        profile: "profile_del".to_string(),
         created_at: now,
+        modified_at: now,
     };
     let cond = QueryCond {
         application_id: Some("application_id_del"),
@@ -434,7 +453,9 @@ pub fn del_by_network_id(runtime: &Runtime, model: &dyn DeviceRouteModel) -> Res
         network_id: "network_id_del".to_string(),
         network_code: "network_code_del".to_string(),
         network_addr: "network_addr_del".to_string(),
+        profile: "profile_del".to_string(),
         created_at: now,
+        modified_at: now,
     };
     let cond = QueryCond {
         network_id: Some("network_id_del"),
@@ -503,7 +524,9 @@ pub fn del_by_device_id(runtime: &Runtime, model: &dyn DeviceRouteModel) -> Resu
         network_id: "network_id_del".to_string(),
         network_code: "network_code_del".to_string(),
         network_addr: "network_addr_del".to_string(),
+        profile: "profile_del".to_string(),
         created_at: now,
+        modified_at: now,
     };
     let cond = QueryCond {
         device_id: Some("device_id_del"),
@@ -570,7 +593,9 @@ pub fn del_by_network_addrs(runtime: &Runtime, model: &dyn DeviceRouteModel) -> 
             network_id: "network_id_bulk".to_string(),
             network_code: "network_code_bulk".to_string(),
             network_addr: format!("network_del{:#03}", i),
+            profile: "profile_del".to_string(),
             created_at: now,
+            modified_at: now,
         };
         routes.push(route);
     }
@@ -645,6 +670,127 @@ pub fn del_by_network_addrs(runtime: &Runtime, model: &dyn DeviceRouteModel) -> 
     Ok(())
 }
 
+/// Test `update()`.
+pub fn update(runtime: &Runtime, model: &dyn DeviceRouteModel) -> Result<(), String> {
+    let now = Utc::now().trunc_subsecs(3);
+    let route_id_update1 = "route_id_update1";
+    let route_id_update2 = "route_id_update2";
+    let route_id_not_update1 = "route_id_not_update1";
+    let route_id_not_update2 = "route_id_not_update2";
+    let mut route = DeviceRoute {
+        route_id: route_id_update1.to_string(),
+        unit_id: "unit_id_update".to_string(),
+        unit_code: "unit_code_update".to_string(),
+        application_id: "application_id_update1".to_string(),
+        application_code: "application_code_update".to_string(),
+        device_id: "device_id_update".to_string(),
+        network_id: "network_id_update".to_string(),
+        network_code: "network_code_update".to_string(),
+        network_addr: "network_addr_update".to_string(),
+        profile: "profile_update".to_string(),
+        created_at: now,
+        modified_at: now,
+    };
+    if let Err(e) = runtime.block_on(async {
+        model.add(&route).await?;
+        route.route_id = route_id_update2.to_string();
+        route.application_id = "application_id_update2".to_string();
+        model.add(&route).await?;
+        route.route_id = route_id_not_update1.to_string();
+        route.device_id = "device_id_not_update".to_string();
+        route.application_id = "network_id_update".to_string();
+        model.add(&route).await?;
+        route.route_id = route_id_not_update2.to_string();
+        route.application_id = "network_id_update2".to_string();
+        model.add(&route).await
+    }) {
+        return Err(format!("model.add error: {}", e));
+    }
+
+    // Update.
+    let update_cond = UpdateQueryCond {
+        device_id: "device_id_update",
+    };
+    let modified_at = now + Duration::milliseconds(1);
+    let updates = Updates {
+        profile: Some(""),
+        modified_at: Some(modified_at),
+    };
+    if let Err(e) = runtime.block_on(async { model.update(&update_cond, &updates).await }) {
+        return Err(format!("model.update() one error: {}", e));
+    }
+
+    let get_route = match runtime.block_on(async { model.get(route_id_update1).await }) {
+        Err(e) => return Err(format!("model.get() update route1 error: {}", e)),
+        Ok(route) => match route {
+            None => return Err("model.get() should get update1 route".to_string()),
+            Some(route) => route,
+        },
+    };
+    expect(get_route.profile.as_str()).to_equal("")?;
+    expect(get_route.modified_at).to_equal(modified_at)?;
+
+    let get_route = match runtime.block_on(async { model.get(route_id_update2).await }) {
+        Err(e) => return Err(format!("model.get() update route2 error: {}", e)),
+        Ok(route) => match route {
+            None => return Err("model.get() should get update route2".to_string()),
+            Some(route) => route,
+        },
+    };
+    expect(get_route.profile.as_str()).to_equal("")?;
+    expect(get_route.modified_at).to_equal(modified_at)?;
+
+    let get_route = match runtime.block_on(async { model.get(route_id_not_update1).await }) {
+        Err(e) => return Err(format!("model.get() not update route1 error: {}", e)),
+        Ok(route) => match route {
+            None => return Err("model.get() should get not update1 route".to_string()),
+            Some(route) => route,
+        },
+    };
+    expect(get_route.profile.as_str()).to_equal("profile_update")?;
+    expect(get_route.modified_at).to_equal(now)?;
+
+    let get_route = match runtime.block_on(async { model.get(route_id_not_update2).await }) {
+        Err(e) => return Err(format!("model.get() not update route2 error: {}", e)),
+        Ok(route) => match route {
+            None => return Err("model.get() should get not update route2".to_string()),
+            Some(route) => route,
+        },
+    };
+    expect(get_route.profile.as_str()).to_equal("profile_update")?;
+    expect(get_route.modified_at).to_equal(now)
+}
+
+/// Test `update()` with a non-exist condition.
+pub fn update_not_exist(runtime: &Runtime, model: &dyn DeviceRouteModel) -> Result<(), String> {
+    let cond = UpdateQueryCond {
+        device_id: "device_id_not_exist",
+    };
+    let updates = Updates {
+        modified_at: Some(Utc::now()),
+        ..Default::default()
+    };
+    if let Err(e) = runtime.block_on(async { model.update(&cond, &updates).await }) {
+        return Err(format!("model.update() error: {}", e));
+    }
+    Ok(())
+}
+
+/// Test `update()` with invalid update content.
+pub fn update_invalid(runtime: &Runtime, model: &dyn DeviceRouteModel) -> Result<(), String> {
+    let cond = UpdateQueryCond {
+        device_id: "device_id",
+    };
+    let updates = Updates {
+        modified_at: None,
+        profile: None,
+    };
+    if let Err(e) = runtime.block_on(async { model.update(&cond, &updates).await }) {
+        return Err(format!("model.update() error: {}", e));
+    }
+    Ok(())
+}
+
 /// Test `count()`.
 pub fn count(runtime: &Runtime, model: &dyn DeviceRouteModel) -> Result<(), String> {
     let now = Utc::now().trunc_subsecs(3);
@@ -658,7 +804,9 @@ pub fn count(runtime: &Runtime, model: &dyn DeviceRouteModel) -> Result<(), Stri
         network_id: "network_id_count".to_string(),
         network_code: "network_code_count".to_string(),
         network_addr: "network_addr_count1".to_string(),
+        profile: "profile_count".to_string(),
         created_at: now,
+        modified_at: now,
     };
     if let Err(e) = runtime.block_on(async {
         model.add(&route).await?;
@@ -1006,7 +1154,9 @@ pub fn list(runtime: &Runtime, model: &dyn DeviceRouteModel) -> Result<(), Strin
         network_id: "network_id_list".to_string(),
         network_code: "network_code_list".to_string(),
         network_addr: "network_addr_list1".to_string(),
+        profile: "profile".to_string(),
         created_at: now,
+        modified_at: now,
     };
     if let Err(e) = runtime.block_on(async {
         model.add(&route).await?;
@@ -1389,7 +1539,9 @@ pub fn list_sort(runtime: &Runtime, model: &dyn DeviceRouteModel) -> Result<(), 
         network_id: "network_id_list".to_string(),
         network_code: "network_code_list".to_string(),
         network_addr: "network_addr_list1_1".to_string(),
+        profile: "profile".to_string(),
         created_at: now,
+        modified_at: now + Duration::seconds(20),
     };
     if let Err(e) = runtime.block_on(async {
         model.add(&route).await?;
@@ -1398,6 +1550,7 @@ pub fn list_sort(runtime: &Runtime, model: &dyn DeviceRouteModel) -> Result<(), 
         route.device_id = "device_id_list1_2".to_string();
         route.network_addr = "network_addr_list1_2".to_string();
         route.created_at = now;
+        route.modified_at = now + Duration::seconds(18);
         model.add(&route).await?;
         now = now + Duration::seconds(1);
         route.route_id = "route_id_list1_3".to_string();
@@ -1405,6 +1558,7 @@ pub fn list_sort(runtime: &Runtime, model: &dyn DeviceRouteModel) -> Result<(), 
         route.network_id = "network_id_list1_3".to_string();
         route.network_addr = "network_addr_list1_3".to_string();
         route.created_at = now;
+        route.modified_at = now + Duration::seconds(16);
         model.add(&route).await?;
         now = now + Duration::seconds(1);
         route.route_id = "route_id_list2_1".to_string();
@@ -1415,6 +1569,7 @@ pub fn list_sort(runtime: &Runtime, model: &dyn DeviceRouteModel) -> Result<(), 
         route.network_code = "network_code_list2".to_string();
         route.network_addr = "network_addr_list2_1".to_string();
         route.created_at = now;
+        route.modified_at = now + Duration::seconds(14);
         model.add(&route).await?;
         now = now + Duration::seconds(1);
         route.route_id = "route_id_list3_1".to_string();
@@ -1427,6 +1582,7 @@ pub fn list_sort(runtime: &Runtime, model: &dyn DeviceRouteModel) -> Result<(), 
         route.network_code = "network_code_list3".to_string();
         route.network_addr = "network_addr_list3_1".to_string();
         route.created_at = now;
+        route.modified_at = now + Duration::seconds(12);
         model.add(&route).await
     }) {
         return Err(format!("model.add() error: {}", e));
@@ -1623,6 +1779,38 @@ pub fn list_sort(runtime: &Runtime, model: &dyn DeviceRouteModel) -> Result<(), 
     expect(list[3].route_id.as_str()).to_equal("route_id_list1_2")?;
     expect(list[4].route_id.as_str()).to_equal("route_id_list1_1")?;
 
+    let sort_cond = vec![SortCond {
+        key: SortKey::ModifiedAt,
+        asc: true,
+    }];
+    opts.sort = Some(sort_cond.as_slice());
+    let list = match runtime.block_on(async { model.list(&opts, None).await }) {
+        Err(e) => return Err(format!("list modified-asc result error: {}", e)),
+        Ok((list, _)) => list,
+    };
+    expect(list.len()).to_equal(5)?;
+    expect(list[0].route_id.as_str()).to_equal("route_id_list3_1")?;
+    expect(list[1].route_id.as_str()).to_equal("route_id_list2_1")?;
+    expect(list[2].route_id.as_str()).to_equal("route_id_list1_3")?;
+    expect(list[3].route_id.as_str()).to_equal("route_id_list1_2")?;
+    expect(list[4].route_id.as_str()).to_equal("route_id_list1_1")?;
+
+    let sort_cond = vec![SortCond {
+        key: SortKey::ModifiedAt,
+        asc: false,
+    }];
+    opts.sort = Some(sort_cond.as_slice());
+    let list = match runtime.block_on(async { model.list(&opts, None).await }) {
+        Err(e) => return Err(format!("list modified-desc result error: {}", e)),
+        Ok((list, _)) => list,
+    };
+    expect(list.len()).to_equal(5)?;
+    expect(list[0].route_id.as_str()).to_equal("route_id_list1_1")?;
+    expect(list[1].route_id.as_str()).to_equal("route_id_list1_2")?;
+    expect(list[2].route_id.as_str()).to_equal("route_id_list1_3")?;
+    expect(list[3].route_id.as_str()).to_equal("route_id_list2_1")?;
+    expect(list[4].route_id.as_str()).to_equal("route_id_list3_1")?;
+
     let sort_cond = vec![];
     opts.sort = Some(sort_cond.as_slice());
     let list = match runtime.block_on(async { model.list(&opts, None).await }) {
@@ -1645,7 +1833,9 @@ pub fn list_offset_limit(runtime: &Runtime, model: &dyn DeviceRouteModel) -> Res
         network_id: "network_id_list".to_string(),
         network_code: "network_code_list".to_string(),
         network_addr: "network_addr_list1_1".to_string(),
+        profile: "profile".to_string(),
         created_at: now,
+        modified_at: now,
     };
     if let Err(e) = runtime.block_on(async {
         model.add(&route).await?;
@@ -1744,7 +1934,9 @@ pub fn list_cursor(runtime: &Runtime, model: &dyn DeviceRouteModel) -> Result<()
         network_id: "network_id_list".to_string(),
         network_code: "network_code_list".to_string(),
         network_addr: "network_addr_list1_1".to_string(),
+        profile: "profile".to_string(),
         created_at: now,
+        modified_at: now,
     };
     if let Err(e) = runtime.block_on(async {
         model.add(&route).await?;

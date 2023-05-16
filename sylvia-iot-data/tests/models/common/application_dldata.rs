@@ -37,6 +37,7 @@ pub fn add(
         device_id: Some("device_id1".to_string()),
         network_code: None,
         network_addr: None,
+        profile: "profile1".to_string(),
         data: "data1".to_string(),
         extension: Some(extension),
     };
@@ -62,6 +63,7 @@ pub fn add(
         device_id: None,
         network_code: Some("network_code2".to_string()),
         network_addr: Some("network_addr2".to_string()),
+        profile: "profile2".to_string(),
         data: "data2".to_string(),
         extension: None,
     };
@@ -90,6 +92,7 @@ pub fn add_dup(runtime: &Runtime, model: &dyn ApplicationDlDataModel) -> Result<
         device_id: Some("device_id".to_string()),
         network_code: None,
         network_addr: None,
+        profile: "profile".to_string(),
         data: "data".to_string(),
         extension: None,
     };
@@ -118,6 +121,7 @@ pub fn del_by_unit(
         device_id: Some("device_id1_1".to_string()),
         network_code: None,
         network_addr: None,
+        profile: "profile".to_string(),
         data: "data".to_string(),
         extension: None,
     };
@@ -173,6 +177,7 @@ pub fn del_twice(runtime: &Runtime, model: &dyn ApplicationDlDataModel) -> Resul
         device_id: Some("device_id1_1".to_string()),
         network_code: None,
         network_addr: None,
+        profile: "profile".to_string(),
         data: "data".to_string(),
         extension: None,
     };
@@ -206,6 +211,7 @@ pub fn del_by_device_id(
         device_id: Some("device_id1".to_string()),
         network_code: None,
         network_addr: None,
+        profile: "profile".to_string(),
         data: "data".to_string(),
         extension: None,
     };
@@ -263,6 +269,7 @@ pub fn del_by_network_addr(
         device_id: None,
         network_code: Some("network_code".to_string()),
         network_addr: Some("network_addr1".to_string()),
+        profile: "profile".to_string(),
         data: "data".to_string(),
         extension: None,
     };
@@ -321,6 +328,7 @@ pub fn del_by_proc(
         device_id: None,
         network_code: Some("network_code".to_string()),
         network_addr: Some("network_addr".to_string()),
+        profile: "profile".to_string(),
         data: "data".to_string(),
         extension: None,
     };
@@ -390,6 +398,7 @@ pub fn update_with_zero(
         device_id: None,
         network_code: Some("network_code".to_string()),
         network_addr: Some("network_addr".to_string()),
+        profile: "profile".to_string(),
         data: "data".to_string(),
         extension: None,
     };
@@ -467,6 +476,7 @@ pub fn update_with_positive(
         device_id: None,
         network_code: Some("network_code".to_string()),
         network_addr: Some("network_addr".to_string()),
+        profile: "profile".to_string(),
         data: "data".to_string(),
         extension: None,
     };
@@ -544,6 +554,7 @@ pub fn update_with_negative(
         device_id: None,
         network_code: Some("network_code".to_string()),
         network_addr: Some("network_addr".to_string()),
+        profile: "profile".to_string(),
         data: "data".to_string(),
         extension: None,
     };
@@ -650,6 +661,7 @@ pub fn count(runtime: &Runtime, model: &dyn ApplicationDlDataModel) -> Result<()
         device_id: None,
         network_code: Some("network_code1_1".to_string()),
         network_addr: Some("network_addr1_1".to_string()),
+        profile: "profile1".to_string(),
         data: "data".to_string(),
         extension: None,
     };
@@ -669,6 +681,7 @@ pub fn count(runtime: &Runtime, model: &dyn ApplicationDlDataModel) -> Result<()
         data.resp = Some(now + Duration::milliseconds(2));
         data.network_code = Some("network_code2".to_string());
         data.network_addr = Some("network_addr2".to_string());
+        data.profile = "profile2".to_string();
         model.add(&data).await?;
         data.data_id = "data_id5".to_string();
         data.unit_id = "unit_id2".to_string();
@@ -677,6 +690,7 @@ pub fn count(runtime: &Runtime, model: &dyn ApplicationDlDataModel) -> Result<()
         data.device_id = Some("device_id3".to_string());
         data.network_code = None;
         data.network_addr = None;
+        data.profile = "profile3".to_string();
         data.extension = Some(Map::new());
         model.add(&data).await
     }) {
@@ -724,6 +738,16 @@ pub fn count(runtime: &Runtime, model: &dyn ApplicationDlDataModel) -> Result<()
     expect(count).to_equal(2)?;
 
     let cond = ListQueryCond {
+        profile: Some("profile1"),
+        ..Default::default()
+    };
+    let count = match runtime.block_on(async { model.count(&cond).await }) {
+        Err(e) => return Err(format!("count profile result error: {}", e)),
+        Ok(count) => count,
+    };
+    expect(count).to_equal(3)?;
+
+    let cond = ListQueryCond {
         proc_gte: Some(now + Duration::milliseconds(1)),
         proc_lte: Some(now + Duration::milliseconds(3)),
         ..Default::default()
@@ -769,6 +793,7 @@ pub fn list(runtime: &Runtime, model: &dyn ApplicationDlDataModel) -> Result<(),
         device_id: None,
         network_code: Some("network_code1_1".to_string()),
         network_addr: Some("network_addr1_1".to_string()),
+        profile: "profile1".to_string(),
         data: "data".to_string(),
         extension: None,
     };
@@ -788,6 +813,7 @@ pub fn list(runtime: &Runtime, model: &dyn ApplicationDlDataModel) -> Result<(),
         data.resp = Some(now + Duration::milliseconds(2));
         data.network_code = Some("network_code2".to_string());
         data.network_addr = Some("network_addr2".to_string());
+        data.profile = "profile2".to_string();
         model.add(&data).await?;
         data.data_id = "data_id5".to_string();
         data.unit_id = "unit_id2".to_string();
@@ -796,6 +822,7 @@ pub fn list(runtime: &Runtime, model: &dyn ApplicationDlDataModel) -> Result<(),
         data.device_id = Some("device_id3".to_string());
         data.network_code = None;
         data.network_addr = None;
+        data.profile = "profile3".to_string();
         data.extension = Some(Map::new());
         model.add(&data).await
     }) {
@@ -853,6 +880,17 @@ pub fn list(runtime: &Runtime, model: &dyn ApplicationDlDataModel) -> Result<(),
     expect(list.len()).to_equal(2)?;
 
     let cond = ListQueryCond {
+        profile: Some("profile1"),
+        ..Default::default()
+    };
+    opts.cond = &cond;
+    let list = match runtime.block_on(async { model.list(&opts, None).await }) {
+        Err(e) => return Err(format!("list profile result error: {}", e)),
+        Ok((list, _)) => list,
+    };
+    expect(list.len()).to_equal(3)?;
+
+    let cond = ListQueryCond {
         proc_gte: Some(now + Duration::milliseconds(1)),
         proc_lte: Some(now + Duration::milliseconds(3)),
         ..Default::default()
@@ -901,6 +939,7 @@ pub fn list_sort(runtime: &Runtime, model: &dyn ApplicationDlDataModel) -> Resul
         device_id: None,
         network_code: Some("network_code1_1".to_string()),
         network_addr: Some("network_addr1_1".to_string()),
+        profile: "profile".to_string(),
         data: "data".to_string(),
         extension: None,
     };
@@ -1149,6 +1188,7 @@ pub fn list_offset_limit(
         device_id: None,
         network_code: Some("network_code1_1".to_string()),
         network_addr: Some("network_addr1_1".to_string()),
+        profile: "profile".to_string(),
         data: "data".to_string(),
         extension: None,
     };
@@ -1264,6 +1304,7 @@ pub fn list_cursor(runtime: &Runtime, model: &dyn ApplicationDlDataModel) -> Res
         device_id: None,
         network_code: Some("network_code1_1".to_string()),
         network_addr: Some("network_addr1_1".to_string()),
+        profile: "profile".to_string(),
         data: "data".to_string(),
         extension: None,
     };

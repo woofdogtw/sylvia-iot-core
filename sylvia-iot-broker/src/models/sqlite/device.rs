@@ -42,6 +42,7 @@ struct Schema {
     created_at: i64,
     /// i64 as time tick from Epoch in milliseconds.
     modified_at: i64,
+    profile: String,
     name: String,
     info: String,
 }
@@ -63,6 +64,7 @@ const FIELDS: &'static [&'static str] = &[
     "network_addr",
     "created_at",
     "modified_at",
+    "profile",
     "name",
     "info",
 ];
@@ -76,6 +78,7 @@ const TABLE_INIT_SQL: &'static str = "\
     network_addr TEXT NOT NULL,\
     created_at INTEGER NOT NULL,\
     modified_at INTEGER NOT NULL,\
+    profile TEXT NOT NULL,\
     name TEXT NOT NULL,\
     info TEXT,\
     UNIQUE (unit_code,network_code,network_addr),\
@@ -161,6 +164,7 @@ impl DeviceModel for Model {
                 network_addr: row.network_addr,
                 created_at: Utc.timestamp_nanos(row.created_at * 1000000),
                 modified_at: Utc.timestamp_nanos(row.modified_at * 1000000),
+                profile: row.profile,
                 name: row.name,
                 info: serde_json::from_str(row.info.as_str())?,
             });
@@ -211,6 +215,7 @@ impl DeviceModel for Model {
             network_addr: row.network_addr,
             created_at: Utc.timestamp_nanos(row.created_at * 1000000),
             modified_at: Utc.timestamp_nanos(row.modified_at * 1000000),
+            profile: row.profile,
             name: row.name,
             info: serde_json::from_str(row.info.as_str())?,
         }))
@@ -234,6 +239,7 @@ impl DeviceModel for Model {
             quote(device.network_addr.as_str()),
             device.created_at.timestamp_millis().to_string(),
             device.modified_at.timestamp_millis().to_string(),
+            quote(device.profile.as_str()),
             quote(device.name.as_str()),
             info,
         ];
@@ -270,6 +276,7 @@ impl DeviceModel for Model {
                 quote(device.network_addr.as_str()),
                 device.created_at.timestamp_millis().to_string(),
                 device.modified_at.timestamp_millis().to_string(),
+                quote(device.profile.as_str()),
                 quote(device.name.as_str()),
                 info,
             ]);
@@ -375,6 +382,9 @@ fn build_list_where<'a>(
         let values: Vec<String> = value.iter().map(|&x| quote(x)).collect();
         builder.and_where_in("network_addr", &values);
     }
+    if let Some(value) = cond.profile {
+        build_where_like(builder, "profile", value.to_lowercase().as_str());
+    }
     if let Some(value) = cond.name_contains {
         build_where_like(builder, "name", value.to_lowercase().as_str());
     }
@@ -407,6 +417,7 @@ fn build_sort<'a>(builder: &'a mut SqlBuilder, opts: &ListOptions) -> &'a mut Sq
                 SortKey::ModifiedAt => "modified_at",
                 SortKey::NetworkCode => "network_code",
                 SortKey::NetworkAddr => "network_addr",
+                SortKey::Profile => "profile",
                 SortKey::Name => "name",
             };
             builder.order_by(key, !cond.asc);
@@ -424,6 +435,10 @@ fn build_update_where<'a>(
     let mut count = 0;
     if let Some(value) = updates.modified_at.as_ref() {
         builder.set("modified_at", value.timestamp_millis());
+        count += 1;
+    }
+    if let Some(value) = updates.profile.as_ref() {
+        builder.set("profile", quote(value));
         count += 1;
     }
     if let Some(value) = updates.name.as_ref() {

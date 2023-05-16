@@ -41,6 +41,7 @@ struct Schema {
     pub device_id: String,
     /// i64 as time tick from Epoch in milliseconds.
     pub time: i64,
+    pub profile: String,
     pub data: String,
     /// use empty string as NULL.
     pub extension: String,
@@ -64,6 +65,7 @@ const FIELDS: &'static [&'static str] = &[
     "unit_id",
     "device_id",
     "time",
+    "profile",
     "data",
     "extension",
 ];
@@ -78,6 +80,7 @@ const TABLE_INIT_SQL: &'static str = "\
     unit_id TEXT NOT NULL,\
     device_id TEXT NOT NULL,\
     time INTEGER NOT NULL,\
+    profile TEXT NOT NULL,\
     data TEXT NOT NULL,\
     extension TEXT NOT NULL,\
     PRIMARY KEY (data_id))";
@@ -163,6 +166,7 @@ impl ApplicationUlDataModel for Model {
                 unit_id: row.unit_id,
                 device_id: row.device_id,
                 time: Utc.timestamp_nanos(row.time * 1000000),
+                profile: row.profile,
                 data: row.data,
                 extension: match row.extension.len() {
                     0 => None,
@@ -211,6 +215,7 @@ impl ApplicationUlDataModel for Model {
             quote(data.unit_id.as_str()),
             quote(data.device_id.as_str()),
             data.time.timestamp_millis().to_string(),
+            quote(data.profile.as_str()),
             quote(data.data.as_str()),
             extension,
         ];
@@ -285,6 +290,9 @@ fn build_list_where<'a>(
     }
     if let Some(value) = cond.network_addr {
         builder.and_where_eq("network_addr", quote(value));
+    }
+    if let Some(value) = cond.profile {
+        builder.and_where_eq("profile", quote(value));
     }
     if let Some(value) = cond.proc_gte {
         builder.and_where_ge("proc", value.timestamp_millis());

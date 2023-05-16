@@ -22,6 +22,7 @@ const FIELDS: &'static [&'static str] = &[
     "network_addr",
     "created_at",
     "modified_at",
+    "profile",
     "name",
     "info",
 ];
@@ -66,6 +67,7 @@ pub fn get_by_device_id(context: &mut SpecContext<TestState>) -> Result<(), Stri
             now.timestamp_millis().to_string(),
             now.timestamp_millis().to_string(),
             quote(""),
+            quote(""),
             quote("{}"),
         ])
         .sql()
@@ -108,6 +110,7 @@ pub fn get_by_device_id(context: &mut SpecContext<TestState>) -> Result<(), Stri
     expect(device.network_addr).to_equal("network_addr_get_none".to_string())?;
     expect(device.created_at).to_equal(now)?;
     expect(device.modified_at).to_equal(now)?;
+    expect(device.profile).to_equal("".to_string())?;
     expect(device.name).to_equal("".to_string())?;
     expect(device.info).to_equal(Map::<String, Value>::new())?;
 
@@ -122,6 +125,7 @@ pub fn get_by_device_id(context: &mut SpecContext<TestState>) -> Result<(), Stri
             quote("network_addr_get_some"),
             now.timestamp_millis().to_string(),
             now.timestamp_millis().to_string(),
+            quote("profile_get"),
             quote("name_get"),
             quote("{\"boolean\":false,\"string\":\"string\",\"number\":1,\"object\":{\"array\":[\"array\"]}}"),
         ])
@@ -153,6 +157,7 @@ pub fn get_by_device_id(context: &mut SpecContext<TestState>) -> Result<(), Stri
     expect(device.network_addr).to_equal("network_addr_get_some".to_string())?;
     expect(device.created_at).to_equal(now)?;
     expect(device.modified_at).to_equal(now)?;
+    expect(device.profile).to_equal("profile_get".to_string())?;
     expect(device.name).to_equal("name_get".to_string())?;
 
     match device.info.get("boolean") {
@@ -225,6 +230,7 @@ pub fn get_by_unit_device(context: &mut SpecContext<TestState>) -> Result<(), St
             quote("network_addr_get"),
             now.timestamp_millis().to_string(),
             now.timestamp_millis().to_string(),
+            quote("profile_get"),
             quote("name_get"),
             quote("{}"),
         ])
@@ -247,6 +253,7 @@ pub fn get_by_unit_device(context: &mut SpecContext<TestState>) -> Result<(), St
             quote("network_addr_not_get"),
             now.timestamp_millis().to_string(),
             now.timestamp_millis().to_string(),
+            quote("profile_get"),
             quote("name_get"),
             quote("{}"),
         ])
@@ -269,6 +276,7 @@ pub fn get_by_unit_device(context: &mut SpecContext<TestState>) -> Result<(), St
             quote("network_addr_get_other"),
             now.timestamp_millis().to_string(),
             now.timestamp_millis().to_string(),
+            quote("profile_get"),
             quote("name_get"),
             quote("{}"),
         ])
@@ -335,6 +343,7 @@ pub fn get_by_network_device(context: &mut SpecContext<TestState>) -> Result<(),
             quote("network_addr_get"),
             now.timestamp_millis().to_string(),
             now.timestamp_millis().to_string(),
+            quote("profile_get"),
             quote("name_get"),
             quote("{}"),
         ])
@@ -357,6 +366,7 @@ pub fn get_by_network_device(context: &mut SpecContext<TestState>) -> Result<(),
             quote("network_addr_not_get"),
             now.timestamp_millis().to_string(),
             now.timestamp_millis().to_string(),
+            quote("profile_get"),
             quote("name_get"),
             quote("{}"),
         ])
@@ -379,6 +389,7 @@ pub fn get_by_network_device(context: &mut SpecContext<TestState>) -> Result<(),
             quote("network_addr_get_other"),
             now.timestamp_millis().to_string(),
             now.timestamp_millis().to_string(),
+            quote("profile_get"),
             quote("name_get"),
             quote("{}"),
         ])
@@ -444,6 +455,7 @@ pub fn get_by_unit_network(context: &mut SpecContext<TestState>) -> Result<(), S
             quote("network_addr_get_none"),
             now.timestamp_millis().to_string(),
             now.timestamp_millis().to_string(),
+            quote("profile_get"),
             quote("name_get"),
             quote("{}"),
         ])
@@ -466,6 +478,7 @@ pub fn get_by_unit_network(context: &mut SpecContext<TestState>) -> Result<(), S
             quote("network_addr_get_some"),
             now.timestamp_millis().to_string(),
             now.timestamp_millis().to_string(),
+            quote("profile_get"),
             quote("name_get"),
             quote("{}"),
         ])

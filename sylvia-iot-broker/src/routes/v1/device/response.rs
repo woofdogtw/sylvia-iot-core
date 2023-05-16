@@ -50,6 +50,7 @@ pub struct GetDeviceData {
     pub created_at: String,
     #[serde(rename = "modifiedAt")]
     pub modified_at: String,
+    pub profile: String,
     pub name: String,
     pub info: Map<String, Value>,
 }

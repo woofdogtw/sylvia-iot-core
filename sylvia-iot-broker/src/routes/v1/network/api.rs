@@ -49,7 +49,8 @@ use crate::{
         },
     },
     models::{
-        device, device_route, dldata_buffer,
+        device::{self, DeviceCacheItem},
+        device_route, dldata_buffer,
         network::{
             ListOptions, ListQueryCond, Network, QueryCond, SortCond, SortKey, UpdateQueryCond,
             Updates,
@@ -76,6 +77,7 @@ enum RecvCtrlMsg {
     DelManager { new: String },
 }
 
+/// Control channel.
 #[derive(Serialize)]
 #[serde(untagged)]
 enum SendCtrlMsg {
@@ -93,6 +95,7 @@ enum SendCtrlMsg {
     },
 }
 
+/// Data channel.
 #[derive(Serialize)]
 struct SendDataMsg {
     kind: String,
@@ -119,6 +122,7 @@ enum SendDataKind {
         #[serde(rename = "deviceId")]
         device_id: String,
         time: String,
+        profile: String,
         data: String,
         #[serde(skip_serializing_if = "Option::is_none")]
         extension: Option<Map<String, Value>>,
@@ -144,6 +148,7 @@ enum SendDataKind {
         #[serde(rename = "deviceId", skip_serializing_if = "Option::is_none")]
         device_id: Option<String>,
         time: String,
+        profile: Option<String>,
         data: String,
         #[serde(skip_serializing_if = "Option::is_none")]
         extension: Option<Map<String, Value>>,
@@ -1167,12 +1172,12 @@ async fn delete_manager(fn_name: &str, state: &State, network: &Network) -> Resu
 }
 
 impl MgrHandler {
-    /// To validate the device and return device ID.
+    /// To validate the device and return device ID and profile.
     async fn validate_device(
         &self,
         mgr: &NetworkMgr,
         data: &Box<UlData>,
-    ) -> Result<Option<String>, Box<dyn StdError>> {
+    ) -> Result<Option<DeviceCacheItem>, Box<dyn StdError>> {
         const FN_NAME: &'static str = "validate_device";
 
         let dev_cond = device::QueryOneCond {
@@ -1205,7 +1210,10 @@ impl MgrHandler {
                             );
                             Ok(None)
                         }
-                        Some(device) => Ok(Some(device.device_id)),
+                        Some(device) => Ok(Some(DeviceCacheItem {
+                            device_id: device.device_id,
+                            profile: device.profile,
+                        })),
                     },
                 }
             }
@@ -1227,7 +1235,7 @@ impl MgrHandler {
                             );
                             Ok(None)
                         }
-                        Some(device) => Ok(Some(device.device_id)),
+                        Some(device) => Ok(Some(device)),
                     },
                 }
             }
@@ -1473,6 +1481,7 @@ impl MgrHandler {
                     unit_id: app_unit_id,
                     device_id: app_data.device_id.clone(),
                     time: app_data.time.clone(),
+                    profile: app_data.profile.clone(),
                     data: app_data.data.clone(),
                     extension: app_data.extension.clone(),
                 },
@@ -1528,7 +1537,7 @@ impl MgrHandler {
         mgr: &NetworkMgr,
         proc: &DateTime<Utc>,
         data: &Box<UlData>,
-        device_id: Option<String>,
+        device: Option<&DeviceCacheItem>,
     ) -> Result<(), ()> {
         const FN_NAME: &'static str = "send_network_uldata_msg";
 
@@ -1548,7 +1557,14 @@ impl MgrHandler {
                         0 => None,
                         _ => Some(mgr.unit_id().to_string()),
                     },
-                    device_id,
+                    device_id: match device {
+                        None => None,
+                        Some(device) => Some(device.device_id.clone()),
+                    },
+                    profile: match device {
+                        None => None,
+                        Some(device) => Some(device.profile.clone()),
+                    },
                     time: data.time.clone(),
                     data: data.data.clone(),
                     extension: data.extension.clone(),
@@ -1658,15 +1674,15 @@ impl EventHandler for MgrHandler {
     async fn on_uldata(&self, mgr: &NetworkMgr, data: Box<UlData>) -> Result<(), ()> {
         let proc = Utc::now();
         // To validate the device and get the device ID for generating data for applications.
-        let device_id = match self.validate_device(mgr, &data).await {
+        let device = match self.validate_device(mgr, &data).await {
             Err(_) => return Err(()),
-            Ok(device_id) => device_id,
+            Ok(device) => device,
         };
-        self.send_network_uldata_msg(mgr, &proc, &data, device_id.clone())
+        self.send_network_uldata_msg(mgr, &proc, &data, device.as_ref())
             .await?;
-        let device_id = match device_id {
+        let device = match device {
             None => return Ok(()),
-            Some(device_id) => device_id,
+            Some(device) => device,
         };
 
         let mut app_data = {
@@ -1675,11 +1691,12 @@ impl EventHandler for MgrHandler {
                 data_id: strings::random_id(&proc, DATA_ID_RAND_LEN),
                 time: data.time,
                 publish: time_str(&now),
-                device_id,
+                device_id: device.device_id,
                 network_id: mgr.id().to_string(),
                 network_code: mgr.name().to_string(),
                 network_addr: data.network_addr,
                 is_public: mgr.unit_id().len() > 0,
+                profile: device.profile,
                 data: data.data,
                 extension: data.extension,
             }

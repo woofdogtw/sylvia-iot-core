@@ -12,6 +12,7 @@
         unitId: string,             // routed data's unit ID
         deviceId: string,           // device ID
         time: Date,                 // device time
+        profile: string,            // the device/data profile that is used for application servers
         data: string,               // data in hexadecimal format
         extension: object           // (optional) extensions
     }
@@ -27,6 +28,7 @@
         deviceId: string,           // (optional) device ID
         networkCode: string,        // (optional) device network code
         networkAddr: string,        // (optional) device network address
+        profile: string,            // the device/data profile that is used for application servers
         data: string,               // data in hexadecimal format
         extension: object           // (optional) extensions
     }
@@ -42,6 +44,7 @@
         unitId: string,             // (present if device exist) private network's unit ID
         deviceId: string,           // (present if device exist) device ID
         time: Date,                 // device time
+        profile: string,            // the device/data profile that is used for application servers
         data: string,               // data in hexadecimal format
         extension: object           // (optional) extensions
     }
@@ -58,6 +61,7 @@
         deviceId: string,           // device ID
         networkCode: string,        // device network code
         networkAddr: string,        // device network address
+        profile: string,            // the device/data profile that is used for application servers
         data: string,               // data in hexadecimal format
         extension: object           // (optional) extensions
     }

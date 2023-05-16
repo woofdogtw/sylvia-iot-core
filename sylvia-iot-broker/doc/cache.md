@@ -10,6 +10,7 @@
     - none: for data not in database.
     - object
         - *string* `deviceId`
+        - *string* `profile`
 
 ## Device Route
 
@@ -31,6 +32,7 @@
         - Network ID of the device.
         - Network address of the device.
         - Device ID.
+        - Device profile.
 
 ### For both public/private network downlink data
 
@@ -42,6 +44,7 @@
         - Network ID of the device.
         - Network address of the device.
         - Device ID.
+        - Device profile.
 
 ## Network Route
 

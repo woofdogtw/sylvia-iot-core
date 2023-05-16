@@ -78,7 +78,7 @@ pub fn get_list(context: &mut SpecContext<TestState>) -> Result<(), String> {
         routes_state,
         "/coremgr/api/v1/device/list",
         TOKEN_MANAGER,
-        "deviceId,unitId,unitCode,networkId,networkCode,networkAddr,createdAt,modifiedAt,name,info",
+        "deviceId,unitId,unitCode,networkId,networkCode,networkAddr,createdAt,modifiedAt,profile,name,info",
     )
 }
 

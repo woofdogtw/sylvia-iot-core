@@ -45,6 +45,7 @@ struct Schema {
     #[serde(rename = "deviceId", skip_serializing_if = "Option::is_none")]
     pub device_id: Option<String>,
     pub time: DateTime,
+    pub profile: String,
     pub data: String,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub extension: Option<Document>,
@@ -72,6 +73,7 @@ impl NetworkUlDataModel for Model {
             doc! {"name": "networkAddr_1", "key": {"networkAddr": 1}},
             doc! {"name": "proc_1", "key": {"proc": 1}, "expireAfterSeconds": EXPIRES},
             doc! {"name": "time_1", "key": {"time": 1}},
+            doc! {"name": "profile_1", "key": {"profile": 1}},
         ];
         let command = doc! {
             "createIndexes": COL_NAME,
@@ -134,6 +136,7 @@ impl NetworkUlDataModel for Model {
             unit_id: data.unit_id.clone(),
             device_id: data.device_id.clone(),
             time: data.time.into(),
+            profile: data.profile.clone(),
             data: data.data.clone(),
             extension: match data.extension.as_ref() {
                 None => None,
@@ -178,6 +181,7 @@ impl Cursor for DbCursor {
                 unit_id: item.unit_id,
                 device_id: item.device_id,
                 time: item.time.into(),
+                profile: item.profile,
                 data: item.data,
                 extension: match item.extension {
                     None => None,
@@ -229,6 +233,9 @@ fn get_list_query_filter(cond: &ListQueryCond) -> Document {
     }
     if let Some(value) = cond.network_addr {
         filter.insert("networkAddr", value);
+    }
+    if let Some(value) = cond.profile {
+        filter.insert("profile", value);
     }
     let mut time_doc = Document::new();
     if let Some(value) = cond.proc_gte {

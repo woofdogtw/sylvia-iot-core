@@ -183,6 +183,7 @@ pub fn create_device(unit: &str, network: &str, addr: &str, is_public: bool) -> 
         network_addr: addr.to_string(),
         created_at: now,
         modified_at: now,
+        profile: "".to_string(),
         name: addr.to_string(),
         info: Map::<String, Value>::new(),
     }
@@ -206,7 +207,9 @@ pub fn create_device_route(
         network_code: network.to_string(),
         device_id: addr.to_string(),
         network_addr: addr.to_string(),
+        profile: "".to_string(),
         created_at: now,
+        modified_at: now,
     }
 }
 

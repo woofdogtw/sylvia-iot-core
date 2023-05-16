@@ -667,6 +667,10 @@ pub fn suite(db_engine: &'static str, cache_engine: &'static str) -> Suite<TestS
                 "uplink with off/on/off routes",
                 routing::uplink_route_on_off,
             );
+            context.it(
+                "uplink with changing device profile",
+                routing::uplink_route_profile,
+            );
 
             context
                 .before_all(routing::before_all_fn)

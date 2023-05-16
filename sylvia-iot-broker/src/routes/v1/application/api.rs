@@ -72,6 +72,7 @@ enum RecvCtrlMsg {
     DelManager { new: String },
 }
 
+/// Control channel.
 #[derive(Serialize)]
 #[serde(untagged)]
 enum SendCtrlMsg {
@@ -89,6 +90,7 @@ enum SendCtrlMsg {
     },
 }
 
+/// Data channel.
 #[derive(Serialize)]
 struct SendDataMsg {
     kind: String,
@@ -111,6 +113,7 @@ enum SendDataKind {
         network_code: Option<String>,
         #[serde(rename = "networkAddr", skip_serializing_if = "Option::is_none")]
         network_addr: Option<String>,
+        profile: String,
         data: String,
         #[serde(skip_serializing_if = "Option::is_none")]
         extension: Option<Map<String, Value>>,
@@ -130,6 +133,7 @@ enum SendDataKind {
         network_code: String,
         #[serde(rename = "networkAddr")]
         network_addr: String,
+        profile: String,
         data: String,
         #[serde(skip_serializing_if = "Option::is_none")]
         extension: Option<Map<String, Value>>,
@@ -1232,6 +1236,7 @@ impl MgrHandler {
             network_id: device.network_id,
             network_addr: device.network_addr,
             device_id: device.device_id,
+            profile: device.profile,
         })
     }
 
@@ -1240,6 +1245,7 @@ impl MgrHandler {
         proc: &DateTime<Utc>,
         data_id: &str,
         unit_id: &str,
+        profile: &str,
         data: &Box<DlData>,
     ) -> Result<(), ()> {
         const FN_NAME: &'static str = "send_application_dldata_msg";
@@ -1255,6 +1261,7 @@ impl MgrHandler {
                     device_id: data.device_id.clone(),
                     network_code: data.network_code.clone(),
                     network_addr: data.network_addr.clone(),
+                    profile: profile.to_string(),
                     data: data.data.clone(),
                     extension: data.extension.clone(),
                 },
@@ -1279,6 +1286,7 @@ impl MgrHandler {
         proc: &DateTime<Utc>,
         netmgr_code: &str,
         dldata_buff: &dldata_buffer::DlDataBuffer,
+        profile: &str,
         net_data: &NetworkDlData,
     ) -> Result<(), ()> {
         const FN_NAME: &'static str = "send_network_dldata_msg";
@@ -1295,6 +1303,7 @@ impl MgrHandler {
                     device_id: dldata_buff.device_id.clone(),
                     network_code: netmgr_code.to_string(),
                     network_addr: dldata_buff.network_addr.clone(),
+                    profile: profile.to_string(),
                     data: net_data.data.clone(),
                     extension: net_data.extension.clone(),
                 },
@@ -1384,8 +1393,14 @@ impl EventHandler for MgrHandler {
         let now = Utc::now();
         let data_id = strings::random_id(&now, DATA_ID_RAND_LEN);
 
-        self.send_application_dldata_msg(&now, data_id.as_str(), mgr.unit_id(), &data)
-            .await?;
+        self.send_application_dldata_msg(
+            &now,
+            data_id.as_str(),
+            mgr.unit_id(),
+            &dldata_route.profile,
+            &data,
+        )
+        .await?;
 
         // Check if the network exists.
         let network_mgr = {
@@ -1441,8 +1456,14 @@ impl EventHandler for MgrHandler {
             data: data.data,
             extension: data.extension,
         };
-        self.send_network_dldata_msg(&now, network_mgr.name(), &dldata, &net_data)
-            .await?;
+        self.send_network_dldata_msg(
+            &now,
+            network_mgr.name(),
+            &dldata,
+            &dldata_route.profile,
+            &net_data,
+        )
+        .await?;
         if let Err(e) = network_mgr.send_dldata(&net_data) {
             error!("[{}] send dldata to network with error: {}", FN_NAME, e);
             return Ok(Box::new(DlDataResp {

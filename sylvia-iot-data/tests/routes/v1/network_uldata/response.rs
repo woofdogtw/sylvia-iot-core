@@ -32,6 +32,7 @@ pub struct GetListData {
     #[serde(rename = "deviceId")]
     pub device_id: Option<String>,
     pub time: String,
+    pub profile: String,
     pub data: String,
     pub extension: Option<Map<String, Value>>,
 }

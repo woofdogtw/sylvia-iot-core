@@ -10,8 +10,8 @@ use serde_json::{Map, Value};
 use serde_urlencoded;
 use tokio::runtime::Runtime;
 
-use sylvia_iot_data::{models::application_uldata::ApplicationUlData, routes};
 use sylvia_iot_corelib::err;
+use sylvia_iot_data::{models::application_uldata::ApplicationUlData, routes};
 
 use super::{
     super::{
@@ -50,6 +50,14 @@ pub fn get_count(context: &mut SpecContext<TestState>) -> Result<(), String> {
     test_get_count(runtime, routes_state, TOKEN_MANAGER, Some(&param), 2)?;
     param.addr = Some("network_addr2".to_string());
     test_get_count(runtime, routes_state, TOKEN_MANAGER, Some(&param), 0)?;
+
+    let mut param = request::GetCount {
+        profile: Some("profile1".to_string()),
+        ..Default::default()
+    };
+    test_get_count(runtime, routes_state, TOKEN_MANAGER, Some(&param), 3)?;
+    param.profile = Some("profile2".to_string());
+    test_get_count(runtime, routes_state, TOKEN_MANAGER, Some(&param), 1)?;
 
     let mut param = request::GetCount {
         unit: Some(UNIT_OWNER.to_string()),
@@ -251,6 +259,28 @@ pub fn get_list(context: &mut SpecContext<TestState>) -> Result<(), String> {
         TOKEN_MANAGER,
         Some(&param),
         0,
+        max_proc,
+    )?;
+
+    let mut param = request::GetList {
+        profile: Some("profile1".to_string()),
+        ..Default::default()
+    };
+    test_get_list(
+        runtime,
+        routes_state,
+        TOKEN_MANAGER,
+        Some(&param),
+        3,
+        max_proc,
+    )?;
+    param.profile = Some("profile2".to_string());
+    test_get_list(
+        runtime,
+        routes_state,
+        TOKEN_MANAGER,
+        Some(&param),
+        1,
         max_proc,
     )?;
 
@@ -1143,7 +1173,7 @@ fn test_get_list_format_csv(
     };
 
     let fields =
-        b"dataId,proc,pub,unitCode,networkCode,networkAddr,unitId,deviceId,time,data,extension";
+        b"dataId,proc,pub,unitCode,networkCode,networkAddr,unitId,deviceId,time,profile,data,extension";
     let mut count = 0;
     for line in body.lines() {
         if count == 0 {
@@ -1174,6 +1204,7 @@ fn count_list_dataset(
         network_code: "network_code1_1".to_string(),
         network_addr: "network_addr1_1".to_string(),
         time: now + Duration::milliseconds(5),
+        profile: "profile1".to_string(),
         data: "data".to_string(),
         extension: None,
     };
@@ -1198,6 +1229,7 @@ fn count_list_dataset(
         data.device_id = "device_id2".to_string();
         data.network_code = "network_code2".to_string();
         data.network_addr = "network_addr2".to_string();
+        data.profile = "profile2".to_string();
         state.model.application_uldata().add(&data).await?;
         data.data_id = "data_id5".to_string();
         data.unit_code = None;
@@ -1208,6 +1240,7 @@ fn count_list_dataset(
         data.device_id = "device_id3".to_string();
         data.network_code = "network_code3".to_string();
         data.network_addr = "network_addr3".to_string();
+        data.profile = "profile3".to_string();
         data.extension = Some(Map::new());
         state.model.application_uldata().add(&data).await
     }) {
@@ -1238,6 +1271,7 @@ fn add_offset_limit_data(
             unit_id: UNIT_OWNER.to_string(),
             device_id: "device_id".to_string(),
             time: proc,
+            profile: "profile".to_string(),
             data: "00".to_string(),
             extension: match use_some {
                 false => None,

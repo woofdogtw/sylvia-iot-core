@@ -45,6 +45,7 @@ pub struct UlData {
     pub network_addr: String,
     #[serde(rename = "isPublic")]
     pub is_public: bool,
+    pub profile: String,
     pub data: String,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub extension: Option<Map<String, Value>>,

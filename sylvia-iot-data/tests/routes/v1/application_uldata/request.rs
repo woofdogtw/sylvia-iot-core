@@ -11,6 +11,8 @@ pub struct GetCount {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub addr: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    pub profile: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub tfield: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub tstart: Option<i64>,
@@ -28,6 +30,8 @@ pub struct GetList {
     pub network: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub addr: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub profile: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub tfield: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]

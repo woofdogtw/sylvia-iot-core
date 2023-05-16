@@ -18,6 +18,7 @@ pub struct NetworkDlData {
     pub device_id: String,
     pub network_code: String,
     pub network_addr: String,
+    pub profile: String,
     pub data: String,
     pub extension: Option<Map<String, Value>>,
 }
@@ -73,6 +74,8 @@ pub struct ListQueryCond<'a> {
     pub network_code: Option<&'a str>,
     /// To get the specified device's network address.
     pub network_addr: Option<&'a str>,
+    /// To get the specified device/data profile.
+    pub profile: Option<&'a str>,
     /// To get data greater than and equal to the specified `proc` time.
     pub proc_gte: Option<DateTime<Utc>>,
     /// To get data less than and equal to the specified `proc` time.

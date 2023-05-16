@@ -34,6 +34,7 @@ pub struct GetListData {
     pub network_code: String,
     #[serde(rename = "networkAddr")]
     pub network_addr: String,
+    pub profile: String,
     pub data: String,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub extension: Option<Map<String, Value>>,
@@ -50,6 +51,7 @@ pub struct GetListCsvData {
     pub device_id: String,
     pub network_code: String,
     pub network_addr: String,
+    pub profile: String,
     pub data: String,
     pub extension: String,
 }
