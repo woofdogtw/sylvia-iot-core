@@ -3033,6 +3033,8 @@ pub fn patch(context: &mut SpecContext<TestState>) -> Result<(), String> {
         "public",
         "manager-public",
         true,
+        ("manager", "address1"),
+        "",
     )?;
     test_patch(
         runtime,
@@ -3042,6 +3044,8 @@ pub fn patch(context: &mut SpecContext<TestState>) -> Result<(), String> {
         "manager",
         "manager",
         false,
+        ("", "address2"),
+        "",
     )?;
     test_patch(
         runtime,
@@ -3051,6 +3055,8 @@ pub fn patch(context: &mut SpecContext<TestState>) -> Result<(), String> {
         "public",
         "owner-public",
         true,
+        ("owner", "address3"),
+        "",
     )?;
     test_patch(
         runtime,
@@ -3060,6 +3066,66 @@ pub fn patch(context: &mut SpecContext<TestState>) -> Result<(), String> {
         "owner",
         "owner",
         false,
+        ("", ""),
+        "",
+    )
+}
+
+pub fn patch_wrong_network(context: &mut SpecContext<TestState>) -> Result<(), String> {
+    let state = context.state.borrow();
+    let state = state.get(STATE).unwrap();
+    let runtime = state.runtime.as_ref().unwrap();
+    let routes_state = state.routes_state.as_ref().unwrap();
+
+    add_unit_model(runtime, routes_state, "manager", vec![], "manager")?;
+    add_unit_model(runtime, routes_state, "owner", vec![], "owner")?;
+    add_network_model(runtime, routes_state, "manager", "manager", "amqp://host")?;
+    add_network_model(runtime, routes_state, "", "public", "amqp://host")?;
+    add_network_model(runtime, routes_state, "owner", "owner", "amqp://host")?;
+
+    test_patch(
+        runtime,
+        routes_state,
+        TOKEN_MANAGER,
+        "manager",
+        "manager",
+        "manager",
+        false,
+        ("manager2", ""),
+        "err_broker_network_not_exist",
+    )?;
+    test_patch(
+        runtime,
+        routes_state,
+        TOKEN_MANAGER,
+        "manager",
+        "manager",
+        "manager2",
+        false,
+        ("manager", "manager2"),
+        "err_broker_network_addr_exist",
+    )?;
+    test_patch(
+        runtime,
+        routes_state,
+        TOKEN_OWNER,
+        "owner",
+        "owner",
+        "owner",
+        false,
+        ("manager", "manager"),
+        "err_broker_network_not_exist",
+    )?;
+    test_patch(
+        runtime,
+        routes_state,
+        TOKEN_OWNER,
+        "owner",
+        "owner",
+        "owner2",
+        false,
+        ("public", "owner"),
+        "err_broker_network_not_exist",
     )
 }
 
@@ -3145,6 +3211,34 @@ pub fn patch_invalid_param(context: &mut SpecContext<TestState>) -> Result<(), S
 
     let param = request::PatchDevice {
         data: request::PatchDeviceData {
+            ..Default::default()
+        },
+    };
+    test_patch_invalid_param(
+        runtime,
+        routes_state,
+        TOKEN_MANAGER,
+        "manager",
+        Some(&param),
+    )?;
+
+    let param = request::PatchDevice {
+        data: request::PatchDeviceData {
+            network_id: Some("".to_string()),
+            ..Default::default()
+        },
+    };
+    test_patch_invalid_param(
+        runtime,
+        routes_state,
+        TOKEN_MANAGER,
+        "manager",
+        Some(&param),
+    )?;
+
+    let param = request::PatchDevice {
+        data: request::PatchDeviceData {
+            network_addr: Some("".to_string()),
             ..Default::default()
         },
     };
@@ -4189,6 +4283,8 @@ fn test_patch(
     network_id: &str,
     device_id: &str,
     is_public: bool,
+    new_network: (&str, &str), // patched network ID and network address. skip if empty.
+    expected_code: &str,
 ) -> Result<(), String> {
     add_device_model(
         runtime, state, unit_id, network_id, device_id, is_public, "profile",
@@ -4211,6 +4307,14 @@ fn test_patch(
     );
     let body = request::PatchDevice {
         data: request::PatchDeviceData {
+            network_id: match new_network.0 {
+                "" => None,
+                _ => Some(new_network.0.to_string()),
+            },
+            network_addr: match new_network.1 {
+                "" => None,
+                _ => Some(new_network.1.to_string()),
+            },
             profile: Some("profile-changes".to_string()),
             name: Some("name changes".to_string()),
             info: Some(info.clone()),
@@ -4222,10 +4326,25 @@ fn test_patch(
         .set_json(&body)
         .to_request();
     let resp = runtime.block_on(async { test::call_service(&mut app, req).await });
+    if expected_code != "" {
+        expect(resp.status()).to_equal(StatusCode::BAD_REQUEST)?;
+        let body: ApiError = runtime.block_on(async { test::read_body_json(resp).await });
+        if body.code.as_str() != expected_code {
+            return Err(format!("unexpected 400 error: {}", body.code.as_str()));
+        }
+        return Ok(());
+    }
+
     expect(resp.status()).to_equal(StatusCode::NO_CONTENT)?;
 
     let time_after = Utc::now().trunc_subsecs(3);
     let device_info = get_device_model(runtime, state, device_id, true)?.unwrap();
+    if new_network.0 != "" {
+        expect(device_info.network_id.as_str()).to_equal(new_network.0)?;
+    }
+    if new_network.1 != "" {
+        expect(device_info.network_addr.as_str()).to_equal(new_network.1)?;
+    }
     expect(device_info.modified_at.ge(&time_before)).to_equal(true)?;
     expect(device_info.modified_at.le(&time_after)).to_equal(true)?;
     expect(device_info.profile.as_str()).to_equal("profile-changes")?;

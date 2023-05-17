@@ -1422,6 +1422,8 @@ Update the specified device information.
 #### Parameters
 
 - *object* `data`:
+    - *string* `networkId`: (**optional**) The associated network ID. The public network can be assigned by **admin** or **manager**.
+    - *string* `networkAddr`: (**optional**) The network address of the specified network. This will be transformed to lowercase.
     - *string* `profile`: (**optional**) The device profile. The pattern is empty or `[A-Za-z0-9]{1}[A-Za-z0-9-_]*`.
     - *string* `name`: (**optional**) The display name.
     - *object* `info`: (**optional**) Other information. You must provide full of fields, or all fields will be replaced with the new value.
@@ -1433,6 +1435,8 @@ Update the specified device information.
     ```json
     {
         "data": {
+            "networkId": "1640924213217-oDwwyNK3",
+            "networkAddr": "13a2",
             "profile": "e-meter",
             "name": "Mt. Sylvia e-meter",
             "info": {
@@ -1447,7 +1451,10 @@ Update the specified device information.
 #### Response
 
 - **204 No Content**
-- **400, 401, 403, 500, 503**: See [Notes](#notes).
+- **400 Bad Request**: the special error codes are:
+    - `err_broker_network_not_exist`: The network does not exist.
+    - `err_broker_network_addr_exist`: The network address has been used.
+- **401, 403, 500, 503**: See [Notes](#notes).
 - **404 Not Found**: The specified device does not exist.
 
 ## <a name="delete_device"></a>Delete device

@@ -103,6 +103,10 @@ pub struct PatchDevice {
 
 #[derive(Debug, Default, Serialize)]
 pub struct PatchDeviceData {
+    #[serde(rename = "networkId", skip_serializing_if = "Option::is_none")]
+    pub network_id: Option<String>,
+    #[serde(rename = "networkAddr", skip_serializing_if = "Option::is_none")]
+    pub network_addr: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub profile: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]

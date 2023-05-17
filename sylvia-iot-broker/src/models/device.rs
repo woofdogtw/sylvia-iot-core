@@ -125,6 +125,9 @@ pub struct UpdateQueryCond<'a> {
 /// The update fields by using [`Some`]s.
 #[derive(Default)]
 pub struct Updates<'a> {
+    /// The (network_id, network_code) tuple.
+    pub network: Option<(&'a str, &'a str)>,
+    pub network_addr: Option<&'a str>,
     pub modified_at: Option<DateTime<Utc>>,
     pub profile: Option<&'a str>,
     pub name: Option<&'a str>,

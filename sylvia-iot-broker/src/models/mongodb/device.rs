@@ -383,6 +383,15 @@ fn get_update_query_filter(cond: &UpdateQueryCond) -> Document {
 fn get_update_doc(updates: &Updates) -> Option<Document> {
     let mut count = 0;
     let mut document = Document::new();
+    if let Some((network_id, network_code)) = updates.network {
+        document.insert("networkId", network_id);
+        document.insert("networkCode", network_code);
+        count += 1;
+    }
+    if let Some(value) = updates.network_addr {
+        document.insert("networkAddr", value);
+        count += 1;
+    }
     if let Some(value) = updates.modified_at.as_ref() {
         document.insert(
             "modifiedAt",

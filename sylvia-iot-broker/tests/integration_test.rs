@@ -38,6 +38,7 @@ pub struct TestState {
     pub routing_conns: Option<Vec<Box<dyn MqConnection>>>, // for routing/data cases.
     pub routing_queues: Option<Vec<Box<dyn MqQueue>>>,     // for routing/data cases.
     pub routing_values: Option<HashMap<String, String>>,   // for routing/data cases.
+    pub routing_device_id: Option<String>,                 // for routing/data cases.
     pub amqp_prefetch: Option<u16>,
     pub mqtt_shared_prefix: Option<String>,
 }

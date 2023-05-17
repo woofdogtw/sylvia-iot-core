@@ -1025,6 +1025,24 @@ pub async fn patch_device(
 ) -> impl Responder {
     const FN_NAME: &'static str = "patch_device";
 
+    let (user_id, roles) = get_token_id_roles(FN_NAME, &req)?;
+    let user_id = user_id.as_str();
+    let device_id = param.device_id.as_str();
+
+    if let Some(network_id) = body.data.network_id.as_ref() {
+        if network_id.len() == 0 {
+            return Err(ErrResp::ErrParam(Some(
+                "`networkId` must with at least one character".to_string(),
+            )));
+        }
+    }
+    if let Some(network_addr) = body.data.network_addr.as_ref() {
+        if network_addr.len() == 0 {
+            return Err(ErrResp::ErrParam(Some(
+                "`networkAddr` must with at least one character".to_string(),
+            )));
+        }
+    }
     if let Some(profile) = body.data.profile.as_ref() {
         if profile.len() > 0 && !strings::is_code(profile.as_str()) {
             return Err(ErrResp::ErrParam(Some(
@@ -1033,17 +1051,49 @@ pub async fn patch_device(
         }
     }
 
-    let (user_id, roles) = get_token_id_roles(FN_NAME, &req)?;
-    let user_id = user_id.as_str();
-    let device_id = param.device_id.as_str();
+    let mut updates = get_updates(&mut body.data).await?;
 
     // To check if the device is for the user.
     let device = match check_device(FN_NAME, device_id, user_id, true, &roles, &state).await? {
         None => return Err(ErrResp::ErrNotFound(None)),
         Some(device) => device,
     };
+    let unit_id = device.unit_id.as_str();
+    let network = match updates.network.as_ref() {
+        None => None,
+        Some((network_id, _)) => {
+            match check_network(FN_NAME, unit_id, network_id, &roles, &state).await? {
+                None => {
+                    return Err(ErrResp::Custom(
+                        ErrReq::NETWORK_NOT_EXIST.0,
+                        ErrReq::NETWORK_NOT_EXIST.1,
+                        None,
+                    ));
+                }
+                Some(network) => Some(network),
+            }
+        }
+    };
+    if let Some(network) = network.as_ref() {
+        updates.network = Some((network.network_id.as_str(), network.code.as_str()));
+    }
+    if let Some(network_addr) = updates.network_addr {
+        let network_id = match updates.network {
+            None => device.network_id.as_str(),
+            Some((network_id, _)) => network_id,
+        };
+        if check_addr(FN_NAME, network_id, network_addr, &state)
+            .await?
+            .is_some()
+        {
+            return Err(ErrResp::Custom(
+                ErrReq::NETWORK_ADDR_EXIST.0,
+                ErrReq::NETWORK_ADDR_EXIST.1,
+                None,
+            ));
+        }
+    }
 
-    let updates = get_updates(&mut body.data).await?;
     let cond = UpdateQueryCond { device_id };
     if let Err(e) = state.model.device().update(&cond, &updates).await {
         error!("[{}] update error: {}", FN_NAME, e);
@@ -1186,6 +1236,14 @@ async fn get_updates<'a>(body: &'a mut request::PatchDeviceData) -> Result<Updat
         ..Default::default()
     };
     let mut count = 0;
+    if let Some(network_id) = body.network_id.as_ref() {
+        updates.network = Some((network_id.as_str(), ""));
+        count += 1;
+    }
+    if let Some(network_addr) = body.network_addr.as_ref() {
+        updates.network_addr = Some(network_addr.as_str());
+        count += 1;
+    }
     if let Some(profile) = body.profile.as_ref() {
         updates.profile = Some(profile.as_str());
         count += 1;
