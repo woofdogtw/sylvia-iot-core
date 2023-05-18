@@ -433,6 +433,15 @@ fn build_update_where<'a>(
     updates: &Updates,
 ) -> Option<&'a mut SqlBuilder> {
     let mut count = 0;
+    if let Some((network_id, network_code)) = updates.network {
+        builder.set("network_id", quote(network_id));
+        builder.set("network_code", quote(network_code));
+        count += 1;
+    }
+    if let Some(value) = updates.network_addr {
+        builder.set("network_addr", quote(value));
+        count += 1;
+    }
     if let Some(value) = updates.modified_at.as_ref() {
         builder.set("modified_at", value.timestamp_millis());
         count += 1;

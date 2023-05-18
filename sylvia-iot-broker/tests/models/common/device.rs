@@ -651,6 +651,8 @@ pub fn update(runtime: &Runtime, model: &dyn DeviceModel) -> Result<(), String> 
     let mut info = Map::<String, Value>::new();
     info.insert("key".to_string(), Value::String("value".to_string()));
     let updates = Updates {
+        network: Some(("network_id_update_all", "network_code_update_all")),
+        network_addr: Some("network_addr_update_all"),
         modified_at: Some(now),
         profile: Some("profile_update_all"),
         name: Some("name_update_all"),
@@ -669,9 +671,9 @@ pub fn update(runtime: &Runtime, model: &dyn DeviceModel) -> Result<(), String> 
     expect(get_device.device_id.as_str()).to_equal(device.device_id.as_str())?;
     expect(get_device.unit_id.as_str()).to_equal(device.unit_id.as_str())?;
     expect(get_device.unit_code.as_ref()).to_equal(device.unit_code.as_ref())?;
-    expect(get_device.network_id.as_str()).to_equal(device.network_id.as_str())?;
-    expect(get_device.network_code.as_str()).to_equal(device.network_code.as_str())?;
-    expect(get_device.network_addr.as_str()).to_equal(device.network_addr.as_str())?;
+    expect(get_device.network_id.as_str()).to_equal("network_id_update_all")?;
+    expect(get_device.network_code.as_str()).to_equal("network_code_update_all")?;
+    expect(get_device.network_addr.as_str()).to_equal("network_addr_update_all")?;
     expect(get_device.created_at).to_equal(device.created_at)?;
     expect(get_device.modified_at).to_equal(now)?;
     expect(get_device.profile.as_str()).to_equal("profile_update_all")?;
@@ -682,6 +684,8 @@ pub fn update(runtime: &Runtime, model: &dyn DeviceModel) -> Result<(), String> 
     let now = now + Duration::milliseconds(1);
     let info = Map::<String, Value>::new();
     let updates = Updates {
+        network: Some((device.network_id.as_str(), device.network_code.as_str())),
+        network_addr: Some(device.network_addr.as_str()),
         modified_at: Some(now),
         profile: Some(""),
         name: Some(""),
@@ -731,6 +735,8 @@ pub fn update_invalid(runtime: &Runtime, model: &dyn DeviceModel) -> Result<(), 
         device_id: "device_id",
     };
     let updates = Updates {
+        network: None,
+        network_addr: None,
         modified_at: None,
         profile: None,
         name: None,

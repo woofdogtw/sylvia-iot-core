@@ -241,6 +241,10 @@ pub fn suite(db_engine: &'static str, cache_engine: &'static str) -> Suite<TestS
             );
             context.it("PATCH /device/{deviceId}", deviceapi::patch);
             context.it(
+                "PATCH /device/{deviceId} with wrong network or address",
+                deviceapi::patch_wrong_network,
+            );
+            context.it(
                 "PATCH /device/{deviceId} with wrong ID",
                 deviceapi::patch_wrong_id,
             );
@@ -670,6 +674,10 @@ pub fn suite(db_engine: &'static str, cache_engine: &'static str) -> Suite<TestS
             context.it(
                 "uplink with changing device profile",
                 routing::uplink_route_profile,
+            );
+            context.it(
+                "uplink with changing network address",
+                routing::uplink_route_change_addr,
             );
 
             context

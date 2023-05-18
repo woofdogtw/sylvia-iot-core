@@ -87,6 +87,10 @@ pub struct PatchDeviceBody {
 
 #[derive(Deserialize)]
 pub struct PatchDeviceData {
+    #[serde(rename = "networkId")]
+    pub network_id: Option<String>,
+    #[serde(rename = "networkAddr")]
+    pub network_addr: Option<String>,
     pub profile: Option<String>,
     pub name: Option<String>,
     pub info: Option<Map<String, Value>>,
