@@ -6,12 +6,13 @@ use async_trait::async_trait;
 use mongodb::Database;
 
 use super::{
-    access_token, authorization_code, client,
+    access_token, authorization_code, client, login_session,
     mongodb::{
         access_token::Model as AccessTokenModel,
         authorization_code::Model as AuthorizationCodeModel,
         client::Model as ClientModel,
         conn::{self, Options},
+        login_session::Model as LoginSessionModel,
         refresh_token::Model as RefreshTokenModel,
         user::Model as UserModel,
     },
@@ -24,6 +25,7 @@ pub struct Model {
     conn: Arc<Database>,
     user: Arc<UserModel>,
     client: Arc<ClientModel>,
+    login_session: Arc<LoginSessionModel>,
     authorization_code: Arc<AuthorizationCodeModel>,
     access_token: Arc<AccessTokenModel>,
     refresh_token: Arc<RefreshTokenModel>,
@@ -37,6 +39,7 @@ impl Model {
             conn: conn.clone(),
             user: Arc::new(UserModel::new(conn.clone()).await?),
             client: Arc::new(ClientModel::new(conn.clone()).await?),
+            login_session: Arc::new(LoginSessionModel::new(conn.clone()).await?),
             authorization_code: Arc::new(AuthorizationCodeModel::new(conn.clone()).await?),
             access_token: Arc::new(AccessTokenModel::new(conn.clone()).await?),
             refresh_token: Arc::new(RefreshTokenModel::new(conn.clone()).await?),
@@ -61,6 +64,10 @@ impl super::Model for Model {
 
     fn client(&self) -> &dyn client::ClientModel {
         self.client.as_ref()
+    }
+
+    fn login_session(&self) -> &dyn login_session::LoginSessionModel {
+        self.login_session.as_ref()
     }
 
     fn authorization_code(&self) -> &dyn authorization_code::AuthorizationCodeModel {

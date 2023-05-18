@@ -1367,11 +1367,11 @@ pub fn delete_user_invalid_perm(context: &mut SpecContext<TestState>) -> Result<
     let runtime = state.runtime.as_ref().unwrap();
     let routes_state = state.routes_state.as_ref().unwrap();
 
-    let token = get_token(runtime, routes_state, "dev")?;
+    let token = get_token(runtime, routes_state, "manager")?;
     let req = TestRequest::delete().uri("/auth/api/v1/client/user/id");
     test_invalid_perm(runtime, &routes_state, token.as_str(), req)?;
 
-    let token = get_token(runtime, routes_state, "manager")?;
+    let token = get_token(runtime, routes_state, "public")?;
     let req = TestRequest::delete().uri("/auth/api/v1/client/user/id");
     test_invalid_perm(runtime, &routes_state, token.as_str(), req)?;
 

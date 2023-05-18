@@ -263,7 +263,7 @@ pub fn post_login(context: &mut SpecContext<TestState>) -> Result<(), String> {
         routes_state,
         None,
         None,
-        ("user", "user", "user"),
+        ("user", "user"),
         StatusCode::BAD_REQUEST,
         INVALID_REQUEST,
     )?;
@@ -273,7 +273,7 @@ pub fn post_login(context: &mut SpecContext<TestState>) -> Result<(), String> {
         routes_state,
         None,
         Some(""),
-        ("user", "user", "user"),
+        ("user", "user"),
         StatusCode::BAD_REQUEST,
         INVALID_REQUEST,
     )?;
@@ -283,7 +283,7 @@ pub fn post_login(context: &mut SpecContext<TestState>) -> Result<(), String> {
         routes_state,
         None,
         Some("state"),
-        ("user", "user", "user"),
+        ("user", "user"),
         StatusCode::BAD_REQUEST,
         INVALID_REQUEST,
     )?;
@@ -300,7 +300,7 @@ pub fn post_login(context: &mut SpecContext<TestState>) -> Result<(), String> {
         routes_state,
         Some(&params),
         None,
-        ("user", "user", "user"),
+        ("user", "user"),
         StatusCode::BAD_REQUEST,
         INVALID_REQUEST,
     )?;
@@ -317,7 +317,7 @@ pub fn post_login(context: &mut SpecContext<TestState>) -> Result<(), String> {
         routes_state,
         Some(&params),
         None,
-        ("user", "user", "user"),
+        ("user", "user"),
         StatusCode::FOUND,
         INVALID_SCOPE,
     )?;
@@ -334,7 +334,7 @@ pub fn post_login(context: &mut SpecContext<TestState>) -> Result<(), String> {
         routes_state,
         Some(&params),
         None,
-        ("u", "user", "user"),
+        ("u", "user"),
         StatusCode::BAD_REQUEST,
         INVALID_AUTH,
     )?;
@@ -343,7 +343,7 @@ pub fn post_login(context: &mut SpecContext<TestState>) -> Result<(), String> {
         routes_state,
         Some(&params),
         None,
-        ("user", "password", "user"),
+        ("user", "password"),
         StatusCode::BAD_REQUEST,
         INVALID_AUTH,
     )?;
@@ -360,7 +360,7 @@ pub fn post_login(context: &mut SpecContext<TestState>) -> Result<(), String> {
         routes_state,
         Some(&params),
         None,
-        ("user", "user", "user"),
+        ("user", "user"),
         StatusCode::FOUND,
         "",
     )?;
@@ -377,10 +377,12 @@ pub fn post_login(context: &mut SpecContext<TestState>) -> Result<(), String> {
         routes_state,
         Some(&params),
         None,
-        ("user", "user", "user"),
+        ("user", "user"),
         StatusCode::FOUND,
         "",
-    )
+    )?;
+
+    Ok(())
 }
 
 pub fn get_authorize(context: &mut SpecContext<TestState>) -> Result<(), String> {
@@ -388,6 +390,26 @@ pub fn get_authorize(context: &mut SpecContext<TestState>) -> Result<(), String>
     let state = state.get(STATE).unwrap();
     let runtime = state.runtime.as_ref().unwrap();
     let routes_state = state.routes_state.as_ref().unwrap();
+
+    let params = request::GetAuthRequest {
+        response_type: "code".to_string(),
+        redirect_uri: crate::TEST_REDIRECT_URI.to_string(),
+        client_id: "public".to_string(),
+        scope: None,
+        state: None,
+    };
+    let session_id = match test_post_login(
+        runtime,
+        routes_state,
+        Some(&params),
+        None,
+        ("user", "user"),
+        StatusCode::FOUND,
+        "",
+    )? {
+        None => return Err("get no session ID".to_string()),
+        Some(session_id) => session_id,
+    };
 
     test_get_authorize(
         runtime,
@@ -403,7 +425,7 @@ pub fn get_authorize(context: &mut SpecContext<TestState>) -> Result<(), String>
         client_id: "public".to_string(),
         scope: None,
         state: None,
-        user_id: "user".to_string(),
+        session_id: session_id.clone(),
     };
     test_get_authorize(
         runtime,
@@ -419,7 +441,7 @@ pub fn get_authorize(context: &mut SpecContext<TestState>) -> Result<(), String>
         client_id: "public".to_string(),
         scope: None,
         state: None,
-        user_id: "user".to_string(),
+        session_id: session_id.clone(),
     };
     test_get_authorize(
         runtime,
@@ -435,7 +457,7 @@ pub fn get_authorize(context: &mut SpecContext<TestState>) -> Result<(), String>
         client_id: "id".to_string(),
         scope: None,
         state: None,
-        user_id: "user".to_string(),
+        session_id: session_id.clone(),
     };
     test_get_authorize(
         runtime,
@@ -451,7 +473,7 @@ pub fn get_authorize(context: &mut SpecContext<TestState>) -> Result<(), String>
         client_id: "private".to_string(),
         scope: None,
         state: None,
-        user_id: "user".to_string(),
+        session_id: session_id.clone(),
     };
     test_get_authorize(
         runtime,
@@ -467,7 +489,7 @@ pub fn get_authorize(context: &mut SpecContext<TestState>) -> Result<(), String>
         client_id: "private".to_string(),
         scope: Some("scope3".to_string()),
         state: None,
-        user_id: "user".to_string(),
+        session_id: session_id.clone(),
     };
     test_get_authorize(
         runtime,
@@ -483,7 +505,7 @@ pub fn get_authorize(context: &mut SpecContext<TestState>) -> Result<(), String>
         client_id: "public".to_string(),
         scope: None,
         state: None,
-        user_id: "user".to_string(),
+        session_id: session_id.clone(),
     };
     test_get_authorize(runtime, routes_state, Some(&params), StatusCode::OK, "")?;
 
@@ -493,7 +515,7 @@ pub fn get_authorize(context: &mut SpecContext<TestState>) -> Result<(), String>
         client_id: "private".to_string(),
         scope: Some("scope1".to_string()),
         state: Some("public-state".to_string()),
-        user_id: "user".to_string(),
+        session_id: session_id.clone(),
     };
     test_get_authorize(runtime, routes_state, Some(&params), StatusCode::OK, "")?;
 
@@ -503,7 +525,7 @@ pub fn get_authorize(context: &mut SpecContext<TestState>) -> Result<(), String>
         client_id: "private".to_string(),
         scope: Some("scope1".to_string()),
         state: None,
-        user_id: "notuser".to_string(),
+        session_id: session_id.clone(),
     };
     test_get_authorize(runtime, routes_state, Some(&params), StatusCode::OK, "")
 }
@@ -514,6 +536,26 @@ pub fn post_authorize(context: &mut SpecContext<TestState>) -> Result<(), String
     let runtime = state.runtime.as_ref().unwrap();
     let routes_state = state.routes_state.as_ref().unwrap();
 
+    let params = request::GetAuthRequest {
+        response_type: "code".to_string(),
+        redirect_uri: crate::TEST_REDIRECT_URI.to_string(),
+        client_id: "public".to_string(),
+        scope: None,
+        state: None,
+    };
+    let session_id = match test_post_login(
+        runtime,
+        routes_state,
+        Some(&params),
+        None,
+        ("user", "user"),
+        StatusCode::FOUND,
+        "",
+    )? {
+        None => return Err("get no session ID".to_string()),
+        Some(session_id) => session_id,
+    };
+
     test_post_authorize(
         runtime,
         routes_state,
@@ -528,7 +570,7 @@ pub fn post_authorize(context: &mut SpecContext<TestState>) -> Result<(), String
         client_id: "public".to_string(),
         scope: None,
         state: None,
-        user_id: "user".to_string(),
+        session_id: session_id.clone(),
         allow: None,
     };
     test_post_authorize(
@@ -545,7 +587,7 @@ pub fn post_authorize(context: &mut SpecContext<TestState>) -> Result<(), String
         client_id: "public".to_string(),
         scope: None,
         state: None,
-        user_id: "user".to_string(),
+        session_id: session_id.clone(),
         allow: None,
     };
     test_post_authorize(
@@ -562,7 +604,7 @@ pub fn post_authorize(context: &mut SpecContext<TestState>) -> Result<(), String
         client_id: "id".to_string(),
         scope: None,
         state: None,
-        user_id: "user".to_string(),
+        session_id: session_id.clone(),
         allow: None,
     };
     test_post_authorize(
@@ -579,10 +621,30 @@ pub fn post_authorize(context: &mut SpecContext<TestState>) -> Result<(), String
         client_id: "public".to_string(),
         scope: None,
         state: None,
-        user_id: "user".to_string(),
+        session_id: session_id.clone(),
         allow: None,
     };
     test_post_authorize(runtime, routes_state, Some(&params), StatusCode::OK, "")?;
+
+    let params = request::GetAuthRequest {
+        response_type: "code".to_string(),
+        redirect_uri: crate::TEST_REDIRECT_URI.to_string(),
+        client_id: "public".to_string(),
+        scope: None,
+        state: None,
+    };
+    let session_id = match test_post_login(
+        runtime,
+        routes_state,
+        Some(&params),
+        None,
+        ("user", "user"),
+        StatusCode::FOUND,
+        "",
+    )? {
+        None => return Err("get no session ID".to_string()),
+        Some(session_id) => session_id,
+    };
 
     let params = request::PostAuthorizeRequest {
         response_type: "code".to_string(),
@@ -590,7 +652,7 @@ pub fn post_authorize(context: &mut SpecContext<TestState>) -> Result<(), String
         client_id: "private".to_string(),
         scope: None,
         state: None,
-        user_id: "user".to_string(),
+        session_id: session_id.clone(),
         allow: None,
     };
     test_post_authorize(
@@ -607,7 +669,7 @@ pub fn post_authorize(context: &mut SpecContext<TestState>) -> Result<(), String
         client_id: "private".to_string(),
         scope: Some("scope3".to_string()),
         state: None,
-        user_id: "user".to_string(),
+        session_id: session_id.clone(),
         allow: None,
     };
     test_post_authorize(
@@ -624,10 +686,30 @@ pub fn post_authorize(context: &mut SpecContext<TestState>) -> Result<(), String
         client_id: "private".to_string(),
         scope: Some("scope1".to_string()),
         state: None,
-        user_id: "user".to_string(),
+        session_id: session_id.clone(),
         allow: None,
     };
     test_post_authorize(runtime, routes_state, Some(&params), StatusCode::OK, "")?;
+
+    let params = request::GetAuthRequest {
+        response_type: "code".to_string(),
+        redirect_uri: crate::TEST_REDIRECT_URI.to_string(),
+        client_id: "public".to_string(),
+        scope: None,
+        state: None,
+    };
+    let session_id = match test_post_login(
+        runtime,
+        routes_state,
+        Some(&params),
+        None,
+        ("user", "user"),
+        StatusCode::FOUND,
+        "",
+    )? {
+        None => return Err("get no session ID".to_string()),
+        Some(session_id) => session_id,
+    };
 
     let params = request::PostAuthorizeRequest {
         response_type: "code".to_string(),
@@ -635,7 +717,7 @@ pub fn post_authorize(context: &mut SpecContext<TestState>) -> Result<(), String
         client_id: "public".to_string(),
         scope: None,
         state: None,
-        user_id: "user".to_string(),
+        session_id: session_id.clone(),
         allow: Some("no".to_string()),
     };
     test_post_authorize(
@@ -652,7 +734,7 @@ pub fn post_authorize(context: &mut SpecContext<TestState>) -> Result<(), String
         client_id: "private".to_string(),
         scope: Some("scope1".to_string()),
         state: None,
-        user_id: "user".to_string(),
+        session_id: session_id.clone(),
         allow: Some("no".to_string()),
     };
     test_post_authorize(
@@ -669,10 +751,30 @@ pub fn post_authorize(context: &mut SpecContext<TestState>) -> Result<(), String
         client_id: "public".to_string(),
         scope: None,
         state: Some("public-state".to_string()),
-        user_id: "user".to_string(),
+        session_id: session_id.clone(),
         allow: Some(ALLOW_VALUE.to_string()),
     };
     test_post_authorize(runtime, routes_state, Some(&params), StatusCode::FOUND, "")?;
+
+    let params = request::GetAuthRequest {
+        response_type: "code".to_string(),
+        redirect_uri: crate::TEST_REDIRECT_URI.to_string(),
+        client_id: "public".to_string(),
+        scope: None,
+        state: None,
+    };
+    let session_id = match test_post_login(
+        runtime,
+        routes_state,
+        Some(&params),
+        None,
+        ("user", "user"),
+        StatusCode::FOUND,
+        "",
+    )? {
+        None => return Err("get no session ID".to_string()),
+        Some(session_id) => session_id,
+    };
 
     let params = request::PostAuthorizeRequest {
         response_type: "code".to_string(),
@@ -680,10 +782,18 @@ pub fn post_authorize(context: &mut SpecContext<TestState>) -> Result<(), String
         client_id: "private".to_string(),
         scope: Some("scope1".to_string()),
         state: None,
-        user_id: "user".to_string(),
+        session_id: session_id.clone(),
         allow: Some(ALLOW_VALUE.to_string()),
     };
     test_post_authorize(runtime, routes_state, Some(&params), StatusCode::FOUND, "")?;
+
+    test_post_authorize(
+        runtime,
+        routes_state,
+        Some(&params),
+        StatusCode::BAD_REQUEST,
+        "invalid_auth",
+    )?;
 
     Ok(())
 }
@@ -1566,15 +1676,16 @@ fn test_get_login(
     }
 }
 
+// Returns session ID if success.
 fn test_post_login(
     runtime: &Runtime,
     state: &routes::State,
     params: Option<&request::GetAuthRequest>,
     params_raw: Option<&str>,
-    auth: (&str, &str, &str),
+    auth: (&str, &str),
     expect_status: StatusCode,
     expect_error: &str,
-) -> Result<(), String> {
+) -> Result<Option<String>, String> {
     let mut app = runtime.block_on(async {
         test::init_service(
             App::new()
@@ -1624,7 +1735,7 @@ fn test_post_login(
                         if !location.as_str().starts_with(crate::TEST_REDIRECT_URI) {
                             return Err(format!("redirect wrong URI: {}", location.as_str()));
                         } else if resp.error == expect_error {
-                            return Ok(());
+                            return Ok(None);
                         }
                     } else if let Ok(resp) =
                         serde_urlencoded::from_str::<request::GetAuthorizeRequest>(query)
@@ -1637,8 +1748,8 @@ fn test_post_login(
                             .to_equal(params.unwrap().redirect_uri.as_str())?;
                         expect(resp.scope.as_deref()).to_equal(params.unwrap().scope.as_deref())?;
                         expect(resp.state.as_deref()).to_equal(params.unwrap().state.as_deref())?;
-                        expect(resp.user_id.as_str()).to_equal(auth.2)?;
-                        return Ok(());
+                        expect(resp.session_id.len()).to_not_equal(0)?;
+                        return Ok(Some(resp.session_id));
                     }
                     return Err(format!("unexpected 302 query: {}", query));
                 }
@@ -1649,7 +1760,7 @@ fn test_post_login(
             if body.error.as_str() != expect_error {
                 return Err(format!("unexpected 400 error: {}", body.error.as_str()));
             }
-            return Ok(());
+            return Ok(None);
         }
         _ => return Err(format!("unexpect status code: {}", resp.status())),
     }
@@ -1816,13 +1927,33 @@ fn test_post_token(
         None => TestRequest::post().uri("/auth/oauth2/token").to_request(),
         Some(params) => {
             if params.code.as_str() == "public" || params.code.as_str() == "private" {
+                let auth_params = request::GetAuthRequest {
+                    response_type: "code".to_string(),
+                    redirect_uri: crate::TEST_REDIRECT_URI.to_string(),
+                    client_id: "public".to_string(),
+                    scope: None,
+                    state: None,
+                };
+                let session_id = match test_post_login(
+                    runtime,
+                    state,
+                    Some(&auth_params),
+                    None,
+                    ("user", "user"),
+                    StatusCode::FOUND,
+                    "",
+                )? {
+                    None => return Err("get no session ID".to_string()),
+                    Some(session_id) => session_id,
+                };
+
                 let mut body = request::PostAuthorizeRequest {
                     response_type: "code".to_string(),
                     client_id: "public".to_string(),
                     redirect_uri: crate::TEST_REDIRECT_URI.to_string(),
                     scope: None,
                     state: None,
-                    user_id: "user".to_string(),
+                    session_id: session_id.to_string(),
                     allow: Some(ALLOW_VALUE.to_string()),
                 };
                 if params.code.as_str() == "private" {

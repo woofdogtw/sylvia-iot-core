@@ -30,7 +30,7 @@ pub struct GetAuthorizeRequest {
     pub scope: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub state: Option<String>,
-    pub user_id: String,
+    pub session_id: String,
 }
 
 #[derive(Debug, Serialize)]
@@ -42,7 +42,7 @@ pub struct PostAuthorizeRequest {
     pub scope: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub state: Option<String>,
-    pub user_id: String,
+    pub session_id: String,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub allow: Option<String>,
 }

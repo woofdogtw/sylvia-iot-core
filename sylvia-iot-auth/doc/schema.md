@@ -31,6 +31,14 @@
         imageUrl: string | null         // image URL
     }
 
+## Login Session
+
+    loginSession: {
+        sessionId: string,              // (unique) session ID
+        expiresAt: Date,                // expiration date time
+        userId: string                  // associated user ID corresponding to `users` collection
+    }
+
 ## Authorization Code
 
     authorizationCode: {

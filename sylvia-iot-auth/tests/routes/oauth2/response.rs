@@ -9,7 +9,7 @@ pub struct OAuth2Error {
 #[derive(Deserialize)]
 pub struct PostLoginLocation {
     pub state: String,
-    pub user_id: String,
+    pub session_id: String,
 }
 
 #[derive(Deserialize)]

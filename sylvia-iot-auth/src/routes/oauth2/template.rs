@@ -92,7 +92,7 @@ pub const GRANT: &'static str= "\
     <form class=\"form-inline\" action=\"{{scope_path}}/oauth2/authorize\" method=\"post\">\
         <h2 class=\"text-center\">Grant {{ client_name }}</h2>\
         <input type=\"hidden\" id=\"allow\" name=\"allow\">\
-        <input type=\"hidden\" name=\"user_id\" value=\"{{user_id}}\">\
+        <input type=\"hidden\" name=\"session_id\" value=\"{{session_id}}\">\
         <input type=\"hidden\" name=\"client_id\" value=\"{{client_id}}\">\
         <input type=\"hidden\" name=\"response_type\" value=\"{{response_type}}\">\
         <input type=\"hidden\" name=\"redirect_uri\" value=\"{{redirect_uri}}\">\
