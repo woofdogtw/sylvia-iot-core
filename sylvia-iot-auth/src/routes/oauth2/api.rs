@@ -37,7 +37,10 @@ use super::{
     response::OAuth2Error,
 };
 use crate::models::{
-    client::QueryCond as ClientQueryCond, user::QueryCond as UserQueryCond, Model,
+    client::QueryCond as ClientQueryCond,
+    login_session::{self, LoginSession, QueryCond as SessionQueryCond},
+    user::QueryCond as UserQueryCond,
+    Model,
 };
 
 pub const TMPL_LOGIN: &'static str = "login";
@@ -192,10 +195,20 @@ pub async fn post_login(req: PostLoginRequest, state: web::Data<State>) -> impl 
         },
     };
 
+    let session = LoginSession {
+        session_id: strings::random_id_sha(&Utc::now(), 4),
+        expires_at: Utc::now() + Duration::seconds(login_session::EXPIRES),
+        user_id,
+    };
+    if let Err(e) = state.model.login_session().add(&session).await {
+        let err_str = e.to_string();
+        error!("[{}] add login session error: {}", FN_NAME, e);
+        return resp_temporary_unavailable(Some(err_str));
+    }
     resp_found(
         format!(
-            "{}/oauth2/authorize?{}&user_id={}",
-            state.scope_path, req.state, user_id
+            "{}/oauth2/authorize?{}&session_id={}",
+            state.scope_path, req.state, session.session_id
         )
         .as_str(),
     )
@@ -245,7 +258,28 @@ pub async fn authorize(
                 return HttpResponse::InternalServerError().json(e);
             }
             true => {
-                let user_id = req.user_id();
+                let session_id = req.session_id();
+                let user_id = match state.model.login_session().get(session_id).await {
+                    Err(e) => {
+                        error!("[{}] authorize() with primitive error: {}", FN_NAME, e);
+                        return resp_temporary_unavailable(None);
+                    }
+                    Ok(session) => match session {
+                        None => {
+                            warn!("[{}] authorize() with invalid session ID", FN_NAME);
+                            return resp_invalid_auth(None);
+                        }
+                        Some(session) => session.user_id,
+                    },
+                };
+                let cond = SessionQueryCond {
+                    session_id: Some(session_id),
+                    ..Default::default()
+                };
+                if let Err(e) = state.model.login_session().del(&cond).await {
+                    error!("[{}] authorize() remove session ID error: {}", FN_NAME, e);
+                    return resp_temporary_unavailable(None);
+                }
                 match pending.authorize(&mut endpoint, Cow::from(user_id)).await {
                     Err(_) => {
                         error!("[{}] authorize error", FN_NAME);
@@ -281,7 +315,7 @@ pub async fn authorize(
     let mut context = Context::new();
     context.insert("scope_path", &state.scope_path);
     context.insert("client_name", &client_name);
-    context.insert("user_id", req.user_id());
+    context.insert("session_id", req.session_id());
     context.insert("client_id", client_id.as_ref());
     context.insert("response_type", req.response_type().unwrap().as_ref());
     context.insert("redirect_uri", req.redirect_uri().unwrap().as_ref());

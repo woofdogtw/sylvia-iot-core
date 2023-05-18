@@ -45,7 +45,7 @@ pub struct AuthorizationRequest {
     redirect_uri: String,
     scope: Option<String>,
     state: Option<String>,
-    user_id: String,
+    session_id: String,
     allow: Option<String>,
 }
 
@@ -150,8 +150,8 @@ impl AuthorizationRequest {
         Ok(request)
     }
 
-    pub fn user_id(&self) -> &str {
-        self.user_id.as_str()
+    pub fn session_id(&self) -> &str {
+        self.session_id.as_str()
     }
 
     pub fn allowed(&self) -> Option<bool> {

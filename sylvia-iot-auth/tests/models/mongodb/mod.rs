@@ -11,6 +11,7 @@ mod access_token;
 mod authorization_code;
 mod client;
 mod conn;
+mod login_session;
 mod refresh_token;
 mod user;
 
@@ -76,6 +77,18 @@ pub fn suite() -> Suite<TestState> {
                 context.it("list() cursor", client::list_cursor);
 
                 context.after_each(client::after_each_fn);
+            });
+
+            context.describe("login_session", |context| {
+                context.it("init()", login_session::init);
+                context.it("get()", login_session::get);
+                context.it("add()", login_session::add);
+                context.it("add() with duplicate session", login_session::add_dup);
+                context.it("del() by session_id", login_session::del_by_session);
+                context.it("del() twice", login_session::del_twice);
+                context.it("del() by user_id", login_session::del_by_user_id);
+
+                context.after_each(login_session::after_each_fn);
             });
 
             context.describe("refresh_token", |context| {

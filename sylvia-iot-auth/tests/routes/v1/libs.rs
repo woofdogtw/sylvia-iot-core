@@ -21,12 +21,24 @@ pub struct ApiError {
 }
 
 #[derive(Debug, Serialize)]
+struct PostLoginRequest<'a> {
+    account: &'a str,
+    password: &'a str,
+    state: &'a str,
+}
+
+#[derive(Debug, Serialize)]
 struct PostAuthorizeRequest<'a> {
     response_type: &'a str,
     redirect_uri: &'a str,
     client_id: &'a str,
-    user_id: &'a str,
+    session_id: &'a str,
     allow: &'a str,
+}
+
+#[derive(Deserialize)]
+struct PostLoginLocation {
+    session_id: String,
 }
 
 #[derive(Deserialize)]
@@ -74,12 +86,53 @@ pub fn get_token(
         .await
     });
 
+    // Login to get session ID.
+    let state = format!(
+        "response_type=code&client_id=public&redirect_uri={}&state=/",
+        crate::TEST_REDIRECT_URI
+    );
+    let params = PostLoginRequest {
+        account: user_id,
+        password: user_id,
+        state: state.as_str(),
+    };
+    let req = TestRequest::post()
+        .uri("/auth/oauth2/login")
+        .set_form(&params)
+        .to_request();
+    let resp = runtime.block_on(async { test::call_service(&mut app, req).await });
+    if resp.status() != StatusCode::FOUND {
+        let status = resp.status();
+        let body = runtime.block_on(async { test::read_body(resp).await });
+        let body = String::from_utf8(body.to_vec()).unwrap();
+        return Err(format!("post login response not 302, {} {}", status, body));
+    }
+    let location = read_location(&resp)?;
+    let session_id = match location.query() {
+        None => return Err("302 with no query content".to_string()),
+        Some(query) => {
+            if let Ok(resp) = serde_urlencoded::from_str::<OAuth2Error>(query) {
+                if !location.as_str().starts_with(crate::TEST_REDIRECT_URI) {
+                    return Err(format!("redirect wrong URI: {}", location.as_str()));
+                }
+                return Err(format!("error: {}", resp.error));
+            } else if let Ok(resp) = serde_urlencoded::from_str::<PostLoginLocation>(query) {
+                if resp.session_id.len() == 0 {
+                    return Err("session_id length zero".to_string());
+                }
+                resp.session_id
+            } else {
+                return Err(format!("unexpected 302 query: {}", query));
+            }
+        }
+    };
+
     // Get authorization code.
     let params = PostAuthorizeRequest {
         response_type: "code",
         client_id: "public",
         redirect_uri: crate::TEST_REDIRECT_URI,
-        user_id,
+        session_id: session_id.as_str(),
         allow: "yes",
     };
     let req = TestRequest::post()

@@ -11,6 +11,7 @@ use async_trait::async_trait;
 pub mod access_token;
 pub mod authorization_code;
 pub mod client;
+pub mod login_session;
 pub mod redis;
 pub mod refresh_token;
 pub mod user;
@@ -49,6 +50,9 @@ pub trait Model: Send + Sync {
     /// To get the client model.
     fn client(&self) -> &dyn client::ClientModel;
 
+    /// To get the login session model.
+    fn login_session(&self) -> &dyn login_session::LoginSessionModel;
+
     /// To get the authorization code model.
     fn authorization_code(&self) -> &dyn authorization_code::AuthorizationCodeModel;
 
@@ -67,6 +71,7 @@ pub async fn new(opts: &ConnOptions) -> Result<Arc<dyn Model>, Box<dyn StdError>
     };
     model.user().init().await?;
     model.client().init().await?;
+    model.login_session().init().await?;
     model.authorization_code().init().await?;
     model.access_token().init().await?;
     model.refresh_token().init().await?;
