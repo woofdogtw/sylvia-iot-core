@@ -1,6 +1,6 @@
 [package]
 name = "sylvia-router"
-version = "0.0.9"
+version = "0.0.10"
 authors = ["Chien-Hong Chan"]
 description = "A simple router application with full Sylvia-IoT core components."
 edition = "2021"
@@ -19,7 +19,7 @@ clap = { version = "4.2.7", default-features = false, features = ["std", "help",
 ipnet = "2.7.2"
 json5 = "0.4.1"
 log = "0.4.17"
-reqwest = { version = "0.11.17", default-features = false, features = ["json", "rustls-tls"] }
+reqwest = { version = "0.11.18", default-features = false, features = ["json", "rustls-tls"] }
 rustls = "0.20.8"
 rustls-pemfile = "1.0.2"
 serde = { version = "1.0.163", features = ["derive"] }

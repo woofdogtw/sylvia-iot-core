@@ -1,5 +1,23 @@
 # Changelog
 
+## 0.0.10 - 2023-05-19
+
+### Added
+
+- **broker**: Add profile for each device.
+    - For application servers, they can quickly parse data by profiles instead of maintaining relationships of devices and data format themselves.
+    - For the **data** module(s), it (they) can develop rule engines by refering to the profiles.
+- **broker**: Support changing network and address for devices.
+    - A device can be changed to another network or address like changing network module.
+
+### Changed
+
+- Update dependencies.
+
+### Fixed
+
+- **auth**: Fix authentication and authorization flow by replacing `user_id` with `session_id` to prevent force attack.
+
 ## 0.0.9 - 2023-05-12
 
 ### Added
