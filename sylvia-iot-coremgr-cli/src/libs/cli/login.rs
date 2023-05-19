@@ -25,7 +25,7 @@ struct PostLoginRequest<'a> {
 
 #[derive(Deserialize)]
 struct PostLoginResponse {
-    user_id: String,
+    session_id: String,
 }
 
 #[derive(Serialize)]
@@ -33,7 +33,7 @@ struct PostAuthorizeRequest<'a> {
     response_type: &'a str,
     client_id: &'a str,
     redirect_uri: &'a str,
-    user_id: &'a str,
+    session_id: &'a str,
     allow: &'a str,
 }
 
@@ -176,7 +176,7 @@ async fn login(account: &str, password: &str, config: &Config) -> Result<AccessT
         let msg = format!("[login] unexpected status: {}, body: {}", status_code, body);
         return Err(ErrResp::ErrIntMsg(Some(msg)));
     }
-    let user_id = match read_location(&resp) {
+    let session_id = match read_location(&resp) {
         Err(e) => {
             let msg = format!("[login] response location header error: {}", e);
             return Err(ErrResp::ErrIntMsg(Some(msg)));
@@ -191,7 +191,7 @@ async fn login(account: &str, password: &str, config: &Config) -> Result<AccessT
                     let msg = format!("[login] response location format error: {}", e);
                     return Err(ErrResp::ErrIntMsg(Some(msg)));
                 }
-                Ok(req) => req.user_id,
+                Ok(req) => req.session_id,
             },
         },
     };
@@ -201,7 +201,7 @@ async fn login(account: &str, password: &str, config: &Config) -> Result<AccessT
         response_type: "code",
         client_id: config.client_id.as_str(),
         redirect_uri: config.redirect_uri.as_str(),
-        user_id: user_id.as_str(),
+        session_id: session_id.as_str(),
         allow: "yes",
     };
     let req = match client

@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.0.11 - 2023-05-20
+
+### Fixed
+
+- **coremgr-cli**: Add device changing network or address that should be supported in v0.0.10.
+- **coremgr-cli**: Fix login flow.
+
 ## 0.0.10 - 2023-05-19
 
 ### Added

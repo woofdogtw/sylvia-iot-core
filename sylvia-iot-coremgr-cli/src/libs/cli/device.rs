@@ -141,6 +141,10 @@ struct PatchReq<'a> {
 
 #[derive(Serialize)]
 struct PatchReqData<'a> {
+    #[serde(rename = "networkId", skip_serializing_if = "Option::is_none")]
+    network_id: Option<&'a str>,
+    #[serde(rename = "networkAddr", skip_serializing_if = "Option::is_none")]
+    network_addr: Option<&'a str>,
     #[serde(skip_serializing_if = "Option::is_none")]
     profile: Option<&'a str>,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -431,6 +435,19 @@ pub fn reg_args(cmd: Command) -> Command {
                         .help("Device ID")
                         .num_args(1)
                         .required(true),
+                )
+                .arg(
+                    Arg::new("netid")
+                        .long("netid")
+                        .help("Network ID")
+                        .num_args(1),
+                )
+                .arg(
+                    Arg::new("address")
+                        .short('a')
+                        .long("address")
+                        .help("Network address")
+                        .num_args(1),
                 )
                 .arg(
                     Arg::new("profile")
@@ -1085,6 +1102,14 @@ async fn update(config: &Config, args: &ArgMatches) -> Result<(), ErrResp> {
 
     let body = PatchReq {
         data: PatchReqData {
+            network_id: match args.get_one::<String>("netid") {
+                None => None,
+                Some(v) => Some(v.as_str()),
+            },
+            network_addr: match args.get_one::<String>("address") {
+                None => None,
+                Some(v) => Some(v.as_str()),
+            },
             profile: match args.get_one::<String>("profile") {
                 None => None,
                 Some(v) => Some(v.as_str()),
