@@ -6,20 +6,21 @@ use std::{
     time::Duration,
 };
 
-use async_trait::async_trait;
-use lapin::{
-    uri::AMQPUri, Channel, Connection as LapinConnection, ConnectionProperties, Error as LapinError,
+use amqprs::{
+    connection::{Connection as AmqprsConnection, OpenConnectionArguments},
+    error::Error as AmqprsError,
+    security::SecurityCredentials,
 };
+use async_trait::async_trait;
+use lapin::uri::AMQPUri;
 use tokio::{
-    sync::Mutex as AsyncMutex,
     task::{self, JoinHandle},
     time,
 };
-use tokio_executor_trait;
 
 use crate::{
     connection::{Connection, Event, EventHandler, Status},
-    randomstring, Error, ID_SIZE,
+    randomstring, ID_SIZE,
 };
 
 /// Manages an AMQP connection.
@@ -30,7 +31,7 @@ pub struct AmqpConnection {
     /// Connection status.
     status: Arc<Mutex<Status>>,
     /// Hold the connection instance.
-    conn: Arc<AsyncMutex<Option<LapinConnection>>>,
+    conn: Arc<Mutex<Option<AmqprsConnection>>>,
     /// Event handlers.
     handlers: Arc<Mutex<HashMap<String, Arc<dyn EventHandler>>>>,
     /// The event loop to manage and monitor the connection instance.
@@ -57,7 +58,7 @@ pub struct AmqpConnectionOptions {
 #[derive(Clone)]
 struct InnerOptions {
     /// The formatted URI resource.
-    uri: AMQPUri,
+    args: OpenConnectionArguments,
     /// Time in milliseconds from disconnection to reconnection.
     reconnect_millis: u64,
 }
@@ -78,34 +79,35 @@ impl AmqpConnection {
         if uri.vhost.len() == 0 {
             uri.vhost = "/".to_string();
         }
+        let mut args = OpenConnectionArguments::default();
+        args.host(&uri.authority.host)
+            .port(uri.authority.port)
+            .credentials(SecurityCredentials::new_plain(
+                &uri.authority.userinfo.username,
+                &uri.authority.userinfo.password,
+            ))
+            .virtual_host(&uri.vhost);
 
         Ok(AmqpConnection {
             opts: InnerOptions {
-                uri,
+                args,
                 reconnect_millis: match opts.reconnect_millis {
                     0 => DEF_RECONN_TIMEOUT_MS,
                     _ => opts.reconnect_millis,
                 },
             },
             status: Arc::new(Mutex::new(Status::Closed)),
-            conn: Arc::new(AsyncMutex::new(None)),
+            conn: Arc::new(Mutex::new(None)),
             handlers: Arc::new(Mutex::new(HashMap::<String, Arc<dyn EventHandler>>::new())),
             ev_loop: Arc::new(Mutex::new(None)),
         })
     }
 
-    /// For AmqpQueue to declare a channel.
-    ///
-    /// This is a helper to utilize the connection instance because [`lapin::Connection`] does not
-    /// implement [`Clone`].
-    pub(super) async fn create_channel(&self) -> Result<Channel, Box<dyn StdError + Send + Sync>> {
-        match (*self.conn.lock().await).as_ref() {
-            None => return Err(Box::new(Error::NotConnected)),
-            // FIXME: this may cause lock too long.
-            Some(conn) => match conn.create_channel().await {
-                Err(e) => Err(Box::new(e)),
-                Ok(channel) => Ok(channel),
-            },
+    /// To get the raw AMQP connection instance for channel declaration.
+    pub(super) fn get_raw_connection(&self) -> Option<AmqprsConnection> {
+        match self.conn.lock().unwrap().as_ref() {
+            None => None,
+            Some(conn) => Some(conn.clone()),
         }
     }
 }
@@ -147,10 +149,10 @@ impl Connection for AmqpConnection {
             *self.status.lock().unwrap() = Status::Closing;
         }
 
-        let conn = { self.conn.lock().await.take() };
-        let mut result: Result<(), LapinError> = Ok(());
+        let conn = { self.conn.lock().unwrap().take() };
+        let mut result: Result<(), AmqprsError> = Ok(());
         if let Some(conn) = conn {
-            result = conn.close(0, "").await;
+            result = conn.close().await;
         }
 
         {
@@ -175,8 +177,8 @@ impl Default for AmqpConnectionOptions {
     fn default() -> Self {
         AmqpConnectionOptions {
             uri: "amqp://localhost".to_string(),
-            connect_timeout_millis: 3000,
-            reconnect_millis: 1000,
+            connect_timeout_millis: DEF_CONN_TIMEOUT_MS,
+            reconnect_millis: DEF_RECONN_TIMEOUT_MS,
         }
     }
 }
@@ -189,10 +191,7 @@ fn create_event_loop(conn: &AmqpConnection) -> JoinHandle<()> {
             match this.status() {
                 Status::Closing | Status::Closed => break,
                 Status::Connecting => {
-                    let opts = ConnectionProperties::default()
-                        .with_executor(tokio_executor_trait::Tokio::current());
-                    let conn = match LapinConnection::connect_uri(this.opts.uri.clone(), opts).await
-                    {
+                    let conn = match AmqprsConnection::open(&this.opts.args).await {
                         Err(_) => {
                             time::sleep(Duration::from_millis(this.opts.reconnect_millis)).await;
                             continue;
@@ -206,9 +205,8 @@ fn create_event_loop(conn: &AmqpConnection) -> JoinHandle<()> {
                         }
                         *status_mutex = Status::Connected;
                     }
-                    // FIXME: to lock before Connected.
                     {
-                        *this.conn.lock().await = Some(conn);
+                        *this.conn.lock().unwrap() = Some(conn);
                     }
 
                     let handlers = { (*this.handlers.lock().unwrap()).clone() };
@@ -225,8 +223,8 @@ fn create_event_loop(conn: &AmqpConnection) -> JoinHandle<()> {
                     time::sleep(Duration::from_millis(this.opts.reconnect_millis)).await;
                     let mut to_disconnected = true;
                     {
-                        if let Some(conn) = (*this.conn.lock().await).as_ref() {
-                            if conn.status().connected() {
+                        if let Some(conn) = (*this.conn.lock().unwrap()).as_ref() {
+                            if conn.is_open() {
                                 to_disconnected = false;
                             }
                         }
@@ -242,9 +240,9 @@ fn create_event_loop(conn: &AmqpConnection) -> JoinHandle<()> {
                         }
                         *status_mutex = Status::Disconnected;
                     }
-                    // FIXME: to lock before Disconnected.
-                    {
-                        let _ = this.conn.lock().await.take();
+                    let conn = { this.conn.lock().unwrap().take() };
+                    if let Some(conn) = conn {
+                        let _ = conn.close().await;
                     }
 
                     let handlers = { (*this.handlers.lock().unwrap()).clone() };

@@ -306,7 +306,7 @@ pub fn post(context: &mut SpecContext<TestState>) -> Result<(), String> {
         let mut found_dldata_result = false;
         let mut found_uldata_public = false;
         let mut found_dldata_result_public = false;
-        for _ in 0..100 {
+        for _ in 0..WAIT_COUNT {
             let username = mq::to_username(QueueType::Network, UNIT_CODE, NET_CODE);
             let username = username.as_str();
             if !found_uldata {
@@ -354,7 +354,7 @@ pub fn post(context: &mut SpecContext<TestState>) -> Result<(), String> {
             {
                 return Ok(());
             }
-            time::sleep(Duration::from_millis(100)).await;
+            time::sleep(Duration::from_millis(WAIT_TICK)).await;
         }
         Err("broker does not consume network uldata or dldata-result".to_string())
     })
@@ -1106,8 +1106,8 @@ pub fn uldata(context: &mut SpecContext<TestState>) -> Result<(), String> {
     };
     test_uldata(runtime, routes_state, network_id, &body, false)?;
     runtime.block_on(async {
-        for _ in 0..100 {
-            time::sleep(Duration::from_millis(100)).await;
+        for _ in 0..WAIT_COUNT {
+            time::sleep(Duration::from_millis(WAIT_TICK)).await;
             match rabbitmq::stats(client, &mq_opts.0, host, username, "uldata").await {
                 Err(e) => return Err(format!("get RabbitMQ stats error: {}", e)),
                 Ok(stats) => {
@@ -1154,8 +1154,8 @@ pub fn uldata(context: &mut SpecContext<TestState>) -> Result<(), String> {
         return Ok(());
     }
     runtime.block_on(async {
-        for _ in 0..100 {
-            time::sleep(Duration::from_millis(100)).await;
+        for _ in 0..WAIT_COUNT {
+            time::sleep(Duration::from_millis(WAIT_TICK)).await;
             match emqx::stats(client, &mq_opts.1, host, username, "uldata").await {
                 Err(e) => return Err(format!("get EMQX stats error: {}", e)),
                 Ok(stats) => {
@@ -1542,7 +1542,7 @@ fn test_stats(
     });
 
     runtime.block_on(async {
-        for _ in 0..100 {
+        for _ in 0..WAIT_COUNT {
             let req = TestRequest::get()
                 .uri(format!("/coremgr/api/v1/network/{}/stats", network_id).as_str())
                 .insert_header((header::AUTHORIZATION, format!("Bearer {}", TOKEN_MANAGER)))
@@ -1571,7 +1571,7 @@ fn test_stats(
             if is_rumqttd {
                 return Ok(());
             }
-            time::sleep(Duration::from_millis(100)).await;
+            time::sleep(Duration::from_millis(WAIT_TICK)).await;
             if stats.messages > 0 || stats.publish_rate > 0.0 {
                 return Ok(());
             }
