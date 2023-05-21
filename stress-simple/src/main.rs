@@ -8,8 +8,8 @@ use std::{
 use async_trait::async_trait;
 use chrono::{DateTime, SecondsFormat, Utc};
 use general_mq::{
-    connection::Connection,
-    queue::{Event, EventHandler, Message, Queue as MqQueue, Status as QueueStatus},
+    connection::GmqConnection,
+    queue::{Event, EventHandler, GmqQueue, Message, Status as QueueStatus},
     AmqpConnection, AmqpConnectionOptions, AmqpQueueOptions, MqttConnection, MqttConnectionOptions,
     MqttQueueOptions, Queue, QueueOptions,
 };
@@ -57,9 +57,9 @@ struct UlDataHandler {
 
 #[async_trait]
 impl EventHandler for UlDataHandler {
-    async fn on_event(&self, _queue: Arc<dyn MqQueue>, _ev: Event) {}
+    async fn on_event(&self, _queue: Arc<dyn GmqQueue>, _ev: Event) {}
 
-    async fn on_message(&self, _queue: Arc<dyn MqQueue>, msg: Box<dyn Message>) {
+    async fn on_message(&self, _queue: Arc<dyn GmqQueue>, msg: Box<dyn Message>) {
         let now = Utc::now();
         let _ = msg.ack().await;
         let received;

@@ -8,7 +8,7 @@ use laboratory::{expect, SpecContext};
 use tokio::time;
 
 use general_mq::{
-    connection::{Connection, Event, EventHandler, Status},
+    connection::{Event, EventHandler, GmqConnection, Status},
     MqttConnection, MqttConnectionOptions,
 };
 
@@ -30,7 +30,7 @@ const RETRY_10MS: usize = 100;
 
 #[async_trait]
 impl EventHandler for TestConnectHandler {
-    async fn on_event(&self, _handler_id: String, _conn: Arc<dyn Connection>, ev: Event) {
+    async fn on_event(&self, _handler_id: String, _conn: Arc<dyn GmqConnection>, ev: Event) {
         if let Event::Status(status) = ev {
             if status == Status::Connected {
                 *self.recv_connected.lock().unwrap() = true;
@@ -41,7 +41,7 @@ impl EventHandler for TestConnectHandler {
 
 #[async_trait]
 impl EventHandler for TestRemoveHandler {
-    async fn on_event(&self, _handler_id: String, _conn: Arc<dyn Connection>, ev: Event) {
+    async fn on_event(&self, _handler_id: String, _conn: Arc<dyn GmqConnection>, ev: Event) {
         if let Event::Status(status) = ev {
             if status == Status::Connected {
                 let mut mutex = self.connected_count.lock().unwrap();
@@ -53,7 +53,7 @@ impl EventHandler for TestRemoveHandler {
 
 #[async_trait]
 impl EventHandler for TestCloseHandler {
-    async fn on_event(&self, _handler_id: String, _conn: Arc<dyn Connection>, ev: Event) {
+    async fn on_event(&self, _handler_id: String, _conn: Arc<dyn GmqConnection>, ev: Event) {
         if let Event::Status(status) = ev {
             if status == Status::Closed {
                 *self.recv_closed.lock().unwrap() = true;
@@ -129,10 +129,10 @@ pub fn connect_no_handler(context: &mut SpecContext<TestState>) -> Result<(), St
         Ok(conn) => conn,
     };
     state.conn = vec![Box::new(conn.clone())];
-    let conn: &mut dyn Connection = &mut conn;
+    let conn: &mut dyn GmqConnection = &mut conn;
 
     if let Err(e) = conn.connect() {
-        return Err(format!("Connect::connect() error: {}", e));
+        return Err(format!("GmqConnection::connect() error: {}", e));
     }
     state.runtime.block_on(wait_connected(conn))
 }
@@ -147,7 +147,7 @@ pub fn connect_with_handler(context: &mut SpecContext<TestState>) -> Result<(), 
         Ok(conn) => conn,
     };
     state.conn = vec![Box::new(conn.clone())];
-    let conn: &mut dyn Connection = &mut conn;
+    let conn: &mut dyn GmqConnection = &mut conn;
 
     let handler = Arc::new(TestConnectHandler {
         recv_connected: Arc::new(Mutex::new(false)),
@@ -155,7 +155,7 @@ pub fn connect_with_handler(context: &mut SpecContext<TestState>) -> Result<(), 
     let _ = conn.add_handler(handler.clone());
 
     if let Err(e) = conn.connect() {
-        return Err(format!("Connect::connect() error: {}", e));
+        return Err(format!("GmqConnection::connect() error: {}", e));
     }
 
     state.runtime.block_on(async move {
@@ -183,10 +183,10 @@ pub fn connect_after_connect(context: &mut SpecContext<TestState>) -> Result<(),
         Ok(conn) => conn,
     };
     state.conn = vec![Box::new(conn.clone())];
-    let conn: &mut dyn Connection = &mut conn;
+    let conn: &mut dyn GmqConnection = &mut conn;
 
     if let Err(e) = conn.connect() {
-        return Err(format!("Connect::connect() error: {}", e));
+        return Err(format!("GmqConnection::connect() error: {}", e));
     }
     expect(conn.connect().is_ok()).to_equal(true)
 }
@@ -201,7 +201,7 @@ pub fn remove_handler(context: &mut SpecContext<TestState>) -> Result<(), String
         Ok(conn) => conn,
     };
     state.conn = vec![Box::new(conn.clone())];
-    let conn: &mut dyn Connection = &mut conn;
+    let conn: &mut dyn GmqConnection = &mut conn;
 
     let handler = Arc::new(TestRemoveHandler {
         connected_count: Arc::new(Mutex::new(0)),
@@ -211,7 +211,7 @@ pub fn remove_handler(context: &mut SpecContext<TestState>) -> Result<(), String
     conn.remove_handler(id.as_str());
 
     if let Err(e) = conn.connect() {
-        return Err(format!("Connect::connect() error: {}", e));
+        return Err(format!("GmqConnection::connect() error: {}", e));
     }
 
     let result = state.runtime.block_on(async move {
@@ -241,7 +241,7 @@ pub fn close(context: &mut SpecContext<TestState>) -> Result<(), String> {
         Ok(conn) => conn,
     };
     state.conn = vec![Box::new(conn.clone())];
-    let conn: &mut dyn Connection = &mut conn;
+    let conn: &mut dyn GmqConnection = &mut conn;
 
     let closed_handler = Arc::new(TestCloseHandler {
         recv_closed: Arc::new(Mutex::new(false)),
@@ -249,7 +249,7 @@ pub fn close(context: &mut SpecContext<TestState>) -> Result<(), String> {
     let _ = conn.add_handler(closed_handler.clone());
 
     if let Err(e) = conn.connect() {
-        return Err(format!("Connect::connect() error: {}", e));
+        return Err(format!("GmqConnection::connect() error: {}", e));
     }
 
     if let Err(e) = state.runtime.block_on(wait_connected(conn)) {
@@ -284,10 +284,10 @@ pub fn close_after_close(context: &mut SpecContext<TestState>) -> Result<(), Str
         Ok(conn) => conn,
     };
     state.conn = vec![Box::new(conn.clone())];
-    let conn: &mut dyn Connection = &mut conn;
+    let conn: &mut dyn GmqConnection = &mut conn;
 
     if let Err(e) = conn.connect() {
-        return Err(format!("Connect::connect() error: {}", e));
+        return Err(format!("GmqConnection::connect() error: {}", e));
     }
 
     if let Err(e) = state.runtime.block_on(wait_connected(conn)) {
@@ -311,7 +311,7 @@ pub fn close_after_close(context: &mut SpecContext<TestState>) -> Result<(), Str
     })
 }
 
-async fn wait_connected(conn: &dyn Connection) -> Result<(), String> {
+async fn wait_connected(conn: &dyn GmqConnection) -> Result<(), String> {
     let mut retry = RETRY_10MS;
     while retry > 0 {
         time::sleep(Duration::from_millis(10)).await;

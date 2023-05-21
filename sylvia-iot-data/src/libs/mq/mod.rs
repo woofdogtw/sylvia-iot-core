@@ -6,8 +6,8 @@ use std::{
 use url::Url;
 
 use general_mq::{
-    connection::Connection as MqConnection,
-    queue::{EventHandler, Queue as MqQueue},
+    connection::GmqConnection,
+    queue::{EventHandler, GmqQueue},
     AmqpConnection, AmqpConnectionOptions, AmqpQueueOptions, MqttConnection, MqttConnectionOptions,
     MqttQueueOptions, Queue, QueueOptions,
 };

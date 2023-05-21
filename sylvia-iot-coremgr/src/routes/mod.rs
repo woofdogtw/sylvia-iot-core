@@ -8,7 +8,7 @@ use std::{
 use actix_web::{dev::HttpServiceFactory, error, web, HttpResponse, Responder};
 use async_trait::async_trait;
 use general_mq::{
-    queue::{Event, EventHandler as QueueEventHandler, Message, Queue as MqQueue, Status},
+    queue::{Event, EventHandler as QueueEventHandler, GmqQueue, Message, Status},
     Queue,
 };
 use log::{error, info, warn};
@@ -106,7 +106,7 @@ impl ErrReq {
 
 #[async_trait]
 impl QueueEventHandler for DataSenderHandler {
-    async fn on_event(&self, queue: Arc<dyn MqQueue>, ev: Event) {
+    async fn on_event(&self, queue: Arc<dyn GmqQueue>, ev: Event) {
         const FN_NAME: &'static str = "DataSenderHandler::on_event";
         let queue_name = queue.name();
 
@@ -119,7 +119,7 @@ impl QueueEventHandler for DataSenderHandler {
         }
     }
 
-    async fn on_message(&self, _queue: Arc<dyn MqQueue>, _msg: Box<dyn Message>) {}
+    async fn on_message(&self, _queue: Arc<dyn GmqQueue>, _msg: Box<dyn Message>) {}
 }
 
 /// To create resources for the service.

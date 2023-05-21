@@ -2,8 +2,8 @@ use std::{collections::HashMap, sync::Arc, time::Duration};
 
 use chrono::{TimeZone, Utc};
 use general_mq::{
-    connection::Connection as MqConnection,
-    queue::{Queue as MqQueue, Status},
+    connection::GmqConnection,
+    queue::{GmqQueue, Status},
     AmqpConnection, AmqpConnectionOptions, AmqpQueueOptions, MqttConnection, MqttConnectionOptions,
     MqttQueueOptions, Queue, QueueOptions,
 };

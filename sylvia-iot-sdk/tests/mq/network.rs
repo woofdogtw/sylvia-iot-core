@@ -7,8 +7,10 @@ use std::{
 use async_trait::async_trait;
 use chrono::{TimeZone, Utc};
 use general_mq::{
-    queue::{Event as MqEvent, EventHandler as MqEventHandler, Message, Queue, Status as MqStatus},
-    AmqpQueueOptions, MqttQueueOptions, Queue as MqQueue, QueueOptions as MqQueueOptions,
+    queue::{
+        Event as MqEvent, EventHandler as MqEventHandler, GmqQueue, Message, Status as MqStatus,
+    },
+    AmqpQueueOptions, MqttQueueOptions, Queue, QueueOptions,
 };
 use laboratory::{expect, SpecContext};
 use serde::{self, Deserialize, Serialize};
@@ -133,7 +135,7 @@ impl TestDlDataResultHandler {
 
 #[async_trait]
 impl MqEventHandler for TestUlDataHandler {
-    async fn on_event(&self, _queue: Arc<dyn Queue>, ev: MqEvent) {
+    async fn on_event(&self, _queue: Arc<dyn GmqQueue>, ev: MqEvent) {
         if let MqEvent::Status(status) = ev {
             if status == MqStatus::Connected {
                 *self.status_connected.lock().unwrap() = true;
@@ -141,7 +143,7 @@ impl MqEventHandler for TestUlDataHandler {
         }
     }
 
-    async fn on_message(&self, _queue: Arc<dyn Queue>, msg: Box<dyn Message>) {
+    async fn on_message(&self, _queue: Arc<dyn GmqQueue>, msg: Box<dyn Message>) {
         let data = match serde_json::from_slice::<NetUlData>(msg.payload()) {
             Err(_) => return,
             Ok(data) => Box::new(data),
@@ -155,7 +157,7 @@ impl MqEventHandler for TestUlDataHandler {
 
 #[async_trait]
 impl MqEventHandler for TestDlDataResultHandler {
-    async fn on_event(&self, _queue: Arc<dyn Queue>, ev: MqEvent) {
+    async fn on_event(&self, _queue: Arc<dyn GmqQueue>, ev: MqEvent) {
         if let MqEvent::Status(status) = ev {
             if status == MqStatus::Connected {
                 *self.status_connected.lock().unwrap() = true;
@@ -163,7 +165,7 @@ impl MqEventHandler for TestDlDataResultHandler {
         }
     }
 
-    async fn on_message(&self, _queue: Arc<dyn Queue>, msg: Box<dyn Message>) {
+    async fn on_message(&self, _queue: Arc<dyn GmqQueue>, msg: Box<dyn Message>) {
         let data = match serde_json::from_slice::<NetDlDataResult>(msg.payload()) {
             Err(_) => return,
             Ok(data) => Box::new(data),
@@ -372,7 +374,7 @@ pub fn uldata(context: &mut SpecContext<TestState>) -> Result<(), String> {
     let handler = TestUlDataHandler::new();
     let queue = match conn {
         Connection::Amqp(conn, _) => {
-            let opts = MqQueueOptions::Amqp(
+            let opts = QueueOptions::Amqp(
                 AmqpQueueOptions {
                     name: "broker.network.unit_code.code_network.uldata".to_string(),
                     is_recv: true,
@@ -382,7 +384,7 @@ pub fn uldata(context: &mut SpecContext<TestState>) -> Result<(), String> {
                 },
                 conn,
             );
-            let mut queue_result = MqQueue::new(opts)?;
+            let mut queue_result = Queue::new(opts)?;
             queue_result.set_handler(Arc::new(handler.clone()));
             if let Err(e) = queue_result.connect() {
                 return Err(format!("connect uldata queue error: {}", e));
@@ -390,7 +392,7 @@ pub fn uldata(context: &mut SpecContext<TestState>) -> Result<(), String> {
             queue_result
         }
         Connection::Mqtt(conn, _) => {
-            let opts = MqQueueOptions::Mqtt(
+            let opts = QueueOptions::Mqtt(
                 MqttQueueOptions {
                     name: "broker.network.unit_code.code_network.uldata".to_string(),
                     is_recv: true,
@@ -400,7 +402,7 @@ pub fn uldata(context: &mut SpecContext<TestState>) -> Result<(), String> {
                 },
                 conn,
             );
-            let mut queue_result = MqQueue::new(opts)?;
+            let mut queue_result = Queue::new(opts)?;
             queue_result.set_handler(Arc::new(handler.clone()));
             if let Err(e) = queue_result.connect() {
                 return Err(format!("connect uldata queue error: {}", e));
@@ -566,7 +568,7 @@ pub fn dldata(context: &mut SpecContext<TestState>) -> Result<(), String> {
 
     let queue = match conn {
         Connection::Amqp(conn, _) => {
-            let opts = MqQueueOptions::Amqp(
+            let opts = QueueOptions::Amqp(
                 AmqpQueueOptions {
                     name: "broker.network.unit_code.code_network.dldata".to_string(),
                     is_recv: false,
@@ -576,14 +578,14 @@ pub fn dldata(context: &mut SpecContext<TestState>) -> Result<(), String> {
                 },
                 conn,
             );
-            let mut queue_result = MqQueue::new(opts)?;
+            let mut queue_result = Queue::new(opts)?;
             if let Err(e) = queue_result.connect() {
                 return Err(format!("connect dldata queue error: {}", e));
             }
             queue_result
         }
         Connection::Mqtt(conn, _) => {
-            let opts = MqQueueOptions::Mqtt(
+            let opts = QueueOptions::Mqtt(
                 MqttQueueOptions {
                     name: "broker.network.unit_code.code_network.dldata".to_string(),
                     is_recv: false,
@@ -593,7 +595,7 @@ pub fn dldata(context: &mut SpecContext<TestState>) -> Result<(), String> {
                 },
                 conn,
             );
-            let mut queue_result = MqQueue::new(opts)?;
+            let mut queue_result = Queue::new(opts)?;
             if let Err(e) = queue_result.connect() {
                 return Err(format!("connect dldata queue error: {}", e));
             }
@@ -749,7 +751,7 @@ pub fn dldata_wrong(context: &mut SpecContext<TestState>) -> Result<(), String> 
 
     let queue = match conn {
         Connection::Amqp(conn, _) => {
-            let opts = MqQueueOptions::Amqp(
+            let opts = QueueOptions::Amqp(
                 AmqpQueueOptions {
                     name: "broker.network.unit_code.code_network.dldata".to_string(),
                     is_recv: false,
@@ -759,14 +761,14 @@ pub fn dldata_wrong(context: &mut SpecContext<TestState>) -> Result<(), String> 
                 },
                 conn,
             );
-            let mut queue_result = MqQueue::new(opts)?;
+            let mut queue_result = Queue::new(opts)?;
             if let Err(e) = queue_result.connect() {
                 return Err(format!("connect dldata queue error: {}", e));
             }
             queue_result
         }
         Connection::Mqtt(conn, _) => {
-            let opts = MqQueueOptions::Mqtt(
+            let opts = QueueOptions::Mqtt(
                 MqttQueueOptions {
                     name: "broker.network.unit_code.code_network.dldata".to_string(),
                     is_recv: false,
@@ -776,7 +778,7 @@ pub fn dldata_wrong(context: &mut SpecContext<TestState>) -> Result<(), String> 
                 },
                 conn,
             );
-            let mut queue_result = MqQueue::new(opts)?;
+            let mut queue_result = Queue::new(opts)?;
             if let Err(e) = queue_result.connect() {
                 return Err(format!("connect dldata queue error: {}", e));
             }
@@ -860,7 +862,7 @@ pub fn dldata_result(context: &mut SpecContext<TestState>) -> Result<(), String>
     let handler = TestDlDataResultHandler::new();
     let queue = match conn {
         Connection::Amqp(conn, _) => {
-            let opts = MqQueueOptions::Amqp(
+            let opts = QueueOptions::Amqp(
                 AmqpQueueOptions {
                     name: "broker.network.unit_code.code_network.dldata-result".to_string(),
                     is_recv: true,
@@ -870,7 +872,7 @@ pub fn dldata_result(context: &mut SpecContext<TestState>) -> Result<(), String>
                 },
                 conn,
             );
-            let mut queue_result = MqQueue::new(opts)?;
+            let mut queue_result = Queue::new(opts)?;
             queue_result.set_handler(Arc::new(handler.clone()));
             if let Err(e) = queue_result.connect() {
                 return Err(format!("connect dldata-result queue error: {}", e));
@@ -878,7 +880,7 @@ pub fn dldata_result(context: &mut SpecContext<TestState>) -> Result<(), String>
             queue_result
         }
         Connection::Mqtt(conn, _) => {
-            let opts = MqQueueOptions::Mqtt(
+            let opts = QueueOptions::Mqtt(
                 MqttQueueOptions {
                     name: "broker.network.unit_code.code_network.dldata-result".to_string(),
                     is_recv: true,
@@ -888,7 +890,7 @@ pub fn dldata_result(context: &mut SpecContext<TestState>) -> Result<(), String>
                 },
                 conn,
             );
-            let mut queue_result = MqQueue::new(opts)?;
+            let mut queue_result = Queue::new(opts)?;
             queue_result.set_handler(Arc::new(handler.clone()));
             if let Err(e) = queue_result.connect() {
                 return Err(format!("connect dldata-result queue error: {}", e));

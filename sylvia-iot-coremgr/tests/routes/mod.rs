@@ -8,7 +8,7 @@ use actix_web::{
     test::{self, TestRequest},
     web, App,
 };
-use general_mq::queue::Queue;
+use general_mq::queue::GmqQueue;
 use laboratory::{describe, expect, SpecContext, Suite};
 use reqwest;
 

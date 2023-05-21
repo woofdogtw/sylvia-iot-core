@@ -7,10 +7,10 @@ use std::{
 use async_trait::async_trait;
 use chrono::{DateTime, Utc};
 use general_mq::{
-    connection::Connection as MqConnection,
-    queue::{Event, EventHandler, Message, Queue, Status},
+    connection::GmqConnection,
+    queue::{Event, EventHandler, GmqQueue, Message, Status},
     AmqpConnection, AmqpConnectionOptions, AmqpQueueOptions, MqttConnection, MqttConnectionOptions,
-    MqttQueueOptions, Queue as MqQueue, QueueOptions as MqQueueOptions,
+    MqttQueueOptions, Queue, QueueOptions,
 };
 use laboratory::{expect, SpecContext};
 use serde::{Deserialize, Serialize};
@@ -130,23 +130,23 @@ pub struct NetDlDataResult {
 }
 
 struct TestResources {
-    _manager_application_uldata: MqQueue,
-    manager_application_dldata: MqQueue,
-    _manager_application_dldata_resp: MqQueue,
-    _manager_application_dldata_result: MqQueue,
-    _owner_application_uldata: MqQueue,
-    owner_application_dldata: MqQueue,
-    _owner_application_dldata_resp: MqQueue,
-    _owner_application_dldata_result: MqQueue,
-    manager_network_uldata: MqQueue,
-    _manager_network_dldata: MqQueue,
-    manager_network_dldata_result: MqQueue,
-    public_network_uldata: MqQueue,
-    _public_network_dldata: MqQueue,
-    public_network_dldata_result: MqQueue,
-    owner_network_uldata: MqQueue,
-    _owner_network_dldata: MqQueue,
-    _owner_network_dldata_result: MqQueue,
+    _manager_application_uldata: Queue,
+    manager_application_dldata: Queue,
+    _manager_application_dldata_resp: Queue,
+    _manager_application_dldata_result: Queue,
+    _owner_application_uldata: Queue,
+    owner_application_dldata: Queue,
+    _owner_application_dldata_resp: Queue,
+    _owner_application_dldata_result: Queue,
+    manager_network_uldata: Queue,
+    _manager_network_dldata: Queue,
+    manager_network_dldata_result: Queue,
+    public_network_uldata: Queue,
+    _public_network_dldata: Queue,
+    public_network_dldata_result: Queue,
+    owner_network_uldata: Queue,
+    _owner_network_dldata: Queue,
+    _owner_network_dldata_result: Queue,
 
     manager_app_handler: TestAppHandler,
     owner_app_handler: TestAppHandler,
@@ -186,9 +186,9 @@ impl TestAppHandler {
 
 #[async_trait]
 impl EventHandler for TestAppHandler {
-    async fn on_event(&self, _queue: Arc<dyn Queue>, _ev: Event) {}
+    async fn on_event(&self, _queue: Arc<dyn GmqQueue>, _ev: Event) {}
 
-    async fn on_message(&self, queue: Arc<dyn Queue>, msg: Box<dyn Message>) {
+    async fn on_message(&self, queue: Arc<dyn GmqQueue>, msg: Box<dyn Message>) {
         let name = queue.name();
         if name.ends_with(".uldata") {
             let data = match serde_json::from_slice::<AppUlData>(msg.payload()) {
@@ -223,9 +223,9 @@ impl TestNetHandler {
 
 #[async_trait]
 impl EventHandler for TestNetHandler {
-    async fn on_event(&self, _queue: Arc<dyn Queue>, _ev: Event) {}
+    async fn on_event(&self, _queue: Arc<dyn GmqQueue>, _ev: Event) {}
 
-    async fn on_message(&self, _queue: Arc<dyn Queue>, msg: Box<dyn Message>) {
+    async fn on_message(&self, _queue: Arc<dyn GmqQueue>, msg: Box<dyn Message>) {
         let data = match serde_json::from_slice::<NetDlData>(msg.payload()) {
             Err(_) => return,
             Ok(data) => Box::new(data),
@@ -1699,11 +1699,11 @@ fn new_data_queues(
     opts: &Options,
     prefix: &str,
     is_network: bool,
-) -> Result<(MqQueue, MqQueue, Option<MqQueue>, MqQueue), String> {
-    let uldata: MqQueue;
-    let dldata: MqQueue;
-    let dldata_resp: Option<MqQueue>;
-    let dldata_result: MqQueue;
+) -> Result<(Queue, Queue, Option<Queue>, Queue), String> {
+    let uldata: Queue;
+    let dldata: Queue;
+    let dldata_resp: Option<Queue>;
+    let dldata_result: Queue;
 
     if opts.unit_id.len() == 0 {
         if opts.unit_code.len() != 0 {
@@ -1736,7 +1736,7 @@ fn new_data_queues(
                 },
             };
 
-            let uldata_opts = MqQueueOptions::Amqp(
+            let uldata_opts = QueueOptions::Amqp(
                 AmqpQueueOptions {
                     name: format!("{}.{}.{}.uldata", prefix, unit, opts.name.as_str()),
                     is_recv: !is_network,
@@ -1747,7 +1747,7 @@ fn new_data_queues(
                 },
                 conn,
             );
-            let dldata_opts = MqQueueOptions::Amqp(
+            let dldata_opts = QueueOptions::Amqp(
                 AmqpQueueOptions {
                     name: format!("{}.{}.{}.dldata", prefix, unit, opts.name.as_str()),
                     is_recv: is_network,
@@ -1758,7 +1758,7 @@ fn new_data_queues(
                 },
                 conn,
             );
-            let dldata_resp_opts = MqQueueOptions::Amqp(
+            let dldata_resp_opts = QueueOptions::Amqp(
                 AmqpQueueOptions {
                     name: format!("{}.{}.{}.dldata-resp", prefix, unit, opts.name.as_str()),
                     is_recv: !is_network,
@@ -1769,7 +1769,7 @@ fn new_data_queues(
                 },
                 conn,
             );
-            let dldata_result_opts = MqQueueOptions::Amqp(
+            let dldata_result_opts = QueueOptions::Amqp(
                 AmqpQueueOptions {
                     name: format!("{}.{}.{}.dldata-result", prefix, unit, opts.name.as_str()),
                     is_recv: !is_network,
@@ -1780,16 +1780,16 @@ fn new_data_queues(
                 },
                 conn,
             );
-            uldata = MqQueue::new(uldata_opts)?;
-            dldata = MqQueue::new(dldata_opts)?;
+            uldata = Queue::new(uldata_opts)?;
+            dldata = Queue::new(dldata_opts)?;
             dldata_resp = match is_network {
-                false => Some(MqQueue::new(dldata_resp_opts)?),
+                false => Some(Queue::new(dldata_resp_opts)?),
                 true => None,
             };
-            dldata_result = MqQueue::new(dldata_result_opts)?;
+            dldata_result = Queue::new(dldata_result_opts)?;
         }
         Connection::Mqtt(conn, _) => {
-            let uldata_opts = MqQueueOptions::Mqtt(
+            let uldata_opts = QueueOptions::Mqtt(
                 MqttQueueOptions {
                     name: format!("{}.{}.{}.uldata", prefix, unit, opts.name.as_str()),
                     is_recv: !is_network,
@@ -1800,7 +1800,7 @@ fn new_data_queues(
                 },
                 conn,
             );
-            let dldata_opts = MqQueueOptions::Mqtt(
+            let dldata_opts = QueueOptions::Mqtt(
                 MqttQueueOptions {
                     name: format!("{}.{}.{}.dldata", prefix, unit, opts.name.as_str()),
                     is_recv: is_network,
@@ -1811,7 +1811,7 @@ fn new_data_queues(
                 },
                 conn,
             );
-            let dldata_resp_opts = MqQueueOptions::Mqtt(
+            let dldata_resp_opts = QueueOptions::Mqtt(
                 MqttQueueOptions {
                     name: format!("{}.{}.{}.dldata-resp", prefix, unit, opts.name.as_str()),
                     is_recv: !is_network,
@@ -1822,7 +1822,7 @@ fn new_data_queues(
                 },
                 conn,
             );
-            let dldata_result_opts = MqQueueOptions::Mqtt(
+            let dldata_result_opts = QueueOptions::Mqtt(
                 MqttQueueOptions {
                     name: format!("{}.{}.{}.dldata-result", prefix, unit, opts.name.as_str()),
                     is_recv: !is_network,
@@ -1833,13 +1833,13 @@ fn new_data_queues(
                 },
                 conn,
             );
-            uldata = MqQueue::new(uldata_opts)?;
-            dldata = MqQueue::new(dldata_opts)?;
+            uldata = Queue::new(uldata_opts)?;
+            dldata = Queue::new(dldata_opts)?;
             dldata_resp = match is_network {
-                false => Some(MqQueue::new(dldata_resp_opts)?),
+                false => Some(Queue::new(dldata_resp_opts)?),
                 true => None,
             };
-            dldata_result = MqQueue::new(dldata_result_opts)?;
+            dldata_result = Queue::new(dldata_result_opts)?;
         }
     }
 

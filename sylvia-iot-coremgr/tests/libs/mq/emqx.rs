@@ -2,8 +2,8 @@ use std::{collections::HashMap, time::Duration};
 
 use base64::{engine::general_purpose, Engine};
 use general_mq::{
-    connection::{Connection, Status as ConnStatus},
-    queue::{Queue, Status as QueueStatus},
+    connection::{GmqConnection, Status as ConnStatus},
+    queue::{GmqQueue, Status as QueueStatus},
     MqttConnection, MqttConnectionOptions, MqttQueue, MqttQueueOptions,
 };
 use laboratory::SpecContext;

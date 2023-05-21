@@ -10,10 +10,10 @@ use async_trait::async_trait;
 use chrono::{DateTime, Utc};
 use general_mq::{
     queue::{
-        Event as QueueEvent, EventHandler as QueueEventHandler, Message, Queue,
+        Event as QueueEvent, EventHandler as QueueEventHandler, GmqQueue, Message,
         Status as QueueStatus,
     },
-    Queue as MqQueue,
+    Queue,
 };
 use hex;
 use serde::{Deserialize, Serialize};
@@ -71,9 +71,9 @@ pub struct NetworkMgr {
     conn_pool: Arc<Mutex<HashMap<String, Connection>>>,
     host_uri: String,
 
-    uldata: Arc<Mutex<MqQueue>>,
-    dldata: Arc<Mutex<MqQueue>>,
-    dldata_result: Arc<Mutex<MqQueue>>,
+    uldata: Arc<Mutex<Queue>>,
+    dldata: Arc<Mutex<Queue>>,
+    dldata_result: Arc<Mutex<Queue>>,
 
     status: Arc<Mutex<MgrStatus>>,
     handler: Arc<Mutex<Arc<dyn EventHandler>>>,
@@ -92,7 +92,7 @@ pub trait EventHandler: Send + Sync {
     async fn on_dldata(&self, mgr: &NetworkMgr, data: Box<DlData>) -> Result<(), ()>;
 }
 
-/// The event handler for [`general_mq::queue::Queue`].
+/// The event handler for [`general_mq::queue::GmqQueue`].
 struct MgrMqEventHandler {
     mgr: NetworkMgr,
 }
@@ -269,7 +269,7 @@ impl NetworkMgr {
 
 #[async_trait]
 impl QueueEventHandler for MgrMqEventHandler {
-    async fn on_event(&self, _queue: Arc<dyn Queue>, _ev: QueueEvent) {
+    async fn on_event(&self, _queue: Arc<dyn GmqQueue>, _ev: QueueEvent) {
         let uldata_status = { self.mgr.uldata.lock().unwrap().status() };
         let dldata_status = { self.mgr.dldata.lock().unwrap().status() };
         let dldata_result_status = { self.mgr.dldata_result.lock().unwrap().status() };
@@ -297,7 +297,7 @@ impl QueueEventHandler for MgrMqEventHandler {
     }
 
     // Validate and decode data.
-    async fn on_message(&self, queue: Arc<dyn Queue>, msg: Box<dyn Message>) {
+    async fn on_message(&self, queue: Arc<dyn GmqQueue>, msg: Box<dyn Message>) {
         const _FN_NAME: &'static str = "NetworkMgr.on_message";
 
         let queue_name = queue.name();

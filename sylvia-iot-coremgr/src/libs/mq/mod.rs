@@ -5,7 +5,7 @@ use std::{
 };
 
 use general_mq::{
-    connection::Connection as MqConnection, AmqpConnection, AmqpConnectionOptions, MqttConnection,
+    connection::GmqConnection, AmqpConnection, AmqpConnectionOptions, MqttConnection,
     MqttConnectionOptions,
 };
 use url::Url;

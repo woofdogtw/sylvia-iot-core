@@ -10,10 +10,10 @@ use async_trait::async_trait;
 use chrono::{DateTime, Utc};
 use general_mq::{
     queue::{
-        Event as QueueEvent, EventHandler as QueueEventHandler, Message, Queue,
+        Event as QueueEvent, EventHandler as QueueEventHandler, GmqQueue, Message,
         Status as QueueStatus,
     },
-    Queue as MqQueue,
+    Queue,
 };
 use hex;
 use serde::{Deserialize, Serialize};
@@ -85,10 +85,10 @@ pub struct ApplicationMgr {
     conn_pool: Arc<Mutex<HashMap<String, Connection>>>,
     host_uri: String,
 
-    uldata: Arc<Mutex<MqQueue>>,
-    dldata: Arc<Mutex<MqQueue>>,
-    dldata_resp: Arc<Mutex<MqQueue>>,
-    dldata_result: Arc<Mutex<MqQueue>>,
+    uldata: Arc<Mutex<Queue>>,
+    dldata: Arc<Mutex<Queue>>,
+    dldata_resp: Arc<Mutex<Queue>>,
+    dldata_result: Arc<Mutex<Queue>>,
 
     status: Arc<Mutex<MgrStatus>>,
     handler: Arc<Mutex<Arc<dyn EventHandler>>>,
@@ -123,7 +123,7 @@ pub trait EventHandler: Send + Sync {
     ) -> Result<(), ()>;
 }
 
-/// The event handler for [`general_mq::queue::Queue`].
+/// The event handler for [`general_mq::queue::GmqQueue`].
 struct MgrMqEventHandler {
     mgr: ApplicationMgr,
 }
@@ -303,7 +303,7 @@ impl ApplicationMgr {
 
 #[async_trait]
 impl QueueEventHandler for MgrMqEventHandler {
-    async fn on_event(&self, _queue: Arc<dyn Queue>, _ev: QueueEvent) {
+    async fn on_event(&self, _queue: Arc<dyn GmqQueue>, _ev: QueueEvent) {
         let status = match { self.mgr.uldata.lock().unwrap().status() } == QueueStatus::Connected
             && { self.mgr.dldata.lock().unwrap().status() } == QueueStatus::Connected
             && { self.mgr.dldata_resp.lock().unwrap().status() } == QueueStatus::Connected
@@ -328,7 +328,7 @@ impl QueueEventHandler for MgrMqEventHandler {
     }
 
     // Validate and decode data.
-    async fn on_message(&self, queue: Arc<dyn Queue>, msg: Box<dyn Message>) {
+    async fn on_message(&self, queue: Arc<dyn GmqQueue>, msg: Box<dyn Message>) {
         const _FN_NAME: &'static str = "ApplicationMgr.on_message";
 
         let queue_name = queue.name();

@@ -13,7 +13,7 @@ use actix_web::{
 use async_trait::async_trait;
 use chrono::{DateTime, Utc};
 use general_mq::{
-    queue::{Event, EventHandler as QueueEventHandler, Message, Queue as MqQueue, Status},
+    queue::{Event, EventHandler as QueueEventHandler, GmqQueue, Message, Status},
     Queue,
 };
 use log::{error, info, warn};
@@ -1787,7 +1787,7 @@ impl EventHandler for MgrHandler {
 
 #[async_trait]
 impl QueueEventHandler for CtrlSenderHandler {
-    async fn on_event(&self, queue: Arc<dyn MqQueue>, ev: Event) {
+    async fn on_event(&self, queue: Arc<dyn GmqQueue>, ev: Event) {
         const FN_NAME: &'static str = "CtrlSenderHandler::on_event";
         let queue_name = queue.name();
 
@@ -1816,12 +1816,12 @@ impl QueueEventHandler for CtrlSenderHandler {
         }
     }
 
-    async fn on_message(&self, _queue: Arc<dyn MqQueue>, _msg: Box<dyn Message>) {}
+    async fn on_message(&self, _queue: Arc<dyn GmqQueue>, _msg: Box<dyn Message>) {}
 }
 
 #[async_trait]
 impl QueueEventHandler for CtrlReceiverHandler {
-    async fn on_event(&self, queue: Arc<dyn MqQueue>, ev: Event) {
+    async fn on_event(&self, queue: Arc<dyn GmqQueue>, ev: Event) {
         const FN_NAME: &'static str = "CtrlReceiverHandler::on_event";
         let queue_name = queue.name();
 
@@ -1850,7 +1850,7 @@ impl QueueEventHandler for CtrlReceiverHandler {
         }
     }
 
-    async fn on_message(&self, queue: Arc<dyn MqQueue>, msg: Box<dyn Message>) {
+    async fn on_message(&self, queue: Arc<dyn GmqQueue>, msg: Box<dyn Message>) {
         const FN_NAME: &'static str = "CtrlReceiverHandler::on_message";
         let queue_name = queue.name();
 

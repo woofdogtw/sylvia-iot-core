@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use actix_web::dev::ServerHandle;
-use general_mq::{connection::Connection as MqConnection, Queue};
+use general_mq::{connection::GmqConnection, Queue};
 use laboratory::{describe, LabResult};
 use tokio::{runtime::Runtime, task};
 
@@ -30,7 +30,7 @@ pub struct TestState {
     pub mq_engine: Option<String>,
     pub recv_conns: Option<HashMap<String, Connection>>, // the connection of the recv queue.
     pub recv_queue: Option<Queue>, // recv queue for new() to test data channel.
-    pub mq_conn: Option<Box<dyn MqConnection>>, // connection for send queue.
+    pub mq_conn: Option<Box<dyn GmqConnection>>, // connection for send queue.
     pub data_queue: Option<Queue>, // queue for sending data.
     pub routes_state: Option<State>,
 }

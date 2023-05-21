@@ -5,7 +5,7 @@ use std::{
 };
 
 use async_trait::async_trait;
-use general_mq::queue::{Event, EventHandler, Message, Queue, Status};
+use general_mq::queue::{Event, EventHandler, GmqQueue, Message, Status};
 use laboratory::{expect, SpecContext};
 use tokio::time;
 
@@ -29,7 +29,7 @@ impl TestHandler {
 
 #[async_trait]
 impl EventHandler for TestHandler {
-    async fn on_event(&self, _queue: Arc<dyn Queue>, ev: Event) {
+    async fn on_event(&self, _queue: Arc<dyn GmqQueue>, ev: Event) {
         if let Event::Status(status) = ev {
             if status == Status::Connected {
                 *self.status_changed.lock().unwrap() = true;
@@ -37,7 +37,7 @@ impl EventHandler for TestHandler {
         }
     }
 
-    async fn on_message(&self, _queue: Arc<dyn Queue>, _msg: Box<dyn Message>) {}
+    async fn on_message(&self, _queue: Arc<dyn GmqQueue>, _msg: Box<dyn Message>) {}
 }
 
 /// Test new control queue.

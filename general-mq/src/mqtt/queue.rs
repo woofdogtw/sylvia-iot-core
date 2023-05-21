@@ -13,8 +13,8 @@ use tokio::{
 
 use super::connection::{MqttConnection, PacketHandler};
 use crate::{
-    connection::{Connection, Status as ConnStatus},
-    queue::{name_validate, Event, EventHandler, Message, Queue, Status, QUEUE_NAME_PATTERN},
+    connection::{GmqConnection, Status as ConnStatus},
+    queue::{name_validate, Event, EventHandler, GmqQueue, Message, Status, QUEUE_NAME_PATTERN},
     Error,
 };
 
@@ -132,7 +132,7 @@ impl MqttQueue {
 }
 
 #[async_trait]
-impl Queue for MqttQueue {
+impl GmqQueue for MqttQueue {
     fn name(&self) -> &str {
         self.opts.name.as_str()
     }
