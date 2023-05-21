@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.0.12 - 2023-05-21
+
+### Changed
+
+- **general-mq**: Rename Connection trait to `GmqConnection` and Queue trait to `GmqQueue`.
+    - Let `Connection` and `Queue` to be the utility structures.
+- Update dependencies.
+
+### Fixed
+
+- **general-mq**: Replace `lapin` by `amqprs`.
+    - To avoid locking a connection when creating channels concurrently.
+    - To fix memory leak when processing consumer messages.
+
 ## 0.0.11 - 2023-05-20
 
 ### Fixed
