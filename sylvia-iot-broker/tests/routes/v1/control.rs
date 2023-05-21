@@ -1,7 +1,7 @@
 use std::{collections::HashMap, sync::Arc, time::Duration};
 
 use async_trait::async_trait;
-use general_mq::queue::{Event, EventHandler, Message, Queue as MqQueue, Status};
+use general_mq::queue::{Event, EventHandler, GmqQueue, Message, Status};
 use laboratory::SpecContext;
 use serde::Serialize;
 use serde_json;
@@ -34,9 +34,9 @@ struct TestHandler;
 
 #[async_trait]
 impl EventHandler for TestHandler {
-    async fn on_event(&self, _queue: Arc<dyn MqQueue>, _ev: Event) {}
+    async fn on_event(&self, _queue: Arc<dyn GmqQueue>, _ev: Event) {}
 
-    async fn on_message(&self, _queue: Arc<dyn MqQueue>, _msg: Box<dyn Message>) {}
+    async fn on_message(&self, _queue: Arc<dyn GmqQueue>, _msg: Box<dyn Message>) {}
 }
 
 pub fn after_each_fn(state: &mut HashMap<&'static str, TestState>) -> () {

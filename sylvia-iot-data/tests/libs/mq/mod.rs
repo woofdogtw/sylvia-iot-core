@@ -1,11 +1,12 @@
 use std::collections::HashMap;
 
-use general_mq::{connection::Connection as MqConnection, queue::Queue as MqQueue};
+use general_mq::{connection::GmqConnection, queue::GmqQueue};
 use laboratory::{describe, Suite};
 use reqwest::{self, Method, StatusCode};
 use serde::Deserialize;
 use tokio::runtime::Runtime;
 
+use sylvia_iot_corelib::constants::MqEngine;
 use sylvia_iot_data::{
     libs::mq::Connection,
     models::{
@@ -15,7 +16,6 @@ use sylvia_iot_data::{
         Model, SqliteModel, SqliteOptions,
     },
 };
-use sylvia_iot_corelib::constants::MqEngine;
 
 use crate::TestState;
 

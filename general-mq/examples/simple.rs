@@ -4,10 +4,10 @@ use async_trait::async_trait;
 
 use general_mq::{
     connection::{
-        Connection, Event as ConnEvent, EventHandler as ConnHandler, Status as ConnStatus,
+        Event as ConnEvent, EventHandler as ConnHandler, GmqConnection, Status as ConnStatus,
     },
     queue::{
-        Event as QueueEvent, EventHandler as QueueHandler, Message, Queue, Status as QueueStatus,
+        Event as QueueEvent, EventHandler as QueueHandler, GmqQueue, Message, Status as QueueStatus,
     },
     AmqpConnection, AmqpConnectionOptions, AmqpQueue, AmqpQueueOptions, MqttConnection,
     MqttConnectionOptions, MqttQueue, MqttQueueOptions,
@@ -24,7 +24,7 @@ const TEST_RELIABLE: bool = true;
 
 #[async_trait]
 impl ConnHandler for TestConnHandler {
-    async fn on_event(&self, handler_id: String, _conn: Arc<dyn Connection>, ev: ConnEvent) {
+    async fn on_event(&self, handler_id: String, _conn: Arc<dyn GmqConnection>, ev: ConnEvent) {
         let event = match ev {
             ConnEvent::Status(status) => match status {
                 ConnStatus::Closing => "status: closing".to_string(),
@@ -45,7 +45,7 @@ impl ConnHandler for TestConnHandler {
 
 #[async_trait]
 impl QueueHandler for TestQueueHandler {
-    async fn on_event(&self, queue: Arc<dyn Queue>, ev: QueueEvent) {
+    async fn on_event(&self, queue: Arc<dyn GmqQueue>, ev: QueueEvent) {
         let event = match ev {
             QueueEvent::Status(status) => match status {
                 QueueStatus::Closing => "status: closing".to_string(),
@@ -64,7 +64,7 @@ impl QueueHandler for TestQueueHandler {
         );
     }
 
-    async fn on_message(&self, _queue: Arc<dyn Queue>, msg: Box<dyn Message>) {
+    async fn on_message(&self, _queue: Arc<dyn GmqQueue>, msg: Box<dyn Message>) {
         match String::from_utf8(msg.payload().to_vec()) {
             Err(e) => {
                 println!(

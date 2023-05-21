@@ -29,7 +29,7 @@ pub enum Status {
 
 /// The operations for connections.
 #[async_trait]
-pub trait Connection: Send + Sync {
+pub trait GmqConnection: Send + Sync {
     /// To get the connection status.
     fn status(&self) -> Status;
 
@@ -37,10 +37,10 @@ pub trait Connection: Send + Sync {
     /// handlers.
     fn add_handler(&mut self, handler: Arc<dyn EventHandler>) -> String;
 
-    /// To remove a handler with an idenfier from [`Connection::add_handler`].
+    /// To remove a handler with an idenfier from [`GmqConnection::add_handler`].
     fn remove_handler(&mut self, id: &str);
 
-    /// To connect to the message broker. The [`Connection`] will connect to the broker using
+    /// To connect to the message broker. The [`GmqConnection`] will connect to the broker using
     /// another runtime task and report status with [`Event`]s.
     fn connect(&mut self) -> Result<(), Box<dyn StdError>>;
 
@@ -52,7 +52,7 @@ pub trait Connection: Send + Sync {
 #[async_trait]
 pub trait EventHandler: Send + Sync {
     /// Triggered by [`Event`]s.
-    async fn on_event(&self, handler_id: String, conn: Arc<dyn Connection>, ev: Event);
+    async fn on_event(&self, handler_id: String, conn: Arc<dyn GmqConnection>, ev: Event);
 }
 
 impl Copy for Status {}

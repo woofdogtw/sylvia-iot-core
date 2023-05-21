@@ -3,15 +3,15 @@ use std::collections::HashMap;
 use laboratory::{describe, LabResult};
 use tokio::{runtime::Runtime, task};
 
-use general_mq::{connection::Connection, queue::Queue};
+use general_mq::{connection::GmqConnection, queue::GmqQueue};
 
 mod amqp;
 mod mqtt;
 
 pub struct TestState {
     pub runtime: Runtime,
-    pub conn: Vec<Box<dyn Connection>>,
-    pub queues: Vec<Box<dyn Queue>>,
+    pub conn: Vec<Box<dyn GmqConnection>>,
+    pub queues: Vec<Box<dyn GmqQueue>>,
 }
 
 pub const STATE: &'static str = "general_mq";

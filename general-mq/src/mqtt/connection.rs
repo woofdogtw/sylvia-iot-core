@@ -19,7 +19,7 @@ use tokio::{
 
 use super::uri::{MQTTScheme, MQTTUri};
 use crate::{
-    connection::{Connection, Event, EventHandler, Status},
+    connection::{Event, EventHandler, GmqConnection, Status},
     randomstring, ID_SIZE,
 };
 
@@ -152,7 +152,7 @@ impl MqttConnection {
 }
 
 #[async_trait]
-impl Connection for MqttConnection {
+impl GmqConnection for MqttConnection {
     fn status(&self) -> Status {
         *self.status.lock().unwrap()
     }

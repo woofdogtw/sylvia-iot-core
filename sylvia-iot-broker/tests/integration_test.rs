@@ -1,7 +1,7 @@
 use std::{collections::HashMap, sync::Arc};
 
 use actix_web::dev::ServerHandle;
-use general_mq::{connection::Connection as MqConnection, queue::Queue as MqQueue, Queue};
+use general_mq::{connection::GmqConnection, queue::GmqQueue, Queue};
 use laboratory::{describe, LabResult};
 use tokio::{runtime::Runtime, task};
 
@@ -35,10 +35,10 @@ pub struct TestState {
     pub data_queue: Option<Queue>, // receive queue to test data channel.
     pub data_ch_host: Option<String>, // receive queue host.
     pub routes_state: Option<State>,
-    pub routing_conns: Option<Vec<Box<dyn MqConnection>>>, // for routing/data cases.
-    pub routing_queues: Option<Vec<Box<dyn MqQueue>>>,     // for routing/data cases.
-    pub routing_values: Option<HashMap<String, String>>,   // for routing/data cases.
-    pub routing_device_id: Option<String>,                 // for routing/data cases.
+    pub routing_conns: Option<Vec<Box<dyn GmqConnection>>>, // for routing/data cases.
+    pub routing_queues: Option<Vec<Box<dyn GmqQueue>>>,     // for routing/data cases.
+    pub routing_values: Option<HashMap<String, String>>,    // for routing/data cases.
+    pub routing_device_id: Option<String>,                  // for routing/data cases.
     pub amqp_prefetch: Option<u16>,
     pub mqtt_shared_prefix: Option<String>,
 }

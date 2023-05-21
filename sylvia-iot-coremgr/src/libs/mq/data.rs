@@ -4,7 +4,7 @@ use std::{
 };
 
 use general_mq::{
-    queue::{EventHandler, Queue as MqQueue},
+    queue::{EventHandler, GmqQueue},
     AmqpQueueOptions, MqttQueueOptions, Queue, QueueOptions,
 };
 use url::Url;

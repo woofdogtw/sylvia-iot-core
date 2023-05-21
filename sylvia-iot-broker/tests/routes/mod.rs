@@ -10,8 +10,8 @@ use actix_web::{
 };
 use async_trait::async_trait;
 use general_mq::{
-    connection::Connection as MqConnection,
-    queue::{Event, EventHandler, Message, Queue},
+    connection::GmqConnection,
+    queue::{Event, EventHandler, GmqQueue, Message},
 };
 use laboratory::{describe, expect, SpecContext, Suite};
 use reqwest;
@@ -41,9 +41,9 @@ struct TestHandler;
 
 #[async_trait]
 impl EventHandler for TestHandler {
-    async fn on_event(&self, _queue: Arc<dyn Queue>, _ev: Event) {}
+    async fn on_event(&self, _queue: Arc<dyn GmqQueue>, _ev: Event) {}
 
-    async fn on_message(&self, _queue: Arc<dyn Queue>, _msg: Box<dyn Message>) {}
+    async fn on_message(&self, _queue: Arc<dyn GmqQueue>, _msg: Box<dyn Message>) {}
 }
 
 pub const STATE: &'static str = "routes";

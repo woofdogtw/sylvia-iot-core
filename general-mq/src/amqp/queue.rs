@@ -22,8 +22,8 @@ use tokio::{
 
 use super::connection::AmqpConnection;
 use crate::{
-    connection::{Connection, Status as ConnStatus},
-    queue::{name_validate, Event, EventHandler, Message, Queue, Status, QUEUE_NAME_PATTERN},
+    connection::{GmqConnection, Status as ConnStatus},
+    queue::{name_validate, Event, EventHandler, GmqQueue, Message, Status, QUEUE_NAME_PATTERN},
     Error,
 };
 
@@ -138,7 +138,7 @@ impl AmqpQueue {
 }
 
 #[async_trait]
-impl Queue for AmqpQueue {
+impl GmqQueue for AmqpQueue {
     fn name(&self) -> &str {
         self.opts.name.as_str()
     }

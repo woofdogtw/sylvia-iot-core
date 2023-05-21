@@ -9,8 +9,8 @@ use actix_web::{
 use base64::{engine::general_purpose, Engine};
 use chrono::{DateTime, SubsecRound, Utc};
 use general_mq::{
-    connection::{Connection, Status as ConnStatus},
-    queue::{Queue, Status as QueueStatus},
+    connection::{GmqConnection, Status as ConnStatus},
+    queue::{GmqQueue, Status as QueueStatus},
     AmqpConnection, AmqpConnectionOptions, AmqpQueue, AmqpQueueOptions, MqttConnection,
     MqttConnectionOptions, MqttQueue, MqttQueueOptions,
 };

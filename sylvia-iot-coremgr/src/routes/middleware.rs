@@ -19,7 +19,7 @@ use actix_web::{
 use chrono::Utc;
 use futures::future::{self, LocalBoxFuture, Ready};
 use futures_util::StreamExt;
-use general_mq::{queue::Queue, Queue as MqQueue};
+use general_mq::{queue::GmqQueue, Queue};
 use reqwest;
 use serde::{self, Deserialize, Serialize};
 use serde_json::{Map, Value};
@@ -28,13 +28,13 @@ use sylvia_iot_corelib::{http as sylvia_http, strings};
 
 pub struct LogService {
     auth_uri: String,
-    queue: Option<MqQueue>,
+    queue: Option<Queue>,
 }
 
 pub struct LogMiddleware<S> {
     client: reqwest::Client,
     auth_uri: String,
-    queue: Option<MqQueue>,
+    queue: Option<Queue>,
     service: Rc<RefCell<S>>,
 }
 
@@ -105,7 +105,7 @@ impl DataMsgKind {
 }
 
 impl LogService {
-    pub fn new(auth_uri: String, queue: Option<MqQueue>) -> Self {
+    pub fn new(auth_uri: String, queue: Option<Queue>) -> Self {
         LogService { auth_uri, queue }
     }
 }

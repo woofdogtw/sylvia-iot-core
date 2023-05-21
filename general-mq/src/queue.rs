@@ -33,7 +33,7 @@ pub(crate) const QUEUE_NAME_PATTERN: &'static str = r"^[a-z0-9_-]+([\.]{1}[a-z0-
 
 /// The operations for queues.
 #[async_trait]
-pub trait Queue: Send + Sync {
+pub trait GmqQueue: Send + Sync {
     /// To get the queue name.
     fn name(&self) -> &str;
 
@@ -49,7 +49,7 @@ pub trait Queue: Send + Sync {
     /// To remove the queue event handler.
     fn clear_handler(&mut self);
 
-    /// To connect to the message queue. The [`Queue`] will connect to the queue using another
+    /// To connect to the message queue. The [`GmqQueue`] will connect to the queue using another
     /// runtime task and report status with [`Event`]s.
     fn connect(&mut self) -> Result<(), Box<dyn StdError>>;
 
@@ -79,10 +79,10 @@ pub trait Message: Send + Sync {
 #[async_trait]
 pub trait EventHandler: Send + Sync {
     /// Triggered by [`Event`]s.
-    async fn on_event(&self, queue: Arc<dyn Queue>, ev: Event);
+    async fn on_event(&self, queue: Arc<dyn GmqQueue>, ev: Event);
 
     /// Triggered for new incoming [`Message`]s.
-    async fn on_message(&self, queue: Arc<dyn Queue>, msg: Box<dyn Message>);
+    async fn on_message(&self, queue: Arc<dyn GmqQueue>, msg: Box<dyn Message>);
 }
 
 impl Copy for Status {}

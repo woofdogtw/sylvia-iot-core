@@ -9,10 +9,9 @@ use laboratory::{expect, SpecContext};
 use tokio::{task, time};
 
 use general_mq::{
-    connection::Connection,
-    queue::{Event, EventHandler, Message, Queue, Status},
-    AmqpConnection, AmqpConnectionOptions, AmqpQueue, AmqpQueueOptions, Queue as MqQueue,
-    QueueOptions as MqQueueOptions,
+    connection::GmqConnection,
+    queue::{Event, EventHandler, GmqQueue, Message, Status},
+    AmqpConnection, AmqpConnectionOptions, AmqpQueue, AmqpQueueOptions, Queue, QueueOptions,
 };
 
 use super::{TestState, STATE};
@@ -21,7 +20,7 @@ use super::{TestState, STATE};
 struct Resources {
     pub conn: Vec<Box<AmqpConnection>>,
     pub queues: Vec<Box<AmqpQueue>>,
-    pub mq_queues: Vec<Box<MqQueue>>,
+    pub mq_queues: Vec<Box<Queue>>,
 }
 
 struct TestConnectHandler {
@@ -56,7 +55,7 @@ const RETRY_10MS: usize = 100;
 
 #[async_trait]
 impl EventHandler for TestConnectHandler {
-    async fn on_event(&self, queue: Arc<dyn Queue>, ev: Event) {
+    async fn on_event(&self, queue: Arc<dyn GmqQueue>, ev: Event) {
         if let Event::Status(status) = ev {
             if status == Status::Connected {
                 *self.recv_connected.lock().unwrap() = true;
@@ -65,12 +64,12 @@ impl EventHandler for TestConnectHandler {
         }
     }
 
-    async fn on_message(&self, _queue: Arc<dyn Queue>, _msg: Box<dyn Message>) {}
+    async fn on_message(&self, _queue: Arc<dyn GmqQueue>, _msg: Box<dyn Message>) {}
 }
 
 #[async_trait]
 impl EventHandler for TestRemoveHandler {
-    async fn on_event(&self, _queue: Arc<dyn Queue>, ev: Event) {
+    async fn on_event(&self, _queue: Arc<dyn GmqQueue>, ev: Event) {
         if let Event::Status(status) = ev {
             if status == Status::Connected {
                 let mut mutex = self.connected_count.lock().unwrap();
@@ -79,12 +78,12 @@ impl EventHandler for TestRemoveHandler {
         }
     }
 
-    async fn on_message(&self, _queue: Arc<dyn Queue>, _msg: Box<dyn Message>) {}
+    async fn on_message(&self, _queue: Arc<dyn GmqQueue>, _msg: Box<dyn Message>) {}
 }
 
 #[async_trait]
 impl EventHandler for TestCloseHandler {
-    async fn on_event(&self, queue: Arc<dyn Queue>, ev: Event) {
+    async fn on_event(&self, queue: Arc<dyn GmqQueue>, ev: Event) {
         if let Event::Status(status) = ev {
             if status == Status::Closed {
                 *self.recv_closed.lock().unwrap() = true;
@@ -93,12 +92,12 @@ impl EventHandler for TestCloseHandler {
         }
     }
 
-    async fn on_message(&self, _queue: Arc<dyn Queue>, _msg: Box<dyn Message>) {}
+    async fn on_message(&self, _queue: Arc<dyn GmqQueue>, _msg: Box<dyn Message>) {}
 }
 
 #[async_trait]
 impl EventHandler for TestReconnectHandler {
-    async fn on_event(&self, _queue: Arc<dyn Queue>, ev: Event) {
+    async fn on_event(&self, _queue: Arc<dyn GmqQueue>, ev: Event) {
         if let Event::Status(status) = ev {
             if status == Status::Connected {
                 let mut mutex = self.connected_count.lock().unwrap();
@@ -109,14 +108,14 @@ impl EventHandler for TestReconnectHandler {
         }
     }
 
-    async fn on_message(&self, _queue: Arc<dyn Queue>, _msg: Box<dyn Message>) {}
+    async fn on_message(&self, _queue: Arc<dyn GmqQueue>, _msg: Box<dyn Message>) {}
 }
 
 #[async_trait]
 impl EventHandler for TestRecvMsgHandler {
-    async fn on_event(&self, _queue: Arc<dyn Queue>, _ev: Event) {}
+    async fn on_event(&self, _queue: Arc<dyn GmqQueue>, _ev: Event) {}
 
-    async fn on_message(&self, _queue: Arc<dyn Queue>, msg: Box<dyn Message>) {
+    async fn on_message(&self, _queue: Arc<dyn GmqQueue>, msg: Box<dyn Message>) {
         let use_nack;
         {
             use_nack = *self.use_nack.lock().unwrap();
@@ -249,14 +248,14 @@ pub fn connect_no_handler(context: &mut SpecContext<TestState>) -> Result<(), St
         Ok(q) => q,
     };
     state.queues.push(Box::new(queue.clone()));
-    let conn: &mut dyn Connection = &mut conn;
-    let queue: &mut dyn Queue = &mut queue;
+    let conn: &mut dyn GmqConnection = &mut conn;
+    let queue: &mut dyn GmqQueue = &mut queue;
 
     if let Err(e) = conn.connect() {
-        return Err(format!("Connect::connect() error: {}", e));
+        return Err(format!("GmqConnection::connect() error: {}", e));
     }
     if let Err(e) = queue.connect() {
-        return Err(format!("Queue::connect() error: {}", e));
+        return Err(format!("GmqQueue::connect() error: {}", e));
     }
     state.runtime.block_on(wait_connected(queue, RETRY_10MS))
 }
@@ -316,10 +315,10 @@ pub fn connect_after_connect(context: &mut SpecContext<TestState>) -> Result<(),
         Ok(q) => q,
     };
     state.queues = vec![Box::new(queue.clone())];
-    let queue: &mut dyn Queue = &mut queue;
+    let queue: &mut dyn GmqQueue = &mut queue;
 
     if let Err(e) = queue.connect() {
-        return Err(format!("Queue::connect() error: {}", e));
+        return Err(format!("GmqQueue::connect() error: {}", e));
     }
     expect(queue.connect().is_ok()).to_equal(true)
 }
@@ -346,10 +345,10 @@ pub fn clear_handler(context: &mut SpecContext<TestState>) -> Result<(), String>
     queue.clear_handler();
 
     if let Err(e) = conn.connect() {
-        return Err(format!("Connect::connect() error: {}", e));
+        return Err(format!("GmqConnection::connect() error: {}", e));
     }
     if let Err(e) = queue.connect() {
-        return Err(format!("Queue::connect() error: {}", e));
+        return Err(format!("GmqQueue::connect() error: {}", e));
     }
 
     let count = state.runtime.block_on(async move {
@@ -498,7 +497,7 @@ pub fn mq_new_default(_context: &mut SpecContext<TestState>) -> Result<(), Strin
         Ok(conn) => conn,
     };
 
-    let opts = MqQueueOptions::Amqp(
+    let opts = QueueOptions::Amqp(
         AmqpQueueOptions {
             name: "name".to_string(),
             reconnect_millis: 0,
@@ -506,7 +505,7 @@ pub fn mq_new_default(_context: &mut SpecContext<TestState>) -> Result<(), Strin
         },
         &conn,
     );
-    let queue = MqQueue::new(opts);
+    let queue = Queue::new(opts);
     expect(queue.is_ok()).to_equal(true)
 }
 
@@ -517,27 +516,27 @@ pub fn mq_new_wrong_opts(_context: &mut SpecContext<TestState>) -> Result<(), St
         Ok(conn) => conn,
     };
 
-    let opts = MqQueueOptions::Amqp(
+    let opts = QueueOptions::Amqp(
         AmqpQueueOptions {
             name: "".to_string(),
             ..Default::default()
         },
         &conn,
     );
-    let queue = MqQueue::new(opts);
+    let queue = Queue::new(opts);
     expect(queue.is_err()).to_equal(true)?;
 
-    let opts = MqQueueOptions::Amqp(
+    let opts = QueueOptions::Amqp(
         AmqpQueueOptions {
             name: "A@".to_string(),
             ..Default::default()
         },
         &conn,
     );
-    let queue = MqQueue::new(opts);
+    let queue = Queue::new(opts);
     expect(queue.is_err()).to_equal(true)?;
 
-    let opts = MqQueueOptions::Amqp(
+    let opts = QueueOptions::Amqp(
         AmqpQueueOptions {
             name: "name".to_string(),
             is_recv: true,
@@ -546,7 +545,7 @@ pub fn mq_new_wrong_opts(_context: &mut SpecContext<TestState>) -> Result<(), St
         },
         &conn,
     );
-    let queue = MqQueue::new(opts);
+    let queue = Queue::new(opts);
     expect(queue.is_err()).to_equal(true)
 }
 
@@ -557,14 +556,14 @@ pub fn mq_properties(_context: &mut SpecContext<TestState>) -> Result<(), String
         Ok(conn) => conn,
     };
 
-    let opts = MqQueueOptions::Amqp(
+    let opts = QueueOptions::Amqp(
         AmqpQueueOptions {
             name: "name-send".to_string(),
             ..Default::default()
         },
         &conn,
     );
-    let queue = match MqQueue::new(opts) {
+    let queue = match Queue::new(opts) {
         Err(e) => return Err(format!("Queue::new() error: {}", e)),
         Ok(q) => q,
     };
@@ -576,7 +575,7 @@ pub fn mq_properties(_context: &mut SpecContext<TestState>) -> Result<(), String
         return Err("send queue status not Closed".to_string());
     }
 
-    let opts = MqQueueOptions::Amqp(
+    let opts = QueueOptions::Amqp(
         AmqpQueueOptions {
             name: "name-recv".to_string(),
             is_recv: true,
@@ -584,7 +583,7 @@ pub fn mq_properties(_context: &mut SpecContext<TestState>) -> Result<(), String
         },
         &conn,
     );
-    let queue = match MqQueue::new(opts) {
+    let queue = match Queue::new(opts) {
         Err(e) => return Err(format!("Queue::new() error: {}", e)),
         Ok(q) => q,
     };
@@ -609,7 +608,7 @@ pub fn mq_connect_no_handler(context: &mut SpecContext<TestState>) -> Result<(),
         Ok(conn) => conn,
     };
     state.conn = vec![Box::new(conn.clone())];
-    let opts = MqQueueOptions::Amqp(
+    let opts = QueueOptions::Amqp(
         AmqpQueueOptions {
             name: "name".to_string(),
             is_recv: true,
@@ -617,19 +616,19 @@ pub fn mq_connect_no_handler(context: &mut SpecContext<TestState>) -> Result<(),
         },
         &conn,
     );
-    let mut queue = match MqQueue::new(opts) {
+    let mut queue = match Queue::new(opts) {
         Err(e) => return Err(format!("Queue::new() error: {}", e)),
         Ok(q) => q,
     };
     state.queues.push(Box::new(queue.clone()));
-    let conn: &mut dyn Connection = &mut conn;
-    let queue: &mut dyn Queue = &mut queue;
+    let conn: &mut dyn GmqConnection = &mut conn;
+    let queue: &mut dyn GmqQueue = &mut queue;
 
     if let Err(e) = conn.connect() {
-        return Err(format!("Connect::connect() error: {}", e));
+        return Err(format!("GmqConnection::connect() error: {}", e));
     }
     if let Err(e) = queue.connect() {
-        return Err(format!("Queue::connect() error: {}", e));
+        return Err(format!("GmqQueue::connect() error: {}", e));
     }
     state.runtime.block_on(wait_connected(queue, RETRY_10MS))
 }
@@ -679,7 +678,7 @@ pub fn mq_connect_after_connect(context: &mut SpecContext<TestState>) -> Result<
         Ok(conn) => conn,
     };
     state.conn = vec![Box::new(conn.clone())];
-    let opts = MqQueueOptions::Amqp(
+    let opts = QueueOptions::Amqp(
         AmqpQueueOptions {
             name: "name".to_string(),
             is_recv: true,
@@ -687,15 +686,15 @@ pub fn mq_connect_after_connect(context: &mut SpecContext<TestState>) -> Result<
         },
         &conn,
     );
-    let mut queue = match MqQueue::new(opts) {
+    let mut queue = match Queue::new(opts) {
         Err(e) => return Err(format!("Queue::new() error: {}", e)),
         Ok(q) => q,
     };
     state.queues = vec![Box::new(queue.clone())];
-    let queue: &mut dyn Queue = &mut queue;
+    let queue: &mut dyn GmqQueue = &mut queue;
 
     if let Err(e) = queue.connect() {
-        return Err(format!("Queue::connect() error: {}", e));
+        return Err(format!("GmqQueue::connect() error: {}", e));
     }
     expect(queue.connect().is_ok()).to_equal(true)
 }
@@ -722,10 +721,10 @@ pub fn mq_clear_handler(context: &mut SpecContext<TestState>) -> Result<(), Stri
     queue.clear_handler();
 
     if let Err(e) = conn.connect() {
-        return Err(format!("Connect::connect() error: {}", e));
+        return Err(format!("GmqConnection::connect() error: {}", e));
     }
     if let Err(e) = queue.connect() {
-        return Err(format!("Queue::connect() error: {}", e));
+        return Err(format!("GmqQueue::connect() error: {}", e));
     }
 
     let count = state.runtime.block_on(async move {
@@ -835,7 +834,7 @@ pub fn mq_send_error(context: &mut SpecContext<TestState>) -> Result<(), String>
         Ok(conn) => conn,
     };
 
-    let opts = MqQueueOptions::Amqp(
+    let opts = QueueOptions::Amqp(
         AmqpQueueOptions {
             name: "name".to_string(),
             is_recv: true,
@@ -843,7 +842,7 @@ pub fn mq_send_error(context: &mut SpecContext<TestState>) -> Result<(), String>
         },
         &conn,
     );
-    let queue = match MqQueue::new(opts) {
+    let queue = match Queue::new(opts) {
         Err(e) => return Err(format!("Queue::new() recv error: {}", e)),
         Ok(q) => q,
     };
@@ -853,7 +852,7 @@ pub fn mq_send_error(context: &mut SpecContext<TestState>) -> Result<(), String>
         Ok(()) => return Err("send to recv queue should error".to_string()),
     }
 
-    let opts = MqQueueOptions::Amqp(
+    let opts = QueueOptions::Amqp(
         AmqpQueueOptions {
             name: "name".to_string(),
             is_recv: false,
@@ -861,7 +860,7 @@ pub fn mq_send_error(context: &mut SpecContext<TestState>) -> Result<(), String>
         },
         &conn,
     );
-    let queue = match MqQueue::new(opts) {
+    let queue = match Queue::new(opts) {
         Err(e) => return Err(format!("Queue::new() send error: {}", e)),
         Ok(conn) => conn,
     };
@@ -920,7 +919,7 @@ pub fn reconnect(context: &mut SpecContext<TestState>) -> Result<(), String> {
         }
 
         if let Err(e) = conn.connect() {
-            return Err(format!("Connect::connect() again error: {}", e));
+            return Err(format!("GmqConnection::connect() again error: {}", e));
         }
         if let Err(e) = wait_connected(queue.as_ref(), 1000).await {
             return Err(format!("wait reconnect connected error: {}", e));
@@ -1576,10 +1575,10 @@ fn create_conn_rsc(
     }
 
     if let Err(e) = conn.connect() {
-        return Err(format!("Connect::connect() error: {}", e));
+        return Err(format!("GmqConnection::connect() error: {}", e));
     }
     if let Err(e) = queue.connect() {
-        return Err(format!("Queue::connect() error: {}", e));
+        return Err(format!("GmqQueue::connect() error: {}", e));
     }
     Ok(())
 }
@@ -1597,7 +1596,7 @@ fn mq_create_conn_rsc(
     };
     state.conn = vec![Box::new(conn.clone())];
     resources.conn = vec![Box::new(conn.clone())];
-    let opts = MqQueueOptions::Amqp(
+    let opts = QueueOptions::Amqp(
         AmqpQueueOptions {
             name: "name".to_string(),
             is_recv: true,
@@ -1605,7 +1604,7 @@ fn mq_create_conn_rsc(
         },
         &conn,
     );
-    let mut queue = match MqQueue::new(opts) {
+    let mut queue = match Queue::new(opts) {
         Err(e) => return Err(format!("Queue::new() error: {}", e)),
         Ok(q) => q,
     };
@@ -1621,10 +1620,10 @@ fn mq_create_conn_rsc(
     }
 
     if let Err(e) = conn.connect() {
-        return Err(format!("Connect::connect() error: {}", e));
+        return Err(format!("GmqConnection::connect() error: {}", e));
     }
     if let Err(e) = queue.connect() {
-        return Err(format!("Queue::connect() error: {}", e));
+        return Err(format!("GmqQueue::connect() error: {}", e));
     }
     Ok(())
 }
@@ -1675,18 +1674,18 @@ fn create_msg_rsc(
 
     for conn in resources.conn.iter_mut() {
         if let Err(e) = conn.connect() {
-            return Err(format!("Connect::connect() error: {}", e));
+            return Err(format!("GmqConnection::connect() error: {}", e));
         }
     }
     for queue in resources.queues.iter_mut() {
         if let Err(e) = queue.connect() {
-            return Err(format!("Queue::connect() error: {}", e));
+            return Err(format!("GmqQueue::connect() error: {}", e));
         }
     }
     Ok(ret_handlers)
 }
 
-async fn wait_connected(queue: &dyn Queue, mut retry: usize) -> Result<(), String> {
+async fn wait_connected(queue: &dyn GmqQueue, mut retry: usize) -> Result<(), String> {
     while retry > 0 {
         time::sleep(Duration::from_millis(10)).await;
         if queue.status() == Status::Connected {

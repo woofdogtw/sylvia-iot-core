@@ -9,7 +9,7 @@ use std::{
 use async_trait::async_trait;
 use chrono::DateTime;
 use general_mq::{
-    queue::{Event, EventHandler, Message, Queue as MqQueue, Status},
+    queue::{Event, EventHandler, GmqQueue, Message, Status},
     Queue,
 };
 use log::{error, info, warn};
@@ -75,7 +75,7 @@ pub fn new(
 
 #[async_trait]
 impl EventHandler for DataHandler {
-    async fn on_event(&self, queue: Arc<dyn MqQueue>, ev: Event) {
+    async fn on_event(&self, queue: Arc<dyn GmqQueue>, ev: Event) {
         const FN_NAME: &'static str = "DataHandler::on_event";
         let queue_name = queue.name();
 
@@ -88,7 +88,7 @@ impl EventHandler for DataHandler {
         }
     }
 
-    async fn on_message(&self, queue: Arc<dyn MqQueue>, msg: Box<dyn Message>) {
+    async fn on_message(&self, queue: Arc<dyn GmqQueue>, msg: Box<dyn Message>) {
         const FN_NAME: &'static str = "DataHandler::on_message";
         let queue_name = queue.name();
 

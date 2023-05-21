@@ -71,7 +71,7 @@ mod mqtt;
 
 pub use amqp::{AmqpConnection, AmqpConnectionOptions, AmqpQueue, AmqpQueueOptions};
 pub use mqtt::{MqttConnection, MqttConnectionOptions, MqttQueue, MqttQueueOptions};
-use queue::{EventHandler, Queue as MqQueue, Status};
+use queue::{EventHandler, GmqQueue, Status};
 
 /// general-mq error.
 #[derive(Clone, Debug)]
@@ -119,7 +119,7 @@ impl Queue {
 }
 
 #[async_trait]
-impl MqQueue for Queue {
+impl GmqQueue for Queue {
     fn name(&self) -> &str {
         match self {
             Queue::Amqp(q) => q.name(),

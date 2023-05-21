@@ -19,7 +19,7 @@ use tokio::{
 };
 
 use crate::{
-    connection::{Connection, Event, EventHandler, Status},
+    connection::{Event, EventHandler, GmqConnection, Status},
     randomstring, ID_SIZE,
 };
 
@@ -113,7 +113,7 @@ impl AmqpConnection {
 }
 
 #[async_trait]
-impl Connection for AmqpConnection {
+impl GmqConnection for AmqpConnection {
     fn status(&self) -> Status {
         *self.status.lock().unwrap()
     }

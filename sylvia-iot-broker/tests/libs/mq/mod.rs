@@ -5,8 +5,8 @@ use std::{
 };
 
 use general_mq::{
-    connection::{Connection as MqConnection, Status},
-    queue::Queue as MqQueue,
+    connection::{GmqConnection, Status},
+    queue::GmqQueue,
     AmqpConnection, AmqpConnectionOptions, MqttConnection, MqttConnectionOptions,
 };
 use laboratory::{describe, Suite};
