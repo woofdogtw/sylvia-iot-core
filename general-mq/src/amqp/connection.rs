@@ -10,9 +10,10 @@ use amqprs::{
     connection::{Connection as AmqprsConnection, OpenConnectionArguments},
     error::Error as AmqprsError,
     security::SecurityCredentials,
+    tls::TlsAdaptor,
 };
 use async_trait::async_trait;
-use lapin::uri::AMQPUri;
+use lapin::uri::{AMQPScheme, AMQPUri};
 use tokio::{
     task::{self, JoinHandle},
     time,
@@ -87,6 +88,13 @@ impl AmqpConnection {
                 &uri.authority.userinfo.password,
             ))
             .virtual_host(&uri.vhost);
+        if uri.scheme == AMQPScheme::AMQPS {
+            let adaptor = match TlsAdaptor::without_client_auth(None, uri.authority.host.clone()) {
+                Err(e) => return Err(e.to_string()),
+                Ok(adaptor) => adaptor,
+            };
+            args.tls_adaptor(adaptor);
+        }
 
         Ok(AmqpConnection {
             opts: InnerOptions {
