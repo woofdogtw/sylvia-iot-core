@@ -34,7 +34,7 @@ mod v1;
 pub struct State {
     /// The scope root path for the service.
     ///
-    /// For example `coremgr`, the APIs are
+    /// For example `/coremgr`, the APIs are
     /// - `http://host:port/coremgr/api/v1/user/xxx`
     /// - `http://host:port/coremgr/api/v1/unit/xxx`
     pub scope_path: &'static str,

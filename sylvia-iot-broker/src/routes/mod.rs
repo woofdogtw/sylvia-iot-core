@@ -40,7 +40,7 @@ mod v1;
 pub struct State {
     /// The scope root path for the service.
     ///
-    /// For example `broker`, the APIs are
+    /// For example `/broker`, the APIs are
     /// - `http://host:port/broker/api/v1/unit/xxx`
     /// - `http://host:port/broker/api/v1/application/xxx`
     pub scope_path: &'static str,

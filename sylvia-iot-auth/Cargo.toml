@@ -1,6 +1,6 @@
 [package]
 name = "sylvia-iot-auth"
-version = "0.0.12"
+version = "0.0.13"
 authors = ["Chien-Hong Chan"]
 description = "The authentication/authorization module of the Sylvia-IoT platform."
 edition = "2021"
@@ -17,7 +17,7 @@ actix-web = { version = "4.3.1", default-features = false, features = ["rustls"]
 actix-web-prom = "0.6.0"
 async-stream = "0.3.5"
 async-trait = "0.1.68"
-base64 = "0.21.0"
+base64 = "0.21.2"
 chrono = { version = "0.4.24", default-features = false, features = ["serde"] }
 clap = { version = "4.3.0", default-features = false, features = ["std", "help", "usage", "error-context"] }
 futures = "0.3.28"

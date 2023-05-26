@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.0.13 - 2023-05-26
+
+### Changed
+
+- Update dependencies.
+
+### Fixed
+
+- **general-mq**: Support **amqps**.
+
 ## 0.0.12 - 2023-05-21
 
 ### Changed
