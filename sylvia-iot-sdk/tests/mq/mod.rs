@@ -4,17 +4,17 @@ use std::{
     time::Duration,
 };
 
-use general_mq::{
-    connection::{GmqConnection, Status},
-    queue::GmqQueue,
-    AmqpConnection, AmqpConnectionOptions, MqttConnection, MqttConnectionOptions,
-};
 use laboratory::{describe, Suite};
 use reqwest::{Method, StatusCode};
 use serde::Deserialize;
 use tokio::{runtime::Runtime, time};
 use url::Url;
 
+use general_mq::{
+    connection::{GmqConnection, Status},
+    queue::GmqQueue,
+    AmqpConnection, AmqpConnectionOptions, MqttConnection, MqttConnectionOptions,
+};
 use sylvia_iot_sdk::mq::Connection;
 
 pub mod application;
@@ -77,6 +77,8 @@ pub fn suite(mq_engine: &'static str) -> Suite<TestState> {
                 "dldata-result with wrong content",
                 network::dldata_result_wrong,
             );
+            context.it("ctrl", network::ctrl);
+            context.it("ctrl with wrong content", network::ctrl_wrong);
 
             context.after_each(after_each_fn);
         });

@@ -1,13 +1,13 @@
 use std::{collections::HashMap, sync::Arc, time::Duration};
 
 use async_trait::async_trait;
-use general_mq::queue::{Event, EventHandler, GmqQueue, Message, Status};
 use laboratory::SpecContext;
 use serde::Serialize;
 use serde_json;
 use tokio::time;
 use url::Url;
 
+use general_mq::queue::{Event, EventHandler, GmqQueue, Message, Status};
 use sylvia_iot_broker::libs::{
     config::DEF_MQ_CHANNEL_URL,
     mq::{control, Options as MgrOptions},

@@ -1,17 +1,17 @@
 use std::{collections::HashMap, time::Duration};
 
 use base64::{engine::general_purpose, Engine};
-use general_mq::{
-    connection::{GmqConnection, Status as ConnStatus},
-    queue::{GmqQueue, Status as QueueStatus},
-    MqttConnection, MqttConnectionOptions, MqttQueue, MqttQueueOptions,
-};
 use laboratory::SpecContext;
 use reqwest::{Client, Method, StatusCode};
 use serde::{Deserialize, Serialize};
 use serde_json;
 use tokio::time;
 
+use general_mq::{
+    connection::{GmqConnection, Status as ConnStatus},
+    queue::{GmqQueue, Status as QueueStatus},
+    MqttConnection, MqttConnectionOptions, MqttQueue, MqttQueueOptions,
+};
 use sylvia_iot_corelib::err::ErrResp;
 use sylvia_iot_coremgr::libs::mq::{
     emqx::{self, ManagementOpts},
@@ -586,8 +586,8 @@ pub fn post_acl(context: &mut SpecContext<TestState>) -> Result<(), String> {
             (StatusCode::OK, body) => match serde_json::from_str::<GetAclBody>(body.as_str()) {
                 Err(e) => return Err(format!("unexpected response: {}, body: {}", e, body)),
                 Ok(resp) => match resp.rules.len() {
-                    3 => Ok(()),
-                    _ => Err(format!("post_acl number wrong: 3/{}", resp.rules.len())),
+                    4 => Ok(()),
+                    _ => Err(format!("post_acl number wrong: 4/{}", resp.rules.len())),
                 },
             },
             (status, body) => Err(format!(

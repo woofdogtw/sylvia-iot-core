@@ -8,18 +8,18 @@ use actix_web::{
 };
 use base64::{engine::general_purpose, Engine};
 use chrono::{DateTime, SubsecRound, Utc};
-use general_mq::{
-    connection::{GmqConnection, Status as ConnStatus},
-    queue::{GmqQueue, Status as QueueStatus},
-    AmqpConnection, AmqpConnectionOptions, AmqpQueue, AmqpQueueOptions, MqttConnection,
-    MqttConnectionOptions, MqttQueue, MqttQueueOptions,
-};
 use hex;
 use laboratory::{expect, SpecContext};
 use serde::{Deserialize, Serialize};
 use serde_json::{Map, Value};
 use tokio::{runtime::Runtime, time};
 
+use general_mq::{
+    connection::{GmqConnection, Status as ConnStatus},
+    queue::{GmqQueue, Status as QueueStatus},
+    AmqpConnection, AmqpConnectionOptions, AmqpQueue, AmqpQueueOptions, MqttConnection,
+    MqttConnectionOptions, MqttQueue, MqttQueueOptions,
+};
 use sylvia_iot_broker::models::{device, Model};
 use sylvia_iot_corelib::err;
 use sylvia_iot_coremgr::{
@@ -140,6 +140,7 @@ struct GetNetworkStatsRes {
 #[derive(Deserialize)]
 struct GetNetworkStatsResData {
     dldata: Stats,
+    ctrl: Stats,
 }
 
 const UNIT_OWNER: &'static str = "manager";
@@ -1009,9 +1010,15 @@ pub fn stats(context: &mut SpecContext<TestState>) -> Result<(), String> {
     if let Err(e) = runtime.block_on(async {
         rabbitmq::publish_message(client, &mq_opts.0, host, username, "dldata", payload).await
     }) {
-        return Err(format!("publish AMQP payload error: {}", e));
+        return Err(format!("publish AMQP dldata payload error: {}", e));
     }
-    test_stats(runtime, routes_state, network_id, is_rumqttd)?;
+    let payload = general_purpose::STANDARD.encode("amqp2");
+    if let Err(e) = runtime.block_on(async {
+        rabbitmq::publish_message(client, &mq_opts.0, host, username, "ctrl", payload).await
+    }) {
+        return Err(format!("publish AMQP ctrl payload error: {}", e));
+    }
+    test_stats(runtime, routes_state, network_id, false)?;
 
     param.data.code = NET2_CODE.to_string();
     param.data.host_uri = match state.rumqttd_handles.is_some() {
@@ -1031,7 +1038,13 @@ pub fn stats(context: &mut SpecContext<TestState>) -> Result<(), String> {
         if let Err(e) = runtime.block_on(async {
             emqx::publish_message(client, &mq_opts.1, host, username, "dldata", payload).await
         }) {
-            return Err(format!("publish MQTT payload error: {}", e));
+            return Err(format!("publish MQTT dldata payload error: {}", e));
+        }
+        let payload = general_purpose::STANDARD.encode("mqtt2");
+        if let Err(e) = runtime.block_on(async {
+            emqx::publish_message(client, &mq_opts.1, host, username, "ctrl", payload).await
+        }) {
+            return Err(format!("publish MQTT ctrl payload error: {}", e));
         }
     }
     test_stats(runtime, routes_state, network_id, is_rumqttd)
@@ -1542,6 +1555,8 @@ fn test_stats(
     });
 
     runtime.block_on(async {
+        let mut recv_dldata = false;
+        let mut recv_ctrl = false;
         for _ in 0..WAIT_COUNT {
             let req = TestRequest::get()
                 .uri(format!("/coremgr/api/v1/network/{}/stats", network_id).as_str())
@@ -1558,23 +1573,29 @@ fn test_stats(
                 return Err(format!("API not 200, status: {}, body: {}", status, body));
             }
             let body = test::read_body(resp).await;
-            let stats = match String::from_utf8(body.to_vec()) {
+            let (dldata_stats, ctrl_stats) = match String::from_utf8(body.to_vec()) {
                 Err(e) => return Err(format!("response body is not UTF-8: {}", e)),
                 Ok(body) => match serde_json::from_str::<GetNetworkStatsRes>(body.as_str()) {
                     Err(e) => {
                         return Err(format!("unexpected response format: {}, body: {}", e, body))
                     }
-                    Ok(body) => body.data.dldata,
+                    Ok(body) => (body.data.dldata, body.data.ctrl),
                 },
             };
+            if !recv_dldata && (dldata_stats.messages > 0 || dldata_stats.publish_rate > 0.0) {
+                recv_dldata = true;
+            }
+            if !recv_ctrl && (ctrl_stats.messages > 0 || ctrl_stats.publish_rate > 0.0) {
+                recv_ctrl = true;
+            }
+            if recv_dldata && recv_ctrl {
+                return Ok(());
+            }
 
             if is_rumqttd {
                 return Ok(());
             }
             time::sleep(Duration::from_millis(WAIT_TICK)).await;
-            if stats.messages > 0 || stats.publish_rate > 0.0 {
-                return Ok(());
-            }
         }
         Err("stats not changed".to_string())
     })

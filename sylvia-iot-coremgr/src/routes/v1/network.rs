@@ -824,6 +824,24 @@ async fn get_network_stats(
                         deliver_rate: stats.deliver_rate,
                     },
                 },
+                ctrl: match rabbitmq::stats(&client, opts, host, username, "ctrl").await {
+                    Err(ErrResp::ErrNotFound(_)) => response::Stats {
+                        consumers: 0,
+                        messages: 0,
+                        publish_rate: 0.0,
+                        deliver_rate: 0.0,
+                    },
+                    Err(e) => {
+                        error!("[{}] get ctrl stats error: {}", FN_NAME, e);
+                        return e.error_response();
+                    }
+                    Ok(stats) => response::Stats {
+                        consumers: stats.consumers,
+                        messages: stats.messages,
+                        publish_rate: stats.publish_rate,
+                        deliver_rate: stats.deliver_rate,
+                    },
+                },
             }
         }
         "mqtt" | "mqtts" => match &state.mqtt {
@@ -848,10 +866,25 @@ async fn get_network_stats(
                             deliver_rate: stats.deliver_rate,
                         },
                     },
+                    ctrl: match emqx::stats(&client, opts, host, username, "ctrl").await {
+                        Err(e) => {
+                            error!("[{}] get ctrl stats error: {}", FN_NAME, e);
+                            return e.error_response();
+                        }
+                        Ok(stats) => response::Stats {
+                            consumers: stats.consumers,
+                            messages: stats.messages,
+                            publish_rate: stats.publish_rate,
+                            deliver_rate: stats.deliver_rate,
+                        },
+                    },
                 }
             }
             MqttState::Rumqttd => response::GetNetworkStatsData {
                 dldata: response::Stats {
+                    ..Default::default()
+                },
+                ctrl: response::Stats {
                     ..Default::default()
                 },
             },

@@ -1,10 +1,10 @@
 use std::{collections::HashMap, error::Error as StdError, sync::Arc};
 
 use actix_web::{dev::HttpServiceFactory, error, web, HttpResponse, Responder};
-use general_mq::Queue;
 use reqwest;
 use serde::{Deserialize, Serialize};
 
+use general_mq::Queue;
 use sylvia_iot_corelib::{constants::DbEngine, err::ErrResp};
 
 use crate::{

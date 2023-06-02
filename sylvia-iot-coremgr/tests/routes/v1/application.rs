@@ -8,18 +8,18 @@ use actix_web::{
 };
 use base64::{engine::general_purpose, Engine};
 use chrono::{DateTime, SubsecRound, Utc};
-use general_mq::{
-    connection::{GmqConnection, Status as ConnStatus},
-    queue::{GmqQueue, Status as QueueStatus},
-    AmqpConnection, AmqpConnectionOptions, AmqpQueue, AmqpQueueOptions, MqttConnection,
-    MqttConnectionOptions, MqttQueue, MqttQueueOptions,
-};
 use hex;
 use laboratory::{expect, SpecContext};
 use serde::{Deserialize, Serialize};
 use serde_json::{Map, Value};
 use tokio::{runtime::Runtime, time};
 
+use general_mq::{
+    connection::{GmqConnection, Status as ConnStatus},
+    queue::{GmqQueue, Status as QueueStatus},
+    AmqpConnection, AmqpConnectionOptions, AmqpQueue, AmqpQueueOptions, MqttConnection,
+    MqttConnectionOptions, MqttQueue, MqttQueueOptions,
+};
 use sylvia_iot_broker::models::{device, network, Model};
 use sylvia_iot_corelib::err;
 use sylvia_iot_coremgr::{

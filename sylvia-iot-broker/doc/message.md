@@ -2,6 +2,10 @@
 
 ## Between Broker and Application
 
+### Device and application data
+
+These messages are used between devices and applications with **unicast** and **reliable** queues.
+
     broker.application.[unit].[code].uldata: {
         dataId: string,                 // unique data ID
         time: string,                   // device time for this data in ISO 8601 format
@@ -40,6 +44,10 @@
 
 ## Between Broker and Network
 
+### Device and application data
+
+These messages are used between devices and applications with **unicast** and **reliable** queues.
+
     broker.network.[unit].[code].uldata: {
         time: string,                   // device time for this data in ISO 8601 format
         networkAddr: string,            // device network address
@@ -62,12 +70,46 @@
         message: string                 // (optional) detail message
     }
 
+### Control messages
+
+These messages are used for notifying network servers that relative devices are modified with **unicast** and **reliable** queues.
+
+    broker.network.[unit].[code].ctrl: {
+        operation: string,              // operation
+        time: string,                   // timestamp in ISO 8601 format.
+        new: object | object[],         // new configuration(s)
+        old: object | object[]          // (optional) old configuration(s)
+    }
+
+The operations are:
+
+- `add-device`: to add a device.
+    - *object* `new`:
+        - *string* `networkAddr`: The network address of the specified network.
+- `add-device-bulk`: to add devices in bulk.
+    - *object* `new`:
+        - *string[]* `networkAddrs`: The network addresses of the specified network.
+- `add-device-range`: to add devices with address range.
+    - *object* `new`:
+        - *string* `startAddr`: The start network address of the specified network.
+        - *string* `endAddr`: The end network address of the specified network.
+- `del-device`: to delete a device.
+    - *object* `new`:
+        - *string* `networkAddr`: The network address of the specified network.
+- `del-device-bulk`: to delete devices in bulk.
+    - *object* `new`:
+        - *string[]* `networkAddrs`: The network addresses of the specified network.
+- `del-device-range`: to delete devices with address range.
+    - *object* `new`:
+        - *string* `startAddr`: The start network address of the specified network.
+        - *string* `endAddr`: The end network address of the specified network.
+
 ## Control Channel
 
-The messages of control channel is used for operating cache.
+The messages are used between `broker`s in the clulster for operating cache with **broadcast** and **best-effort** queues.
 
     broker.ctrl.[function]: {           // function such as `application`, `network`, ...
-        operation: string,              // operation 
+        operation: string,              // operation
         new: object | object[],         // new configuration(s)
         old: object | object[]          // (optional) old configuration(s)
     }
@@ -161,6 +203,8 @@ The messages of control channel is used for operating cache.
         - *string* `networkCode`: network code.
 
 ## Data Channel
+
+These messages are used from `broker` to `data` module(s) with **unicast** and **reliable** queues.
 
     broker.data: {
         kind: string,   // network-uldata, network-dldata, ...

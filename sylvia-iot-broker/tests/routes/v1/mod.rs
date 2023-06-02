@@ -21,6 +21,7 @@ mod device_route;
 mod dldata_buffer;
 mod libs;
 mod network;
+mod network_ctrl;
 mod network_route;
 mod routing;
 mod unit;
@@ -719,6 +720,64 @@ pub fn suite_data(
                 .before_all(data::before_all_fn)
                 .after_all(data::after_all_fn)
                 .after_each(data::after_each_fn);
+        });
+
+        context
+            .before_all(move |state| {
+                state.insert(
+                    STATE,
+                    new_state(Some(db_engine), Some(cache_engine), Some(data_host)),
+                );
+                create_users_tokens(state);
+            })
+            .after_all(after_all_fn);
+    })
+}
+
+pub fn suite_net_ctrl(
+    db_engine: &'static str,
+    cache_engine: &'static str,
+    data_host: &'static str,
+) -> Suite<TestState> {
+    let suite_name = format!(
+        "routes.v1 - network control channel - {}/{}/{}",
+        db_engine, cache_engine, data_host
+    );
+    describe(suite_name, move |context| {
+        context.describe("network control channel", |context| {
+            context.it("POST /device", network_ctrl::post_device);
+            context.it("POST /device/bulk", network_ctrl::post_device_bulk);
+            context.it(
+                "POST /device/bulk-delete",
+                network_ctrl::post_device_bulk_delete,
+            );
+            context.it("POST /device/range", network_ctrl::post_device_range);
+            context.it(
+                "POST /device/range-delete",
+                network_ctrl::post_device_range_delete,
+            );
+            context.it(
+                "PATCH /device/{deviceId} with diff address",
+                network_ctrl::patch_device_addr,
+            );
+            context.it(
+                "PATCH /device/{deviceId} with diff network",
+                network_ctrl::patch_device_network,
+            );
+            context.it(
+                "PATCH /device/{deviceId} with diff network and address",
+                network_ctrl::patch_device_network_addr,
+            );
+            context.it(
+                "PATCH /device/{deviceId} without network and address",
+                network_ctrl::patch_device_none,
+            );
+            context.it("DELETE /device/{deviceId}", network_ctrl::delete_device);
+
+            context
+                .before_all(network_ctrl::before_all_fn)
+                .after_all(network_ctrl::after_all_fn)
+                .after_each(network_ctrl::after_each_fn);
         });
 
         context

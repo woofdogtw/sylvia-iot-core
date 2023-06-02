@@ -8,14 +8,15 @@ use std::{
 
 use async_trait::async_trait;
 use chrono::DateTime;
-use general_mq::{
-    queue::{Event, EventHandler, GmqQueue, Message, Status},
-    Queue,
-};
 use log::{error, info, warn};
 use serde::Deserialize;
 use serde_json::{Map, Value};
 use tokio::time;
+
+use general_mq::{
+    queue::{Event, EventHandler, GmqQueue, Message, Status},
+    Queue,
+};
 
 use super::{super::config::DataData as DataMqConfig, new_data_queue, Connection};
 use crate::models::{coremgr_opdata::CoremgrOpData, Model};

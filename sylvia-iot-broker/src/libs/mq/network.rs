@@ -7,13 +7,6 @@ use std::{
 
 use async_trait::async_trait;
 use chrono::DateTime;
-use general_mq::{
-    queue::{
-        Event as QueueEvent, EventHandler as QueueEventHandler, GmqQueue, Message,
-        Status as QueueStatus,
-    },
-    Queue,
-};
 use hex;
 use log::{error, warn};
 use serde::{Deserialize, Serialize};
@@ -21,11 +14,18 @@ use serde_json::{Map, Value};
 use tokio::task;
 use url::Url;
 
+use general_mq::{
+    queue::{
+        Event as QueueEvent, EventHandler as QueueEventHandler, GmqQueue, Message,
+        Status as QueueStatus,
+    },
+    Queue,
+};
 use sylvia_iot_corelib::strings;
 
 use super::{
-    get_connection, new_data_queues, remove_connection, Connection, DataMqStatus, MgrStatus,
-    Options,
+    get_connection, new_ctrl_queues, new_data_queues, remove_connection, Connection, MgrMqStatus,
+    MgrStatus, Options,
 };
 
 /// Uplink data from network to broker.
@@ -75,6 +75,7 @@ pub struct NetworkMgr {
     uldata: Arc<Mutex<Queue>>,
     dldata: Arc<Mutex<Queue>>,
     dldata_result: Arc<Mutex<Queue>>,
+    ctrl: Arc<Mutex<Queue>>,
 
     status: Arc<Mutex<MgrStatus>>,
     handler: Arc<Mutex<Arc<dyn EventHandler>>>,
@@ -107,6 +108,7 @@ impl NetworkMgr {
         let conn = get_connection(&conn_pool, host_uri)?;
 
         let (uldata, dldata, _, dldata_result) = new_data_queues(&conn, &opts, QUEUE_PREFIX, true)?;
+        let ctrl = new_ctrl_queues(&conn, &opts, QUEUE_PREFIX, true)?;
 
         let mgr = NetworkMgr {
             opts: Arc::new(opts),
@@ -115,6 +117,7 @@ impl NetworkMgr {
             uldata,
             dldata,
             dldata_result,
+            ctrl,
             status: Arc::new(Mutex::new(MgrStatus::NotReady)),
             handler: Arc::new(Mutex::new(handler)),
         };
@@ -134,12 +137,17 @@ impl NetworkMgr {
         if let Err(e) = q.connect() {
             return Err(e.to_string());
         }
+        let mut q = { mgr.ctrl.lock().unwrap().clone() };
+        q.set_handler(mq_handler.clone());
+        if let Err(e) = q.connect() {
+            return Err(e.to_string());
+        }
         match conn {
             Connection::Amqp(_, counter) => {
-                *counter.lock().unwrap() += 3;
+                *counter.lock().unwrap() += 4;
             }
             Connection::Mqtt(_, counter) => {
-                *counter.lock().unwrap() += 3;
+                *counter.lock().unwrap() += 4;
             }
         }
         Ok(mgr)
@@ -171,12 +179,13 @@ impl NetworkMgr {
     }
 
     /// Detail status of each message queue. Please ignore `dldata_resp`.
-    pub fn mq_status(&self) -> DataMqStatus {
-        DataMqStatus {
+    pub fn mq_status(&self) -> MgrMqStatus {
+        MgrMqStatus {
             uldata: { self.uldata.lock().unwrap().status() },
             dldata: { self.dldata.lock().unwrap().status() },
             dldata_resp: QueueStatus::Closed,
             dldata_result: { self.dldata_result.lock().unwrap().status() },
+            ctrl: { self.ctrl.lock().unwrap().status() },
         }
     }
 
@@ -188,8 +197,10 @@ impl NetworkMgr {
         q.close().await?;
         let mut q = { self.dldata_result.lock().unwrap().clone() };
         q.close().await?;
+        let mut q = { self.ctrl.lock().unwrap().clone() };
+        q.close().await?;
 
-        remove_connection(&self.conn_pool, &self.host_uri, 3).await
+        remove_connection(&self.conn_pool, &self.host_uri, 4).await
     }
 
     /// Send downlink data to the network.
@@ -201,6 +212,12 @@ impl NetworkMgr {
         });
         Ok(())
     }
+
+    /// Send control data to the network.
+    pub async fn send_ctrl(&self, payload: Vec<u8>) -> Result<(), Box<dyn StdError>> {
+        let queue = { (*self.ctrl.lock().unwrap()).clone() };
+        queue.send_msg(payload).await
+    }
 }
 
 #[async_trait]
@@ -209,10 +226,12 @@ impl QueueEventHandler for MgrMqEventHandler {
         let uldata_status = { self.mgr.uldata.lock().unwrap().status() };
         let dldata_status = { self.mgr.dldata.lock().unwrap().status() };
         let dldata_result_status = { self.mgr.dldata_result.lock().unwrap().status() };
+        let ctrl_status = { self.mgr.ctrl.lock().unwrap().status() };
 
         let status = match uldata_status == QueueStatus::Connected
             && dldata_status == QueueStatus::Connected
             && dldata_result_status == QueueStatus::Connected
+            && ctrl_status == QueueStatus::Connected
         {
             false => MgrStatus::NotReady,
             true => MgrStatus::Ready,

@@ -5,17 +5,17 @@ use std::{
 };
 
 use async_trait::async_trait;
+use laboratory::{expect, SpecContext};
+use serde::{self, Deserialize, Serialize};
+use serde_json::{self, Map, Value};
+use tokio::time;
+
 use general_mq::{
     queue::{
         Event as MqEvent, EventHandler as MqEventHandler, GmqQueue, Message, Status as MqStatus,
     },
     AmqpQueueOptions, MqttQueueOptions, Queue, QueueOptions,
 };
-use laboratory::{expect, SpecContext};
-use serde::{self, Deserialize, Serialize};
-use serde_json::{self, Map, Value};
-use tokio::time;
-
 use sylvia_iot_broker::libs::mq::{
     network::{DlData, DlDataResult, EventHandler, NetworkMgr, UlData},
     Connection, MgrStatus, Options,
@@ -71,6 +71,12 @@ struct TestDlDataHandler {
     // Use Mutex to implement interior mutability.
     status_connected: Arc<Mutex<bool>>,
     recv_dldata: Arc<Mutex<Vec<Box<NetDlData>>>>,
+}
+
+struct TestCtrlDataHandler {
+    // Use Mutex to implement interior mutability.
+    status_connected: Arc<Mutex<bool>>,
+    recv_ctrl: Arc<Mutex<Vec<Vec<u8>>>>,
 }
 
 impl TestHandler {
@@ -157,6 +163,34 @@ impl MqEventHandler for TestDlDataHandler {
     }
 }
 
+impl TestCtrlDataHandler {
+    fn new() -> Self {
+        TestCtrlDataHandler {
+            status_connected: Arc::new(Mutex::new(false)),
+            recv_ctrl: Arc::new(Mutex::new(vec![])),
+        }
+    }
+}
+
+#[async_trait]
+impl MqEventHandler for TestCtrlDataHandler {
+    async fn on_event(&self, _queue: Arc<dyn GmqQueue>, ev: MqEvent) {
+        if let MqEvent::Status(status) = ev {
+            if status == MqStatus::Connected {
+                *self.status_connected.lock().unwrap() = true;
+            }
+        }
+    }
+
+    async fn on_message(&self, _queue: Arc<dyn GmqQueue>, msg: Box<dyn Message>) {
+        let data = msg.payload().to_vec();
+        {
+            self.recv_ctrl.lock().unwrap().push(data);
+        }
+        let _ = msg.ack().await;
+    }
+}
+
 /// Test new managers with default options.
 pub fn new_default(context: &mut SpecContext<TestState>) -> Result<(), String> {
     let mut state = context.state.borrow_mut();
@@ -190,6 +224,7 @@ pub fn new_default(context: &mut SpecContext<TestState>) -> Result<(), String> {
     expect(mq_status.dldata == MqStatus::Connecting).equals(true)?;
     expect(mq_status.dldata_resp == MqStatus::Closed).equals(true)?;
     expect(mq_status.dldata_result == MqStatus::Connecting).equals(true)?;
+    expect(mq_status.ctrl == MqStatus::Connecting).equals(true)?;
 
     for _ in 0..WAIT_COUNT {
         if *handler.status_changed.lock().unwrap() {
@@ -204,6 +239,7 @@ pub fn new_default(context: &mut SpecContext<TestState>) -> Result<(), String> {
     expect(mq_status.dldata == MqStatus::Connected).equals(true)?;
     expect(mq_status.dldata_resp == MqStatus::Closed).equals(true)?;
     expect(mq_status.dldata_result == MqStatus::Connected).equals(true)?;
+    expect(mq_status.ctrl == MqStatus::Connected).equals(true)?;
 
     Ok(())
 }
@@ -1042,6 +1078,129 @@ pub fn dldata_result_wrong(context: &mut SpecContext<TestState>) -> Result<(), S
         }
         time::sleep(Duration::from_secs(1)).await;
         expect(handler.recv_dldata_result.lock().unwrap().len()).equals(0)?;
+
+        if let Err(e) = mgr.close().await {
+            return Err(format!("close manager error: {}", e));
+        }
+        Ok(())
+    })?;
+    Ok(())
+}
+
+/// Test generating ctrl data.
+pub fn ctrl(context: &mut SpecContext<TestState>) -> Result<(), String> {
+    let mut state = context.state.borrow_mut();
+    let state = state.get_mut(STATE).unwrap();
+    let runtime = state.runtime.as_ref().unwrap();
+    let mq_engine = state.mq_engine.as_ref().unwrap().as_str();
+
+    let conn = new_connection(runtime, mq_engine)?;
+    state.mq_conn = Some(conn.clone());
+    let conn_pool = Arc::new(Mutex::new(HashMap::new()));
+    let host_uri = conn_host_uri(mq_engine)?;
+    let handler = Arc::new(TestHandler::new());
+
+    let opts = Options {
+        unit_id: "unit_id".to_string(),
+        unit_code: "unit_code".to_string(),
+        id: "id_network".to_string(),
+        name: "code_network".to_string(),
+        prefetch: state.amqp_prefetch,
+        shared_prefix: state.mqtt_shared_prefix.clone(),
+        ..Default::default()
+    };
+    let mgr = NetworkMgr::new(conn_pool.clone(), &host_uri, opts, handler.clone())?;
+    state.net_mgrs = Some(vec![mgr.clone()]);
+
+    let queue_handler = Arc::new(TestCtrlDataHandler::new());
+    let _queue_result = match conn {
+        Connection::Amqp(conn, _) => {
+            let opts = QueueOptions::Amqp(
+                AmqpQueueOptions {
+                    name: "broker.network.unit_code.code_network.ctrl".to_string(),
+                    is_recv: true,
+                    reliable: true,
+                    broadcast: false,
+                    ..Default::default()
+                },
+                &conn,
+            );
+            let mut queue_result = Queue::new(opts)?;
+            queue_result.set_handler(queue_handler.clone());
+            if let Err(e) = queue_result.connect() {
+                return Err(format!("connect ctrl queue error: {}", e));
+            }
+            queue_result
+        }
+        Connection::Mqtt(conn, _) => {
+            let opts = QueueOptions::Mqtt(
+                MqttQueueOptions {
+                    name: "broker.network.unit_code.code_network.ctrl".to_string(),
+                    is_recv: true,
+                    reliable: true,
+                    broadcast: false,
+                    ..Default::default()
+                },
+                &conn,
+            );
+            let mut queue_result = Queue::new(opts)?;
+            queue_result.set_handler(queue_handler.clone());
+            if let Err(e) = queue_result.connect() {
+                return Err(format!("connect ctrl queue error: {}", e));
+            }
+            queue_result
+        }
+    };
+
+    runtime.block_on(async move {
+        for _ in 0..WAIT_COUNT {
+            if *queue_handler.status_connected.lock().unwrap() {
+                break;
+            }
+            time::sleep(Duration::from_millis(WAIT_TICK)).await;
+        }
+        if !*queue_handler.status_connected.lock().unwrap() {
+            return Err("send queue not connected".to_string());
+        }
+        for _ in 0..WAIT_COUNT {
+            if mgr.status() == MgrStatus::Ready {
+                break;
+            }
+            time::sleep(Duration::from_millis(WAIT_TICK)).await;
+        }
+        if mgr.status() != MgrStatus::Ready {
+            return Err("manager not ready".to_string());
+        }
+
+        if let Err(e) = mgr.send_ctrl("1".to_string().into_bytes()).await {
+            return Err(format!("send data1 error: {}", e));
+        }
+        if let Err(e) = mgr.send_ctrl("2".to_string().into_bytes()).await {
+            return Err(format!("send data2 error: {}", e));
+        }
+
+        for _ in 0..WAIT_COUNT {
+            if queue_handler.recv_ctrl.lock().unwrap().len() < 2 {
+                time::sleep(Duration::from_millis(WAIT_TICK)).await;
+                continue;
+            }
+        }
+        if queue_handler.recv_ctrl.lock().unwrap().len() < 2 {
+            return Err(format!(
+                "receive {}/2 data",
+                queue_handler.recv_ctrl.lock().unwrap().len()
+            ));
+        }
+
+        for i in 0..2 {
+            let data = match { queue_handler.recv_ctrl.lock().unwrap().pop() } {
+                None => return Err(format!("only receive {}/2 data", i)),
+                Some(data) => data,
+            };
+            if data.len() != 1 || (data[0] != b'1' && data[0] != b'2') {
+                return Err(format!("receive wrong data {:?}", data));
+            }
+        }
 
         if let Err(e) = mgr.close().await {
             return Err(format!("close manager error: {}", e));

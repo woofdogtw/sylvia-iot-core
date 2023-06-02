@@ -6,12 +6,6 @@ use std::{
 
 use async_trait::async_trait;
 use chrono::Utc;
-use general_mq::{
-    connection::GmqConnection,
-    queue::{Event, EventHandler, GmqQueue, Message},
-    AmqpConnection, AmqpConnectionOptions, AmqpQueueOptions, MqttConnection, MqttConnectionOptions,
-    MqttQueueOptions, Queue, QueueOptions,
-};
 use hex;
 use laboratory::SpecContext;
 use serde::{Deserialize, Serialize};
@@ -19,6 +13,12 @@ use serde_json::{Map, Value};
 use tokio::time;
 use url::Url;
 
+use general_mq::{
+    connection::GmqConnection,
+    queue::{Event, EventHandler, GmqQueue, Message},
+    AmqpConnection, AmqpConnectionOptions, AmqpQueueOptions, MqttConnection, MqttConnectionOptions,
+    MqttQueueOptions, Queue, QueueOptions,
+};
 use sylvia_iot_broker::libs::mq::{data, Connection, MgrStatus};
 use sylvia_iot_corelib::strings::time_str;
 
@@ -224,7 +224,7 @@ struct AppNetConsumerHandler {
 const UNIT_CODE: &'static str = "manager";
 const APP_CODE: &'static str = "manager";
 const NET_CODE_PRV: &'static str = "manager";
-const NET_CODE_PUB: &'static str = "manager";
+const NET_CODE_PUB: &'static str = "public";
 const NET_ADDR_PRV: &'static str = "manager";
 const NET_ADDR_PRV_NOT_ROUTE: &'static str = "manager-not-route";
 const NET_ADDR_PUB: &'static str = "public";
@@ -295,7 +295,7 @@ pub fn before_all_fn(state: &mut HashMap<&'static str, TestState>) -> () {
     let state = state.get_mut(STATE).unwrap();
     let runtime = state.runtime.as_ref().unwrap();
     let routes_state = state.routes_state.as_mut().unwrap();
-    let routing_values = state.routing_values.as_mut().unwrap();
+    let test_values = state.test_values.as_mut().unwrap();
     let data_ch_host = state.data_ch_host.as_ref().unwrap();
 
     // Setup data channel send queue.
@@ -393,7 +393,7 @@ pub fn before_all_fn(state: &mut HashMap<&'static str, TestState>) -> () {
         }
         Ok(device_id) => device_id,
     };
-    routing_values.insert(NET_ADDR_PUB.to_string(), public_device_id.clone());
+    test_values.insert(NET_ADDR_PUB.to_string(), public_device_id.clone());
     device.data.network_id = public_network_id.clone();
     device.data.network_addr = NET_ADDR_PUB_NOT_ROUTE.to_string();
     let _public_device_id = match libs::create_device(runtime, routes_state, TOKEN_MANAGER, &device)
@@ -504,7 +504,7 @@ pub fn after_each_fn(state: &mut HashMap<&'static str, TestState>) -> () {
             }
         })
     }
-    if let Some(mut conns) = state.routing_conns.take() {
+    if let Some(mut conns) = state.test_conns.take() {
         runtime.block_on(async move {
             loop {
                 match conns.pop() {
@@ -767,7 +767,7 @@ pub fn downlink(context: &mut SpecContext<TestState>) -> Result<(), String> {
 
     let rsc = create_connections(state)?;
     let runtime = state.runtime.as_ref().unwrap();
-    let routing_values = state.routing_values.as_ref().unwrap();
+    let test_values = state.test_values.as_ref().unwrap();
 
     // Send to private device by network address.
     let payload_hex = hex::encode(NET_ADDR_PRV);
@@ -845,7 +845,7 @@ pub fn downlink(context: &mut SpecContext<TestState>) -> Result<(), String> {
     let payload_hex = hex::encode(NET_ADDR_PUB);
     let data = QueueAppDlData {
         correlation_id: NET_ADDR_PUB.to_string(),
-        device_id: Some(routing_values.get(NET_ADDR_PUB).unwrap().clone()),
+        device_id: Some(test_values.get(NET_ADDR_PUB).unwrap().clone()),
         network_code: None,
         network_addr: None,
         data: payload_hex.clone(),
@@ -928,7 +928,7 @@ fn create_connections(state: &mut TestState) -> Result<TestResources, String> {
         if let Err(e) = conn.connect() {
             return Err(format!("new connection error: {}", e));
         }
-        state.routing_conns = Some(vec![Box::new(conn.clone())]);
+        state.test_conns = Some(vec![Box::new(conn.clone())]);
 
         // Create data channel receive queue.
         let opts = QueueOptions::Mqtt(
@@ -1065,7 +1065,7 @@ fn create_connections(state: &mut TestState) -> Result<TestResources, String> {
         if let Err(e) = conn.connect() {
             return Err(format!("new connection error: {}", e));
         }
-        state.routing_conns = Some(vec![Box::new(conn.clone())]);
+        state.test_conns = Some(vec![Box::new(conn.clone())]);
 
         // Create data channel receive queue.
         let opts = QueueOptions::Amqp(

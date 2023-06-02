@@ -431,14 +431,13 @@ async fn create_queue_rsc<'a>(
                     error!("[{}] add EMQX user {} error: {}", fn_name, username, e);
                     return Err(e.error_response());
                 }
-                let q_type = QueueType::Application;
-                if let Err(e) = emqx::post_acl(&client, opts, host, q_type, username).await {
+                if let Err(e) = emqx::post_acl(&client, opts, host, rsc.q_type, username).await {
                     let _ = clear_queue_rsc(fn_name, &state, &clear_rsc);
                     error!("[{}] add EMQX ACL {} error: {}", fn_name, username, e);
                     return Err(e.error_response());
                 }
                 if let Err(e) =
-                    emqx::post_topic_metrics(&client, opts, host, q_type, username).await
+                    emqx::post_topic_metrics(&client, opts, host, rsc.q_type, username).await
                 {
                     let _ = clear_queue_rsc(fn_name, &state, &clear_rsc);
                     error!("[{}] add EMQX metrics {} error: {}", fn_name, username, e);

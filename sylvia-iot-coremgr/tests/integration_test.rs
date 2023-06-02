@@ -1,11 +1,11 @@
 use std::thread::JoinHandle as ThreadHandle;
 
 use actix_web::dev::ServerHandle;
-use general_mq::{AmqpConnection, Queue};
 use laboratory::{describe, LabResult};
 use reqwest::Client;
 use tokio::{runtime::Runtime, task};
 
+use general_mq::{AmqpConnection, Queue};
 use sylvia_iot_auth::models::SqliteModel as AuthDbModel;
 use sylvia_iot_broker::models::SqliteModel as BrokerDbModel;
 use sylvia_iot_corelib::constants::MqEngine;

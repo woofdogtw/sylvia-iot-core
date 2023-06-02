@@ -6,17 +6,17 @@ use std::{
 
 use async_trait::async_trait;
 use chrono::{TimeZone, Utc};
+use laboratory::{expect, SpecContext};
+use serde::{self, Deserialize, Serialize};
+use serde_json::{self, Map, Value};
+use tokio::time;
+
 use general_mq::{
     queue::{
         Event as MqEvent, EventHandler as MqEventHandler, GmqQueue, Message, Status as MqStatus,
     },
     AmqpQueueOptions, MqttQueueOptions, Queue, QueueOptions,
 };
-use laboratory::{expect, SpecContext};
-use serde::{self, Deserialize, Serialize};
-use serde_json::{self, Map, Value};
-use tokio::time;
-
 use sylvia_iot_sdk::{
     mq::{
         application::{ApplicationMgr, DlData, DlDataResp, DlDataResult, EventHandler, UlData},
@@ -132,7 +132,7 @@ impl EventHandler for TestHandler {
             let mut mutex = self.is_uldata_recv.lock().unwrap();
             if !*mutex {
                 *mutex = true;
-                return Err(());
+                return Err(()); // test AMQP NACK.
             }
         }
 
@@ -146,7 +146,7 @@ impl EventHandler for TestHandler {
             let mut mutex = self.is_dldata_resp_recv.lock().unwrap();
             if !*mutex {
                 *mutex = true;
-                return Err(());
+                return Err(()); // test AMQP NACK.
             }
         }
 
@@ -164,7 +164,7 @@ impl EventHandler for TestHandler {
             let mut mutex = self.is_dldata_result_recv.lock().unwrap();
             if !*mutex {
                 *mutex = true;
-                return Err(());
+                return Err(()); // test AMQP NACK.
             }
         }
 

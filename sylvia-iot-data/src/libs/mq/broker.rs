@@ -8,10 +8,6 @@ use std::{
 
 use async_trait::async_trait;
 use chrono::DateTime;
-use general_mq::{
-    queue::{Event, EventHandler, GmqQueue, Message, Status},
-    Queue,
-};
 use log::{error, info, warn};
 use serde::Deserialize;
 use serde_json::{Map, Value};
@@ -29,6 +25,10 @@ use crate::models::{
     },
     network_uldata::NetworkUlData,
     Model,
+};
+use general_mq::{
+    queue::{Event, EventHandler, GmqQueue, Message, Status},
+    Queue,
 };
 
 #[derive(Clone)]

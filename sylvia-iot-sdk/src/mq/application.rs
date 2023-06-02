@@ -8,6 +8,12 @@ use std::{
 
 use async_trait::async_trait;
 use chrono::{DateTime, Utc};
+use hex;
+use serde::{Deserialize, Serialize};
+use serde_json::{self, Map, Value};
+use tokio::task;
+use url::Url;
+
 use general_mq::{
     queue::{
         Event as QueueEvent, EventHandler as QueueEventHandler, GmqQueue, Message,
@@ -15,11 +21,6 @@ use general_mq::{
     },
     Queue,
 };
-use hex;
-use serde::{Deserialize, Serialize};
-use serde_json::{self, Map, Value};
-use tokio::task;
-use url::Url;
 
 use super::{
     get_connection, new_data_queues, remove_connection, Connection, DataMqStatus, MgrStatus,
@@ -169,7 +170,7 @@ impl ApplicationMgr {
 
         let conn = get_connection(&conn_pool, host_uri)?;
 
-        let (uldata, dldata, dldata_resp, dldata_result) =
+        let (uldata, dldata, dldata_resp, dldata_result, _) =
             new_data_queues(&conn, &opts, QUEUE_PREFIX, false)?;
 
         let mgr = ApplicationMgr {
@@ -240,13 +241,14 @@ impl ApplicationMgr {
         *self.status.lock().unwrap()
     }
 
-    /// Detail status of each message queue.
+    /// Detail status of each message queue. Please ignore `ctrl`.
     pub fn mq_status(&self) -> DataMqStatus {
         DataMqStatus {
             uldata: { self.uldata.lock().unwrap().status() },
             dldata: { self.dldata.lock().unwrap().status() },
             dldata_resp: { self.dldata_resp.lock().unwrap().status() },
             dldata_result: { self.dldata_result.lock().unwrap().status() },
+            ctrl: QueueStatus::Closed,
         }
     }
 

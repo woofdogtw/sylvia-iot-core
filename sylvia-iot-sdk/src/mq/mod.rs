@@ -54,6 +54,8 @@ pub struct DataMqStatus {
     pub dldata_resp: Status,
     /// For `dldata-result`.
     pub dldata_result: Status,
+    /// For `ctrl`.
+    pub ctrl: Status,
 }
 
 /// The options of the application/network manager.
@@ -182,6 +184,7 @@ async fn remove_connection(
 /// - `[prefix].[unit].[code].dldata`
 /// - `[prefix].[unit].[code].dldata-resp`: `Some` for applications and `None` for networks.
 /// - `[prefix].[unit].[code].dldata-result`
+/// - `[prefix].[unit].[code].ctrl`
 fn new_data_queues(
     conn: &Connection,
     opts: &Options,
@@ -193,6 +196,7 @@ fn new_data_queues(
         Arc<Mutex<Queue>>,
         Option<Arc<Mutex<Queue>>>,
         Arc<Mutex<Queue>>,
+        Option<Arc<Mutex<Queue>>>,
     ),
     String,
 > {
@@ -200,6 +204,7 @@ fn new_data_queues(
     let dldata: Arc<Mutex<Queue>>;
     let dldata_resp: Option<Arc<Mutex<Queue>>>;
     let dldata_result: Arc<Mutex<Queue>>;
+    let ctrl: Option<Arc<Mutex<Queue>>>;
 
     if opts.unit_id.len() == 0 {
         if opts.unit_code.len() != 0 {
@@ -276,6 +281,17 @@ fn new_data_queues(
                 },
                 conn,
             );
+            let ctrl_opts = QueueOptions::Amqp(
+                AmqpQueueOptions {
+                    name: format!("{}.{}.{}.ctrl", prefix, unit, opts.name.as_str()),
+                    is_recv: is_network,
+                    reliable: true,
+                    broadcast: false,
+                    prefetch,
+                    ..Default::default()
+                },
+                conn,
+            );
             uldata = Arc::new(Mutex::new(Queue::new(uldata_opts)?));
             dldata = Arc::new(Mutex::new(Queue::new(dldata_opts)?));
             dldata_resp = match is_network {
@@ -283,6 +299,10 @@ fn new_data_queues(
                 true => None,
             };
             dldata_result = Arc::new(Mutex::new(Queue::new(dldata_result_opts)?));
+            ctrl = match is_network {
+                false => None,
+                true => Some(Arc::new(Mutex::new(Queue::new(ctrl_opts)?))),
+            };
         }
         Connection::Mqtt(conn, _) => {
             let uldata_opts = QueueOptions::Mqtt(
@@ -329,6 +349,17 @@ fn new_data_queues(
                 },
                 conn,
             );
+            let ctrl_opts = QueueOptions::Mqtt(
+                MqttQueueOptions {
+                    name: format!("{}.{}.{}.ctrl", prefix, unit, opts.name.as_str()),
+                    is_recv: is_network,
+                    reliable: true,
+                    broadcast: false,
+                    shared_prefix: opts.shared_prefix.clone(),
+                    ..Default::default()
+                },
+                conn,
+            );
             uldata = Arc::new(Mutex::new(Queue::new(uldata_opts)?));
             dldata = Arc::new(Mutex::new(Queue::new(dldata_opts)?));
             dldata_resp = match is_network {
@@ -336,8 +367,12 @@ fn new_data_queues(
                 true => None,
             };
             dldata_result = Arc::new(Mutex::new(Queue::new(dldata_result_opts)?));
+            ctrl = match is_network {
+                false => None,
+                true => Some(Arc::new(Mutex::new(Queue::new(ctrl_opts)?))),
+            };
         }
     }
 
-    Ok((uldata, dldata, dldata_resp, dldata_result))
+    Ok((uldata, dldata, dldata_resp, dldata_result, ctrl))
 }

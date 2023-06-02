@@ -274,6 +274,11 @@ pub async fn post_acl(
                 action: "publish",
                 permission: "allow",
             },
+            PostAclRuleItem {
+                topic: format!("broker.{}.ctrl", username),
+                action: "subscribe",
+                permission: "allow",
+            },
         ],
     };
     let req = match client
@@ -428,7 +433,7 @@ pub async fn post_topic_metrics(
     let q_name_prefix = format!("broker.{}.", username);
     let queues = match q_type {
         QueueType::Application => vec!["uldata", "dldata", "dldata-resp", "dldata-result"],
-        QueueType::Network => vec!["uldata", "dldata", "dldata-result"],
+        QueueType::Network => vec!["uldata", "dldata", "dldata-result", "ctrl"],
     };
     for queue in queues {
         let req = match client
@@ -497,7 +502,7 @@ pub async fn delete_topic_metrics(
     );
     let queues = match q_type {
         QueueType::Application => vec!["uldata", "dldata", "dldata-resp", "dldata-result"],
-        QueueType::Network => vec!["uldata", "dldata", "dldata-result"],
+        QueueType::Network => vec!["uldata", "dldata", "dldata-result", "ctrl"],
     };
     for queue in queues {
         let req = match client
@@ -537,7 +542,7 @@ pub async fn stats(
     opts: &ManagementOpts,
     hostname: &str,
     username: &str,
-    queue: &str, // uldata,dldata,dldata-resp,dldata-result
+    queue: &str, // uldata,dldata,dldata-resp,dldata-result,ctrl
 ) -> Result<Stats, ErrResp> {
     let queue_name = format!("broker.{}.{}", username, queue);
     let uri = format!(

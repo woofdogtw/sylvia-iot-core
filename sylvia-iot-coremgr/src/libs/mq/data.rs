@@ -3,11 +3,12 @@ use std::{
     sync::{Arc, Mutex},
 };
 
+use url::Url;
+
 use general_mq::{
     queue::{EventHandler, GmqQueue},
     AmqpQueueOptions, MqttQueueOptions, Queue, QueueOptions,
 };
-use url::Url;
 
 use super::{get_connection, Connection};
 

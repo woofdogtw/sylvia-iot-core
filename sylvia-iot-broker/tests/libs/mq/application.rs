@@ -5,17 +5,17 @@ use std::{
 };
 
 use async_trait::async_trait;
+use laboratory::{expect, SpecContext};
+use serde::{self, Deserialize, Serialize};
+use serde_json::{self, Map, Value};
+use tokio::time;
+
 use general_mq::{
     queue::{
         Event as MqEvent, EventHandler as MqEventHandler, GmqQueue, Message, Status as MqStatus,
     },
     AmqpQueueOptions, MqttQueueOptions, Queue, QueueOptions,
 };
-use laboratory::{expect, SpecContext};
-use serde::{self, Deserialize, Serialize};
-use serde_json::{self, Map, Value};
-use tokio::time;
-
 use sylvia_iot_broker::libs::mq::{
     application::{ApplicationMgr, DlData, DlDataResp, DlDataResult, EventHandler, UlData},
     Connection, MgrStatus, Options,
@@ -294,6 +294,7 @@ pub fn new_default(context: &mut SpecContext<TestState>) -> Result<(), String> {
     expect(mq_status.dldata == MqStatus::Connecting).equals(true)?;
     expect(mq_status.dldata_resp == MqStatus::Connecting).equals(true)?;
     expect(mq_status.dldata_result == MqStatus::Connecting).equals(true)?;
+    expect(mq_status.ctrl == MqStatus::Closed).equals(true)?;
 
     for _ in 0..WAIT_COUNT {
         if *handler.status_changed.lock().unwrap() {
@@ -308,6 +309,7 @@ pub fn new_default(context: &mut SpecContext<TestState>) -> Result<(), String> {
     expect(mq_status.dldata == MqStatus::Connected).equals(true)?;
     expect(mq_status.dldata_resp == MqStatus::Connected).equals(true)?;
     expect(mq_status.dldata_result == MqStatus::Connected).equals(true)?;
+    expect(mq_status.ctrl == MqStatus::Closed).equals(true)?;
 
     Ok(())
 }
