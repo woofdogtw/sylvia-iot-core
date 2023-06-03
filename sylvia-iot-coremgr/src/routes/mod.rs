@@ -7,15 +7,15 @@ use std::{
 
 use actix_web::{dev::HttpServiceFactory, error, web, HttpResponse, Responder};
 use async_trait::async_trait;
-use general_mq::{
-    queue::{Event, EventHandler as QueueEventHandler, GmqQueue, Message, Status},
-    Queue,
-};
 use log::{error, info, warn};
 use reqwest;
 use serde::{Deserialize, Serialize};
 use url::Url;
 
+use general_mq::{
+    queue::{Event, EventHandler as QueueEventHandler, GmqQueue, Message, Status},
+    Queue,
+};
 use sylvia_iot_corelib::{constants::MqEngine, err::ErrResp};
 
 use crate::libs::{

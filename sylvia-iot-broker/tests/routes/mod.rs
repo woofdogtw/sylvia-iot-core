@@ -9,14 +9,14 @@ use actix_web::{
     web, App,
 };
 use async_trait::async_trait;
-use general_mq::{
-    connection::GmqConnection,
-    queue::{Event, EventHandler, GmqQueue, Message},
-};
 use laboratory::{describe, expect, SpecContext, Suite};
 use reqwest;
 use url::Url;
 
+use general_mq::{
+    connection::GmqConnection,
+    queue::{Event, EventHandler, GmqQueue, Message},
+};
 use sylvia_iot_auth::libs::config as sylvia_iot_auth_config;
 use sylvia_iot_broker::{
     libs::{

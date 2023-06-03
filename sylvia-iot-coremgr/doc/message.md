@@ -2,6 +2,8 @@
 
 ## Data Channel
 
+These messages are used from `coremgr` to `data` module(s) with **unicast** and **reliable** queues.
+
     coremgr.data: {
         kind: string,   // operation
         data: object    // data content

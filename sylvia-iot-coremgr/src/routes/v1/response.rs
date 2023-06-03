@@ -150,6 +150,7 @@ pub struct GetNetworkStats {
 #[derive(Serialize)]
 pub struct GetNetworkStatsData {
     pub dldata: Stats,
+    pub ctrl: Stats,
 }
 
 #[derive(Default, Serialize)]

@@ -6,17 +6,17 @@ use std::{
 
 use async_trait::async_trait;
 use chrono::{DateTime, Utc};
+use laboratory::{expect, SpecContext};
+use serde::{Deserialize, Serialize};
+use serde_json::{Map, Value};
+use tokio::time;
+
 use general_mq::{
     connection::GmqConnection,
     queue::{Event, EventHandler, GmqQueue, Message, Status},
     AmqpConnection, AmqpConnectionOptions, AmqpQueueOptions, MqttConnection, MqttConnectionOptions,
     MqttQueueOptions, Queue, QueueOptions,
 };
-use laboratory::{expect, SpecContext};
-use serde::{Deserialize, Serialize};
-use serde_json::{Map, Value};
-use tokio::time;
-
 use sylvia_iot_broker::{
     libs::mq::{Connection, MgrStatus, Options},
     models::{
@@ -245,7 +245,7 @@ pub fn before_all_fn(state: &mut HashMap<&'static str, TestState>) -> () {
     let state = state.get_mut(STATE).unwrap();
     let runtime = state.runtime.as_ref().unwrap();
     let routes_state = state.routes_state.as_ref().unwrap();
-    let routing_values = state.routing_values.as_mut().unwrap();
+    let test_values = state.test_values.as_mut().unwrap();
 
     let mut unit = unit::request::PostUnit {
         data: unit::request::PostUnitData {
@@ -268,7 +268,7 @@ pub fn before_all_fn(state: &mut HashMap<&'static str, TestState>) -> () {
         }
         Ok(unit_id) => unit_id,
     };
-    routing_values.insert(OWNER_UNIT_ID.to_string(), owner_unit_id.clone());
+    test_values.insert(OWNER_UNIT_ID.to_string(), owner_unit_id.clone());
     let mut application = application::request::PostApplication {
         data: application::request::PostApplicationData {
             code: "manager".to_string(),
@@ -295,7 +295,7 @@ pub fn before_all_fn(state: &mut HashMap<&'static str, TestState>) -> () {
             }
             Ok(application_id) => application_id,
         };
-    routing_values.insert(OWNER_APP_ID.to_string(), owner_application_id.clone());
+    test_values.insert(OWNER_APP_ID.to_string(), owner_application_id.clone());
     let mut network = network::request::PostNetwork {
         data: network::request::PostNetworkData {
             code: "manager".to_string(),
@@ -331,7 +331,7 @@ pub fn before_all_fn(state: &mut HashMap<&'static str, TestState>) -> () {
         }
         Ok(network_id) => network_id,
     };
-    routing_values.insert(OWNER_NET_ID.to_string(), owner_network_id.clone());
+    test_values.insert(OWNER_NET_ID.to_string(), owner_network_id.clone());
     let mut device = device::request::PostDevice {
         data: device::request::PostDeviceData {
             unit_id: manager_unit_id.clone(),
@@ -383,7 +383,7 @@ pub fn before_all_fn(state: &mut HashMap<&'static str, TestState>) -> () {
         }
         Ok(device_id) => device_id,
     };
-    routing_values.insert(OWNER_DEV2_ID.to_string(), owner_device2_id);
+    test_values.insert(OWNER_DEV2_ID.to_string(), owner_device2_id);
     let route = network_route::request::PostNetworkRoute {
         data: network_route::request::PostNetworkRouteData {
             network_id: manager_network_id.clone(),
@@ -479,7 +479,7 @@ pub fn after_each_fn(state: &mut HashMap<&'static str, TestState>) -> () {
             }
         })
     }
-    if let Some(mut conns) = state.routing_conns.take() {
+    if let Some(mut conns) = state.test_conns.take() {
         runtime.block_on(async move {
             loop {
                 match conns.pop() {
@@ -491,7 +491,7 @@ pub fn after_each_fn(state: &mut HashMap<&'static str, TestState>) -> () {
             }
         })
     }
-    if let Some(device_id) = state.routing_device_id.take() {
+    if let Some(device_id) = state.test_device_id.take() {
         runtime.block_on(async move {
             if let Some(model) = mongodb_model {
                 let cond = RouteQueryCond {
@@ -1125,7 +1125,7 @@ pub fn uplink_route_on_off(context: &mut SpecContext<TestState>) -> Result<(), S
     let rsc = &resources;
     let runtime = state.runtime.as_ref().unwrap();
     let routes_state = state.routes_state.as_ref().unwrap();
-    let routing_values = state.routing_values.as_ref().unwrap();
+    let test_values = state.test_values.as_ref().unwrap();
 
     // Send with no routes.
     runtime.block_on(async move {
@@ -1164,8 +1164,8 @@ pub fn uplink_route_on_off(context: &mut SpecContext<TestState>) -> Result<(), S
     // Add route and send data.
     let route = device_route::request::PostDeviceRoute {
         data: device_route::request::PostDeviceRouteData {
-            device_id: routing_values.get(OWNER_DEV2_ID).unwrap().clone(),
-            application_id: routing_values.get(OWNER_APP_ID).unwrap().clone(),
+            device_id: test_values.get(OWNER_DEV2_ID).unwrap().clone(),
+            application_id: test_values.get(OWNER_APP_ID).unwrap().clone(),
         },
     };
     let route_id = libs::create_device_route(runtime, routes_state, TOKEN_MANAGER, &route)?;
@@ -1273,13 +1273,13 @@ pub fn uplink_route_profile(context: &mut SpecContext<TestState>) -> Result<(), 
     let rsc = &resources;
     let runtime = state.runtime.as_ref().unwrap();
     let routes_state = state.routes_state.as_ref().unwrap();
-    let routing_values = state.routing_values.as_mut().unwrap();
+    let test_values = state.test_values.as_mut().unwrap();
 
     // Add a device for testing changing the device profile.
     let device = device::request::PostDevice {
         data: device::request::PostDeviceData {
-            unit_id: routing_values.get(OWNER_UNIT_ID).unwrap().clone(),
-            network_id: routing_values.get(OWNER_NET_ID).unwrap().clone(),
+            unit_id: test_values.get(OWNER_UNIT_ID).unwrap().clone(),
+            network_id: test_values.get(OWNER_NET_ID).unwrap().clone(),
             network_addr: ADDR.to_string(),
             profile: None,
             name: None,
@@ -1287,13 +1287,13 @@ pub fn uplink_route_profile(context: &mut SpecContext<TestState>) -> Result<(), 
         },
     };
     let device_id = libs::create_device(runtime, routes_state, TOKEN_OWNER, &device)?;
-    state.routing_device_id = Some(device_id.clone());
+    state.test_device_id = Some(device_id.clone());
 
     // Add route and send data.
     let route = device_route::request::PostDeviceRoute {
         data: device_route::request::PostDeviceRouteData {
             device_id: device_id.clone(),
-            application_id: routing_values.get(OWNER_APP_ID).unwrap().clone(),
+            application_id: test_values.get(OWNER_APP_ID).unwrap().clone(),
         },
     };
     let _ = libs::create_device_route(runtime, routes_state, TOKEN_MANAGER, &route)?;
@@ -1392,13 +1392,13 @@ pub fn uplink_route_change_addr(context: &mut SpecContext<TestState>) -> Result<
     let rsc = &resources;
     let runtime = state.runtime.as_ref().unwrap();
     let routes_state = state.routes_state.as_ref().unwrap();
-    let routing_values = state.routing_values.as_mut().unwrap();
+    let test_values = state.test_values.as_mut().unwrap();
 
     // Add a device for testing changing the device profile.
     let device = device::request::PostDevice {
         data: device::request::PostDeviceData {
-            unit_id: routing_values.get(OWNER_UNIT_ID).unwrap().clone(),
-            network_id: routing_values.get(OWNER_NET_ID).unwrap().clone(),
+            unit_id: test_values.get(OWNER_UNIT_ID).unwrap().clone(),
+            network_id: test_values.get(OWNER_NET_ID).unwrap().clone(),
             network_addr: ADDR.to_string(),
             profile: None,
             name: None,
@@ -1406,13 +1406,13 @@ pub fn uplink_route_change_addr(context: &mut SpecContext<TestState>) -> Result<
         },
     };
     let device_id = libs::create_device(runtime, routes_state, TOKEN_OWNER, &device)?;
-    state.routing_device_id = Some(device_id.clone());
+    state.test_device_id = Some(device_id.clone());
 
     // Add route and send data.
     let route = device_route::request::PostDeviceRoute {
         data: device_route::request::PostDeviceRouteData {
             device_id: device_id.clone(),
-            application_id: routing_values.get(OWNER_APP_ID).unwrap().clone(),
+            application_id: test_values.get(OWNER_APP_ID).unwrap().clone(),
         },
     };
     let _ = libs::create_device_route(runtime, routes_state, TOKEN_MANAGER, &route)?;
@@ -1522,7 +1522,7 @@ pub fn uplink_route_change_addr(context: &mut SpecContext<TestState>) -> Result<
 
 /// Create connections, queues, handlers for routing test cases.
 fn create_connections(state: &mut TestState) -> Result<TestResources, String> {
-    state.routing_conns = Some(vec![]);
+    state.test_conns = Some(vec![]);
     let mut amqp_conn = AmqpConnection::new(AmqpConnectionOptions {
         uri: "amqp://localhost".to_string(),
         ..Default::default()
@@ -1531,7 +1531,7 @@ fn create_connections(state: &mut TestState) -> Result<TestResources, String> {
         return Err(format!("new AMQP connection error: {}", e));
     }
     state
-        .routing_conns
+        .test_conns
         .as_mut()
         .unwrap()
         .push(Box::new(amqp_conn.clone()));
@@ -1543,7 +1543,7 @@ fn create_connections(state: &mut TestState) -> Result<TestResources, String> {
         return Err(format!("new MQTT connection error: {}", e));
     }
     state
-        .routing_conns
+        .test_conns
         .as_mut()
         .unwrap()
         .push(Box::new(mqtt_conn.clone()));

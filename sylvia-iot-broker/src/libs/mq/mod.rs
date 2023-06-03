@@ -47,7 +47,7 @@ pub enum MgrStatus {
 }
 
 /// Detail queue connection status.
-pub struct DataMqStatus {
+pub struct MgrMqStatus {
     /// For `uldata`.
     pub uldata: Status,
     /// For `dldata`.
@@ -56,6 +56,8 @@ pub struct DataMqStatus {
     pub dldata_resp: Status,
     /// For `dldata-result`.
     pub dldata_result: Status,
+    /// For `ctrl`.
+    pub ctrl: Status,
 }
 
 /// The options of the application/network manager.
@@ -179,7 +181,80 @@ async fn remove_connection(
     Ok(())
 }
 
-/// The utility function for creating application/network queue. The return tuple contains:
+/// The utility function for creating application/network control queue with the following nameing:
+/// - `[prefix].[unit].[code].ctrl`
+fn new_ctrl_queues(
+    conn: &Connection,
+    opts: &Options,
+    prefix: &str,
+    is_network: bool,
+) -> Result<Arc<Mutex<Queue>>, String> {
+    let ctrl: Arc<Mutex<Queue>>;
+
+    if opts.unit_id.len() == 0 {
+        if opts.unit_code.len() != 0 {
+            return Err("unit_id and unit_code must both empty or non-empty".to_string());
+        }
+    } else {
+        if opts.unit_code.len() == 0 {
+            return Err("unit_id and unit_code must both empty or non-empty".to_string());
+        }
+    }
+    if opts.id.len() == 0 {
+        return Err("`id` cannot be empty".to_string());
+    }
+    if opts.name.len() == 0 {
+        return Err("`name` cannot be empty".to_string());
+    }
+
+    let unit = match opts.unit_code.len() {
+        0 => "_",
+        _ => opts.unit_code.as_str(),
+    };
+
+    match conn {
+        Connection::Amqp(conn, _) => {
+            let prefetch = match opts.prefetch {
+                None => DEF_PREFETCH,
+                Some(prefetch) => match prefetch {
+                    0 => DEF_PREFETCH,
+                    _ => prefetch,
+                },
+            };
+
+            let ctrl_opts = QueueOptions::Amqp(
+                AmqpQueueOptions {
+                    name: format!("{}.{}.{}.ctrl", prefix, unit, opts.name.as_str()),
+                    is_recv: !is_network,
+                    reliable: true,
+                    broadcast: false,
+                    prefetch,
+                    ..Default::default()
+                },
+                conn,
+            );
+            ctrl = Arc::new(Mutex::new(Queue::new(ctrl_opts)?));
+        }
+        Connection::Mqtt(conn, _) => {
+            let ctrl_opts = QueueOptions::Mqtt(
+                MqttQueueOptions {
+                    name: format!("{}.{}.{}.ctrl", prefix, unit, opts.name.as_str()),
+                    is_recv: !is_network,
+                    reliable: true,
+                    broadcast: false,
+                    shared_prefix: opts.shared_prefix.clone(),
+                    ..Default::default()
+                },
+                conn,
+            );
+            ctrl = Arc::new(Mutex::new(Queue::new(ctrl_opts)?));
+        }
+    }
+
+    Ok(ctrl)
+}
+
+/// The utility function for creating application/network data queues. The return tuple contains:
 /// - `[prefix].[unit].[code].uldata`
 /// - `[prefix].[unit].[code].dldata`
 /// - `[prefix].[unit].[code].dldata-resp`: `Some` for applications and `None` for networks.

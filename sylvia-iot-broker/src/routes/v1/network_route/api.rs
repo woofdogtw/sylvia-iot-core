@@ -13,16 +13,16 @@ use actix_web::{
 };
 use async_trait::async_trait;
 use chrono::Utc;
-use general_mq::{
-    queue::{Event, EventHandler as QueueEventHandler, GmqQueue, Message, Status},
-    Queue,
-};
 use log::{error, info, warn};
 use serde::{Deserialize, Serialize};
 use serde_json;
 use tokio::time;
 use url::Url;
 
+use general_mq::{
+    queue::{Event, EventHandler as QueueEventHandler, GmqQueue, Message, Status},
+    Queue,
+};
 use sylvia_iot_corelib::{
     err::ErrResp,
     role::Role,

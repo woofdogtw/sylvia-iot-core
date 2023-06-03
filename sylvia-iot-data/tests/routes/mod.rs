@@ -5,10 +5,10 @@ use actix_web::{
     test::{self, TestRequest},
     web, App,
 };
-use general_mq::Queue;
 use laboratory::{describe, expect, SpecContext, Suite};
 use reqwest;
 
+use general_mq::Queue;
 use sylvia_iot_auth::libs::config as sylvia_iot_auth_config;
 use sylvia_iot_broker::libs::config as sylvia_iot_broker_config;
 use sylvia_iot_corelib::constants::DbEngine;

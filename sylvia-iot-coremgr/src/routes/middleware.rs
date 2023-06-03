@@ -19,11 +19,11 @@ use actix_web::{
 use chrono::Utc;
 use futures::future::{self, LocalBoxFuture, Ready};
 use futures_util::StreamExt;
-use general_mq::{queue::GmqQueue, Queue};
 use reqwest;
 use serde::{self, Deserialize, Serialize};
 use serde_json::{Map, Value};
 
+use general_mq::{queue::GmqQueue, Queue};
 use sylvia_iot_corelib::{http as sylvia_http, strings};
 
 pub struct LogService {

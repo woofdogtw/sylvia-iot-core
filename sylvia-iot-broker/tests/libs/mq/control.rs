@@ -5,10 +5,10 @@ use std::{
 };
 
 use async_trait::async_trait;
-use general_mq::queue::{Event, EventHandler, GmqQueue, Message, Status};
 use laboratory::{expect, SpecContext};
 use tokio::time;
 
+use general_mq::queue::{Event, EventHandler, GmqQueue, Message, Status};
 use sylvia_iot_broker::libs::mq::{control, Connection};
 
 use super::STATE;

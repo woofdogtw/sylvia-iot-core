@@ -6,20 +6,20 @@ use std::{
 
 use async_trait::async_trait;
 use chrono::{TimeZone, Utc};
+use laboratory::{expect, SpecContext};
+use serde::{self, Deserialize, Serialize};
+use serde_json::{self, Map, Value};
+use tokio::time;
+
 use general_mq::{
     queue::{
         Event as MqEvent, EventHandler as MqEventHandler, GmqQueue, Message, Status as MqStatus,
     },
     AmqpQueueOptions, MqttQueueOptions, Queue, QueueOptions,
 };
-use laboratory::{expect, SpecContext};
-use serde::{self, Deserialize, Serialize};
-use serde_json::{self, Map, Value};
-use tokio::time;
-
 use sylvia_iot_sdk::{
     mq::{
-        network::{DlData, DlDataResult, EventHandler, NetworkMgr, UlData},
+        network::{DlData, DlDataResult, EventHandler, NetworkCtrlMsg, NetworkMgr, UlData},
         Connection, MgrStatus, Options,
     },
     util::strings,
@@ -63,11 +63,74 @@ struct NetDlDataResult {
     message: Option<String>,
 }
 
+/// Control message from broker to network servers.
+#[derive(Serialize)]
+#[serde(untagged)]
+enum SendNetCtrlMsg {
+    AddDevice {
+        time: String,
+        operation: String,
+        new: NetCtrlAddr,
+    },
+    AddDeviceBulk {
+        time: String,
+        operation: String,
+        new: NetCtrlAddrs,
+    },
+    AddDeviceRange {
+        time: String,
+        operation: String,
+        new: NetCtrlAddrRange,
+    },
+    DelDevice {
+        time: String,
+        operation: String,
+        new: NetCtrlAddr,
+    },
+    DelDeviceBulk {
+        time: String,
+        operation: String,
+        new: NetCtrlAddrs,
+    },
+    DelDeviceRange {
+        time: String,
+        operation: String,
+        new: NetCtrlAddrRange,
+    },
+}
+
+/// Shared structure to keep simple design.
+#[derive(Serialize)]
+struct NetCtrlAddr {
+    #[serde(rename = "networkAddr")]
+    network_addr: String,
+}
+
+/// Shared structure to keep simple design.
+#[derive(Serialize)]
+struct NetCtrlAddrs {
+    #[serde(rename = "networkAddrs")]
+    network_addrs: Vec<String>,
+}
+
+/// Shared structure to keep simple design.
+#[derive(Serialize)]
+struct NetCtrlAddrRange {
+    #[serde(rename = "startAddr")]
+    pub start_addr: String,
+    #[serde(rename = "endAddr")]
+    pub end_addr: String,
+}
+
+struct NetCtrlMsgOp;
+
 struct TestHandler {
     // Use Mutex to implement interior mutability.
     status_changed: Arc<Mutex<bool>>,
     recv_dldata: Arc<Mutex<Vec<Box<DlData>>>>,
+    recv_ctrl: Arc<Mutex<Vec<Box<NetworkCtrlMsg>>>>,
     is_dldata_recv: Arc<Mutex<bool>>,
+    is_ctrl_recv: Arc<Mutex<bool>>,
 }
 
 #[derive(Clone)]
@@ -84,12 +147,23 @@ struct TestDlDataResultHandler {
     recv_dldata_result: Arc<Mutex<Vec<Box<NetDlDataResult>>>>,
 }
 
+impl NetCtrlMsgOp {
+    const ADD_DEVICE: &'static str = "add-device";
+    const ADD_DEVICE_BULK: &'static str = "add-device-bulk";
+    const ADD_DEVICE_RANGE: &'static str = "add-device-range";
+    const DEL_DEVICE: &'static str = "del-device";
+    const DEL_DEVICE_BULK: &'static str = "del-device-bulk";
+    const DEL_DEVICE_RANGE: &'static str = "del-device-range";
+}
+
 impl TestHandler {
     fn new() -> Self {
         TestHandler {
             status_changed: Arc::new(Mutex::new(false)),
             recv_dldata: Arc::new(Mutex::new(vec![])),
+            recv_ctrl: Arc::new(Mutex::new(vec![])),
             is_dldata_recv: Arc::new(Mutex::new(false)),
+            is_ctrl_recv: Arc::new(Mutex::new(false)),
         }
     }
 }
@@ -105,11 +179,24 @@ impl EventHandler for TestHandler {
             let mut mutex = self.is_dldata_recv.lock().unwrap();
             if !*mutex {
                 *mutex = true;
-                return Err(());
+                return Err(()); // test AMQP NACK.
             }
         }
 
         let mut mutex = self.recv_dldata.lock().unwrap();
+        mutex.push(data);
+        Ok(())
+    }
+
+    async fn on_ctrl(&self, _mgr: &NetworkMgr, data: Box<NetworkCtrlMsg>) -> Result<(), ()> {
+        {
+            let mut mutex = self.is_ctrl_recv.lock().unwrap();
+            if !*mutex {
+                *mutex = true;
+            }
+        }
+
+        let mut mutex = self.recv_ctrl.lock().unwrap();
         mutex.push(data);
         Ok(())
     }
@@ -224,6 +311,7 @@ pub fn new_default(context: &mut SpecContext<TestState>) -> Result<(), String> {
     expect(mq_status.dldata == MqStatus::Connected).equals(true)?;
     expect(mq_status.dldata_resp == MqStatus::Closed).equals(true)?;
     expect(mq_status.dldata_result == MqStatus::Connected).equals(true)?;
+    expect(mq_status.ctrl == MqStatus::Connected).equals(true)?;
 
     Ok(())
 }
@@ -1015,6 +1103,368 @@ pub fn dldata_result_wrong(context: &mut SpecContext<TestState>) -> Result<(), S
         expect(mgr.send_dldata_result(&data).is_err()).equals(true)?;
 
         Ok(())
+    })?;
+
+    Ok(())
+}
+
+/// Test receiving ctrl.
+pub fn ctrl(context: &mut SpecContext<TestState>) -> Result<(), String> {
+    let mut state = context.state.borrow_mut();
+    let state = state.get_mut(STATE).unwrap();
+    let runtime = state.runtime.as_ref().unwrap();
+    let mq_engine = state.mq_engine.as_ref().unwrap().as_str();
+    let conn_pool = state.mgr_conns.as_ref().unwrap();
+
+    state.app_net_conn = Some(new_connection(runtime, mq_engine)?);
+    let conn = state.app_net_conn.as_ref().unwrap();
+
+    let host_uri = conn_host_uri(mq_engine)?;
+    let mgr_handler = Arc::new(TestHandler::new());
+
+    let opts = Options {
+        unit_id: "unit_id".to_string(),
+        unit_code: "unit_code".to_string(),
+        id: "id_network".to_string(),
+        name: "code_network".to_string(),
+        shared_prefix: state.mqtt_shared_prefix.clone(),
+        ..Default::default()
+    };
+    let mgr = NetworkMgr::new(conn_pool.clone(), &host_uri, opts, mgr_handler.clone())?;
+    state.net_mgrs = Some(vec![mgr.clone()]);
+
+    let queue = match conn {
+        Connection::Amqp(conn, _) => {
+            let opts = QueueOptions::Amqp(
+                AmqpQueueOptions {
+                    name: "broker.network.unit_code.code_network.ctrl".to_string(),
+                    is_recv: false,
+                    reliable: true,
+                    broadcast: false,
+                    ..Default::default()
+                },
+                conn,
+            );
+            let mut queue_result = Queue::new(opts)?;
+            if let Err(e) = queue_result.connect() {
+                return Err(format!("connect ctrl queue error: {}", e));
+            }
+            queue_result
+        }
+        Connection::Mqtt(conn, _) => {
+            let opts = QueueOptions::Mqtt(
+                MqttQueueOptions {
+                    name: "broker.network.unit_code.code_network.ctrl".to_string(),
+                    is_recv: false,
+                    reliable: true,
+                    broadcast: false,
+                    ..Default::default()
+                },
+                conn,
+            );
+            let mut queue_result = Queue::new(opts)?;
+            if let Err(e) = queue_result.connect() {
+                return Err(format!("connect ctrl queue error: {}", e));
+            }
+            queue_result
+        }
+    };
+
+    runtime.block_on(async move {
+        for _ in 0..WAIT_COUNT {
+            if queue.status() == MqStatus::Connected {
+                break;
+            }
+            time::sleep(Duration::from_millis(WAIT_TICK)).await;
+        }
+        if queue.status() != MqStatus::Connected {
+            return Err("send queue not connected".to_string());
+        }
+        for _ in 0..WAIT_COUNT {
+            if mgr.status() == MgrStatus::Ready {
+                break;
+            }
+            time::sleep(Duration::from_millis(WAIT_TICK)).await;
+        }
+        if mgr.status() != MgrStatus::Ready {
+            return Err("manager not ready".to_string());
+        }
+
+        let now_str = strings::time_str(&Utc::now());
+        let data1 = SendNetCtrlMsg::AddDevice {
+            time: now_str.clone(),
+            operation: NetCtrlMsgOp::ADD_DEVICE.to_string(),
+            new: NetCtrlAddr {
+                network_addr: "addr1".to_string(),
+            },
+        };
+        let payload = match serde_json::to_vec(&data1) {
+            Err(e) => return Err(format!("marshal data1 error: {}", e)),
+            Ok(payload) => payload,
+        };
+        if let Err(e) = queue.send_msg(payload).await {
+            return Err(format!("send data1 error: {}", e));
+        }
+        let data2 = SendNetCtrlMsg::AddDeviceBulk {
+            time: now_str.clone(),
+            operation: NetCtrlMsgOp::ADD_DEVICE_BULK.to_string(),
+            new: NetCtrlAddrs {
+                network_addrs: vec!["addr2".to_string()],
+            },
+        };
+        let payload = match serde_json::to_vec(&data2) {
+            Err(e) => return Err(format!("marshal data2 error: {}", e)),
+            Ok(payload) => payload,
+        };
+        if let Err(e) = queue.send_msg(payload).await {
+            return Err(format!("send data2 error: {}", e));
+        }
+        let data3 = SendNetCtrlMsg::AddDeviceRange {
+            time: now_str.clone(),
+            operation: NetCtrlMsgOp::ADD_DEVICE_RANGE.to_string(),
+            new: NetCtrlAddrRange {
+                start_addr: "0001".to_string(),
+                end_addr: "0002".to_string(),
+            },
+        };
+        let payload = match serde_json::to_vec(&data3) {
+            Err(e) => return Err(format!("marshal data3 error: {}", e)),
+            Ok(payload) => payload,
+        };
+        if let Err(e) = queue.send_msg(payload).await {
+            return Err(format!("send data3 error: {}", e));
+        }
+        let data4 = SendNetCtrlMsg::DelDevice {
+            time: now_str.clone(),
+            operation: NetCtrlMsgOp::DEL_DEVICE.to_string(),
+            new: NetCtrlAddr {
+                network_addr: "addr4".to_string(),
+            },
+        };
+        let payload = match serde_json::to_vec(&data4) {
+            Err(e) => return Err(format!("marshal data4 error: {}", e)),
+            Ok(payload) => payload,
+        };
+        if let Err(e) = queue.send_msg(payload).await {
+            return Err(format!("send data4 error: {}", e));
+        }
+        let data5 = SendNetCtrlMsg::DelDeviceBulk {
+            time: now_str.clone(),
+            operation: NetCtrlMsgOp::DEL_DEVICE_BULK.to_string(),
+            new: NetCtrlAddrs {
+                network_addrs: vec!["addr5".to_string()],
+            },
+        };
+        let payload = match serde_json::to_vec(&data5) {
+            Err(e) => return Err(format!("marshal data5 error: {}", e)),
+            Ok(payload) => payload,
+        };
+        if let Err(e) = queue.send_msg(payload).await {
+            return Err(format!("send data5 error: {}", e));
+        }
+        let data6 = SendNetCtrlMsg::DelDeviceRange {
+            time: now_str.clone(),
+            operation: NetCtrlMsgOp::DEL_DEVICE_RANGE.to_string(),
+            new: NetCtrlAddrRange {
+                start_addr: "0003".to_string(),
+                end_addr: "0004".to_string(),
+            },
+        };
+        let payload = match serde_json::to_vec(&data6) {
+            Err(e) => return Err(format!("marshal data6 error: {}", e)),
+            Ok(payload) => payload,
+        };
+        if let Err(e) = queue.send_msg(payload).await {
+            return Err(format!("send data6 error: {}", e));
+        }
+
+        let expect_count = match mq_engine {
+            MqEngine::RABBITMQ => 6,
+            _ => 5,
+        };
+        for _ in 0..WAIT_COUNT {
+            let count = { mgr_handler.recv_ctrl.lock().unwrap().len() };
+            if count < expect_count {
+                time::sleep(Duration::from_millis(WAIT_TICK)).await;
+                continue;
+            }
+        }
+        let count = { mgr_handler.recv_ctrl.lock().unwrap().len() };
+        if count < expect_count {
+            return Err(format!("receive {}/{} data", count, expect_count));
+        }
+
+        let mut recv_dev_add = false;
+        let mut recv_dev_add_bulk = false;
+        let mut recv_dev_add_range = false;
+        let mut recv_dev_del = false;
+        let mut recv_dev_del_bulk = false;
+        let mut recv_dev_del_range = false;
+        for i in 0..expect_count {
+            let data = match { mgr_handler.recv_ctrl.lock().unwrap().pop() } {
+                None => return Err(format!("only receive {}/{} data", i, expect_count)),
+                Some(data) => data,
+            };
+            match data.as_ref() {
+                NetworkCtrlMsg::AddDevice { time, new } => {
+                    expect(time.as_str()).to_equal(now_str.as_str())?;
+                    expect(new.network_addr.as_str()).to_equal("addr1")?;
+                    recv_dev_add = true;
+                }
+                NetworkCtrlMsg::AddDeviceBulk { time, new } => {
+                    expect(time.as_str()).to_equal(now_str.as_str())?;
+                    expect(new.network_addrs.len()).to_equal(1)?;
+                    expect(new.network_addrs[0].as_str()).to_equal("addr2")?;
+                    recv_dev_add_bulk = true;
+                }
+                NetworkCtrlMsg::AddDeviceRange { time, new } => {
+                    expect(time.as_str()).to_equal(now_str.as_str())?;
+                    expect(new.start_addr.as_str()).to_equal("0001")?;
+                    expect(new.end_addr.as_str()).to_equal("0002")?;
+                    recv_dev_add_range = true;
+                }
+                NetworkCtrlMsg::DelDevice { time, new } => {
+                    expect(time.as_str()).to_equal(now_str.as_str())?;
+                    expect(new.network_addr.as_str()).to_equal("addr4")?;
+                    recv_dev_del = true;
+                }
+                NetworkCtrlMsg::DelDeviceBulk { time, new } => {
+                    expect(time.as_str()).to_equal(now_str.as_str())?;
+                    expect(new.network_addrs.len()).to_equal(1)?;
+                    expect(new.network_addrs[0].as_str()).to_equal("addr5")?;
+                    recv_dev_del_bulk = true;
+                }
+                NetworkCtrlMsg::DelDeviceRange { time, new } => {
+                    expect(time.as_str()).to_equal(now_str.as_str())?;
+                    expect(new.start_addr.as_str()).to_equal("0003")?;
+                    expect(new.end_addr.as_str()).to_equal("0004")?;
+                    recv_dev_del_range = true;
+                }
+            }
+        }
+        expect(
+            recv_dev_add_bulk
+                && recv_dev_add_range
+                && recv_dev_del
+                && recv_dev_del_bulk
+                && recv_dev_del_range,
+        )
+        .to_equal(true)?;
+        match mq_engine {
+            MqEngine::RABBITMQ => expect(recv_dev_add).to_equal(true)?,
+            _ => expect(recv_dev_add).to_equal(false)?,
+        }
+
+        Ok(())
+    })?;
+
+    Ok(())
+}
+
+/// Test receiving ctrl with wrong content.
+pub fn ctrl_wrong(context: &mut SpecContext<TestState>) -> Result<(), String> {
+    let mut state = context.state.borrow_mut();
+    let state = state.get_mut(STATE).unwrap();
+    let runtime = state.runtime.as_ref().unwrap();
+    let mq_engine = state.mq_engine.as_ref().unwrap().as_str();
+    let conn_pool = state.mgr_conns.as_ref().unwrap();
+
+    state.app_net_conn = Some(new_connection(runtime, mq_engine)?);
+    let conn = state.app_net_conn.as_ref().unwrap();
+
+    let host_uri = conn_host_uri(mq_engine)?;
+    let mgr_handler = Arc::new(TestHandler::new());
+
+    let opts = Options {
+        unit_id: "unit_id".to_string(),
+        unit_code: "unit_code".to_string(),
+        id: "id_network".to_string(),
+        name: "code_network".to_string(),
+        shared_prefix: state.mqtt_shared_prefix.clone(),
+        ..Default::default()
+    };
+    let mgr = NetworkMgr::new(conn_pool.clone(), &host_uri, opts, mgr_handler.clone())?;
+    state.net_mgrs = Some(vec![mgr.clone()]);
+
+    let queue = match conn {
+        Connection::Amqp(conn, _) => {
+            let opts = QueueOptions::Amqp(
+                AmqpQueueOptions {
+                    name: "broker.network.unit_code.code_network.ctrl".to_string(),
+                    is_recv: false,
+                    reliable: true,
+                    broadcast: false,
+                    ..Default::default()
+                },
+                conn,
+            );
+            let mut queue_result = Queue::new(opts)?;
+            if let Err(e) = queue_result.connect() {
+                return Err(format!("connect ctrl queue error: {}", e));
+            }
+            queue_result
+        }
+        Connection::Mqtt(conn, _) => {
+            let opts = QueueOptions::Mqtt(
+                MqttQueueOptions {
+                    name: "broker.network.unit_code.code_network.ctrl".to_string(),
+                    is_recv: false,
+                    reliable: true,
+                    broadcast: false,
+                    ..Default::default()
+                },
+                conn,
+            );
+            let mut queue_result = Queue::new(opts)?;
+            if let Err(e) = queue_result.connect() {
+                return Err(format!("connect ctrl queue error: {}", e));
+            }
+            queue_result
+        }
+    };
+
+    runtime.block_on(async move {
+        for _ in 0..WAIT_COUNT {
+            if queue.status() == MqStatus::Connected {
+                break;
+            }
+            time::sleep(Duration::from_millis(WAIT_TICK)).await;
+        }
+        if queue.status() != MqStatus::Connected {
+            return Err("send queue not connected".to_string());
+        }
+        for _ in 0..WAIT_COUNT {
+            if mgr.status() == MgrStatus::Ready {
+                break;
+            }
+            time::sleep(Duration::from_millis(WAIT_TICK)).await;
+        }
+        if mgr.status() != MgrStatus::Ready {
+            return Err("manager not ready".to_string());
+        }
+
+        if let Err(e) = queue.send_msg(vec![]).await {
+            return Err(format!("send empty error: {}", e));
+        }
+
+        let data = SendNetCtrlMsg::AddDevice {
+            time: strings::time_str(&Utc::now()),
+            operation: NetCtrlMsgOp::ADD_DEVICE_BULK.to_string(),
+            new: NetCtrlAddr {
+                network_addr: "addr5".to_string(),
+            },
+        };
+        let payload = match serde_json::to_vec(&data) {
+            Err(e) => return Err(format!("marshal data error: {}", e)),
+            Ok(payload) => payload,
+        };
+        if let Err(e) = queue.send_msg(payload).await {
+            return Err(format!("send data error: {}", e));
+        }
+
+        time::sleep(Duration::from_secs(1)).await;
+        let count = { mgr_handler.recv_ctrl.lock().unwrap().len() };
+        expect(count).equals(0)
     })?;
 
     Ok(())

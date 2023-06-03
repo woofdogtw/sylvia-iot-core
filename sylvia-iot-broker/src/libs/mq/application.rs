@@ -6,13 +6,6 @@ use std::{
 };
 
 use async_trait::async_trait;
-use general_mq::{
-    queue::{
-        Event as QueueEvent, EventHandler as QueueEventHandler, GmqQueue, Message,
-        Status as QueueStatus,
-    },
-    Queue,
-};
 use hex;
 use log::{error, warn};
 use serde::{Deserialize, Serialize};
@@ -20,11 +13,17 @@ use serde_json::{self, Map, Value};
 use tokio::task;
 use url::Url;
 
+use general_mq::{
+    queue::{
+        Event as QueueEvent, EventHandler as QueueEventHandler, GmqQueue, Message,
+        Status as QueueStatus,
+    },
+    Queue,
+};
 use sylvia_iot_corelib::{err, strings};
 
 use super::{
-    get_connection, new_data_queues, remove_connection, Connection, DataMqStatus, MgrStatus,
-    Options,
+    get_connection, new_data_queues, remove_connection, Connection, MgrMqStatus, MgrStatus, Options,
 };
 
 /// Uplink data from broker to application.
@@ -212,12 +211,13 @@ impl ApplicationMgr {
     }
 
     /// Detail status of each message queue.
-    pub fn mq_status(&self) -> DataMqStatus {
-        DataMqStatus {
+    pub fn mq_status(&self) -> MgrMqStatus {
+        MgrMqStatus {
             uldata: { self.uldata.lock().unwrap().status() },
             dldata: { self.dldata.lock().unwrap().status() },
             dldata_resp: { self.dldata_resp.lock().unwrap().status() },
             dldata_result: { self.dldata_result.lock().unwrap().status() },
+            ctrl: QueueStatus::Closed,
         }
     }
 

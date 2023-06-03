@@ -8,6 +8,12 @@ use std::{
 
 use async_trait::async_trait;
 use chrono::{DateTime, Utc};
+use hex;
+use serde::{Deserialize, Serialize};
+use serde_json::{Map, Value};
+use tokio::task;
+use url::Url;
+
 use general_mq::{
     queue::{
         Event as QueueEvent, EventHandler as QueueEventHandler, GmqQueue, Message,
@@ -15,11 +21,6 @@ use general_mq::{
     },
     Queue,
 };
-use hex;
-use serde::{Deserialize, Serialize};
-use serde_json::{Map, Value};
-use tokio::task;
-use url::Url;
 
 use crate::util::strings;
 
@@ -62,6 +63,76 @@ pub struct DlDataResult {
     pub message: Option<String>,
 }
 
+/// Network control message from broker to network.
+#[derive(Clone, Deserialize)]
+#[serde(tag = "operation")]
+pub enum NetworkCtrlMsg {
+    #[serde(rename = "add-device")]
+    AddDevice { time: String, new: CtrlAddDevice },
+    #[serde(rename = "add-device-bulk")]
+    AddDeviceBulk {
+        time: String,
+        new: CtrlAddDeviceBulk,
+    },
+    #[serde(rename = "add-device-range")]
+    AddDeviceRange {
+        time: String,
+        new: CtrlAddDeviceRange,
+    },
+    #[serde(rename = "del-device")]
+    DelDevice { time: String, new: CtrlDelDevice },
+    #[serde(rename = "del-device-bulk")]
+    DelDeviceBulk {
+        time: String,
+        new: CtrlDelDeviceBulk,
+    },
+    #[serde(rename = "del-device-range")]
+    DelDeviceRange {
+        time: String,
+        new: CtrlDelDeviceRange,
+    },
+}
+
+#[derive(Clone, Deserialize)]
+pub struct CtrlAddDevice {
+    #[serde(rename = "networkAddr")]
+    pub network_addr: String,
+}
+
+#[derive(Clone, Deserialize)]
+pub struct CtrlAddDeviceBulk {
+    #[serde(rename = "networkAddrs")]
+    pub network_addrs: Vec<String>,
+}
+
+#[derive(Clone, Deserialize)]
+pub struct CtrlAddDeviceRange {
+    #[serde(rename = "startAddr")]
+    pub start_addr: String,
+    #[serde(rename = "endAddr")]
+    pub end_addr: String,
+}
+
+#[derive(Clone, Deserialize)]
+pub struct CtrlDelDevice {
+    #[serde(rename = "networkAddr")]
+    pub network_addr: String,
+}
+
+#[derive(Clone, Deserialize)]
+pub struct CtrlDelDeviceBulk {
+    #[serde(rename = "networkAddrs")]
+    pub network_addrs: Vec<String>,
+}
+
+#[derive(Clone, Deserialize)]
+pub struct CtrlDelDeviceRange {
+    #[serde(rename = "startAddr")]
+    pub start_addr: String,
+    #[serde(rename = "endAddr")]
+    pub end_addr: String,
+}
+
 /// The manager for network queues.
 #[derive(Clone)]
 pub struct NetworkMgr {
@@ -74,6 +145,7 @@ pub struct NetworkMgr {
     uldata: Arc<Mutex<Queue>>,
     dldata: Arc<Mutex<Queue>>,
     dldata_result: Arc<Mutex<Queue>>,
+    ctrl: Arc<Mutex<Queue>>,
 
     status: Arc<Mutex<MgrStatus>>,
     handler: Arc<Mutex<Arc<dyn EventHandler>>>,
@@ -90,6 +162,12 @@ pub trait EventHandler: Send + Sync {
     /// Return [`Err`] will NACK the data.
     /// The data may will be received again depending on the protocol (such as AMQP).
     async fn on_dldata(&self, mgr: &NetworkMgr, data: Box<DlData>) -> Result<(), ()>;
+
+    /// Fired when a [`NetworkCtrlMsg`] data is received.
+    ///
+    /// Return [`Err`] will NACK the data.
+    /// The data may will be received again depending on the protocol (such as AMQP).
+    async fn on_ctrl(&self, mgr: &NetworkMgr, data: Box<NetworkCtrlMsg>) -> Result<(), ()>;
 }
 
 /// The event handler for [`general_mq::queue::GmqQueue`].
@@ -137,7 +215,8 @@ impl NetworkMgr {
     ) -> Result<Self, String> {
         let conn = get_connection(&conn_pool, host_uri)?;
 
-        let (uldata, dldata, _, dldata_result) = new_data_queues(&conn, &opts, QUEUE_PREFIX, true)?;
+        let (uldata, dldata, _, dldata_result, ctrl) =
+            new_data_queues(&conn, &opts, QUEUE_PREFIX, true)?;
 
         let mgr = NetworkMgr {
             opts: Arc::new(opts),
@@ -146,6 +225,7 @@ impl NetworkMgr {
             uldata,
             dldata,
             dldata_result,
+            ctrl: ctrl.unwrap(),
             status: Arc::new(Mutex::new(MgrStatus::NotReady)),
             handler: Arc::new(Mutex::new(handler)),
         };
@@ -165,12 +245,17 @@ impl NetworkMgr {
         if let Err(e) = q.connect() {
             return Err(e.to_string());
         }
+        let mut q = { mgr.ctrl.lock().unwrap().clone() };
+        q.set_handler(mq_handler.clone());
+        if let Err(e) = q.connect() {
+            return Err(e.to_string());
+        }
         match conn {
             Connection::Amqp(_, counter) => {
-                *counter.lock().unwrap() += 3;
+                *counter.lock().unwrap() += 4;
             }
             Connection::Mqtt(_, counter) => {
-                *counter.lock().unwrap() += 3;
+                *counter.lock().unwrap() += 4;
             }
         }
         Ok(mgr)
@@ -208,6 +293,7 @@ impl NetworkMgr {
             dldata: { self.dldata.lock().unwrap().status() },
             dldata_resp: QueueStatus::Closed,
             dldata_result: { self.dldata_result.lock().unwrap().status() },
+            ctrl: { self.ctrl.lock().unwrap().status() },
         }
     }
 
@@ -220,8 +306,10 @@ impl NetworkMgr {
         q.close().await?;
         let mut q = { self.dldata_result.lock().unwrap().clone() };
         q.close().await?;
+        let mut q = { self.ctrl.lock().unwrap().clone() };
+        q.close().await?;
 
-        remove_connection(&self.conn_pool, &self.host_uri, 3).await
+        remove_connection(&self.conn_pool, &self.host_uri, 4).await
     }
 
     /// Send uplink data to the broker.
@@ -273,10 +361,12 @@ impl QueueEventHandler for MgrMqEventHandler {
         let uldata_status = { self.mgr.uldata.lock().unwrap().status() };
         let dldata_status = { self.mgr.dldata.lock().unwrap().status() };
         let dldata_result_status = { self.mgr.dldata_result.lock().unwrap().status() };
+        let ctrl_status = { self.mgr.ctrl.lock().unwrap().status() };
 
         let status = match uldata_status == QueueStatus::Connected
             && dldata_status == QueueStatus::Connected
             && dldata_result_status == QueueStatus::Connected
+            && ctrl_status == QueueStatus::Connected
         {
             false => MgrStatus::NotReady,
             true => MgrStatus::Ready,
@@ -327,6 +417,19 @@ impl QueueEventHandler for MgrMqEventHandler {
             };
             let handler = { self.mgr.handler.lock().unwrap().clone() };
             let _ = match handler.on_dldata(&self.mgr, Box::new(data)).await {
+                Err(_) => msg.nack().await,
+                Ok(_) => msg.ack().await,
+            };
+        } else if queue_name.cmp(self.mgr.ctrl.lock().unwrap().name()) == Ordering::Equal {
+            let data = match serde_json::from_slice::<NetworkCtrlMsg>(msg.payload()) {
+                Err(_) => {
+                    let _ = msg.ack().await;
+                    return;
+                }
+                Ok(data) => data,
+            };
+            let handler = { self.mgr.handler.lock().unwrap().clone() };
+            let _ = match handler.on_ctrl(&self.mgr, Box::new(data)).await {
                 Err(_) => msg.nack().await,
                 Ok(_) => msg.ack().await,
             };

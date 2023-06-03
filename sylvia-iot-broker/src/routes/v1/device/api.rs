@@ -12,16 +12,16 @@ use actix_web::{
 };
 use async_trait::async_trait;
 use chrono::Utc;
-use general_mq::{
-    queue::{Event, EventHandler as QueueEventHandler, GmqQueue, Message, Status},
-    Queue,
-};
 use log::{error, info, warn};
 use serde::{Deserialize, Serialize};
 use serde_json::{self, Map};
 use tokio::time;
 use url::Url;
 
+use general_mq::{
+    queue::{Event, EventHandler as QueueEventHandler, GmqQueue, Message, Status},
+    Queue,
+};
 use sylvia_iot_corelib::{
     err::ErrResp,
     role::Role,
@@ -31,7 +31,7 @@ use sylvia_iot_corelib::{
 use super::{
     super::{
         super::{ErrReq, State},
-        lib::{check_device, check_unit, get_token_id_roles},
+        lib::{check_device, check_unit, gen_mgr_key, get_token_id_roles},
     },
     request, response,
 };
@@ -60,6 +60,7 @@ enum RecvCtrlMsg {
     DelDeviceBulk { new: CtrlDelDeviceBulk },
 }
 
+/// Control message inside broker cluster.
 #[derive(Serialize)]
 #[serde(untagged)]
 enum SendCtrlMsg {
@@ -115,9 +116,79 @@ struct CtrlReceiverHandler {
     cache: Option<Arc<dyn Cache>>,
 }
 
+/// Control message from broker to network servers.
+#[derive(Serialize)]
+#[serde(untagged)]
+enum SendNetCtrlMsg {
+    AddDevice {
+        time: String,
+        operation: String,
+        new: NetCtrlAddr,
+    },
+    AddDeviceBulk {
+        time: String,
+        operation: String,
+        new: NetCtrlAddrs,
+    },
+    AddDeviceRange {
+        time: String,
+        operation: String,
+        new: NetCtrlAddrRange,
+    },
+    DelDevice {
+        time: String,
+        operation: String,
+        new: NetCtrlAddr,
+    },
+    DelDeviceBulk {
+        time: String,
+        operation: String,
+        new: NetCtrlAddrs,
+    },
+    DelDeviceRange {
+        time: String,
+        operation: String,
+        new: NetCtrlAddrRange,
+    },
+}
+
+struct NetCtrlMsgOp;
+
+/// Shared structure to keep simple design.
+#[derive(Serialize)]
+struct NetCtrlAddr {
+    #[serde(rename = "networkAddr")]
+    network_addr: String,
+}
+
+/// Shared structure to keep simple design.
+#[derive(Serialize)]
+struct NetCtrlAddrs {
+    #[serde(rename = "networkAddrs")]
+    network_addrs: Vec<String>,
+}
+
+/// Shared structure to keep simple design.
+#[derive(Serialize)]
+struct NetCtrlAddrRange {
+    #[serde(rename = "startAddr")]
+    pub start_addr: String,
+    #[serde(rename = "endAddr")]
+    pub end_addr: String,
+}
+
 impl CtrlMsgOp {
     const DEL_DEVICE: &'static str = "del-device";
     const DEL_DEVICE_BULK: &'static str = "del-device-bulk";
+}
+
+impl NetCtrlMsgOp {
+    const ADD_DEVICE: &'static str = "add-device";
+    const ADD_DEVICE_BULK: &'static str = "add-device-bulk";
+    const ADD_DEVICE_RANGE: &'static str = "add-device-range";
+    const DEL_DEVICE: &'static str = "del-device";
+    const DEL_DEVICE_BULK: &'static str = "del-device-bulk";
+    const DEL_DEVICE_RANGE: &'static str = "del-device-range";
 }
 
 const BULK_MAX: usize = 1024;
@@ -308,7 +379,7 @@ pub async fn post_device(
             Some(_) => Some(unit.code),
         },
         network_id: network.network_id,
-        network_code: network.code,
+        network_code: network.code.clone(),
         network_addr: body.data.network_addr.to_lowercase(),
         created_at: now,
         modified_at: now,
@@ -339,12 +410,27 @@ pub async fn post_device(
                 unit_code: device.unit_code,
                 network_id: device.network_id,
                 network_code: device.network_code,
-                network_addr: device.network_addr,
+                network_addr: device.network_addr.clone(),
                 device_id: device.device_id,
             },
         };
         send_del_ctrl_message(FN_NAME, &msg, &state).await?;
     }
+
+    // Send message to the device's network server.
+    let mgr_key = match network.unit_code.as_ref() {
+        None => gen_mgr_key("", network.code.as_str()),
+        Some(unit_code) => gen_mgr_key(unit_code.as_str(), network.code.as_str()),
+    };
+    let msg_op = NetCtrlMsgOp::ADD_DEVICE;
+    let msg = SendNetCtrlMsg::AddDevice {
+        time: time_str(&Utc::now()),
+        operation: msg_op.to_string(),
+        new: NetCtrlAddr {
+            network_addr: device.network_addr,
+        },
+    };
+    let _ = send_net_ctrl_message(FN_NAME, &msg, msg_op, &state, &mgr_key).await;
 
     Ok(HttpResponse::Ok().json(response::PostDevice {
         data: response::PostDeviceData { device_id },
@@ -454,15 +540,30 @@ pub async fn post_device_bulk(
             operation: CtrlMsgOp::DEL_DEVICE_BULK.to_string(),
             new: CtrlDelDeviceBulk {
                 unit_id: unit.unit_id,
-                unit_code: network.unit_code,
+                unit_code: network.unit_code.clone(),
                 network_id: network.network_id,
-                network_code: network.code,
+                network_code: network.code.clone(),
                 network_addrs: body.data.network_addrs.clone(),
                 device_ids: devices.iter().map(|x| x.device_id.clone()).collect(),
             },
         };
         send_del_ctrl_message(FN_NAME, &msg, &state).await?;
     }
+
+    // Send message to the device's network server.
+    let mgr_key = match network.unit_code.as_ref() {
+        None => gen_mgr_key("", network.code.as_str()),
+        Some(unit_code) => gen_mgr_key(unit_code.as_str(), network.code.as_str()),
+    };
+    let msg_op = NetCtrlMsgOp::ADD_DEVICE_BULK;
+    let msg = SendNetCtrlMsg::AddDeviceBulk {
+        time: time_str(&Utc::now()),
+        operation: msg_op.to_string(),
+        new: NetCtrlAddrs {
+            network_addrs: body.data.network_addrs.clone(),
+        },
+    };
+    let _ = send_net_ctrl_message(FN_NAME, &msg, msg_op, &state, &mgr_key).await;
 
     Ok(HttpResponse::NoContent().finish())
 }
@@ -530,6 +631,21 @@ pub async fn post_device_bulk_del(
     };
 
     del_device_rsc_bulk(FN_NAME, &body.data, &network, &state).await?;
+
+    // Send message to the device's network server.
+    let mgr_key = match network.unit_code.as_ref() {
+        None => gen_mgr_key("", network.code.as_str()),
+        Some(unit_code) => gen_mgr_key(unit_code.as_str(), network.code.as_str()),
+    };
+    let msg_op = NetCtrlMsgOp::DEL_DEVICE_BULK;
+    let msg = SendNetCtrlMsg::DelDeviceBulk {
+        time: time_str(&Utc::now()),
+        operation: msg_op.to_string(),
+        new: NetCtrlAddrs {
+            network_addrs: body.data.network_addrs.clone(),
+        },
+    };
+    let _ = send_net_ctrl_message(FN_NAME, &msg, msg_op, &state, &mgr_key).await;
 
     Ok(HttpResponse::NoContent().finish())
 }
@@ -644,15 +760,31 @@ pub async fn post_device_range(
             operation: CtrlMsgOp::DEL_DEVICE_BULK.to_string(),
             new: CtrlDelDeviceBulk {
                 unit_id: unit.unit_id,
-                unit_code: network.unit_code,
+                unit_code: network.unit_code.clone(),
                 network_id: network.network_id,
-                network_code: network.code,
+                network_code: network.code.clone(),
                 network_addrs: devices.iter().map(|x| x.network_addr.clone()).collect(),
                 device_ids: devices.iter().map(|x| x.device_id.clone()).collect(),
             },
         };
         send_del_ctrl_message(FN_NAME, &msg, &state).await?;
     }
+
+    // Send message to the device's network server.
+    let mgr_key = match network.unit_code.as_ref() {
+        None => gen_mgr_key("", network.code.as_str()),
+        Some(unit_code) => gen_mgr_key(unit_code.as_str(), network.code.as_str()),
+    };
+    let msg_op = NetCtrlMsgOp::ADD_DEVICE_RANGE;
+    let msg = SendNetCtrlMsg::AddDeviceRange {
+        time: time_str(&Utc::now()),
+        operation: msg_op.to_string(),
+        new: NetCtrlAddrRange {
+            start_addr: body.data.start_addr.clone(),
+            end_addr: body.data.end_addr.clone(),
+        },
+    };
+    let _ = send_net_ctrl_message(FN_NAME, &msg, msg_op, &state, &mgr_key).await;
 
     Ok(HttpResponse::NoContent().finish())
 }
@@ -737,6 +869,22 @@ pub async fn post_device_range_del(
     };
 
     del_device_rsc_bulk(FN_NAME, &rm_cond, &network, &state).await?;
+
+    // Send message to the device's network server.
+    let mgr_key = match network.unit_code.as_ref() {
+        None => gen_mgr_key("", network.code.as_str()),
+        Some(unit_code) => gen_mgr_key(unit_code.as_str(), network.code.as_str()),
+    };
+    let msg_op = NetCtrlMsgOp::DEL_DEVICE_RANGE;
+    let msg = SendNetCtrlMsg::DelDeviceRange {
+        time: time_str(&Utc::now()),
+        operation: msg_op.to_string(),
+        new: NetCtrlAddrRange {
+            start_addr: body.data.start_addr.clone(),
+            end_addr: body.data.end_addr.clone(),
+        },
+    };
+    let _ = send_net_ctrl_message(FN_NAME, &msg, msg_op, &state, &mgr_key).await;
 
     Ok(HttpResponse::NoContent().finish())
 }
@@ -1118,14 +1266,53 @@ pub async fn patch_device(
             operation: CtrlMsgOp::DEL_DEVICE.to_string(),
             new: CtrlDelDevice {
                 unit_id: device.unit_id,
-                unit_code: device.unit_code,
+                unit_code: device.unit_code.clone(),
                 network_id: device.network_id,
-                network_code: device.network_code,
-                network_addr: device.network_addr,
+                network_code: device.network_code.clone(),
+                network_addr: device.network_addr.clone(),
                 device_id: device.device_id,
             },
         };
         send_del_ctrl_message(FN_NAME, &msg, &state).await?;
+    }
+
+    // Send message to the device's network server if device network or address is changed.
+    if updates.network.is_some() || updates.network_addr.is_some() {
+        let now = Utc::now();
+
+        let msg_op = NetCtrlMsgOp::DEL_DEVICE;
+        let msg = SendNetCtrlMsg::DelDevice {
+            time: time_str(&now),
+            operation: msg_op.to_string(),
+            new: NetCtrlAddr {
+                network_addr: device.network_addr.clone(),
+            },
+        };
+        let mgr_key = match device.unit_code.as_ref() {
+            None => gen_mgr_key("", device.network_code.as_str()),
+            Some(code) => gen_mgr_key(code.as_str(), device.network_code.as_str()),
+        };
+        let _ = send_net_ctrl_message(FN_NAME, &msg, msg_op, &state, &mgr_key).await;
+
+        let msg_op = NetCtrlMsgOp::ADD_DEVICE;
+        let msg = SendNetCtrlMsg::AddDevice {
+            time: time_str(&now),
+            operation: msg_op.to_string(),
+            new: NetCtrlAddr {
+                network_addr: match updates.network_addr {
+                    None => device.network_addr,
+                    Some(addr) => addr.to_string(),
+                },
+            },
+        };
+        let mgr_key = match network.as_ref() {
+            None => mgr_key,
+            Some(network) => match network.unit_code.as_ref() {
+                None => gen_mgr_key("", network.code.as_str()),
+                Some(code) => gen_mgr_key(code.as_str(), network.code.as_str()),
+            },
+        };
+        let _ = send_net_ctrl_message(FN_NAME, &msg, msg_op, &state, &mgr_key).await;
     }
 
     Ok(HttpResponse::NoContent().finish())
@@ -1159,15 +1346,30 @@ pub async fn delete_device(
             operation: CtrlMsgOp::DEL_DEVICE.to_string(),
             new: CtrlDelDevice {
                 unit_id: device.unit_id,
-                unit_code: device.unit_code,
+                unit_code: device.unit_code.clone(),
                 network_id: device.network_id,
-                network_code: device.network_code,
-                network_addr: device.network_addr,
+                network_code: device.network_code.clone(),
+                network_addr: device.network_addr.clone(),
                 device_id: device.device_id,
             },
         };
         send_del_ctrl_message(FN_NAME, &msg, &state).await?;
     }
+
+    // Send message to the device's network server.
+    let mgr_key = match device.unit_code.as_ref() {
+        None => gen_mgr_key("", device.network_code.as_str()),
+        Some(unit_code) => gen_mgr_key(unit_code.as_str(), device.network_code.as_str()),
+    };
+    let msg_op = NetCtrlMsgOp::DEL_DEVICE;
+    let msg = SendNetCtrlMsg::DelDevice {
+        time: time_str(&Utc::now()),
+        operation: msg_op.to_string(),
+        new: NetCtrlAddr {
+            network_addr: device.network_addr,
+        },
+    };
+    let _ = send_net_ctrl_message(FN_NAME, &msg, msg_op, &state, &mgr_key).await;
 
     Ok(HttpResponse::NoContent().finish())
 }
@@ -1563,6 +1765,30 @@ async fn send_del_ctrl_message(
         ))));
     }
 
+    Ok(())
+}
+
+/// Send network control message.
+async fn send_net_ctrl_message(
+    fn_name: &str,
+    msg: &SendNetCtrlMsg,
+    msg_op: &str,
+    state: &web::Data<State>,
+    mgr_key: &str,
+) -> Result<(), ErrResp> {
+    let mgr = {
+        match state.network_mgrs.lock().unwrap().get_mut(mgr_key) {
+            None => return Ok(()),
+            Some(mgr) => mgr.clone(),
+        }
+    };
+    match serde_json::to_vec(msg) {
+        Err(e) => warn!("[{}] marshal {} error: {}", fn_name, msg_op, e),
+        Ok(payload) => match mgr.send_ctrl(payload).await {
+            Err(e) => warn!("[{}] send {} error: {}", fn_name, msg_op, e),
+            Ok(_) => (),
+        },
+    }
     Ok(())
 }
 

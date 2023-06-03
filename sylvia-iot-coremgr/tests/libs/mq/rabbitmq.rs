@@ -2,17 +2,17 @@ use std::{collections::HashMap, time::Duration};
 
 use base64::{engine::general_purpose, Engine};
 use chrono::Utc;
-use general_mq::{
-    connection::{GmqConnection, Status as ConnStatus},
-    queue::{GmqQueue, Status as QueueStatus},
-    AmqpConnection, AmqpConnectionOptions, AmqpQueue, AmqpQueueOptions,
-};
 use laboratory::SpecContext;
 use reqwest::{Client, Method, StatusCode};
 use serde::Deserialize;
 use serde_json;
 use tokio::time;
 
+use general_mq::{
+    connection::{GmqConnection, Status as ConnStatus},
+    queue::{GmqQueue, Status as QueueStatus},
+    AmqpConnection, AmqpConnectionOptions, AmqpQueue, AmqpQueueOptions,
+};
 use sylvia_iot_corelib::err::ErrResp;
 use sylvia_iot_coremgr::libs::mq::{rabbitmq, QueueType};
 

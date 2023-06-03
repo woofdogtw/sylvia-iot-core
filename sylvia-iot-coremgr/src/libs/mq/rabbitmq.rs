@@ -256,14 +256,14 @@ pub async fn put_permissions(
         )
         .replace(".", "\\."),
         QueueType::Network => {
-            format!("^broker.{}.(uldata|dldata|dldata-result)$", username).replace(".", "\\.")
+            format!("^broker.{}.(uldata|dldata|dldata-result|ctrl)$", username).replace(".", "\\.")
         }
     };
     let read_pattern = match q_type {
         QueueType::Application => {
             format!("^broker.{}.(uldata|dldata-resp|dldata-result)$", username).replace(".", "\\.")
         }
-        QueueType::Network => format!("^broker.{}.dldata$", username).replace(".", "\\."),
+        QueueType::Network => format!("^broker.{}.(dldata|ctrl)$", username).replace(".", "\\."),
     };
     let body = PutPermissionsBody {
         configure: config_pattern.to_string(),
@@ -480,7 +480,7 @@ pub async fn stats(
     opts: &ManagementOpts,
     hostname: &str,
     username: &str,
-    queue: &str, // uldata,dldata,dldata-resp,dldata-result
+    queue: &str, // uldata,dldata,dldata-resp,dldata-result,ctrl
 ) -> Result<Stats, ErrResp> {
     let uri = format!(
         "http://{}:15672/api/queues/{}/broker.{}.{}?msg_rates_age=60&msg_rates_incr=5",

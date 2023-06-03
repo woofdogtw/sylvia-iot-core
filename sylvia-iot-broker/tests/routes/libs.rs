@@ -881,7 +881,7 @@ pub fn new_state(
             Some(host) => Some(host.to_string()),
         },
         routes_state: Some(state),
-        routing_values: Some(HashMap::new()),
+        test_values: Some(HashMap::new()),
         ..Default::default()
     }
 }

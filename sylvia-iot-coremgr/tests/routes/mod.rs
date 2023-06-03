@@ -8,10 +8,10 @@ use actix_web::{
     test::{self, TestRequest},
     web, App,
 };
-use general_mq::queue::GmqQueue;
 use laboratory::{describe, expect, SpecContext, Suite};
 use reqwest;
 
+use general_mq::queue::GmqQueue;
 use sylvia_iot_auth::libs::config as sylvia_iot_auth_config;
 use sylvia_iot_broker::libs::config as sylvia_iot_broker_config;
 use sylvia_iot_coremgr::{

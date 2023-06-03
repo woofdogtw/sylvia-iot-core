@@ -244,6 +244,112 @@ pub fn create_device(
     Ok(body.data.device_id)
 }
 
+pub fn create_device_bulk(
+    runtime: &Runtime,
+    state: &routes::State,
+    token: &str,
+    param: &device::request::PostDeviceBulk,
+) -> Result<Vec<String>, String> {
+    let mut app = runtime.block_on(async {
+        test::init_service(
+            App::new()
+                .wrap(NormalizePath::trim())
+                .service(routes::new_service(state)),
+        )
+        .await
+    });
+
+    let req = TestRequest::post()
+        .uri("/broker/api/v1/device/bulk")
+        .insert_header((header::AUTHORIZATION, format!("Bearer {}", token)))
+        .set_json(param)
+        .to_request();
+    let resp = runtime.block_on(async { test::call_service(&mut app, req).await });
+    if resp.status() != StatusCode::NO_CONTENT {
+        let status = resp.status();
+        let body = runtime.block_on(async { test::read_body(resp).await });
+        return Err(format!(
+            "create device bulk resp status {}, body: {:?}",
+            status, body
+        ));
+    }
+    let req = TestRequest::get()
+        .uri("/broker/api/v1/device/list")
+        .insert_header((header::AUTHORIZATION, format!("Bearer {}", token)))
+        .to_request();
+    let resp = runtime.block_on(async { test::call_service(&mut app, req).await });
+    if resp.status() != StatusCode::OK {
+        let status = resp.status();
+        let body = runtime.block_on(async { test::read_body(resp).await });
+        return Err(format!(
+            "get device bulk resp status {}, body: {:?}",
+            status, body
+        ));
+    }
+    let body: device::response::GetDeviceList =
+        runtime.block_on(async { test::read_body_json(resp).await });
+    let device_ids: Vec<String> = body
+        .data
+        .iter()
+        .map(|device| device.device_id.clone())
+        .collect();
+
+    Ok(device_ids)
+}
+
+pub fn create_device_range(
+    runtime: &Runtime,
+    state: &routes::State,
+    token: &str,
+    param: &device::request::PostDeviceRange,
+) -> Result<Vec<String>, String> {
+    let mut app = runtime.block_on(async {
+        test::init_service(
+            App::new()
+                .wrap(NormalizePath::trim())
+                .service(routes::new_service(state)),
+        )
+        .await
+    });
+
+    let req = TestRequest::post()
+        .uri("/broker/api/v1/device/range")
+        .insert_header((header::AUTHORIZATION, format!("Bearer {}", token)))
+        .set_json(param)
+        .to_request();
+    let resp = runtime.block_on(async { test::call_service(&mut app, req).await });
+    if resp.status() != StatusCode::NO_CONTENT {
+        let status = resp.status();
+        let body = runtime.block_on(async { test::read_body(resp).await });
+        return Err(format!(
+            "create device range resp status {}, body: {:?}",
+            status, body
+        ));
+    }
+    let req = TestRequest::get()
+        .uri("/broker/api/v1/device/list")
+        .insert_header((header::AUTHORIZATION, format!("Bearer {}", token)))
+        .to_request();
+    let resp = runtime.block_on(async { test::call_service(&mut app, req).await });
+    if resp.status() != StatusCode::OK {
+        let status = resp.status();
+        let body = runtime.block_on(async { test::read_body(resp).await });
+        return Err(format!(
+            "get device range resp status {}, body: {:?}",
+            status, body
+        ));
+    }
+    let body: device::response::GetDeviceList =
+        runtime.block_on(async { test::read_body_json(resp).await });
+    let device_ids: Vec<String> = body
+        .data
+        .iter()
+        .map(|device| device.device_id.clone())
+        .collect();
+
+    Ok(device_ids)
+}
+
 pub fn patch_device(
     runtime: &Runtime,
     state: &routes::State,
@@ -271,6 +377,104 @@ pub fn patch_device(
         let body = runtime.block_on(async { test::read_body(resp).await });
         return Err(format!(
             "patch device resp status {}, body: {:?}",
+            status, body
+        ));
+    }
+
+    Ok(())
+}
+
+pub fn delete_device(
+    runtime: &Runtime,
+    state: &routes::State,
+    token: &str,
+    device_id: &str,
+) -> Result<(), String> {
+    let mut app = runtime.block_on(async {
+        test::init_service(
+            App::new()
+                .wrap(NormalizePath::trim())
+                .service(routes::new_service(state)),
+        )
+        .await
+    });
+
+    let req = TestRequest::delete()
+        .uri(format!("/broker/api/v1/device/{}", device_id).as_str())
+        .insert_header((header::AUTHORIZATION, format!("Bearer {}", token)))
+        .to_request();
+    let resp = runtime.block_on(async { test::call_service(&mut app, req).await });
+    if resp.status() != StatusCode::NO_CONTENT {
+        let status = resp.status();
+        let body = runtime.block_on(async { test::read_body(resp).await });
+        return Err(format!(
+            "delete device resp status {}, body: {:?}",
+            status, body
+        ));
+    }
+
+    Ok(())
+}
+
+pub fn delete_device_bulk(
+    runtime: &Runtime,
+    state: &routes::State,
+    token: &str,
+    param: &device::request::PostDeviceBulk,
+) -> Result<(), String> {
+    let mut app = runtime.block_on(async {
+        test::init_service(
+            App::new()
+                .wrap(NormalizePath::trim())
+                .service(routes::new_service(state)),
+        )
+        .await
+    });
+
+    let req = TestRequest::post()
+        .uri("/broker/api/v1/device/bulk-delete")
+        .insert_header((header::AUTHORIZATION, format!("Bearer {}", token)))
+        .set_json(param)
+        .to_request();
+    let resp = runtime.block_on(async { test::call_service(&mut app, req).await });
+    if resp.status() != StatusCode::NO_CONTENT {
+        let status = resp.status();
+        let body = runtime.block_on(async { test::read_body(resp).await });
+        return Err(format!(
+            "delete device bulk resp status {}, body: {:?}",
+            status, body
+        ));
+    }
+
+    Ok(())
+}
+
+pub fn delete_device_range(
+    runtime: &Runtime,
+    state: &routes::State,
+    token: &str,
+    param: &device::request::PostDeviceRange,
+) -> Result<(), String> {
+    let mut app = runtime.block_on(async {
+        test::init_service(
+            App::new()
+                .wrap(NormalizePath::trim())
+                .service(routes::new_service(state)),
+        )
+        .await
+    });
+
+    let req = TestRequest::post()
+        .uri("/broker/api/v1/device/range-delete")
+        .insert_header((header::AUTHORIZATION, format!("Bearer {}", token)))
+        .set_json(param)
+        .to_request();
+    let resp = runtime.block_on(async { test::call_service(&mut app, req).await });
+    if resp.status() != StatusCode::NO_CONTENT {
+        let status = resp.status();
+        let body = runtime.block_on(async { test::read_body(resp).await });
+        return Err(format!(
+            "delete device range resp status {}, body: {:?}",
             status, body
         ));
     }

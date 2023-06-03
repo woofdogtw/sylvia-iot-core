@@ -4,11 +4,12 @@ use std::{
     sync::{Arc, Mutex},
 };
 
+use url::Url;
+
 use general_mq::{
     connection::GmqConnection, AmqpConnection, AmqpConnectionOptions, MqttConnection,
     MqttConnectionOptions,
 };
-use url::Url;
 
 pub mod data;
 pub mod emqx;

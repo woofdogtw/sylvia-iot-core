@@ -4,14 +4,14 @@ use std::{
     time::Duration,
 };
 
+use laboratory::{describe, Suite};
+use tokio::{runtime::Runtime, time};
+
 use general_mq::{
     connection::{GmqConnection, Status},
     queue::GmqQueue,
     AmqpConnection, AmqpConnectionOptions, MqttConnection, MqttConnectionOptions,
 };
-use laboratory::{describe, Suite};
-use tokio::{runtime::Runtime, time};
-
 use sylvia_iot_broker::libs::mq::Connection;
 use sylvia_iot_corelib::constants::MqEngine;
 
@@ -54,6 +54,7 @@ pub fn suite(mq_engine: &'static str) -> Suite<TestState> {
                 "dldata-result with wrong parameters",
                 network::dldata_result_wrong,
             );
+            context.it("ctrl", network::ctrl);
 
             context.after_each(after_each_fn);
         });

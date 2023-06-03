@@ -1,10 +1,10 @@
 use std::{collections::HashMap, sync::Arc};
 
 use actix_web::dev::ServerHandle;
-use general_mq::{connection::GmqConnection, queue::GmqQueue, Queue};
 use laboratory::{describe, LabResult};
 use tokio::{runtime::Runtime, task};
 
+use general_mq::{connection::GmqConnection, queue::GmqQueue, Queue};
 use sylvia_iot_auth::models::SqliteModel as AuthDbModel;
 use sylvia_iot_broker::{
     libs::mq::{application::ApplicationMgr, network::NetworkMgr, Connection},
@@ -35,10 +35,12 @@ pub struct TestState {
     pub data_queue: Option<Queue>, // receive queue to test data channel.
     pub data_ch_host: Option<String>, // receive queue host.
     pub routes_state: Option<State>,
-    pub routing_conns: Option<Vec<Box<dyn GmqConnection>>>, // for routing/data cases.
-    pub routing_queues: Option<Vec<Box<dyn GmqQueue>>>,     // for routing/data cases.
-    pub routing_values: Option<HashMap<String, String>>,    // for routing/data cases.
-    pub routing_device_id: Option<String>,                  // for routing/data cases.
+    pub test_values: Option<HashMap<String, String>>,
+    pub test_conns: Option<Vec<Box<dyn GmqConnection>>>,
+    pub test_device_id: Option<String>,
+    pub routing_queues: Option<Vec<Box<dyn GmqQueue>>>, // for routing/data cases.
+    pub netctrl_queue_amqp: Option<Queue>,
+    pub netctrl_queue_mqtt: Option<Queue>,
     pub amqp_prefetch: Option<u16>,
     pub mqtt_shared_prefix: Option<String>,
 }
@@ -80,6 +82,21 @@ async fn integration_test() -> LabResult {
                 TEST_MQTT_HOST_URI,
             ));
             context.describe_import(routes::v1::suite_data(
+                DbEngine::SQLITE,
+                CacheEngine::MEMORY,
+                TEST_AMQP_HOST_URI,
+            ));
+            context.describe_import(routes::v1::suite_net_ctrl(
+                DbEngine::MONGODB,
+                CacheEngine::NONE,
+                TEST_AMQP_HOST_URI,
+            ));
+            context.describe_import(routes::v1::suite_net_ctrl(
+                DbEngine::SQLITE,
+                CacheEngine::NONE,
+                TEST_MQTT_HOST_URI,
+            ));
+            context.describe_import(routes::v1::suite_net_ctrl(
                 DbEngine::SQLITE,
                 CacheEngine::MEMORY,
                 TEST_AMQP_HOST_URI,

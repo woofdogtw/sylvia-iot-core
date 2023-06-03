@@ -141,6 +141,7 @@ struct GetStatsRes {
 #[derive(Deserialize, Serialize)]
 struct GetStatsResData {
     dldata: Stats,
+    ctrl: Stats,
 }
 
 #[derive(Deserialize, Serialize)]
