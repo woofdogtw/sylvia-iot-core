@@ -22,7 +22,7 @@ use general_mq::{
 struct Config {
     #[serde(rename = "intervalUs")]
     interval_us: u64,
-    count: u64,
+    count: usize,
     #[serde(rename = "netHost")]
     net_host: String,
     #[serde(rename = "netQueue")]
@@ -50,10 +50,11 @@ struct AppUlData {
 
 struct UlDataHandler {
     start_us: i64,
-    count: u64,
-    received: Arc<Mutex<u64>>,
+    count: usize,
+    received: Arc<Mutex<usize>>,
     total_latency_ms: Arc<Mutex<u64>>, // use Arc<Mutex<>> for interior mutability.
     last_print_sec: Arc<Mutex<i64>>,
+    latency_stats: Arc<Mutex<Vec<u32>>>,
 }
 
 #[async_trait]
@@ -91,6 +92,11 @@ impl EventHandler for UlDataHandler {
             total_latency = *mutex;
         }
 
+        {
+            let mut mutex = self.latency_stats.lock().unwrap();
+            mutex.push(latency as u32);
+        }
+
         let elapse_sec = (now.timestamp_micros() - self.start_us) / 1000000;
         let mut should_print = false;
         {
@@ -105,7 +111,7 @@ impl EventHandler for UlDataHandler {
                 "elapsed {} secs, count: {}, avg latency (ms): {}",
                 elapse_sec,
                 received,
-                total_latency / received
+                total_latency / received as u64
             );
         }
     }
@@ -125,6 +131,37 @@ async fn main() -> Result<()> {
             break;
         }
         time::sleep(Duration::from_millis(10)).await;
+    }
+    let count;
+    {
+        let mut mutex = handler.latency_stats.lock().unwrap();
+        count = mutex.len();
+        if count == conf.count {
+            (*mutex).sort();
+
+            let index_50 = count / 2;
+            let index_80 = count * 4 / 5;
+            let index_90 = count * 9 / 10;
+            let index_95 = count * 95 / 100;
+            let index_98 = count * 98 / 100;
+            let index_99 = count * 99 / 100;
+            println!("min: {}", (*mutex)[0]);
+            println!("50%: {}", (*mutex)[index_50]);
+            println!("80%: {}", (*mutex)[index_80]);
+            println!("90%: {}", (*mutex)[index_90]);
+            println!("95%: {}", (*mutex)[index_95]);
+            println!("98%: {}", (*mutex)[index_98]);
+            println!("99%: {}", (*mutex)[index_99]);
+            println!("max: {}", (*mutex)[count - 1]);
+        }
+    }
+    let total;
+    {
+        let mutex = handler.total_latency_ms.lock().unwrap();
+        total = *mutex;
+    }
+    if count == conf.count {
+        println!("avg: {}", total / count as u64);
     }
     Ok(())
 }
@@ -289,12 +326,14 @@ async fn create_app_queue(config: &Config) -> Result<(Queue, Arc<UlDataHandler>)
         received: Arc::new(Mutex::new(0)),
         total_latency_ms: Arc::new(Mutex::new(0)),
         last_print_sec: Arc::new(Mutex::new(0)),
+        latency_stats: Arc::new(Mutex::new(Vec::with_capacity(config.count as usize))),
     });
     queue.set_handler(handler.clone());
     Ok((queue, handler))
 }
 
 async fn run(config: &Config, queue: Queue, start_us: i64) -> Result<()> {
+    let dbg_exceed = std::env::var("DEBUG_EXCEED").is_ok();
     for i in 0..config.count {
         let payload = serde_json::to_vec(&NetUlData {
             time: Utc::now().to_rfc3339_opts(SecondsFormat::Millis, true),
@@ -306,9 +345,11 @@ async fn run(config: &Config, queue: Queue, start_us: i64) -> Result<()> {
             return Err(IoError::new(ErrorKind::ConnectionRefused, e.to_string()));
         }
         let diff = (Utc::now().timestamp_micros() - start_us) as u64;
-        let next_time = config.interval_us * (i + 1);
+        let next_time = config.interval_us * (i as u64 + 1);
         if diff > next_time {
-            println!("exceed interval");
+            if dbg_exceed {
+                println!("exceed interval");
+            }
         } else {
             time::sleep(Duration::from_micros(next_time - diff)).await;
         }

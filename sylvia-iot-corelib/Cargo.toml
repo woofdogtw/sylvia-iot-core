@@ -12,7 +12,7 @@ repository = "https://github.com/woofdogtw/sylvia-iot-core.git"
 actix-web = { version = "4.3.1", default-features = false, features = ["rustls"] }
 anyhow = "1.0.71"
 chrono = { version = "0.4.26", default-features = false, features = ["serde"] }
-clap = { version = "4.3.0", default-features = false, features = ["std", "help", "usage", "error-context"] }
+clap = { version = "4.3.1", default-features = false, features = ["std", "help", "usage", "error-context"] }
 hex = "0.4.3"
 hmac = "0.12.1"
 log = "0.4.18"

@@ -1,5 +1,23 @@
 # Changelog
 
+## 0.0.14 - 2023-06-04
+
+### Added
+
+- **broker**: Add network control messages for operating devices.
+- **coremgr**: Add network control message queue support including permissions and stats.
+- **sdk**: Add network control message support in `NetworkMgr`.
+- **sdk**: Add HTTP client to handle request retrying when the access token is expired.
+    - Currently we only provide user get/update API utility functions.
+
+### Changed
+
+- **simple-stress**: Add latency statistics for min, 50%, 80%, 90%, 95%, 98%, 99%, max.
+
+### Fixed
+
+- **coremgr**: To fix a bug that creating EMQX network queues with application permissions.
+
 ## 0.0.13 - 2023-05-26
 
 ### Changed

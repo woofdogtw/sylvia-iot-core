@@ -10,7 +10,7 @@ repository = "https://github.com/woofdogtw/sylvia-iot-core.git"
 
 [dependencies]
 chrono = { version = "0.4.26", default-features = false, features = ["serde"] }
-clap = { version = "4.3.0", default-features = false, features = ["std", "help", "usage", "error-context"] }
+clap = { version = "4.3.1", default-features = false, features = ["std", "help", "usage", "error-context"] }
 dirs = "5.0.1"
 hex = "0.4.3"
 json5 = "0.4.1"
