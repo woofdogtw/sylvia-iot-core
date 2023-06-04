@@ -1,4 +1,4 @@
-//! Provides the authentication middleware by sending the Bearer token to [`sylvia-iot-auth`].
+//! Provides the authentication middleware by sending the Bearer token to `sylvia-iot-auth`.
 
 use std::{
     cell::RefCell,

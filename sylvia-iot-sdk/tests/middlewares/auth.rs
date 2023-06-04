@@ -195,7 +195,7 @@ fn before_all_fn(state: &mut HashMap<&'static str, TestState>) -> () {
                 }),
                 ..Default::default()
             };
-            sylvia_iot_auth_routes::new_state("auth", &conf).await
+            sylvia_iot_auth_routes::new_state("/auth", &conf).await
         }) {
             Err(e) => panic!("create auth state error: {}", e),
             Ok(state) => state,
@@ -224,7 +224,7 @@ fn before_all_fn(state: &mut HashMap<&'static str, TestState>) -> () {
             runtime.block_on(async { srv.await })
         });
     };
-    let auth_svc = rx.recv().unwrap();
+    let core_svc = rx.recv().unwrap();
 
     if let Err(e) = runtime.block_on(async {
         for _ in 0..WAIT_COUNT {
@@ -257,7 +257,7 @@ fn before_all_fn(state: &mut HashMap<&'static str, TestState>) -> () {
         TestState {
             runtime: Some(runtime),
             auth_db,
-            auth_svc: Some(auth_svc),
+            core_svc: Some(core_svc),
             auth_uri,
             ..Default::default()
         },
@@ -267,7 +267,7 @@ fn before_all_fn(state: &mut HashMap<&'static str, TestState>) -> () {
 fn after_all_fn(state: &mut HashMap<&'static str, TestState>) -> () {
     let state = state.get_mut(STATE).unwrap();
 
-    stop_auth_svc(state);
+    stop_core_svc(state);
 }
 
 fn remove_sqlite(path: &str) {
@@ -284,9 +284,9 @@ fn remove_sqlite(path: &str) {
     }
 }
 
-fn stop_auth_svc(state: &TestState) {
+fn stop_core_svc(state: &TestState) {
     let runtime = state.runtime.as_ref().unwrap();
-    if let Some(svc) = state.auth_svc.as_ref() {
+    if let Some(svc) = state.core_svc.as_ref() {
         runtime.block_on(async { svc.stop(false).await });
     }
     let mut path = std::env::temp_dir();
@@ -294,7 +294,7 @@ fn stop_auth_svc(state: &TestState) {
     remove_sqlite(path.to_str().unwrap());
 }
 
-pub fn create_user(name: &str, time: DateTime<Utc>, roles: HashMap<String, bool>) -> User {
+fn create_user(name: &str, time: DateTime<Utc>, roles: HashMap<String, bool>) -> User {
     User {
         user_id: name.to_string(),
         account: name.to_string(),
@@ -311,7 +311,7 @@ pub fn create_user(name: &str, time: DateTime<Utc>, roles: HashMap<String, bool>
     }
 }
 
-pub fn create_client(name: &str, user_id: &str, secret: Option<String>) -> Client {
+fn create_client(name: &str, user_id: &str, secret: Option<String>) -> Client {
     let now = Utc::now();
     Client {
         client_id: name.to_string(),
@@ -326,7 +326,7 @@ pub fn create_client(name: &str, user_id: &str, secret: Option<String>) -> Clien
     }
 }
 
-pub fn create_token(token: &str, user_id: &str, client_id: &str) -> AccessToken {
+fn create_token(token: &str, user_id: &str, client_id: &str) -> AccessToken {
     let expires_at = Utc.timestamp_nanos((Utc::now().timestamp() + 3600) * 1000000000);
     AccessToken {
         access_token: token.to_string(),

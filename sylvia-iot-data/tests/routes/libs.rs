@@ -153,7 +153,7 @@ pub fn new_state(db_engine: Option<&'static str>) -> TestState {
                 }),
                 ..Default::default()
             };
-            sylvia_iot_auth_routes::new_state("auth", &conf).await
+            sylvia_iot_auth_routes::new_state("/auth", &conf).await
         }) {
             Err(e) => panic!("create auth state error: {}", e),
             Ok(state) => state,
@@ -171,7 +171,7 @@ pub fn new_state(db_engine: Option<&'static str>) -> TestState {
                 }),
                 ..Default::default()
             };
-            sylvia_iot_broker_routes::new_state("broker", &conf).await
+            sylvia_iot_broker_routes::new_state("/broker", &conf).await
         }) {
             Err(e) => panic!("create broker state error: {}", e),
             Ok(state) => state,

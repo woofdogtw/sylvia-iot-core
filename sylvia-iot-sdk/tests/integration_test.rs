@@ -11,6 +11,7 @@ use general_mq::Queue;
 use sylvia_iot_auth::models::SqliteModel as AuthDbModel;
 use sylvia_iot_sdk::mq::{application::ApplicationMgr, network::NetworkMgr, Connection};
 
+mod api;
 mod middlewares;
 mod mq;
 
@@ -18,7 +19,8 @@ mod mq;
 pub struct TestState {
     pub runtime: Option<Runtime>, // use Option for Default. Always Some().
     pub auth_db: Option<AuthDbModel>, // sylvia-iot-auth relative databases.
-    pub auth_svc: Option<ServerHandle>, // sylvia-iot-auth service.
+    pub broker_db: Option<AuthDbModel>, // sylvia-iot-broker relative databases.
+    pub core_svc: Option<ServerHandle>, // sylvia-iot service.
     pub auth_uri: Option<String>, // the /tokeninfo URI.
     pub mq_engine: Option<String>,
     pub mgr_conns: Option<Arc<Mutex<HashMap<String, Connection>>>>,
@@ -33,6 +35,8 @@ pub const WAIT_COUNT: isize = 100;
 pub const WAIT_TICK: u64 = 100;
 pub const TEST_AUTH_BASE: &'static str = "http://localhost:1080/auth";
 pub const TEST_REDIRECT_URI: &'static str = "http://localhost:1080/auth/oauth2/redirect";
+pub const TEST_BROKER_BASE: &'static str = "http://localhost:1080/broker";
+pub const TEST_COREMGR_BASE: &'static str = "http://localhost:1080/coremgr";
 pub const TEST_AMQP_HOST_URI: &'static str = "amqp://localhost";
 pub const TEST_MQTT_HOST_URI: &'static str = "mqtt://localhost";
 
@@ -40,6 +44,7 @@ pub const TEST_MQTT_HOST_URI: &'static str = "mqtt://localhost";
 async fn integration_test() -> LabResult {
     let handle = task::spawn_blocking(|| {
         describe("full test", |context| {
+            context.describe_import(api::suite());
             context.describe_import(middlewares::suite());
             context.describe_import(mq::suite(mq::MqEngine::RABBITMQ));
             context.describe_import(mq::suite(mq::MqEngine::EMQX));

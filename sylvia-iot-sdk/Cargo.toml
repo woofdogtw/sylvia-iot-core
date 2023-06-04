@@ -27,6 +27,8 @@ url = "2.3.1"
 actix-http = "3.3.1"
 laboratory = "2.0.0"
 sylvia-iot-auth = { path="../sylvia-iot-auth" }
+sylvia-iot-broker = { path="../sylvia-iot-broker" }
+sylvia-iot-coremgr = { path="../sylvia-iot-coremgr" }
 
 [profile.release]
 codegen-units = 1
