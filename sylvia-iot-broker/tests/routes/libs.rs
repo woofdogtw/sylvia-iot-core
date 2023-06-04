@@ -782,7 +782,7 @@ pub fn new_state(
                 }),
                 ..Default::default()
             };
-            sylvia_iot_auth_routes::new_state("auth", &conf).await
+            sylvia_iot_auth_routes::new_state("/auth", &conf).await
         }) {
             Err(e) => panic!("create auth state error: {}", e),
             Ok(state) => state,
