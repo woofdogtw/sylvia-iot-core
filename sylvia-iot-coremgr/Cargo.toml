@@ -19,20 +19,20 @@ async-stream = "0.3.5"
 async-trait = "0.1.68"
 base64 = "0.21.2"
 chrono = { version = "0.4.26", default-features = false, features = ["serde"] }
-clap = { version = "4.3.2", default-features = false, features = ["std", "help", "usage", "error-context"] }
+clap = { version = "4.3.4", default-features = false, features = ["std", "help", "usage", "error-context"] }
 csv = "1.2.2"
 futures = "0.3.28"
 futures-util = "0.3.28"
 general-mq = { path="../general-mq" }
 hex = "0.4.3"
 json5 = "0.4.1"
-log = "0.4.18"
+log = "0.4.19"
 reqwest = { version = "0.11.18", default-features = false, features = ["json", "rustls-tls", "stream"] }
 rumqttd = "0.15.0"
 rustls = "0.20.8"
 rustls-pemfile = "1.0.2"
 serde = { version = "1.0.164", features = ["derive"] }
-serde_json = "1.0.96"
+serde_json = "1.0.97"
 serde_urlencoded = "0.7.1"
 sylvia-iot-auth = { path="../sylvia-iot-auth" }
 sylvia-iot-broker = { path="../sylvia-iot-broker" }
