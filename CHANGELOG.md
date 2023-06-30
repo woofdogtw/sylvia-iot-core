@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.0.15 - 2023-06-30
+
+### Changed
+
+- Update Rust to 1.70.0 with GitHub Actions runner image 20230619.1.0.
+- Update Docker images with alpine-3.17.4.
+- Update dependencies.
+- **broker**: Force convert host name to lowercase when using `PATCH /appplication` or `PATCH /network`.
+- **coremgr**: Modify test cases for RabbitMQ 3.12.
+
 ## 0.0.14 - 2023-06-04
 
 ### Added

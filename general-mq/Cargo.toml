@@ -15,7 +15,7 @@ lapin = { version = "2.2.1", features = ["rustls"] }
 rand = "0.8.5"
 regex = "1.8.4"
 rumqttc = "0.22.0"
-tokio = { version = "1.28.2", features = ["io-util", "macros", "rt-multi-thread", "time"] }
+tokio = { version = "1.29.1", features = ["io-util", "macros", "rt-multi-thread", "time"] }
 url = "2.4.0"
 urlencoding = "2.1.2"
 
