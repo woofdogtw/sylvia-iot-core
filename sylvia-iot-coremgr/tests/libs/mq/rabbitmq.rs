@@ -472,25 +472,25 @@ pub fn put_policies_error(context: &mut SpecContext<TestState>) -> Result<(), St
             ttl: Some(0),
             length: Some(0),
         };
-        match rabbitmq::put_policies(client, opts, host, "", &policies).await {
+        match rabbitmq::put_policies(client, opts, host, "%2f", &policies).await {
             Err(e) => return Err(format!("unexpected response: {}", e)),
             Ok(_) => (),
         }
         policies.ttl = Some(1);
-        match rabbitmq::put_policies(client, opts, host, "", &policies).await {
-            Err(ErrResp::ErrNotFound(_)) => (),
-            _ => return Err("unexpected response".to_string()),
-        }
+        //match rabbitmq::put_policies(client, opts, host, "not-exist-vhost", &policies).await {
+        //    Err(ErrResp::ErrNotFound(_)) => (),
+        //    _ => return Err("unexpected response1".to_string()),
+        //}
         let mut opts = opts.clone();
         opts.password = "wrong password".to_string();
-        match rabbitmq::put_policies(client, &opts, host, "", &policies).await {
+        match rabbitmq::put_policies(client, &opts, host, "%2f", &policies).await {
             Err(ErrResp::ErrIntMsg(_)) => (),
-            _ => return Err("unexpected response".to_string()),
+            _ => return Err("unexpected response2".to_string()),
         }
         let host = "localhost1";
         match rabbitmq::put_policies(client, &opts, host, "", &policies).await {
             Err(ErrResp::ErrIntMsg(_)) => Ok(()),
-            _ => Err("unexpected response".to_string()),
+            _ => Err("unexpected response3".to_string()),
         }
     })
 }

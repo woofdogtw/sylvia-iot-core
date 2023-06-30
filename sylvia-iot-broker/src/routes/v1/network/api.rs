@@ -867,8 +867,11 @@ async fn get_updates<'a>(body: &'a mut request::PatchNetworkData) -> Result<Upda
                         "unsupport `hostUri` scheme".to_string(),
                     )));
                 }
+                body.host_uri = Some(uri.to_string()); // change host name case.
             }
         }
+    }
+    if let Some(host_uri) = body.host_uri.as_ref() {
         updates.host_uri = Some(host_uri.as_str());
         count += 1;
     }
