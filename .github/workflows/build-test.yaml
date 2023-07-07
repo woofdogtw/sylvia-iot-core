@@ -14,7 +14,7 @@ jobs:
     name: Build and test general-mq
     permissions:
       contents: write
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-20.04
     services:
       rabbitmq:
         image: rabbitmq:3.12.1-management-alpine
@@ -23,7 +23,7 @@ jobs:
           - 5672:5672
           - 15672:15672
       emqx:
-        image: emqx/emqx:5.1.0
+        image: emqx/emqx:5.1.1
         ports:
           - 1883:1883
           - 8883:8883
@@ -72,10 +72,10 @@ jobs:
     name: Build and test sylvia-iot-auth
     permissions:
       contents: write
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-20.04
     services:
       mongo:
-        image: mongo:6.0.6
+        image: mongo:6.0.7
         ports:
           - 27017:27017
       redis:
@@ -126,10 +126,10 @@ jobs:
     name: Build and test sylvia-iot-broker
     permissions:
       contents: write
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-20.04
     services:
       mongo:
-        image: mongo:6.0.6
+        image: mongo:6.0.7
         ports:
           - 27017:27017
       rabbitmq:
@@ -139,7 +139,7 @@ jobs:
           - 5672:5672
           - 15672:15672
       emqx:
-        image: emqx/emqx:5.1.0
+        image: emqx/emqx:5.1.1
         ports:
           - 1883:1883
           - 8883:8883
@@ -188,7 +188,7 @@ jobs:
     name: Build and test sylvia-iot-corelib
     permissions:
       contents: write
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-20.04
     env:
       PROJ: sylvia-iot-corelib
       RUSTFLAGS: "-C instrument-coverage"
@@ -233,10 +233,10 @@ jobs:
     name: Build and test sylvia-iot-coremgr
     permissions:
       contents: write
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-20.04
     services:
       mongo:
-        image: mongo:6.0.6
+        image: mongo:6.0.7
         ports:
           - 27017:27017
       rabbitmq:
@@ -267,7 +267,7 @@ jobs:
           -e EMQX_LOADED_MODULES="emqx_mod_acl_internal,emqx_mod_presence,emqx_mod_topic_metrics"
           -p 1883:1883 -p 8883:8883 -p 18083:18083
           -v "$(pwd)/.github/workflows/files/emqx.conf":"/opt/emqx/etc/emqx.conf"
-          emqx/emqx:5.1.0
+          emqx/emqx:5.1.1
       - name: Build bin/lib
         run: cargo build -p $PROJ
       - name: Run test
@@ -297,7 +297,7 @@ jobs:
     name: Build and test sylvia-iot-coremgr-cli
     permissions:
       contents: write
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-20.04
     env:
       PROJ: sylvia-iot-coremgr-cli
     steps:
@@ -310,10 +310,10 @@ jobs:
     name: Build and test sylvia-iot-data
     permissions:
       contents: write
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-20.04
     services:
       mongo:
-        image: mongo:6.0.6
+        image: mongo:6.0.7
         ports:
           - 27017:27017
       rabbitmq:
@@ -323,7 +323,7 @@ jobs:
           - 5672:5672
           - 15672:15672
       emqx:
-        image: emqx/emqx:5.1.0
+        image: emqx/emqx:5.1.1
         ports:
           - 1883:1883
           - 8883:8883
@@ -372,7 +372,7 @@ jobs:
     name: Build and test sylvia-iot-sdk
     permissions:
       contents: write
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-20.04
     services:
       rabbitmq:
         image: rabbitmq:3.12.1-management-alpine
@@ -381,7 +381,7 @@ jobs:
           - 5672:5672
           - 15672:15672
       emqx:
-        image: emqx/emqx:5.1.0
+        image: emqx/emqx:5.1.1
         ports:
           - 1883:1883
           - 8883:8883
@@ -428,7 +428,7 @@ jobs:
 
   router:
     name: Build and test sylvia-router
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-20.04
     env:
       PROJ: sylvia-router
     steps:

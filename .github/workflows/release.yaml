@@ -9,7 +9,7 @@ env:
 jobs:
   release:
     name: Publish GitHub Releases and Docker Hub
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-20.04
     steps:
       - name: Check out repository
         uses: actions/checkout@v3
@@ -171,7 +171,7 @@ jobs:
           ./ghr_${GHR_VER}_linux_amd64/ghr -u "${GITHUB_REPOSITORY%/*}" -r "${GITHUB_REPOSITORY#*/}" "${GITHUB_REF#refs/tags/}" ${BIN_DIR}
   crates:
     name: Publish crates.io
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-20.04
     env:
       CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
       RELEASE_VER: ${{ github.ref_name }}

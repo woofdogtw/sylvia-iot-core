@@ -12,8 +12,9 @@ pub struct Options {
 
 /// Connect to SQLite.
 pub async fn connect(options: &Options) -> Result<SqlitePool, Box<dyn StdError>> {
-    let mut opts = SqliteConnectOptions::from_str(&options.path)?.create_if_missing(true);
-    opts.log_statements(LevelFilter::Off);
+    let opts = SqliteConnectOptions::from_str(&options.path)?
+        .create_if_missing(true)
+        .log_statements(LevelFilter::Off);
     let result = SqlitePool::connect_with(opts).await?;
     Ok(result)
 }

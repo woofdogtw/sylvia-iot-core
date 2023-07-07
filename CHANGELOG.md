@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.0.16 - 2023-07-07
+
+### Changed
+
+- Update dependencies.
+
+### Fixed
+
+- Update `sqlx` to 0.7.0 to solve CVE issues.
+- Use Ubuntu-20.04 to release binary for GLIBC compatibility on older OS distributions.
+
 ## 0.0.15 - 2023-06-30
 
 ### Changed
