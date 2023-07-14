@@ -75,11 +75,11 @@ jobs:
     runs-on: ubuntu-20.04
     services:
       mongo:
-        image: mongo:6.0.7
+        image: mongo:6.0.8
         ports:
           - 27017:27017
       redis:
-        image: redis:7.0.11
+        image: redis:7.0.12
         ports:
           - 6379:6379
     env:
@@ -129,7 +129,7 @@ jobs:
     runs-on: ubuntu-20.04
     services:
       mongo:
-        image: mongo:6.0.7
+        image: mongo:6.0.8
         ports:
           - 27017:27017
       rabbitmq:
@@ -236,7 +236,7 @@ jobs:
     runs-on: ubuntu-20.04
     services:
       mongo:
-        image: mongo:6.0.7
+        image: mongo:6.0.8
         ports:
           - 27017:27017
       rabbitmq:
@@ -313,7 +313,7 @@ jobs:
     runs-on: ubuntu-20.04
     services:
       mongo:
-        image: mongo:6.0.7
+        image: mongo:6.0.8
         ports:
           - 27017:27017
       rabbitmq:

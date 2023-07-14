@@ -30,18 +30,18 @@ async fn main() -> Result<(), Box<dyn StdError>> {
     match libs::run(&conf.coremgr_cli, &args).await {
         Err(e) => {
             let diff = Utc::now().timestamp_millis() - start;
-            println!("Error ({} ms): {}", diff, e);
+            eprintln!("Error ({} ms): {}", diff, e);
             Err(e)
         }
         Ok(None) => {
-            println!("Sub-command not support");
+            eprintln!("Sub-command not support");
             Err(Box::new(IoError::new(
                 ErrorKind::InvalidInput,
                 "sub-command not support",
             )))
         }
         Ok(Some(_)) => {
-            println!("OK ({} ms)", Utc::now().timestamp_millis() - start);
+            eprintln!("OK ({} ms)", Utc::now().timestamp_millis() - start);
             Ok(())
         }
     }

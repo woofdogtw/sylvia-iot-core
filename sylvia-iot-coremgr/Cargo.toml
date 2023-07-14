@@ -1,6 +1,6 @@
 [package]
 name = "sylvia-iot-coremgr"
-version = "0.0.16"
+version = "0.0.17"
 authors = ["Chien-Hong Chan"]
 description = "The manager of Sylvia-IoT core modules."
 edition = "2021"
@@ -31,8 +31,8 @@ reqwest = { version = "0.11.18", default-features = false, features = ["json", "
 rumqttd = "0.15.0"
 rustls = "0.20.8"
 rustls-pemfile = "1.0.3"
-serde = { version = "1.0.167", features = ["derive"] }
-serde_json = "1.0.100"
+serde = { version = "1.0.171", features = ["derive"] }
+serde_json = "1.0.102"
 serde_urlencoded = "0.7.1"
 sylvia-iot-auth = { path="../sylvia-iot-auth" }
 sylvia-iot-broker = { path="../sylvia-iot-broker" }

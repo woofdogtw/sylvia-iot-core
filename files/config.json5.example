@@ -186,13 +186,15 @@
             },
         },
         "mqChannels": {
-            "brokerData": { // broker.data queue
+            "broker": {                             // broker.data queue
                 "url": "amqp://localhost",
-                "prefetch": 100,
+                "prefetch": 100,                            // AMQP prefetch
+                "sharedPrefix": "$share/sylvia-iot-data/",  // MQTT shared subscription prefix
             },
-            "coremgrData": { // coremgr.data queue
+            "coremgr": {                            // coremgr.data queue
                 "url": "amqp://localhost",
-                "prefetch": 100,
+                "prefetch": 100,                            // AMQP prefetch
+                "sharedPrefix": "$share/sylvia-iot-data/",  // MQTT shared subscription prefix
             },
         },
     },

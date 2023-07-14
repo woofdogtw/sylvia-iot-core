@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.0.17 - 2023-07-14
+
+### Changed
+
+- Update dependencies.
+- **coremgr-cli**: Print latency with stderr for using pipes to process JSON output more convinient.
+
+### Fixed
+
+- Fix bugs of the example JSON5 configuration file.
+
 ## 0.0.16 - 2023-07-07
 
 ### Changed
