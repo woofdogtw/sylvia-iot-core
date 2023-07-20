@@ -211,7 +211,7 @@
             "name": "eth0",
             "ifname": "eth0",
         },
-        "wlan": {                                   // coment wlan to not support WLAN
+        "wlan": {                                   // comment wlan to not support WLAN
             "name": "wlan",
             "ifname": "wlx0123456789ab",
         },
