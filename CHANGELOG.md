@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.0.18 - 2023-07-21
+
+### Changed
+
+- Update dependencies.
+- Update action versions for GitHub CI.
+- **auth**: Update jquery and bootstrap version for default templates.
+
 ## 0.0.17 - 2023-07-14
 
 ### Changed
