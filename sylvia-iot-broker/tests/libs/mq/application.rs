@@ -290,10 +290,6 @@ pub fn new_default(context: &mut SpecContext<TestState>) -> Result<(), String> {
     expect(mgr.id()).equals("id_application")?;
     expect(mgr.name()).equals("code_application")?;
     expect(status == MgrStatus::NotReady).equals(true)?;
-    expect(mq_status.uldata == MqStatus::Connecting).equals(true)?;
-    expect(mq_status.dldata == MqStatus::Connecting).equals(true)?;
-    expect(mq_status.dldata_resp == MqStatus::Connecting).equals(true)?;
-    expect(mq_status.dldata_result == MqStatus::Connecting).equals(true)?;
     expect(mq_status.ctrl == MqStatus::Closed).equals(true)?;
 
     for _ in 0..WAIT_COUNT {

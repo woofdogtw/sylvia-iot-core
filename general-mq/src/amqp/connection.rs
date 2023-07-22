@@ -142,8 +142,8 @@ impl GmqConnection for AmqpConnection {
             if (*task_handle_mutex).is_some() {
                 return Ok(());
             }
-            *task_handle_mutex = Some(create_event_loop(self));
             *self.status.lock().unwrap() = Status::Connecting;
+            *task_handle_mutex = Some(create_event_loop(self));
         }
         Ok(())
     }
