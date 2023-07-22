@@ -6,6 +6,9 @@
 
 This contains core modules of Sylvia-IoT platform.
 
+- [Documentation](https://woofdogtw.github.io/sylvia-iot-core)
+    - [中文版](https://woofdogtw.github.io/sylvia-iot-core/book-zh-TW)
+
 # Milestone
 
 ## v0.1.0 (end of 2023)
@@ -19,8 +22,8 @@ To release v0.1.0, there are some tasks to do:
 - [X] (Q3) **broker**: provide control channel to publish events when changing devices for network (adapters) and application (adapters).
 - [X] (Q3) **sdk**: add a module for operating control channels.
 - [X] (Q3) **sdk**: add HTTP API functions for **Service** clients (of networks/applications) to refresh tokens automatically.
-- [ ] (Q4) refine documents.
-- [ ] (Q4) write mdBook to introduce Sylvia-IoT platform.
+- [X] (Q4) refine documents.
+- [X] (Q4) write mdBook to introduce Sylvia-IoT platform.
 
 ## v0.2.0
 

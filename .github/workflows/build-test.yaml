@@ -9,6 +9,7 @@ on:
 env:
   BINUTILS_VER: v0.3.6
   GRCOV_VER: v0.8.13
+  MDBOOK_VER: v0.4.32
 jobs:
   general-mq:
     name: Build and test general-mq
@@ -54,7 +55,6 @@ jobs:
             LLVM_PROFILE_FILE="$(pwd)/target/$PROJ.profraw"
             cargo test -p $PROJ --test integration_test -- --nocapture
       - name: Collect coverage
-        if: ${{ github.event_name != 'pull_request' }}
         run: |
           TEST_FILE=$(LLVM_PROFILE_FILE="$(pwd)/target/$PROJ.profraw" cargo test -p $PROJ --test integration_test --no-run --message-format=json | jq -r "select(.profile.test == true) | .filenames[]")
           rm default*.profraw
@@ -108,7 +108,6 @@ jobs:
             LLVM_PROFILE_FILE="$(pwd)/target/$PROJ.profraw"
             cargo test -p $PROJ --test integration_test -- --nocapture
       - name: Collect coverage
-        if: ${{ github.event_name != 'pull_request' }}
         run: |
           TEST_FILE=$(LLVM_PROFILE_FILE="$(pwd)/target/$PROJ.profraw" cargo test -p $PROJ --test integration_test --no-run --message-format=json | jq -r "select(.profile.test == true) | .filenames[]")
           rm default*.profraw
@@ -170,7 +169,6 @@ jobs:
             LLVM_PROFILE_FILE="$(pwd)/target/$PROJ.profraw"
             cargo test -p $PROJ --test integration_test -- --nocapture
       - name: Collect coverage
-        if: ${{ github.event_name != 'pull_request' }}
         run: |
           TEST_FILE=$(LLVM_PROFILE_FILE="$(pwd)/target/$PROJ.profraw" cargo test -p $PROJ --test integration_test --no-run --message-format=json | jq -r "select(.profile.test == true) | .filenames[]")
           rm default*.profraw
@@ -215,7 +213,6 @@ jobs:
             LLVM_PROFILE_FILE="$(pwd)/target/$PROJ.profraw"
             cargo test -p $PROJ --test integration_test -- --nocapture
       - name: Collect coverage
-        if: ${{ github.event_name != 'pull_request' }}
         run: |
           TEST_FILE=$(LLVM_PROFILE_FILE="$(pwd)/target/$PROJ.profraw" cargo test -p $PROJ --test integration_test --no-run --message-format=json | jq -r "select(.profile.test == true) | .filenames[]")
           rm default*.profraw
@@ -279,7 +276,6 @@ jobs:
             LLVM_PROFILE_FILE="$(pwd)/target/$PROJ.profraw"
             cargo test -p $PROJ --test integration_test -- --nocapture
       - name: Collect coverage
-        if: ${{ github.event_name != 'pull_request' }}
         run: |
           TEST_FILE=$(LLVM_PROFILE_FILE="$(pwd)/target/$PROJ.profraw" cargo test -p $PROJ --test integration_test --no-run --message-format=json | jq -r "select(.profile.test == true) | .filenames[]")
           rm default*.profraw
@@ -354,7 +350,6 @@ jobs:
             LLVM_PROFILE_FILE="$(pwd)/target/$PROJ.profraw"
             cargo test -p $PROJ --test integration_test -- --nocapture
       - name: Collect coverage
-        if: ${{ github.event_name != 'pull_request' }}
         run: |
           TEST_FILE=$(LLVM_PROFILE_FILE="$(pwd)/target/$PROJ.profraw" cargo test -p $PROJ --test integration_test --no-run --message-format=json | jq -r "select(.profile.test == true) | .filenames[]")
           rm default*.profraw
@@ -412,7 +407,6 @@ jobs:
             LLVM_PROFILE_FILE="$(pwd)/target/$PROJ.profraw"
             cargo test -p $PROJ --test integration_test -- --nocapture
       - name: Collect coverage
-        if: ${{ github.event_name != 'pull_request' }}
         run: |
           TEST_FILE=$(LLVM_PROFILE_FILE="$(pwd)/target/$PROJ.profraw" cargo test -p $PROJ --test integration_test --no-run --message-format=json | jq -r "select(.profile.test == true) | .filenames[]")
           rm default*.profraw
@@ -436,3 +430,33 @@ jobs:
         uses: actions/checkout@v3
       - name: Build bin/lib
         run: cargo build -p $PROJ
+
+  documentation:
+    name: Build documentation
+    runs-on: ubuntu-20.04
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v3
+      - name: Install tools
+        run: |
+          curl -kLO https://github.com/rust-lang/mdBook/releases/download/$MDBOOK_VER/mdbook-$MDBOOK_VER-x86_64-unknown-linux-gnu.tar.gz
+          tar xf mdbook-$MDBOOK_VER-x86_64-unknown-linux-gnu.tar.gz
+          mv mdbook ~/.cargo/bin/
+      - name: Build book
+        run: |
+          mdbook build documentation/book
+      - name: Build book-zh-TW
+        run: |
+          mdbook build documentation/book-zh-TW
+      - name: Publish book
+        if: ${{ github.event_name != 'pull_request' }}
+        uses: JamesIves/github-pages-deploy-action@v4.4.3
+        with:
+          folder: documentation/book/book
+          target-folder: docs
+      - name: Publish book-zh-TW
+        if: ${{ github.event_name != 'pull_request' }}
+        uses: JamesIves/github-pages-deploy-action@v4.4.3
+        with:
+          folder: documentation/book-zh-TW/book
+          target-folder: docs/book-zh-TW
