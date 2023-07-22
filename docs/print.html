@@ -1,0 +1,2126 @@
+<!DOCTYPE HTML>
+<html lang="en" class="sidebar-visible no-js rust">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>Sylvia-IoT Documentation</title>
+        <meta name="robots" content="noindex" />
+
+
+        <!-- Custom HTML head -->
+        
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff" />
+
+        <link rel="icon" href="favicon.svg">
+        <link rel="shortcut icon" href="favicon.png">
+        <link rel="stylesheet" href="css/variables.css">
+        <link rel="stylesheet" href="css/general.css">
+        <link rel="stylesheet" href="css/chrome.css">
+        <link rel="stylesheet" href="css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" href="highlight.css">
+        <link rel="stylesheet" href="tomorrow-night.css">
+        <link rel="stylesheet" href="ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+
+    </head>
+    <body>
+    <div id="body-container">
+        <!-- Provide site root to javascript -->
+        <script>
+            var path_to_root = "";
+            var default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "navy" : "rust";
+        </script>
+
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                var theme = localStorage.getItem('mdbook-theme');
+                var sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            var theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            var html = document.querySelector('html');
+            html.classList.remove('no-js')
+            html.classList.remove('rust')
+            html.classList.add(theme);
+            html.classList.add('js');
+        </script>
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            var html = document.querySelector('html');
+            var sidebar = null;
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+            }
+            html.classList.remove('sidebar-visible');
+            html.classList.add("sidebar-" + sidebar);
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <div class="sidebar-scrollbox">
+                <ol class="chapter"><li class="chapter-item expanded "><a href="index.html"><strong aria-hidden="true">1.</strong> Introduction</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="intro/overview.html"><strong aria-hidden="true">1.1.</strong> What is Sylvia-IoT?</a></li><li class="chapter-item expanded "><a href="intro/concept.html"><strong aria-hidden="true">1.2.</strong> Concept</a></li></ol></li><li class="chapter-item expanded "><a href="guide/index.html"><strong aria-hidden="true">2.</strong> User Guide</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="guide/quick.html"><strong aria-hidden="true">2.1.</strong> Quick Start</a></li><li class="chapter-item expanded "><a href="guide/configuration.html"><strong aria-hidden="true">2.2.</strong> Configuration</a></li></ol></li><li class="chapter-item expanded "><a href="arch/index.html"><strong aria-hidden="true">3.</strong> Internal Architecture</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="arch/arch.html"><strong aria-hidden="true">3.1.</strong> Architecture</a></li><li class="chapter-item expanded "><a href="arch/flow.html"><strong aria-hidden="true">3.2.</strong> Data Flow</a></li><li class="chapter-item expanded "><a href="arch/cache.html"><strong aria-hidden="true">3.3.</strong> Cache</a></li></ol></li><li class="chapter-item expanded "><a href="dev/index.html"><strong aria-hidden="true">4.</strong> Developer's Guide</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="dev/oauth2.html"><strong aria-hidden="true">4.1.</strong> OAuth2 Authentication</a></li><li class="chapter-item expanded "><a href="dev/network.html"><strong aria-hidden="true">4.2.</strong> Network Services</a></li><li class="chapter-item expanded "><a href="dev/application.html"><strong aria-hidden="true">4.3.</strong> Application Services</a></li><li class="chapter-item expanded "><a href="dev/core.html"><strong aria-hidden="true">4.4.</strong> Sylvia-IoT Core</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="dev/dir.html"><strong aria-hidden="true">4.4.1.</strong> Directory Structure</a></li><li class="chapter-item expanded "><a href="dev/style.html"><strong aria-hidden="true">4.4.2.</strong> Code Style</a></li><li class="chapter-item expanded "><a href="dev/testing.html"><strong aria-hidden="true">4.4.3.</strong> Writing Tests</a></li></ol></li></ol></li><li class="chapter-item expanded "><a href="appendex/index.html"><strong aria-hidden="true">5.</strong> Appendix</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="appendex/source.html"><strong aria-hidden="true">5.1.</strong> Data Sources</a></li><li class="chapter-item expanded "><a href="appendex/repo.html"><strong aria-hidden="true">5.2.</strong> Supplementary Projects</a></li></ol></li></ol>
+            </div>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle"></div>
+        </nav>
+
+        <!-- Track and set sidebar scroll position -->
+        <script>
+            var sidebarScrollbox = document.querySelector('#sidebar .sidebar-scrollbox');
+            sidebarScrollbox.addEventListener('click', function(e) {
+                if (e.target.tagName === 'A') {
+                    sessionStorage.setItem('sidebar-scroll', sidebarScrollbox.scrollTop);
+                }
+            }, { passive: true });
+            var sidebarScrollTop = sessionStorage.getItem('sidebar-scroll');
+            sessionStorage.removeItem('sidebar-scroll');
+            if (sidebarScrollTop) {
+                // preserve sidebar scroll position when navigating via links within sidebar
+                sidebarScrollbox.scrollTop = sidebarScrollTop;
+            } else {
+                // scroll sidebar to current active section when navigating via "next/previous chapter" buttons
+                var activeSection = document.querySelector('#sidebar .active');
+                if (activeSection) {
+                    activeSection.scrollIntoView({ block: 'center' });
+                }
+            }
+        </script>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <button id="sidebar-toggle" class="icon-button" type="button" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </button>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">Sylvia-IoT Documentation</h1>
+
+                    <div class="right-buttons">
+                        <a href="print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <blockquote>
+<p>The English version of this document was translated with the assistance of ChatGPT 😊.</p>
+</blockquote>
+<p>This document will guide you step by step to understand what
+<strong>Sylvia-IoT Internet of Things platform</strong> is and then provide instructions on how to install and
+use it.</p>
+<p>After getting a preliminary understanding of Sylvia-IoT and its usage, we will delve into its
+internal architecture to give you insights into the modules, operation principles, and design
+philosophy behind its performance optimization.</p>
+<p>The development guide will explain how third-party developers or providers can develop their
+applications or network services. For those interested in core development with Sylvia-IoT, the
+guide also provides code structure and style.</p>
+<p>Let's get started!</p>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="what-is-sylvia-iot"><a class="header" href="#what-is-sylvia-iot">What is Sylvia-IoT?</a></h1>
+<p><strong>Sylvia-IoT</strong> is an Internet of Things (IoT) platform primarily designed to forward device messages
+to applications or enable applications to send commands to devices.</p>
+<p><img src="intro/intro.svg" alt="Introduction" /></p>
+<p>The diagram above provides a simple explanation. Devices (such as sensors) are bound to specific
+communication modules and transmit data through network gateways or servers. Sylvia-IoT acts as a
+message broker, allowing each application to subscribe to devices they are interested in for data
+analysis or data transmission to the devices.</p>
+<h2 id="features"><a class="header" href="#features">Features</a></h2>
+<p>Using the Sylvia-IoT platform provides several benefits to different providers:</p>
+<ul>
+<li>Device Providers:
+<ul>
+<li>Easier module changes from network providers without altering applications.</li>
+</ul>
+</li>
+<li>Network Providers:
+<ul>
+<li>Focus on developing network communication protocols for device usage.</li>
+<li>Develop adapters to connect with the Sylvia-IoT platform.</li>
+</ul>
+</li>
+<li>Application Providers:
+<ul>
+<li>Specify any number of applications to receive data from the same device.</li>
+<li>Through Sylvia-IoT's communication protocol isolation, devices' network providers can be
+changed without rewriting code.</li>
+</ul>
+</li>
+</ul>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="concept"><a class="header" href="#concept">Concept</a></h1>
+<p>Sylvia-IoT provides HTTP APIs to manage the following entities:</p>
+<ul>
+<li>User Account:
+<ul>
+<li>Access to Sylvia-IoT's management interface is possible through user accounts.</li>
+<li>Clients can obtain access tokens to access HTTP APIs.</li>
+</ul>
+</li>
+<li>Client:
+<ul>
+<li>Represents entities that access HTTP APIs.</li>
+<li>Third parties can develop management features for Sylvia-IoT through HTTP APIs.</li>
+<li>Users authorize clients to access resources using OAuth2.</li>
+</ul>
+</li>
+<li>Unit:
+<ul>
+<li>Each unit can have an owner and multiple members.</li>
+<li>Units can manage their own devices, networks, and applications.</li>
+</ul>
+</li>
+<li>Device:
+<ul>
+<li>Represents IoT terminal devices, such as sensors, trackers, and more.</li>
+</ul>
+</li>
+<li>Application:
+<ul>
+<li>Analyzes device data and presents it based on requirements, such as a smart home control
+center.</li>
+</ul>
+</li>
+<li>Network:
+<ul>
+<li>Connects different network servers to receive and send device data based on communication
+requirements.</li>
+<li>Common communication protocols include LoRa, WiFi, and TCP/IP.</li>
+<li>Network adapters can be developed to integrate existing network servers (e.g., TTN,
+ChirpStack) with Sylvia-IoT.</li>
+</ul>
+</li>
+<li>Routing Rules:
+<ul>
+<li>Associate devices with applications.</li>
+<li>Individual devices can be bound using network addresses or entire networks can be bound to
+specific applications.</li>
+<li>Supports many-to-many relationships, allowing multiple devices to be bound to one application
+or vice versa.</li>
+</ul>
+</li>
+</ul>
+<h2 id="communication-protocols"><a class="header" href="#communication-protocols">Communication Protocols</a></h2>
+<p>Currently, Sylvia-IoT supports the following protocols for message transmission between applications
+and networks:</p>
+<ul>
+<li>AMQP 0-9-1</li>
+<li>MQTT 3.1.1</li>
+</ul>
+<p>Any message queuing model with explicit names (excluding wildcards) can be supported, such as AMQP
+1.0, Apache Kafka, NATS, etc. However, topic publish/subscribe, broadcast, and multicast modes are
+currently not supported.</p>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="user-guide"><a class="header" href="#user-guide">User Guide</a></h1>
+<p>Chapter Contents:</p>
+<ul>
+<li>Take you through a quick start to set up a functional Sylvia-IoT instance and simulate receiving
+device data.</li>
+<li>Provide complete configuration file content and overview.</li>
+</ul>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="quick-start"><a class="header" href="#quick-start">Quick Start</a></h1>
+<p>This chapter describes the quick installation steps in the Ubuntu 20.04 environment.</p>
+<blockquote>
+<p>The current executable is compiled using GLIBC 2.31 and can be executed on Ubuntu 20.04 or later
+OS versions.
+Older OS versions can use the <a href="https://hub.docker.com/r/woofdogtw/sylvia-iot-core"><strong>Docker image</strong></a>.
+Related configurations and environment variables will be explained in the
+<a href="guide/configuration.html"><strong>Configuration</strong></a> section.</p>
+</blockquote>
+<h2 id="install-tools"><a class="header" href="#install-tools">Install Tools</a></h2>
+<pre><code class="language-shell">sudo apt -y install curl jq
+</code></pre>
+<h2 id="install-docker"><a class="header" href="#install-docker">Install Docker</a></h2>
+<p>Refer to the installation steps on the <a href="https://docs.docker.com/engine/install/ubuntu/"><strong>Docker official website</strong></a>.</p>
+<pre><code class="language-shell">sudo apt -y install apt-transport-https ca-certificates curl gnupg lsb-release
+curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
+echo &quot;deb [arch=amd64 signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable&quot; | sudo tee /etc/apt/sources.list.d/docker.list &gt; /dev/null
+sudo apt update
+sudo apt -y install docker-ce docker-ce-cli containerd.io docker-compose-plugin
+sudo usermod -aG docker $USER
+</code></pre>
+<blockquote>
+<p>Remember to restart the shell to apply user permissions.</p>
+</blockquote>
+<h2 id="install-mongodbrabbitmqemqx"><a class="header" href="#install-mongodbrabbitmqemqx">Install MongoDB、RabbitMQ、EMQX</a></h2>
+<p>Start the services (versions and data storage folders can be adjusted as needed):</p>
+<pre><code class="language-shell">export MONGODB_VER=6.0.8
+export RABBITMQ_VER=3.12.1
+export EMQX_VER=5.1.1
+
+export MONGODB_DIR=$HOME/db/mongodb
+export RABBITMQ_DIR=$HOME/db/rabbitmq
+export EMQX_DIR=$HOME/db/emqx
+
+mkdir -p $MONGODB_DIR
+docker run --rm --name mongodb -d \
+  -p 27017:27017 \
+  -v $MONGODB_DIR:/data/db \
+  mongo:$MONGODB_VER
+
+mkdir -p $RABBITMQ_DIR
+docker run --rm --name rabbitmq -d \
+  -e RABBITMQ_NODENAME=&quot;rabbit@localhost&quot; \
+  -p 5671:5671 -p 5672:5672 -p 15672:15672 \
+  -v $RABBITMQ_DIR:/var/lib/rabbitmq \
+  rabbitmq:$RABBITMQ_VER-management-alpine
+
+mkdir -p $EMQX_DIR
+docker run --rm --name emqx -d \
+  -e EMQX_LOADED_PLUGINS=&quot;emqx_dashboard|emqx_management|emqx_auth_mnesia&quot; \
+  -e EMQX_LOADED_MODULES=&quot;emqx_mod_acl_internal,emqx_mod_presence,emqx_mod_topic_metrics&quot; \
+  -p 1883:1883 -p 8883:8883 -p 18083:18083 \
+  -v $EMQX_DIR:/opt/emqx/data \
+  emqx/emqx:$EMQX_VER
+</code></pre>
+<blockquote>
+<p>The following information only introduces the plugins required by EMQX, which will not be used in
+the following demonstrations. You can also choose not to start EMQX at this stage.</p>
+</blockquote>
+<h2 id="download-sylvia-iot"><a class="header" href="#download-sylvia-iot">Download Sylvia-IoT</a></h2>
+<pre><code class="language-shell">curl -LO https://github.com/woofdogtw/sylvia-iot-core/releases/latest/download/sylvia-iot-core.tar.xz
+curl -LO https://github.com/woofdogtw/sylvia-iot-core/releases/latest/download/sylvia-iot-coremgr-cli.tar.xz
+curl -L -o config.json5 https://github.com/woofdogtw/sylvia-iot-core/raw/main/files/config.json5.example
+tar xf sylvia-iot-core.tar.xz
+tar xf sylvia-iot-coremgr-cli.tar.xz
+</code></pre>
+<h2 id="modify-configjson5"><a class="header" href="#modify-configjson5">Modify config.json5</a></h2>
+<p>For demonstration purposes, we make some modifications to the example config.json5:</p>
+<ul>
+<li>Since we are showcasing MongoDB here, we change all <code>&quot;engine&quot;: &quot;sqlite&quot;</code> to <code>&quot;engine&quot;: &quot;mongodb&quot;</code>.
+<pre><code>&quot;db&quot;: {
+    &quot;engine&quot;: &quot;mongodb&quot;,
+    ...
+},
+</code></pre>
+</li>
+<li>We don't enable HTTPS for now, so the certificate file settings are commented out:
+<pre><code>//&quot;cacertFile&quot;: &quot;/etc/ssl/certs/ca-certificates.crt&quot;,
+//&quot;certFile&quot;: &quot;/home/user/rust/conf/certs/sylvia-iot.crt&quot;,
+//&quot;keyFile&quot;: &quot;/home/user/rust/conf/certs/sylvia-iot.key&quot;,
+</code></pre>
+</li>
+<li>We create a folder to store static files, and in this example, it's <code>/home/user/static</code>.
+<pre><code>&quot;staticPath&quot;: &quot;/home/user/static&quot;,
+</code></pre>
+</li>
+<li>We use the default login page template and comment out the example template:
+<pre><code>&quot;templates&quot;: {      // Jinja2 template paths.
+    //&quot;login&quot;: &quot;/home/user/rust/static/login.j2&quot;,
+    //&quot;grant&quot;: &quot;/home/user/rust/static/grant.j2&quot;,
+},
+</code></pre>
+</li>
+<li>We use <a href="https://github.com/bytebeamio/rumqtt"><strong>rumqttd</strong></a> instead of EMQX:
+<pre><code>&quot;coremgr&quot;: {
+  ...
+  &quot;mq&quot;: {
+    &quot;engine&quot;: {
+      &quot;amqp&quot;: &quot;rabbitmq&quot;,
+      &quot;mqtt&quot;: &quot;rumqttd&quot;,
+    },
+    ...
+  },
+  ...
+},
+</code></pre>
+</li>
+</ul>
+<h2 id="set-up-initial-data"><a class="header" href="#set-up-initial-data">Set Up Initial Data</a></h2>
+<p>First, let's enter the MongoDB shell:</p>
+<pre><code class="language-shell">docker exec -it mongodb mongosh
+</code></pre>
+<p>In the MongoDB shell interface, we create the basic data:</p>
+<pre><code>use test1
+
+db.user.insertOne({
+  userId: 'admin',
+  account: 'admin',
+  email: 'admin',
+  createdAt: new Date(),
+  modifiedAt: new Date(),
+  verifiedAt: new Date(),
+  expiredAt: null,
+  disabledAt: null,
+  roles: {&quot;admin&quot;:true,&quot;dev&quot;:false},
+  password: '27258772d876ffcef7ca2c75d6f4e6bcd81c203bd3e93c0791c736e5a2df4afa',
+  salt: 'YsBsou2O',
+  name: 'Admin',
+  info: {}
+})
+
+db.client.insertOne({
+  clientId: 'public',
+  createdAt: new Date(),
+  modifiedAt: new Date(),
+  clientSecret: null,
+  redirectUris: ['http://localhost:1080/auth/oauth2/redirect'],
+  scopes: [],
+  userId: 'dev',
+  name: 'Public',
+  imageUrl: null
+})
+</code></pre>
+<p>Then, press <code>Ctrl+C</code> twice to exit.</p>
+<h2 id="getting-started"><a class="header" href="#getting-started">Getting Started</a></h2>
+<p>Start Sylvia-IoT core:</p>
+<pre><code class="language-shell">./sylvia-iot-core -f config.json5
+</code></pre>
+<p>If the program doesn't terminate, it means the startup was successful 😊.</p>
+<p>Open another command-line window and log in using the CLI:</p>
+<pre><code class="language-shell">./sylvia-iot-coremgr-cli -f config.json5 login -a admin -p admin
+</code></pre>
+<p>You will see the following screen (the content you see may be slightly different):</p>
+<pre><code>$ ./sylvia-iot-coremgr-cli -f config.json5 login -a admin -p admin
+{
+  &quot;access_token&quot;: &quot;ef9cf7cfc645f9092b9af62666d903c5a8e4579ff6941b479c1d9c9b63b0b634&quot;,
+  &quot;refresh_token&quot;: &quot;265983a08af706fbe2912ff2edb1750311d1b689e4dab3a83c4b494c4cf2d033&quot;,
+  &quot;token_type&quot;: &quot;bearer&quot;,
+  &quot;expires_in&quot;: 3599
+}
+OK (146 ms)
+</code></pre>
+<p>The access token will be automatically saved in the file <code>$HOME/.sylvia-iot-coremgr-cli.json</code>. The
+CLI will use the content of this file to access the APIs.</p>
+<p>You can use <code>./sylvia-iot-coremgr-cli help</code> to inquire about the usage of commands.</p>
+<h2 id="create-resources"><a class="header" href="#create-resources">Create Resources</a></h2>
+<p>For the convenience of using <a href="https://mosquitto.org/download/"><strong>mosquitto CLI</strong></a>, we create the
+following entities:</p>
+<ul>
+<li>A unit with the code <strong>demo</strong></li>
+<li>An MQTT application with the code <strong>test-app-mqtt</strong></li>
+<li>An MQTT network with the code <strong>test-net-mqtt</strong></li>
+<li>A device with the network address <strong>01000461</strong></li>
+<li>A route to bind the device to the application</li>
+</ul>
+<p>During this process, you will need to change the connection password to <strong>password</strong> (the content
+you see may be slightly different):</p>
+<pre><code class="language-shell">UNIT_ID=$(./sylvia-iot-coremgr-cli -f config.json5 unit add -c demo -o admin -n 'Demo' | jq -r .unitId)
+APP_ID=$(./sylvia-iot-coremgr-cli -f config.json5 application add -c test-app-mqtt -u $UNIT_ID --host 'mqtt://localhost' -n 'TestApp-MQTT' | jq -r .applicationId)
+NET_ID=$(./sylvia-iot-coremgr-cli -f config.json5 network add -c test-net-mqtt -u $UNIT_ID --host 'mqtt://localhost' -n 'TestNet-MQTT' | jq -r .networkId)
+./sylvia-iot-coremgr-cli -f config.json5 application update -i $APP_ID -p password
+./sylvia-iot-coremgr-cli -f config.json5 network update -i $NET_ID -p password
+DEV_ID=$(./sylvia-iot-coremgr-cli -f config.json5 device add -u $UNIT_ID --netid $NET_ID -a 01000461 -n 01000461 | jq -r .deviceId)
+./sylvia-iot-coremgr-cli -f config.json5 device-route add -d $DEV_ID -a $APP_ID
+</code></pre>
+<h2 id="upload-device-data"><a class="header" href="#upload-device-data">Upload Device Data</a></h2>
+<p>You can install mosquitto CLI with the following command:</p>
+<pre><code class="language-shell">sudo apt -y install mosquitto-clients
+</code></pre>
+<p>Open a shell to subscribe to the application topic (format:
+<code>broker.application.[unit-code].[app-code].uldata</code>):</p>
+<pre><code class="language-shell">mosquitto_sub -u test-app-mqtt -P password -t broker.application.demo.test-app-mqtt.uldata
+</code></pre>
+<p>Open another shell to simulate the network system sending device data (topic format:
+<code>broker.network.[unit-code].[net-code].uldata</code>):</p>
+<pre><code class="language-shell">mosquitto_pub -u test-net-mqtt -P password -t broker.network.demo.test-net-mqtt.uldata -m '{&quot;time&quot;:&quot;2023-07-08T06:55:02.000Z&quot;,&quot;networkAddr&quot;:&quot;01000461&quot;,&quot;data&quot;:&quot;74657374&quot;}'
+</code></pre>
+<p>At this point, you should see the following screen in the subscribed shell (the content may be
+slightly different):</p>
+<pre><code>$ mosquitto_sub -u test-app-mqtt -P password -t broker.application.demo.test-app-mqtt.uldata
+{&quot;dataId&quot;:&quot;1688799672075-iJ4YQeQ5Lyv4&quot;,&quot;time&quot;:&quot;2023-07-08T06:55:02.000Z&quot;,&quot;pub&quot;:&quot;2023-07-08T07:01:12.075Z&quot;,&quot;deviceId&quot;:&quot;1688798563252-aWcZVRML&quot;,&quot;networkId&quot;:&quot;1688798370824-RwAbBDFh&quot;,&quot;networkCode&quot;:&quot;test-net-mqtt&quot;,&quot;networkAddr&quot;:&quot;01000461&quot;,&quot;isPublic&quot;:true,&quot;profile&quot;:&quot;&quot;,&quot;data&quot;:&quot;74657374&quot;}
+</code></pre>
+<p>If you see the data, congratulations! You have completed the basic use of Sylvia-IoT! (Congratulations! Achievement unlocked!
+😆)</p>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="configuration"><a class="header" href="#configuration">Configuration</a></h1>
+<p>This chapter describes the configuration format and usage of Sylvia-IoT.</p>
+<p>Sylvia-IoT supports four sources of configuration, prioritized as follows (from highest to lowest):</p>
+<ul>
+<li>JSON5 configuration file</li>
+<li>Command-line parameters</li>
+<li>Environment variables</li>
+<li>Internal default values (may not exist; if required but not provided, an error message will be
+displayed)</li>
+</ul>
+<p>You can refer to
+<a href="https://github.com/woofdogtw/sylvia-iot-core/blob/main/files/config.json5.example"><strong>the sample JSON5 file</strong></a>
+for a complete list of configuration options. This chapter will provide corresponding explanations.
+The following conventions apply to the configuration:</p>
+<ul>
+<li>The nested structure in JSON5 is represented using <code>.</code> (dot).</li>
+<li>For command-line parameters that encounter nested JSON5, the dot notation is also used.</li>
+<li>For command-line parameters corresponding to camelCase JSON5 properties, they will be written in
+all lowercase or with <code>-</code> followed by lowercase. For example:
+<ul>
+<li>JSON5 property <code>server.httpPort</code> corresponds to <code>--server.httpport</code>.</li>
+<li>JSON5 property <code>broker.mqChannels</code> corresponds to <code>--broker.mq-channels</code>.</li>
+</ul>
+</li>
+<li>Environment variables are written in all uppercase.</li>
+<li>For environment variables that encounter nested JSON5, <code>_</code> (underscore) is used.</li>
+<li>For environment variables corresponding to camelCase JSON5 properties, they will be written in all
+uppercase or with <code>_</code> (underscore) separating words. For example:
+<ul>
+<li>JSON5 property <code>server.httpPort</code> corresponds to <code>SERVER_HTTP_PORT</code>.</li>
+<li>JSON5 property <code>broker.mqChannels</code> corresponds to <code>BROKER_MQCHANNELS</code>.</li>
+</ul>
+</li>
+</ul>
+<p>Here are the complete table explanations:</p>
+<blockquote>
+<p>If marked with <strong>Refer to example</strong>, it means that the sample JSON5 is provided or you can use
+the CLI <strong>help</strong> command to view the supported options.</p>
+</blockquote>
+<h2 id="common-settings"><a class="header" href="#common-settings">Common Settings</a></h2>
+<div class="table-wrapper"><table><thead><tr><th>JSON5</th><th>CLI Parameters</th><th>Environment Variables</th><th>Default</th><th>Description</th></tr></thead><tbody>
+<tr><td>log.level</td><td>log.level</td><td>LOG_LEVEL</td><td>info</td><td>Log level. Refer to example</td></tr>
+<tr><td>log.style</td><td>log.style</td><td>LOG_STYLE</td><td>json</td><td>Log style. Refer to example</td></tr>
+<tr><td>server.httpPort</td><td>log.httpport</td><td>SERVER_HTTP_PORT</td><td>1080</td><td>HTTP listening port</td></tr>
+<tr><td>server.httpsPort</td><td>log.httpsport</td><td>SERVER_HTTPS_PORT</td><td>1443</td><td>HTTPS listening port</td></tr>
+<tr><td>server.cacertFile</td><td>log.cacertfile</td><td>SERVER_CACERT_FILE</td><td></td><td>HTTPS root certificate file location</td></tr>
+<tr><td>server.certFile</td><td>log.certfile</td><td>SERVER_CERT_FILE</td><td></td><td>HTTPS certificate file location</td></tr>
+<tr><td>server.keyFile</td><td>log.keyfile</td><td>SERVER_KEY_FILE</td><td></td><td>HTTPS private key file location</td></tr>
+<tr><td>server.staticPath</td><td>log.static</td><td>SERVER_STATIC_PATH</td><td></td><td>Static files directory location</td></tr>
+</tbody></table>
+</div>
+<h3 id="detailed-explanation"><a class="header" href="#detailed-explanation">Detailed Explanation</a></h3>
+<ul>
+<li>Root certificate is not currently used.</li>
+<li>Both certificate and private key must be used simultaneously to enable HTTPS service.</li>
+</ul>
+<h2 id="api-scopes"><a class="header" href="#api-scopes">API Scopes</a></h2>
+<p>All APIs require access through registered clients and access tokens. Each token is associated with
+a specific client, and only authorized clients can access the APIs.</p>
+<p>When a particular API is configured with <code>apiScopes</code> settings, the access token must include the
+relevant scopes enabled by the client during registration and authorized by the user to access that
+API.</p>
+<p>Both command-line parameters and environment variables should be provided as JSON strings. For
+example:</p>
+<pre><code>--auth.api-scopes='{&quot;auth.tokeninfo.get&quot;:[]}'
+</code></pre>
+<p>You can define custom scope names and apply them to various API scopes. You can refer to the example
+provided in the <strong>Authentication Service</strong> section for more details.</p>
+<h2 id="authentication-service-auth"><a class="header" href="#authentication-service-auth">Authentication Service (auth)</a></h2>
+<div class="table-wrapper"><table><thead><tr><th>JSON5</th><th>CLI Parameters</th><th>Environment Variables</th><th>Default</th><th>Description</th></tr></thead><tbody>
+<tr><td>auth.db.engine</td><td>auth.db.engine</td><td>AUTH_DB_ENGINE</td><td>sqlite</td><td>Database type</td></tr>
+<tr><td>auth.db.mongodb.url</td><td>auth.db.mongodb.url</td><td>AUTH_DB_MONGODB_URL</td><td>mongodb://localhost:27017</td><td>MongoDB connection URL</td></tr>
+<tr><td>auth.db.mongodb.database</td><td>auth.db.mongodb.database</td><td>AUTH_DB_MONGODB_DATABASE</td><td>auth</td><td>MongoDB database name</td></tr>
+<tr><td>auth.db.mongodb.poolSize</td><td>auth.db.mongodb.poolsize</td><td>AUTH_DB_MONGODB_POOLSIZE</td><td></td><td>Maximum number of MongoDB connections</td></tr>
+<tr><td>auth.db.sqlite.path</td><td>auth.db.sqlite.path</td><td>AUTH_DB_SQLITE_PATH</td><td>auth.db</td><td>SQLite file location</td></tr>
+<tr><td>auth.db.templates.login</td><td>auth.db.templates</td><td>AUTH_TEMPLATES</td><td></td><td>Login page template file location</td></tr>
+<tr><td>auth.db.templates.grant</td><td>auth.db.templates</td><td>AUTH_TEMPLATES</td><td></td><td>Authorization page template file location</td></tr>
+<tr><td>auth.db.apiScopes</td><td>auth.api-scopes</td><td>AUTH_API_SCOPES</td><td></td><td>API scope settings</td></tr>
+</tbody></table>
+</div>
+<h3 id="detailed-explanation-1"><a class="header" href="#detailed-explanation-1">Detailed Explanation</a></h3>
+<ul>
+<li>Templates:
+<ul>
+<li>These are the web pages required for the OAuth2 authorization code grant flow.
+<strong>sylvia-iot-auth</strong> provides default pages, but Sylvia-IoT allows you to customize web pages
+to match your own style.</li>
+<li>The templates use the Jinja2 format (dependent on the <a href="https://tera.netlify.app/"><strong>tera</strong></a>
+package).</li>
+<li>Both command-line parameters and environment variables should use JSON strings. For example:
+<pre><code>--auth.templates='{&quot;login&quot;:&quot;xxx&quot;}'
+</code></pre>
+</li>
+<li>For more details, please refer to <a href="guide/../dev/oauth2.html"><strong>OAuth2 Authentication</strong></a>.</li>
+</ul>
+</li>
+<li>API scopes
+<ul>
+<li>The <strong>auth</strong> module provides the following scopes that can be configured for corresponding
+APIs to limit the scope of access for clients:
+<ul>
+<li><code>auth.tokeninfo.get</code>: Authorize clients to read token data.
+<ul>
+<li><code>GET /api/v1/auth/tokeninfo</code></li>
+</ul>
+</li>
+<li><code>auth.logout.post</code>: Authorize clients to log out tokens.
+<ul>
+<li><code>POST /auth/api/v1/auth/logout</code></li>
+</ul>
+</li>
+<li><code>user.get</code>: Authorize clients to access current user's profile data.
+<ul>
+<li><code>GET /api/v1/user</code></li>
+</ul>
+</li>
+<li><code>user.path</code>: Authorize clients to modify current user's profile data.
+<ul>
+<li><code>PATCH /api/v1/user</code></li>
+</ul>
+</li>
+<li><code>user.get.admin</code>: Authorize clients to access data of all system users.
+<ul>
+<li><code>GET /api/v1/user/count</code></li>
+<li><code>GET /api/v1/user/list</code></li>
+<li><code>GET /api/v1/user/{userId}</code></li>
+</ul>
+</li>
+<li><code>user.post.admin</code>: Authorize clients to create new users in the system.
+<ul>
+<li><code>POST /api/v1/user</code></li>
+</ul>
+</li>
+<li><code>user.patch.admin</code>: Authorize clients to modify data of any system user.
+<ul>
+<li><code>PATCH /api/v1/user/{userId}</code></li>
+</ul>
+</li>
+<li><code>user.delete.admin</code>: Authorize clients to delete data of any system user.
+<ul>
+<li><code>DELETE /api/v1/user/{userId}</code></li>
+</ul>
+</li>
+<li><code>client.get</code>: Authorize clients to access data of all system clients.
+<ul>
+<li><code>GET /api/v1/client/count</code></li>
+<li><code>GET /api/v1/client/list</code></li>
+<li><code>GET /api/v1/client/{clientId}</code></li>
+</ul>
+</li>
+<li><code>client.post</code>: Authorize clients to create new clients in the system.
+<ul>
+<li><code>POST /api/v1/client</code></li>
+</ul>
+</li>
+<li><code>client.patch</code>: Authorize clients to modify data of any system client.
+<ul>
+<li><code>PATCH /api/v1/client/{clientId}</code></li>
+</ul>
+</li>
+<li><code>client.delete</code>: Authorize clients to delete data of any system client.
+<ul>
+<li><code>DELETE /api/v1/client/{clientId}</code></li>
+</ul>
+</li>
+<li><code>client.delete.user</code>: Authorize clients to delete all clients of any system user.
+<ul>
+<li><code>DELETE /api/v1/client/user/{userId}</code></li>
+</ul>
+</li>
+</ul>
+</li>
+<li>For example, in your service, you define the following scopes:
+<ul>
+<li><code>api.admin</code>: Only authorize the removal of all clients of a user.</li>
+<li><code>api.rw</code>: Allow read and write access to all APIs except
+<code>DELETE /api/v1/client/user/{userId}</code>.</li>
+<li><code>api.readonly</code>： Only allow access to GET APIs.</li>
+<li>Allow access to token data and log out actions for all clients.</li>
+</ul>
+<pre><code>&quot;auth&quot;: {
+    ...
+    &quot;apiScopes&quot;: {
+        &quot;auth.tokeninfo.get&quot;: [],
+        &quot;auth.logout.post&quot;: [],
+        &quot;user.get&quot;: [&quot;api.rw&quot;, &quot;api.readonly&quot;],
+        &quot;user.patch&quot;: [&quot;api.rw&quot;],
+        &quot;user.post.admin&quot;: [&quot;api.rw&quot;],
+        &quot;user.get.admin&quot;: [&quot;api.rw&quot;, &quot;api.readonly&quot;],
+        &quot;user.patch.admin&quot;: [&quot;api.rw&quot;],
+        &quot;user.delete.admin&quot;: [&quot;api.rw&quot;],
+        &quot;client.post&quot;: [&quot;api.rw&quot;],
+        &quot;client.get&quot;: [&quot;api.rw&quot;, &quot;api.readonly&quot;],
+        &quot;client.patch&quot;: [&quot;api.rw&quot;],
+        &quot;client.delete&quot;: [&quot;api.rw&quot;],
+        &quot;client.delete.user&quot;: [&quot;api.admin&quot;],
+    },
+    ...
+}
+</code></pre>
+<ul>
+<li>In this example, registered clients can freely select these three scopes. Subsequently,
+users will be informed of this information on the authorization page and decide whether to
+grant authorization to the client.</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<h2 id="message-broker-service-broker"><a class="header" href="#message-broker-service-broker">Message Broker Service (broker)</a></h2>
+<div class="table-wrapper"><table><thead><tr><th>JSON5</th><th>CLI Parameters</th><th>Environment Variables</th><th>Default</th><th>Description</th></tr></thead><tbody>
+<tr><td>broker.auth</td><td>broker.auth</td><td>BROKER_AUTH</td><td>http://localhost:1080/auth</td><td>Authentication service URL</td></tr>
+<tr><td>broker.db.engine</td><td>broker.db.engine</td><td>BROKER_DB_ENGINE</td><td>sqlite</td><td>Database type</td></tr>
+<tr><td>broker.db.mongodb.url</td><td>broker.db.mongodb.url</td><td>BROKER_DB_MONGODB_URL</td><td>mongodb://localhost:27017</td><td>MongoDB connection URL</td></tr>
+<tr><td>broker.db.mongodb.database</td><td>broker.db.mongodb.database</td><td>BROKER_DB_MONGODB_DATABASE</td><td>auth</td><td>MongoDB database name</td></tr>
+<tr><td>broker.db.mongodb.poolSize</td><td>broker.db.mongodb.poolsize</td><td>BROKER_DB_MONGODB_POOLSIZE</td><td></td><td>Maximum number of MongoDB connections</td></tr>
+<tr><td>broker.db.sqlite.path</td><td>broker.db.sqlite.path</td><td>BROKER_DB_SQLITE_PATH</td><td>auth.db</td><td>SQLite file location</td></tr>
+<tr><td>broker.cache.engine</td><td>broker.cache.engine</td><td>BROKER_CACHE_ENGINE</td><td>none</td><td>Cache type</td></tr>
+<tr><td>broker.cache.memory.device</td><td>broker.cache.memory.device</td><td>BROKER_CACHE_MEMORY_DEVICE</td><td>1,000,000</td><td>Memory cache size for devices</td></tr>
+<tr><td>broker.cache.memory.deviceRoute</td><td>broker.cache.memory.device-route</td><td>BROKER_CACHE_MEMORY_DEVICE_ROUTE</td><td>1,000,000</td><td>Memory cache size for device routes</td></tr>
+<tr><td>broker.cache.memory.networkRoute</td><td>broker.cache.memory.network-route</td><td>BROKER_CACHE_MEMORY_NETWORK_ROUTE</td><td>1,000,000</td><td>Memory cache size for network routes</td></tr>
+<tr><td>broker.mq.prefetch</td><td>broker.mq.prefetch</td><td>BROKER_MQ_PREFETCH</td><td>100</td><td>Maximum number of AMQP consumers</td></tr>
+<tr><td>broker.mq.sharedPrefix</td><td>broker.mq.sharedprefix</td><td>BROKER_MQ_SHAREDPREFIX</td><td>$share/sylvia-iot-broker/</td><td>MQTT shared subscription prefix</td></tr>
+<tr><td>broker.mqChannels.unit.url</td><td>broker.mq-channels.unit.url</td><td>BROKER_MQCHANNELS_UNIT_URL</td><td>amqp://localhost</td><td>Unit control message host</td></tr>
+<tr><td>broker.mqChannels.unit.prefetch</td><td>broker.mq-channels.unit.prefetch</td><td>BROKER_MQCHANNELS_UNIT_PREFETCH</td><td>100</td><td>Maximum number of AMQP consumers for unit control messages</td></tr>
+<tr><td>broker.mqChannels.application.url</td><td>broker.mq-channels.application.url</td><td>BROKER_MQCHANNELS_APPLICATION_URL</td><td>amqp://localhost</td><td>Application control message host</td></tr>
+<tr><td>broker.mqChannels.application.prefetch</td><td>broker.mq-channels.application.prefetch</td><td>BROKER_MQCHANNELS_APPLICATION_PREFETCH</td><td>100</td><td>Maximum number of AMQP consumers for application control messages</td></tr>
+<tr><td>broker.mqChannels.network.url</td><td>broker.mq-channels.network.url</td><td>BROKER_MQCHANNELS_NETWORK_URL</td><td>amqp://localhost</td><td>Network control message host</td></tr>
+<tr><td>broker.mqChannels.network.prefetch</td><td>broker.mq-channels.network.prefetch</td><td>BROKER_MQCHANNELS_NETWORK_PREFETCH</td><td>100</td><td>Maximum number of AMQP consumers for network control messages</td></tr>
+<tr><td>broker.mqChannels.device.url</td><td>broker.mq-channels.device.url</td><td>BROKER_MQCHANNELS_DEVICE_URL</td><td>amqp://localhost</td><td>Device control message host</td></tr>
+<tr><td>broker.mqChannels.device.prefetch</td><td>broker.mq-channels.device.prefetch</td><td>BROKER_MQCHANNELS_DEVICE_PREFETCH</td><td>100</td><td>Maximum number of AMQP consumers for device control messages</td></tr>
+<tr><td>broker.mqChannels.deviceRoute.url</td><td>broker.mq-channels.device-route.url</td><td>BROKER_MQCHANNELS_DEVICE_ROUTE_URL</td><td>amqp://localhost</td><td>Device route control message host</td></tr>
+<tr><td>broker.mqChannels.deviceRoute.prefetch</td><td>broker.mq-channels.device-route.prefetch</td><td>BROKER_MQCHANNELS_DEVICE_ROUTE_PREFETCH</td><td>100</td><td>Maximum number of AMQP consumers for device route control messages</td></tr>
+<tr><td>broker.mqChannels.networkRoute.url</td><td>broker.mq-channels.network-route.url</td><td>BROKER_MQCHANNELS_NETWORK_ROUTE_URL</td><td>amqp://localhost</td><td>Network route control message host</td></tr>
+<tr><td>broker.mqChannels.networkRoute.prefetch</td><td>broker.mq-channels.network-route.prefetch</td><td>BROKER_MQCHANNELS_NETWORK_ROUTE_PREFETCH</td><td>100</td><td>Maximum number of AMQP consumers for network route control messages</td></tr>
+<tr><td>broker.mqChannels.data.url</td><td>broker.mq-channels.data.url</td><td>BROKER_MQCHANNELS_DATA_URL</td><td></td><td>Data message host</td></tr>
+<tr><td>broker.db.apiScopes</td><td>broker.api-scopes</td><td>BROKER_API_SCOPES</td><td></td><td>API scope settings</td></tr>
+</tbody></table>
+</div>
+<h3 id="detailed-explanation-2"><a class="header" href="#detailed-explanation-2">Detailed Explanation</a></h3>
+<ul>
+<li>
+<p>The purpose of specifying the Authentication Service URL (<code>broker.auth</code>) is to verify the
+legitimacy of API calls, including user accounts and clients.</p>
+</li>
+<li>
+<p>MQ channels:</p>
+<ul>
+<li>As the Sylvia-IoT Message Broker Service is a critical module that determines performance,
+many configurations are stored in memory. These configurations need to be propagated to
+various instances of the cluster through <strong>Control Channel Messages</strong> via message queues when
+API changes are made.
+<ul>
+<li>For relevant details, please refer to the <a href="guide/../arch/cache.html"><strong>Cache</strong></a> chapter.</li>
+</ul>
+</li>
+<li><strong>data</strong> represents the <strong>Data Channel Message</strong>, which records all data into the
+<strong>sylvia-iot-data</strong> module.
+<ul>
+<li>If no parameters are specified (or JSON5 is set to <strong>null</strong>), no data will be stored.</li>
+<li>For relevant details, please refer to the <a href="guide/../arch/flow.html"><strong>Data Flow</strong></a> chapter.</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>
+<p>API scopes: Please refer to the explanation in the <strong>Authentication Service</strong> section.</p>
+</li>
+</ul>
+<h2 id="core-manager-service-coremgr"><a class="header" href="#core-manager-service-coremgr">Core Manager Service (coremgr)</a></h2>
+<div class="table-wrapper"><table><thead><tr><th>JSON5</th><th>CLI Parameters</th><th>Environment Variables</th><th>Default</th><th>Description</th></tr></thead><tbody>
+<tr><td>coremgr.auth</td><td>coremgr.auth</td><td>COREMGR_AUTH</td><td>http://localhost:1080/auth</td><td>Authentication service URL</td></tr>
+<tr><td>coremgr.broker</td><td>coremgr.broker</td><td>COREMGR_BROKER</td><td>http://localhost:2080/broker</td><td>Message broker service URL</td></tr>
+<tr><td>coremgr.mq.engine.amqp</td><td>coremgr.mq.engine.amqp</td><td>COREMGR_MQ_ENGINE_AMQP</td><td>rabbitmq</td><td>AMQP type</td></tr>
+<tr><td>coremgr.mq.engine.mqtt</td><td>coremgr.mq.engine.mqtt</td><td>COREMGR_MQ_ENGINE_MQTT</td><td>emqx</td><td>MQTT type</td></tr>
+<tr><td>coremgr.mq.rabbitmq.username</td><td>coremgr.mq.rabbitmq.username</td><td>COREMGR_MQ_RABBITMQ_USERNAME</td><td>guest</td><td>RabbitMQ administrator account</td></tr>
+<tr><td>coremgr.mq.rabbitmq.password</td><td>coremgr.mq.rabbitmq.password</td><td>COREMGR_MQ_RABBITMQ_PASSWORD</td><td>guest</td><td>RabbitMQ administrator password</td></tr>
+<tr><td>coremgr.mq.rabbitmq.ttl</td><td>coremgr.mq.rabbitmq.ttl</td><td>COREMGR_MQ_RABBITMQ_TTL</td><td></td><td>RabbitMQ default message TTL (seconds)</td></tr>
+<tr><td>coremgr.mq.rabbitmq.length</td><td>coremgr.mq.rabbitmq.length</td><td>COREMGR_MQ_RABBITMQ_LENGTH</td><td></td><td>RabbitMQ default maximum number of messages in queues</td></tr>
+<tr><td>coremgr.mq.rabbitmq.hosts</td><td>coremgr.mq.rabbitmq.hosts</td><td>COREMGR_MQ_RABBITMQ_HOSTS</td><td></td><td>(Reserved)</td></tr>
+<tr><td>coremgr.mq.emqx.apiKey</td><td>coremgr.mq.emqx.apikey</td><td>COREMGR_MQ_EMQX_APIKEY</td><td></td><td>EMQX management API key</td></tr>
+<tr><td>coremgr.mq.emqx.apiSecret</td><td>coremgr.mq.emqx.apisecret</td><td>COREMGR_MQ_EMQX_APISECRET</td><td></td><td>EMQX management API secret</td></tr>
+<tr><td>coremgr.mq.emqx.hosts</td><td>coremgr.mq.emqx.hosts</td><td>COREMGR_MQ_EMQX_HOSTS</td><td></td><td>(Reserved)</td></tr>
+<tr><td>coremgr.mq.rumqttd.mqttPort</td><td>coremgr.mq.rumqttd.mqtt-port</td><td>COREMGR_MQ_RUMQTTD_MQTT_PORT</td><td>1883</td><td>rumqttd MQTT port</td></tr>
+<tr><td>coremgr.mq.rumqttd.mqttsPort</td><td>coremgr.mq.rumqttd.mqtts-port</td><td>COREMGR_MQ_RUMQTTD_MQTTS_PORT</td><td>8883</td><td>rumqttd MQTTS port</td></tr>
+<tr><td>coremgr.mq.rumqttd.consolePort</td><td>coremgr.mq.rumqttd.console-port</td><td>COREMGR_MQ_RUMQTTD_CONSOLE_PORT</td><td>18083</td><td>rumqttd management API port</td></tr>
+<tr><td>coremgr.mqChannels.data.url</td><td>coremgr.mq-channels.data.url</td><td>COREMGR_MQCHANNELS_DATA_URL</td><td></td><td>Data message host</td></tr>
+</tbody></table>
+</div>
+<h3 id="detailed-explanation-3"><a class="header" href="#detailed-explanation-3">Detailed Explanation</a></h3>
+<ul>
+<li>MQ channels:
+<ul>
+<li><strong>data</strong> represents the <strong>Data Channel Message</strong>.
+<ul>
+<li>Currently, coremgr supports recording HTTP request content for all API requests except
+GET. Enabling the data channel will record the API usage history.</li>
+<li>If no parameters are specified (or JSON5 is set to <strong>null</strong>), no data will be stored.</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<h2 id="core-manager-command-line-interface-coremgr-cli"><a class="header" href="#core-manager-command-line-interface-coremgr-cli">Core Manager Command-Line Interface (coremgr-cli)</a></h2>
+<div class="table-wrapper"><table><thead><tr><th>JSON5</th><th>CLI Parameters</th><th>Environment Variables</th><th>Default</th><th>Description</th></tr></thead><tbody>
+<tr><td>coremgrCli.auth</td><td>coremgr-cli.auth</td><td>COREMGRCLI_AUTH</td><td>http://localhost:1080/auth</td><td>Authentication service URL</td></tr>
+<tr><td>coremgrCli.coremgr</td><td>coremgr-cli.coremgr</td><td>COREMGRCLI_COREMGR</td><td>http://localhost:3080/coremgr</td><td>Core manager service URL</td></tr>
+<tr><td>coremgrCli.data</td><td>coremgr-cli.data</td><td>COREMGRCLI_DATA</td><td>http://localhost:4080/data</td><td>Data service URL</td></tr>
+<tr><td>coremgrCli.clientId</td><td>coremgr-cli.client-id</td><td>COREMGRCLI_CLIENT_ID</td><td></td><td>CLI client ID</td></tr>
+<tr><td>coremgrCli.redirectUri</td><td>coremgr-cli.redirect-uri</td><td>COREMGRCLI_REDIRECT_URI</td><td></td><td>CLI client redirect URI</td></tr>
+</tbody></table>
+</div>
+<h2 id="data-service-data"><a class="header" href="#data-service-data">Data Service (data)</a></h2>
+<div class="table-wrapper"><table><thead><tr><th>JSON5</th><th>CLI Parameters</th><th>Environment Variables</th><th>Default</th><th>Description</th></tr></thead><tbody>
+<tr><td>data.auth</td><td>data.auth</td><td>DATA_AUTH</td><td>http://localhost:1080/auth</td><td>Authentication service URL</td></tr>
+<tr><td>data.broker</td><td>data.broker</td><td>DATA_BROKER</td><td>http://localhost:2080/broker</td><td>Message broker service URL</td></tr>
+<tr><td>data.db.engine</td><td>data.db.engine</td><td>DATA_DB_ENGINE</td><td>sqlite</td><td>Database type</td></tr>
+<tr><td>data.db.mongodb.url</td><td>data.db.mongodb.url</td><td>DATA_DB_MONGODB_URL</td><td>mongodb://localhost:27017</td><td>MongoDB connection URL</td></tr>
+<tr><td>data.db.mongodb.database</td><td>data.db.mongodb.database</td><td>DATA_DB_MONGODB_DATABASE</td><td>data</td><td>MongoDB database name</td></tr>
+<tr><td>data.db.mongodb.poolSize</td><td>data.db.mongodb.poolsize</td><td>DATA_DB_MONGODB_POOLSIZE</td><td></td><td>Maximum number of MongoDB connections</td></tr>
+<tr><td>data.db.sqlite.path</td><td>data.db.sqlite.path</td><td>DATA_DB_SQLITE_PATH</td><td>data.db</td><td>SQLite file location</td></tr>
+<tr><td>data.mqChannels.broker.url</td><td>data.mq-channels.broker.url</td><td>DATA_MQCHANNELS_BROKER_URL</td><td>amqp://localhost</td><td>Data message host</td></tr>
+<tr><td>data.mqChannels.broker.prefetch</td><td>data.mq-channels.broker.prefetch</td><td>DATA_MQCHANNELS_BROKER_PREFETCH</td><td>100</td><td>Maximum number of AMQP consumers for data messages</td></tr>
+<tr><td>data.mqChannels.broker.sharedPrefix</td><td>data.mq-channels.broker.sharedprefix</td><td>DATA_MQCHANNELS_BROKER_SHAREDPREFIX</td><td>$share/sylvia-iot-data/</td><td>MQTT shared subscription prefix</td></tr>
+<tr><td>data.mqChannels.coremgr.url</td><td>data.mq-channels.coremgr.url</td><td>DATA_MQCHANNELS_COREMGR_URL</td><td>amqp://localhost</td><td>Data message host</td></tr>
+<tr><td>data.mqChannels.coremgr.prefetch</td><td>data.mq-channels.coremgr.prefetch</td><td>DATA_MQCHANNELS_COREMGR_PREFETCH</td><td>100</td><td>Maximum number of AMQP consumers for data messages</td></tr>
+<tr><td>data.mqChannels.coremgr.sharedPrefix</td><td>data.mq-channels.coremgr.sharedprefix</td><td>DATA_MQCHANNELS_COREMGR_SHAREDPREFIX</td><td>$share/sylvia-iot-data/</td><td>MQTT shared subscription prefix</td></tr>
+</tbody></table>
+</div><div style="break-before: page; page-break-before: always;"></div><h1 id="internal-architecture"><a class="header" href="#internal-architecture">Internal Architecture</a></h1>
+<p>Chapter Contents:</p>
+<ul>
+<li>Detailed explanation of Sylvia-IoT components.</li>
+<li>Understanding the process of uplink and downlink data.</li>
+<li>Introduction to caching mechanisms.</li>
+</ul>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="architecture"><a class="header" href="#architecture">Architecture</a></h1>
+<p><img src="arch/arch.svg" alt="Architecture" /></p>
+<p>Here is the diagram of Sylvia-IoT components. In this chapter, we will explain each one in detail.</p>
+<h2 id="sylvia-iot-core-components"><a class="header" href="#sylvia-iot-core-components">Sylvia-IoT Core Components</a></h2>
+<p>Abbreviated as ABCD (laughs 😊)</p>
+<h3 id="auth-sylvia-iot-auth"><a class="header" href="#auth-sylvia-iot-auth">Auth (sylvia-iot-auth)</a></h3>
+<ul>
+<li>Purpose
+<ul>
+<li>Provides the validity and information of access tokens for HTTP APIs, allowing APIs to
+determine whether to authorize access with the token.</li>
+<li>Offers the authorization mechanism for OAuth2, currently supporting the following flows:</li>
+<li>提供 OAuth2 的授權機制，目前支援下列流程：
+<ul>
+<li>Authorization code grant flow
+<ul>
+<li>Clients need to use a webview to display login and authorization pages.</li>
+<li>Currently used by coremgr CLI.</li>
+</ul>
+</li>
+<li>Client credentials grant flow
+<ul>
+<li>Currently reserved and not actively used.</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>Managed entities
+<ul>
+<li>User accounts
+<ul>
+<li>User's basic information.</li>
+<li>Permissions (roles).</li>
+</ul>
+</li>
+<li>Clients
+<ul>
+<li>Access permissions (scopes) for HTTP APIs.</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>Dependencies
+<ul>
+<li>None. It can operate independently.</li>
+</ul>
+</li>
+</ul>
+<h3 id="broker-sylvia-iot-broker"><a class="header" href="#broker-sylvia-iot-broker">Broker (sylvia-iot-broker)</a></h3>
+<ul>
+<li>Purpose
+<ul>
+<li>Manages entities related to devices.</li>
+<li>Binds devices and applications, forwards device data to applications, or receives data from
+applications to devices.</li>
+<li>(Optional) Can send all traffic passing through networks and application data via the data
+channel to the <strong>Data service</strong> for storage or analysis.</li>
+</ul>
+</li>
+<li>Managed entities
+<ul>
+<li>Units
+<ul>
+<li>Composed of one owner and multiple members.</li>
+<li>Independently manage devices, applications, networks, and route (binding) rules.</li>
+<li>可以獨立管理裝置、應用、網路、路由（綁定）規則。</li>
+</ul>
+</li>
+<li>Applications
+<ul>
+<li>Analyze data and present results based on device data.</li>
+</ul>
+</li>
+<li>Networks
+<ul>
+<li>Can use services directly connected to Sylvia-IoT or connect existing network services
+(e.g., <a href="https://www.thethingsnetwork.org/"><strong>The Things Network (TTN)</strong></a> or
+<a href="https://www.chirpstack.io/"><strong>ChirpStack</strong></a>) to Sylvia-IoT using adapters.</li>
+<li>One network address can be used to transmit data from one device.</li>
+<li>Administrators (admin role) can create public networks.</li>
+</ul>
+</li>
+<li>Devices
+<ul>
+<li>Each device represents an application on an endpoint, such as a tracker, meter, sensor,
+etc.</li>
+<li>Devices need to be attached to a network address under a network to transmit data.
+<ul>
+<li>Devices can be attached to public networks, but it requires administrator accounts
+(admin/manager roles) to set up.</li>
+<li>Each device has a unique identifier (device ID). If the application relies on this
+identifier, even if the network and address are changed, there is no need to change
+the application's management.</li>
+</ul>
+</li>
+<li>Each device can be assigned a device profile based on the data content.
+<ul>
+<li>With the profile, applications can quickly parse data without the need to create a
+mapping table for identifiers.</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>Route rules
+<ul>
+<li>Binds devices to applications.
+<ul>
+<li>Many-to-many relationships are supported.</li>
+</ul>
+</li>
+<li>Binds networks to applications, and all devices under that network will be routed, meaning
+there is no need to bind them one by one.
+<ul>
+<li>Many-to-many relationships are supported.</li>
+<li>Public networks cannot be bound.</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>Dependencies
+<ul>
+<li>Depends on Auth service.</li>
+</ul>
+</li>
+</ul>
+<h3 id="coremgr-sylvia-iot-coremgr"><a class="header" href="#coremgr-sylvia-iot-coremgr">Coremgr (sylvia-iot-coremgr)</a></h3>
+<ul>
+<li>Purpose
+<ul>
+<li>Coremgr, short for Core Manager, is responsible for managing the core components of
+Sylvia-IoT.</li>
+<li>Provides the main HTTP APIs for external direct access.
+<ul>
+<li>The Auth service only exposes authentication/authorization APIs. User and client
+management still requires the use of coremgr API.</li>
+<li>Uses bridging to indirectly access Auth and Broker HTTP APIs to manage various entities.</li>
+</ul>
+</li>
+<li>Creates queues and corresponding permissions using the management API for RabbitMQ/EMQX, and
+other message brokers.
+<ul>
+<li>Broker only manages associations between entities and AMQP/MQTT connections. The actual
+configuration of RabbitMQ/EMQX is performed by coremgr.</li>
+</ul>
+</li>
+<li>(Optional) Sends operation records, including additions, modifications, deletions, etc.,
+through the data channel to the <strong>Data service</strong> for storage or analysis.</li>
+</ul>
+</li>
+<li>Managed entities
+<ul>
+<li>(None)</li>
+</ul>
+</li>
+<li>Dependencies
+<ul>
+<li>Depends on Auth and Broker services.</li>
+<li>Depends on the management API of the message broker.</li>
+</ul>
+</li>
+</ul>
+<h3 id="coremgr-cli-sylvia-iot-coremgr-cli"><a class="header" href="#coremgr-cli-sylvia-iot-coremgr-cli">Coremgr CLI (sylvia-iot-coremgr-cli)</a></h3>
+<ul>
+<li>Purpose
+<ul>
+<li>Provides a command-line interface (CLI) for users to configure Sylvia-IoT using commands.</li>
+</ul>
+</li>
+<li>Dependencies
+<ul>
+<li>Depends on Auth and Coremgr services. Auth is only used for authentication/authorization.</li>
+<li>Can depend on the Data service to read historical data.</li>
+</ul>
+</li>
+</ul>
+<h3 id="control-channel-vs-data-channel"><a class="header" href="#control-channel-vs-data-channel">Control Channel vs. Data Channel</a></h3>
+<ul>
+<li>The control channel is used to transmit messages related to entity management (users, units,
+devices, etc.). It can be categorized as follows:
+<ul>
+<li>Unicast: Each message has only one consumer and is used for Sylvia-IoT to push messages to
+networks or applications, which will be explained in the later <a href="arch/./flow.html"><strong>Data Flow</strong></a>
+section.</li>
+<li>Broadcast: Used to broadcast messages to various core processes within the Sylvia-IoT cluster,
+which will be explained in the later <a href="arch/./cache.html"><strong>Cache</strong></a> section.</li>
+</ul>
+</li>
+<li>The data channel is used to transmit device data or historical data.
+<ul>
+<li>It covers Application Data, Network Data, and Coremgr OP Data.</li>
+<li>Currently, AMQP 0-9-1 and MQTT 3.1.1 protocols are implemented. Additionally, AMQP 1.0, Kafka,
+NATS, and other protocols can also be implemented.</li>
+</ul>
+</li>
+</ul>
+<h4 id="general-mq"><a class="header" href="#general-mq">general-mq</a></h4>
+<p>Sylvia-IoT utilizes <a href="https://crates.io/crates/general-mq"><strong>general-mq</strong></a> to implement unicast and
+broadcast, abstracting the details of communication protocols.</p>
+<p>By implementing unicast/broadcast modes for AMQP 1.0, Kafka, or other protocols in general-mq and
+corresponding management APIs in coremgr, Sylvia-IoT can support more protocols.</p>
+<h3 id="data-sylvia-iot-data"><a class="header" href="#data-sylvia-iot-data">Data (sylvia-iot-data)</a></h3>
+<ul>
+<li>Purpose
+<ul>
+<li>Record or analyze data from the data channel.</li>
+</ul>
+</li>
+</ul>
+<p>This module is unique in that it does not have a specific implementation. Currently,
+<strong>sylvia-iot-data</strong> in Sylvia-IoT Core provides storage and retrieval of raw data.</p>
+<p>Below are some possible scenarios for extension:</p>
+<ul>
+<li>Rule engine.
+<ul>
+<li>Since the data channel contains all network data, the Data module can be implemented as a
+common rule engine in IoT platforms.</li>
+</ul>
+</li>
+<li>Stream processing.
+<ul>
+<li>The data channel can be implemented as a Kafka queue for stream processing.</li>
+</ul>
+</li>
+</ul>
+<h2 id="message-brokers"><a class="header" href="#message-brokers">Message Brokers</a></h2>
+<blockquote>
+<p>Here, message brokers refer to services like RabbitMQ and EMQX, not Sylvia-IoT Broker.
+Unless specifically mentioned, &quot;Broker&quot; in this document refers to Sylvia-IoT Broker.</p>
+</blockquote>
+<p>Some important points:</p>
+<ul>
+<li>Since coremgr needs to configure queues through the management APIs, relevant implementations must
+be provided to support this feature. Currently, coremgr supports the following message brokers:
+<ul>
+<li>RabbitMQ</li>
+<li>EMQX</li>
+<li>In the future, Kafka or other protocols can be implemented to broaden the application scope of
+Sylvia-IoT.</li>
+</ul>
+</li>
+<li>Sylvia-IoT has the following requirements:
+<ul>
+<li>Message queuing, which refers to the traditional message pattern (one message has only one
+consumer).
+<ul>
+<li>MQTT is implemented using shared subscription.</li>
+</ul>
+</li>
+<li>Publish/Subscribe, used for broadcasting control channel messages. This will be covered in the
+<a href="arch/./cache.html"><strong>Cache</strong></a> section.
+<ul>
+<li>AMQP is implemented using fanout exchanges and temporary queues.</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<h3 id="rumqttd"><a class="header" href="#rumqttd">rumqttd</a></h3>
+<p>In the <a href="arch/../guide/quick.html"><strong>Quick Start</strong></a> section, we used <strong>sylvia-iot-core</strong> as an example. This
+executable includes the complete Auth/Broker/Coremgr/Data and rumqttd.</p>
+<p>To make it possible to run in resource-constrained environments, <strong>sylvia-iot-core</strong> contains the
+<a href="https://github.com/bytebeamio/rumqtt"><strong>rumqttd</strong></a> MQTT broker.
+By configuring it to use SQLite as the database and MQTT for message delivery, the sylvia-iot-core
+achieves the full functionality of Sylvia-IoT in just two files.</p>
+<blockquote>
+<p>The &quot;core&quot; is an executable that contains all the complete functionalities, whereas &quot;coremgr&quot; only
+contains management functionalities and does not include rumqttd.</p>
+</blockquote>
+<p>To accommodate this limited environment, Sylvia-IoT adopts rumqttd.
+Currently, Sylvia-IoT does not have an implementation of rumqttd management APIs, so it is not
+suitable for use in a cluster architecture. It is also not recommended to use this mode for queue
+permission requirements.</p>
+<h2 id="third-party-components"><a class="header" href="#third-party-components">Third-Party Components</a></h2>
+<h3 id="application-servers-network-servers"><a class="header" href="#application-servers-network-servers">Application Servers, Network Servers</a></h3>
+<p>In addition to using the data channel to send and receive device data, applications and networks can
+also access Sylvia-IoT HTTP APIs and control channel messages to build their own management systems.</p>
+<h3 id="devices"><a class="header" href="#devices">Devices</a></h3>
+<p>Devices in Sylvia-IoT refer to narrow-definition terminal devices that only process the data
+required by applications, and they are generally bound to network modules. The network module,
+however, can be interchangeable.</p>
+<p>Here's an example of replacing the network module: Suppose the device uses a Raspberry Pi to connect
+sensors for specific application development. The network part can be changed to different protocols
+at any time (e.g., switching from LoRa to WiFi or even using an Ethernet cable). In Sylvia-IoT, you
+only need to modify the corresponding network and address settings for the device.</p>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="data-flow"><a class="header" href="#data-flow">Data Flow</a></h1>
+<p>This chapter introduces how Sylvia-IoT handles data flow, including the following scenarios:</p>
+<ul>
+<li>Uplink data: Data sent from devices to applications.</li>
+<li>Downlink data: Data sent from applications to devices.</li>
+<li>Control channel: Messages transmitted from Broker to the network.</li>
+<li>Coremgr operation data: Records of system operation history, including management operations.</li>
+</ul>
+<h2 id="uplink-data"><a class="header" href="#uplink-data">Uplink Data</a></h2>
+<p><img src="arch/flow-uplink.svg" alt="Uplink" /></p>
+<p>When device data is sent to the corresponding queue through the network service, the data will be
+processed and sent to the application as follows:</p>
+<ol>
+<li>If the data format is correct, it will proceed to the next step; otherwise, it will be discarded.</li>
+<li>Broker first sends the data directly to the Data module (via the queue) to store the complete
+uplink data content.</li>
+<li>Scan all device routes and perform the following actions:
+<ul>
+<li>Send the data to the corresponding application queue.</li>
+<li>Store the data sent to the application in the Data module.</li>
+</ul>
+</li>
+<li>Scan all network routes and perform the following actions:
+<ul>
+<li>Check if the data has already been sent during the device route stage. If yes, move to the
+next network route action; if not, continue with the following actions:</li>
+<li>Send the data to the corresponding application queue.</li>
+<li>Store the data sent to the application in the Data module.</li>
+</ul>
+</li>
+</ol>
+<blockquote>
+<p>The purpose of the comparison in Step 4 is to avoid duplicate sending when device routes and
+network routes overlap.</p>
+</blockquote>
+<h2 id="downlink-data"><a class="header" href="#downlink-data">Downlink Data</a></h2>
+<p><img src="arch/flow-downlink.svg" alt="Downlink" /></p>
+<p>When the application service sends data to be delivered to a device through the queue, the data is
+processed as follows:</p>
+<ol>
+<li>If the format is correct, proceed to the next step; otherwise, respond with an error message
+through the <code>resp</code> queue.</li>
+<li>Check if the destination device belongs to the specified unit. If it does, proceed to the next
+step; otherwise, respond with an error message through the <code>resp</code> queue.</li>
+<li>Assign a unique identifier (ID) to this data as an independent entry and store it in the Data
+module.</li>
+<li>Store the ID and the source application of this data in the database to facilitate reporting the
+delivery status back to the application service in the future.</li>
+<li>Send the data (including the data ID) to the queue of the corresponding network service.</li>
+<li>If the data is sent to the network service queue, report the data ID back to the application
+service to track the delivery status.</li>
+</ol>
+<blockquote>
+<p>Compared to uplink data, downlink data is slightly more complex, mainly because
+<strong>reporting the delivery status is required</strong>.</p>
+</blockquote>
+<p>The Broker does not retain the <code>resp</code> queue for the network service to report data correctness. This
+is because the Broker, being part of the infrastructure, always ensures data correctness.
+The network service only needs to focus on delivering the data to the device and reporting the final
+result. Even if the data sent by the Broker is invalid, the network service can directly report it
+through the <code>result</code> queue.</p>
+<p><img src="arch/flow-downlink-result.svg" alt="Downlink-Result" /></p>
+<p>After processing the data (regardless of success or failure), the network service <strong>MUST</strong> use the
+data ID to report back to the Broker in the following order:</p>
+<ol>
+<li>If the format is correct, proceed to the next step; otherwise, discard the message.</li>
+<li>Submit a request to the Data module for result updates using the ID.</li>
+<li>Retrieve the application service information associated with that ID and report the result back
+to the application service that sent this downlink data (ensuring that other applications will
+not receive the result).</li>
+<li>If step 3 is successful, clear the ID information from the database.</li>
+</ol>
+<blockquote>
+<p>The use of an additional ID database aims to retain the source application of the downlink data.
+After all, if data is sent by application A, why should application B receive the result
+😊?</p>
+</blockquote>
+<h2 id="control-channel"><a class="header" href="#control-channel">Control Channel</a></h2>
+<p><img src="arch/flow-ctrl.svg" alt="Ctrl" /></p>
+<p>The Broker or coremgr provides APIs that allow the network service to update device data at any
+time. However, relying on periodic API requests for synchronization is inefficient and may impact
+routing performance due to frequent requests.
+The Broker provides a mechanism that when there are changes in device data, information is provided
+to the corresponding network service through <code>broker.network.[unit-code].[network-code].ctrl</code>.</p>
+<p>Sylvia-IoT allows devices to change their associated networks or addresses. When this operation
+occurs, the network service will receive the following messages based on different scenarios:</p>
+<ul>
+<li>Changing from network A to network B:
+<ul>
+<li>Notify network A that a specific address has been removed.</li>
+<li>Notify network B that a specific address has been added.</li>
+</ul>
+</li>
+<li>Changing the address within network A:
+<ul>
+<li>Notify network A that a specific address has been removed.</li>
+<li>Notify network A that a specific address has been added.</li>
+</ul>
+</li>
+</ul>
+<h2 id="operation-data"><a class="header" href="#operation-data">Operation Data</a></h2>
+<p><img src="arch/flow-opdata.svg" alt="OpData" /></p>
+<p>Coremgr has an optional configuration to store all system operation logs (limited to coremgr HTTP
+APIs, of course). The current scope includes POST/PUT/PATCH/DELETE, etc.</p>
+<p>As shown in the diagram, after each API operation, coremgr records the following data:</p>
+<ul>
+<li>Request time</li>
+<li>Response time</li>
+<li>Processing time</li>
+<li>HTTP status</li>
+<li>Source IP address</li>
+<li>HTTP method</li>
+<li>(Optional) HTTP request body
+<ul>
+<li>The content of <code>data.password</code> is filtered. When the request contains a <code>password</code> field, its
+content is cleared. The key is retained to indicate that this request involves password modification.</li>
+</ul>
+</li>
+<li>User ID</li>
+<li>Client ID</li>
+</ul>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="cache"><a class="header" href="#cache">Cache</a></h1>
+<p>In the <a href="arch/flow.html"><strong>Data Flow</strong></a> section, it is mentioned that the main task of the Broker is &quot;to
+match routing rules and forward data&quot;.
+Typically, routing rules are stored in a database, so the speed of matching becomes a critical
+bottleneck. This is especially true when forwarding thousands or even tens of thousands of data at
+the same time, putting significant pressure on the database.</p>
+<p>As it is well known, one of the best solutions to alleviate pressure on the database is caching, and
+Redis is a popular solution for this purpose.</p>
+<p>Sylvia-IoT has been designed from the beginning to be as simple as possible and to adopt the minimum
+possible variety of technologies (you can run the complete Sylvia-IoT functionality with just SQLite
+and MQTT).
+Regarding caching, it uses an in-process-memory approach, which means storing data in variables
+within the process itself. The matching process does not require network or IPC as it directly
+accesses variables within the process.</p>
+<blockquote>
+<p>Currently, the Broker is implemented using <code>std::collections::HashMap</code>.</p>
+</blockquote>
+<p><img src="arch/cache.svg" alt="Cache" /></p>
+<p>The diagram above provides an overview of Sylvia-IoT's caching mechanism. To meet the requirements
+of a cluster architecture, a broadcast queue is introduced to implement the <strong>Control Channel</strong>.</p>
+<p>To ensure data accuracy, updates are first made to the database before updating the cache. Below, we
+outline the steps:</p>
+<ol>
+<li>Users modify routing rules through the HTTP API.</li>
+<li>Similar to a regular API implementation, the database is directly updated.</li>
+<li>Before responding to the HTTP request, an update message is sent to the control channel,
+containing necessary update information (optional details like names are excluded).</li>
+<li>While responding to the HTTP request, the control channel broadcasts the update message to all
+processes in the cluster.</li>
+<li>Upon receiving the message, each process updates the content of its variables.</li>
+</ol>
+<blockquote>
+<p>For simplicity, the current implementation mostly involves deleting cache data (the content of
+step 3 is a deletion action) and then filling it with cache-miss.</p>
+</blockquote>
+<p>Let's discuss a few special situations:</p>
+<ul>
+<li>The caching design of the Broker adopts &quot;eventual consistency.&quot; After step 3, there might be a
+short period during which the old routing is still in use. However, this period is usually not
+very long (within tens or hundreds of milliseconds, or perhaps even shorter).</li>
+<li>To avoid data inconsistency, when a process detects a reconnection to the control channel's queue,
+it completely clears the cache content. It then reads the data from the database during a
+cache-miss event.</li>
+</ul>
+<blockquote>
+<p>In the <a href="arch/../guide/configuration.html"><strong>Configuration File</strong></a> section, the <code>mqChannels</code> contains
+various settings for the control channel corresponding to each API.</p>
+</blockquote>
+<p>Relying on variables within the process as caching allows Sylvia-IoT Broker to achieve efficient
+forwarding capabilities 😊.</p>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="developers-guide"><a class="header" href="#developers-guide">Developer's Guide</a></h1>
+<p>Chapter Contents:</p>
+<ul>
+<li>OAuth2 authentication process.</li>
+<li>Developing network services.</li>
+<li>Developing application services.</li>
+<li>Developing and contributing to the Sylvia-IoT core.</li>
+</ul>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="oauth2-authentication"><a class="header" href="#oauth2-authentication">OAuth2 Authentication</a></h1>
+<p>Sylvia-IoT HTTP APIs require obtaining an access token through OAuth2 for access. The following
+scenarios require using OAuth2 authentication and obtaining access tokens:</p>
+<ul>
+<li>Accessing Sylvia-IoT HTTP API.</li>
+<li>Developing network and application services that need to integrate with <strong>sylvia-iot-auth</strong> for
+user account and token authentication.</li>
+</ul>
+<p><strong>sylvia-iot-auth</strong> provides basic login and authorization pages, and this chapter will also
+describe how to develop custom pages as needed.</p>
+<h2 id="before-getting-started"><a class="header" href="#before-getting-started">Before Getting Started</a></h2>
+<p>Before proceeding, you need to create the first user account and client. In the
+<a href="dev/../guide/quick.html"><strong>Quick Start</strong></a> guide, we created the following resources:</p>
+<ul>
+<li>User account: name is <strong>admin</strong>, and the password is <strong>admin</strong>.</li>
+<li>Client: ID is <strong>public</strong>, and the redirect URI is <strong>http://localhost:1080/auth/oauth2/redirect</strong>.</li>
+</ul>
+<p>You can use <strong>coremgr-cli</strong> to obtain the token using the above information. If you want to create
+your own user account and client, you can do so using the CLI, or you can follow the details below.</p>
+<ul>
+<li>For user accounts, the password is hashed using a combination of <strong>salt</strong> and
+<a href="https://en.wikipedia.org/wiki/PBKDF2"><strong>PBKDF2</strong></a> encryption, with <strong>10000</strong> iterations.
+Replace salt and password with your specified salt and hashed password, respectively. Other fields
+can also be replaced with your specified values.</li>
+<li>For clients, replace <code>clientId</code> and <code>redirectUri</code>. The redirect URI should be set to the client's
+address.
+If your service needs to be accessed through <strong>http://localhost</strong> or
+<strong>https://network.example.com</strong>, and it receives the authorization code at the path
+<strong>/network/redirect</strong>, you can set the redirect URI as
+<code>[&quot;http://localhost/network/redirect&quot;,&quot;https://network.example.com/network/redirect&quot;]</code>.</li>
+</ul>
+<h2 id="using-browser-and-curl"><a class="header" href="#using-browser-and-curl">Using Browser and Curl</a></h2>
+<p>Here, we will explain how to log in with your account credentials and obtain a session ID to access
+the authorization page and obtain the token. The following examples use the user account and client
+created in the <a href="dev/../guide/quick.html"><strong>Quick Start</strong></a> guide.</p>
+<p>Open your browser and enter the URL <code>http://localhost:1080/auth/oauth2/auth?response_type=code&amp;redirect_uri=http%3A%2F%2Flocalhost%3A1080%2Fauth%2Foauth2%2Fredirect&amp;client_id=public</code></p>
+<p>Enter your account credentials. If you are redirected to the authorization page, it means you have
+successfully logged in. The page will display the API scopes required by this client. If you agree,
+click the <strong>Accept</strong> button. After that, the URL in the browser will look like the following (your
+content will be slightly different):</p>
+<pre><code>http://localhost:1080/auth/oauth2/redirect?code=62a801a7d6ceaf2d1018cbac60a6b3d1744295016214bfec6214397d73368278
+</code></pre>
+<p>The <code>code</code> in the URL is the authorization code. You need to use the curl command within 30 seconds
+to obtain the token:</p>
+<pre><code class="language-shell">curl -X POST http://localhost:1080/auth/oauth2/token -d 'grant_type=authorization_code&amp;code=62a801a7d6ceaf2d1018cbac60a6b3d1744295016214bfec6214397d73368278&amp;redirect_uri=http%3A%2F%2Flocalhost%3A1080%2Fauth%2Foauth2%2Fredirect&amp;client_id=public'
+</code></pre>
+<p>If you see the following message, it means you have obtained the token (your content will be
+slightly different):</p>
+<pre><code>{&quot;access_token&quot;:&quot;fecc5af17e254e6c5a561b7acc900c8f0449a42e77f07a19261c2e6cff518ec8&quot;,&quot;refresh_token&quot;:&quot;5905fc23f65ca7ed92bc7be74e33fc3e79cd8bce2c9ef2ef1bb368caaf6c07f0&quot;,&quot;token_type&quot;:&quot;bearer&quot;,&quot;expires_in&quot;:3599,&quot;scope&quot;:&quot;&quot;}
+</code></pre>
+<h2 id="using-curl"><a class="header" href="#using-curl">Using Curl</a></h2>
+<p>If you want to use the curl command to assist with your program development, you can follow these
+steps. First, use the following command to log in and obtain the session ID:</p>
+<pre><code class="language-shell">curl -v -X POST http://localhost:1080/auth/oauth2/login -d 'state=response_type%3Dcode%26client_id%3Dpublic%26redirect_uri%3Dhttp%253A%252F%252Flocalhost%253A1080%252Fauth%252Foauth2%252Fredirect&amp;account=admin&amp;password=admin'
+</code></pre>
+<p>If you see the response like this (your content will be slightly different):</p>
+<pre><code>&lt; HTTP/1.1 302 Found
+&lt; content-length: 0
+&lt; access-control-allow-credentials: true
+&lt; location: /auth/oauth2/authorize?response_type=code&amp;client_id=public&amp;redirect_uri=http%3A%2F%2Flocalhost%3A1080%2Fauth%2Foauth2%2Fredirect&amp;session_id=6643a450b4d678f7d0223fde9e118a2733f1958aa3fc55d616ec278e83d7a06a
+&lt; vary: Origin, Access-Control-Request-Method, Access-Control-Request-Headers
+&lt; access-control-expose-headers: location
+&lt; date: Sat, 15 Jul 2023 04:25:21 GMT
+</code></pre>
+<p>Keep the content of <code>session_id</code> from the <strong>location</strong> field and use it in the next HTTP request
+within 60 seconds:</p>
+<pre><code class="language-shell">curl -v -X POST http://localhost:1080/auth/oauth2/authorize -d 'allow=yes&amp;session_id=6643a450b4d678f7d0223fde9e118a2733f1958aa3fc55d616ec278e83d7a06a&amp;client_id=public&amp;response_type=code&amp;redirect_uri=http%3A%2F%2Flocalhost%3A1080%2Fauth%2Foauth2%2Fredirect'
+</code></pre>
+<p>If you see the response like this (your content will be slightly different):</p>
+<pre><code>&lt; HTTP/1.1 302 Found
+&lt; content-length: 0
+&lt; access-control-allow-credentials: true
+&lt; location: http://localhost:1080/auth/oauth2/redirect?code=eee02ae34b6c93f955ebf244bccec2b7e6534e1a8dc451a2ed92a790be7b14bb
+&lt; vary: Origin, Access-Control-Request-Method, Access-Control-Request-Headers
+&lt; access-control-expose-headers: location
+&lt; date: Sat, 15 Jul 2023 04:40:36 GMT
+</code></pre>
+<p>The <code>code</code> in the <strong>location</strong> field is the authorization code. You need to use the curl command
+within 30 seconds to obtain the token:</p>
+<pre><code class="language-shell">curl -X POST http://localhost:1080/auth/oauth2/token -d 'grant_type=authorization_code&amp;code=eee02ae34b6c93f955ebf244bccec2b7e6534e1a8dc451a2ed92a790be7b14bb&amp;redirect_uri=http%3A%2F%2Flocalhost%3A1080%2Fauth%2Foauth2%2Fredirect&amp;client_id=public'
+</code></pre>
+<p>If you see the following message, it means you have obtained the token (your content will be
+slightly different):</p>
+<pre><code>{&quot;access_token&quot;:&quot;6994982614dc9f6f2bff08169f7636873531686c34c02fbd6bb45655c8f24b13&quot;,&quot;refresh_token&quot;:&quot;387822850a8fa9a474c413b62a17d9f218204ddcaad51ca475448827b83972fe&quot;,&quot;token_type&quot;:&quot;bearer&quot;,&quot;expires_in&quot;:3599,&quot;scope&quot;:&quot;&quot;}
+</code></pre>
+<h2 id="authentication-flow-endpoints"><a class="header" href="#authentication-flow-endpoints">Authentication Flow Endpoints</a></h2>
+<p>Here are the endpoints involved in the OAuth2 authentication flow:</p>
+<ul>
+<li><code>GET /auth/oauth2/auth</code>
+<ul>
+<li>Verifies the client's basic information and redirects to the next endpoint if successful.</li>
+<li>Query parameters:
+<ul>
+<li><code>response_type</code>: Must be <code>code</code>.</li>
+<li><code>client_id</code>: Client identifier.</li>
+<li><code>redirect_uri</code>: The redirect URI where the authorization code will be received.</li>
+<li><code>scope</code>: (<strong>Optional</strong>) The requested scope of access.</li>
+<li><code>state</code>: (<strong>Optional</strong>) Will be included when receiving the authorization code. Generally
+used to retain the previous page information for returning after login.</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><code>GET /auth/oauth2/login</code>
+<ul>
+<li>Displays the account login page.</li>
+<li>Query parameters will be automatically populated from the previous step.
+<ul>
+<li><code>state</code>: (Auto-generated)</li>
+</ul>
+</li>
+<li>Pressing the login button will trigger the next HTTP request.</li>
+</ul>
+</li>
+<li><code>POST /auth/oauth2/login</code>
+<ul>
+<li>Logs in with the account username and password and redirects to the next endpoint if
+successful.</li>
+<li>HTTP body parameters:
+<ul>
+<li><code>account</code>: Account username.</li>
+<li><code>password</code>: Password.
+<ul>
+<li>Since plaintext is used, it is recommended to use HTTPS and a trusted browser
+component (webview).</li>
+</ul>
+</li>
+<li><code>state</code>: Content of the state from the previous step.</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><code>GET /auth/oauth2/authorize</code>
+<ul>
+<li>Authenticates the client parameters and session ID, and displays the client's permission
+requirements.</li>
+<li>Query parameters will be automatically populated from the previous step.
+<ul>
+<li>(Same as <code>GET /auth/oauth2/auth</code>)</li>
+<li><code>session_id</code>: The session ID for the current login process. Currently reserved for 60
+seconds.</li>
+</ul>
+</li>
+<li>Pressing the Allow or Deny button will trigger the next HTTP request.</li>
+</ul>
+</li>
+<li><code>POST /auth/oauth2/authorize</code>
+<ul>
+<li>Authenticates the client and generates the authorization code. The endpoint will redirect to
+the address specified by the client whether successful or failed.</li>
+<li>HTTP body parameters:
+<ul>
+<li>(Same as <code>GET /auth/oauth2/authorize</code> query)</li>
+<li><code>allow</code>: <code>yes</code> indicates approval, while others indicate rejection.</li>
+</ul>
+</li>
+<li>Redirect parameters:
+<ul>
+<li><code>code</code>: The authorization code. This content must be used in the next HTTP request within
+30 seconds.</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><code>POST /auth/oauth2/token</code>
+<ul>
+<li>Authenticates the client information and authorization code, and generates the access token.</li>
+<li>HTTP body parameters:
+<ul>
+<li><code>grant_type</code>: Must be <code>authorization_code</code>.</li>
+<li><code>code</code>: The value of the authorization code.</li>
+<li><code>redirect_uri</code>: The redirect URI of the client.</li>
+<li><code>client_id</code>: Client identifier.</li>
+</ul>
+</li>
+<li>Response content:
+<ul>
+<li><code>access_token</code>: The access token to access the Sylvia-IoT HTTP APIs.</li>
+<li><code>refresh_token</code>: Used to obtain a new token when the access token expires.</li>
+<li><code>token_type</code>: <code>bearer</code>.</li>
+<li><code>expires_in</code>: Expiration time in seconds.</li>
+<li><code>scope</code>: Access scope.</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><code>POST /auth/oauth2/refresh</code>
+<ul>
+<li>Obtains a new access token using the refresh token.</li>
+<li>HTTP body parameters:
+<ul>
+<li><code>grant_type</code>: Must be <code>refresh_token</code>.</li>
+<li><code>refresh_token</code>: The value of the refresh token.</li>
+<li><code>scope</code>: (<strong>Optional</strong>) The requested scopes of access.</li>
+<li><code>client_id</code>: (<strong>Optional</strong>) Client identifier.</li>
+</ul>
+</li>
+<li>Response content: Same as the response content of <code>POST /auth/oauth2/token</code>.</li>
+</ul>
+</li>
+</ul>
+<h2 id="developing-your-own-templates"><a class="header" href="#developing-your-own-templates">Developing Your Own Templates</a></h2>
+<p>You can refer to the <a href="https://github.com/woofdogtw/sylvia-iot-core/blob/main/sylvia-iot-auth/src/routes/oauth2/template.rs"><strong>original version</strong></a>
+of the templates and pay attention to the Jinja2 variables to be preserved within <code>{{ }}</code>.</p>
+<p>For the account login page, please reserve the following variables:</p>
+<ul>
+<li><code>scope_path</code>: This will determine the endpoint to send the <code>POST /login</code> request when the &quot;Login&quot;
+button is clicked.
+<ul>
+<li>The default for Sylvia-IoT is <code>SCHEME://SERVER_HOST/auth</code>, where <code>SCHEME://SERVER_HOST</code>
+corresponds to the information from the <code>GET /auth</code> endpoint.</li>
+</ul>
+</li>
+<li><code>state</code>: When <code>GET /auth</code> is successful, <strong>sylvia-iot-auth</strong> generates the state content and
+includes it in the template.</li>
+</ul>
+<p>For the client authorization page, please reserve the following variables:</p>
+<ul>
+<li><code>scope_path</code>: This will determine the endpoint to send the <code>POST /authorize</code> request when the
+&quot;Login&quot; button is clicked.
+<ul>
+<li>The default for Sylvia-IoT is <code>SCHEME://SERVER_HOST/auth</code>, where <code>SCHEME://SERVER_HOST</code>
+corresponds to the information from the <code>POST /login</code> endpoint.</li>
+</ul>
+</li>
+<li>Other parameters should be referred to as described in the <code>GET /auth/oauth2/authorize</code> endpoint
+section.</li>
+</ul>
+<p>You can choose to implement the login or authorization web page content and provide the following
+parameters in the <a href="dev/../guide/configuration.html"><strong>Configuration File</strong></a>:</p>
+<ul>
+<li><code>auth.db.templates.login</code>: The file path to the login page template.</li>
+<li><code>auth.db.templates.grant</code>: The file path to the authorization page template.</li>
+</ul>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="network-services"><a class="header" href="#network-services">Network Services</a></h1>
+<p>This chapter provides a brief overview of key points in developing network services, including:</p>
+<ul>
+<li>Data Channel</li>
+<li>Control Channel</li>
+<li>Using the <a href="https://crates.io/crates/sylvia-iot-sdk"><strong>SDK</strong></a> to connect channels in Rust</li>
+</ul>
+<p>Before starting this chapter, please make sure you have read and understood the
+<a href="dev/../arch/flow.html"><strong>Data Flow</strong></a> section, and are familiar with the generation and consumption
+timing of queues and related data.</p>
+<h2 id="queues-and-data-formats"><a class="header" href="#queues-and-data-formats">Queues and Data Formats</a></h2>
+<ul>
+<li>
+<p><a href="https://github.com/woofdogtw/sylvia-iot-core/blob/main/sylvia-iot-broker/doc/message.md#between-broker-and-network"><strong>This document</strong></a>
+defines the data content of the queues between the Broker and network services.</p>
+</li>
+<li>
+<p>Both data and control channels use unicast mode.</p>
+<ul>
+<li>AMQP properties:
+<ul>
+<li>durable: true</li>
+<li>exclusive: false</li>
+<li>auto-delete: false</li>
+<li>ttl: determined when generating the network</li>
+<li>max-length: determined when generating the network</li>
+</ul>
+</li>
+<li>MQTT properties:
+<ul>
+<li>QoS: 1 at the Broker side</li>
+<li>clean session: true at the Broker side</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>
+<p>In the <a href="dev/../arch/flow.html"><strong>Data Flow</strong></a> section, it is mentioned that network services need to
+retain <code>dataId</code> while processing downlink data for subsequent result reporting.</p>
+<ul>
+<li>For unreported downlink data, it has no impact on the Broker.
+<ul>
+<li>Currently retained for one day. If not reported, it will always be marked as &quot;unreported&quot;.</li>
+</ul>
+</li>
+<li>The application service can decide how to handle downlink data that has not been reported for
+too long.</li>
+</ul>
+</li>
+<li>
+<p>Rules regarding <code>result</code>:</p>
+<ul>
+<li>Less than 0 indicates the ongoing process.
+<ul>
+<li>-2: Indicates that the data is being sent to the network service. Set by the Broker before
+storing in the database.</li>
+<li>-1: Indicates that the network service has received it. Must be reported back as -1 via
+the <code>result</code> queue by the network service.</li>
+</ul>
+</li>
+<li>0 or positive values indicate the completion of processing. At this point, it will be removed
+from the dldata database, and any further reports cannot be sent back to the application side.
+<ul>
+<li>All reported by the network service.</li>
+<li>0: Successfully sent to the device or the device responded successfully.</li>
+<li>Positive values: Unable to send to the device or the device responded with an error.</li>
+</ul>
+</li>
+</ul>
+<blockquote>
+<p>As the results are currently defined by the network service, the application side still needs
+to know which network the device is currently bound to. It is recommended to follow the above
+rules when developing network services to make the presentation on the application side more
+consistent.</p>
+</blockquote>
+</li>
+</ul>
+<h2 id="rust-and-using-the-sdk"><a class="header" href="#rust-and-using-the-sdk">Rust and Using the SDK</a></h2>
+<p>For Rust developers, there is an SDK available to assist in developing network services. Usage
+examples can be found in the <a href="dev/../appendex/repo.html"><strong>Appendix</strong></a> chapter. Here are a few tips on how
+to use it:</p>
+<ul>
+<li>Channel maintenance is handled in the <code>mq</code> module's <code>NetworkMgr</code>.</li>
+<li>One <code>NetworkMgr</code> corresponds to one network service.</li>
+<li>Only manage <code>NetworkMgr</code>; no need to manually manage the connection status of all queues and
+AMQP/MQTT properties.</li>
+<li>Register an <code>EventHandler</code> to receive real-time updates when the queue status changes or data is
+delivered.</li>
+<li>You can use <code>send_uldata()</code> and <code>send_dldata_result()</code> to send data to the Broker.</li>
+</ul>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="application-services"><a class="header" href="#application-services">Application Services</a></h1>
+<p>This chapter provides a brief overview of key points in developing network services, including:</p>
+<ul>
+<li>Data Channel</li>
+<li>Using the <a href="https://crates.io/crates/sylvia-iot-sdk"><strong>SDK</strong></a> to connect channels in Rust</li>
+</ul>
+<p>Before starting this chapter, please make sure you have read and understood the
+<a href="dev/../arch/flow.html"><strong>Data Flow</strong></a> section, and are familiar with the generation and consumption
+timing of queues and related data.</p>
+<h2 id="queues-and-data-formats-1"><a class="header" href="#queues-and-data-formats-1">Queues and Data Formats</a></h2>
+<ul>
+<li><a href="https://github.com/woofdogtw/sylvia-iot-core/blob/main/sylvia-iot-broker/doc/message.md#between-broker-and-application"><strong>This document</strong></a> 
+defines the data content of the queues between the Broker and application services.</li>
+<li>Data channels use unicast mode.
+<ul>
+<li>AMQP properties:
+<ul>
+<li>durable: true</li>
+<li>exclusive: false</li>
+<li>auto-delete: false</li>
+<li>ttl: determined when generating the application</li>
+<li>max-length: determined when generating the application</li>
+</ul>
+</li>
+<li>MQTT properties:
+<ul>
+<li>QoS: 1 at the Broker side</li>
+<li>clean session: true at the Broker side</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>In the <a href="dev/../arch/flow.html"><strong>Data Flow</strong></a> chapter, it is mentioned that when downlink data is sent
+to the Broker through the <code>dldata</code> queue, the Broker will immediately report the result.
+<ul>
+<li>The <code>correlationId</code> is recommended to be unique. If the application service simultaneously
+sends a large amount of downlink data, this correlation ID will be used to track whether each
+transmission has been correctly sent to the network service.</li>
+<li>If the data is successfully processed, the <code>dataId</code> will be returned. The application service
+can use this data ID to track the processing status of this downlink data in the network
+service.</li>
+</ul>
+</li>
+<li>In the downlink data, you can choose to specify the destination device using either the <code>deviceId</code>
+or the combination of <code>networkCode</code> and <code>networkAddr</code>.
+<ul>
+<li>If the device is on the <strong>public network</strong>, you must use the <code>deviceId</code>. Sylvia-IoT adopts
+this approach to prevent application services from sending data arbitrarily to devices that do
+not belong to their own unit.</li>
+</ul>
+</li>
+<li>Currently, the control channel is not supported. Changes to devices must rely on application
+services to request the Sylvia-IoT HTTP APIs or manage the list of devices themselves.</li>
+</ul>
+<h2 id="rust-and-using-the-sdk-1"><a class="header" href="#rust-and-using-the-sdk-1">Rust and Using the SDK</a></h2>
+<p>For Rust developers, there is an SDK available to assist in developing application services. Usage
+examples can be found in the <a href="dev/../appendex/repo.html"><strong>Appendix</strong></a> chapter. Here are a few tips on how
+to use it:</p>
+<ul>
+<li>Channel maintenance is handled in the <code>mq</code> module's <code>ApplicationMgr</code>.</li>
+<li>One <code>ApplicationMgr</code> corresponds to one application service.</li>
+<li>Only manage <code>ApplicationMgr</code>; no need to manually manage the connection status of all queues and
+AMQP/MQTT properties.</li>
+<li>Register an <code>EventHandler</code> to receive real-time updates when the queue status changes or data is
+delivered.</li>
+<li>You can use <code>send_dldata()</code> to send data to the Broker.</li>
+</ul>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="sylvia-iot-core"><a class="header" href="#sylvia-iot-core">Sylvia-IoT Core</a></h1>
+<p>If you are interested in Sylvia-IoT and would like to develop core functionalities (that is, ABCD
+😊), this chapter will introduce some code structures and important considerations.</p>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="directory-structure"><a class="header" href="#directory-structure">Directory Structure</a></h1>
+<p>Here, we explain the directory and file arrangement structure for the various components of
+Sylvia-IoT.</p>
+<pre><code>[project]/
+├── doc/
+│   ├── api.md
+│   ├── cache.md
+│   ├── message.md
+│   └── schema.md
+├── src/
+│   ├── bin/
+│   │   ├── [project].rs
+│   │   ├── [bin1].rs
+│   │   ├── [bin2].rs
+│   │   └── ...
+│   ├── libs/
+│   │   ├── config..rs
+│   │   ├── [lib1]/
+│   │   ├── [lib2].rs
+│   │   └── ...
+│   ├── models/
+│   │   ├── [engine1]/
+│   │   │   ├── [table1].rs
+│   │   │   ├── [table2].rs
+│   │   │   └── ...
+│   │   ├── [engine2]/
+│   │   │   ├── [table1].rs
+│   │   │   ├── [table2].rs
+│   │   │   └── ...
+│   │   ├── [table1].rs
+│   │   ├── [table2].rs
+│   │   └── ...
+│   └── routes/
+│       ├── v1/
+│       │   ├── [api1]/
+│       │   │   ├── api.rs
+│       │   │   ├── request.rs
+│       │   │   └── response.rs
+│       │   ├── [api2]/
+│       │   │   ├── api.rs
+│       │   │   ├── request.rs
+│       │   │   └── response.rs
+│       │   └── ...
+│       ├── v2/
+│       ├── [non-versioned-api]/
+│       ├── ...
+│       └── middleware.rs
+├── tests/
+│   ├── libs/
+│   │   ├── config..rs
+│   │   ├── [lib1]/
+│   │   ├── [lib2].rs
+│   │   └── ...
+│   ├── models/
+│   │   ├── [engine1]/
+│   │   │   ├── [table1].rs
+│   │   │   ├── [table2].rs
+│   │   │   └── ...
+│   │   ├── [engine2]/
+│   │   │   ├── [table1].rs
+│   │   │   ├── [table2].rs
+│   │   │   └── ...
+│   │   ├── [table1].rs
+│   │   ├── [table2].rs
+│   │   └── ...
+│   └── routes/
+│       ├── v1/
+│       │   ├── [api1]/
+│       │   │   ├── api.rs
+│       │   │   ├── request.rs
+│       │   │   └── response.rs
+│       │   ├── [api2]/
+│       │   │   ├── api.rs
+│       │   │   ├── request.rs
+│       │   │   └── response.rs
+│       │   └── ...
+│       ├── v2/
+│       ├── [non-versioned-api]/
+│       ├── ...
+│       └── middleware.rs
+├── Cargo.toml
+├── LICENSE
+└── README.md
+</code></pre>
+<p>Here are several key points to note:</p>
+<ul>
+<li><code>bin</code>: Contains a rs file with the same name as the project.</li>
+<li><code>doc</code>: This directory is intended for complete documentation.</li>
+<li><code>libs</code>: Contains files other than the database and API-related components.</li>
+<li><code>models</code>: Designed primarily for table-based structures, and uses the database engine for
+separation.</li>
+<li><code>routes</code>: Contains the implementation of HTTP APIs.
+<ul>
+<li>Apart from implementing standard APIs, such as OAuth2, others should be versioned to
+differentiate them.</li>
+</ul>
+</li>
+<li><code>tests</code>: Corresponds one-to-one with the <code>src</code> directory.</li>
+</ul>
+<h2 id="dependencies"><a class="header" href="#dependencies">Dependencies</a></h2>
+<ul>
+<li><code>libs</code> and <code>models</code> do not depend on any other folders.</li>
+<li>In <code>routes</code>
+<ul>
+<li>The entire project's code initialization is centralized in <code>routes/mod.rs</code>.</li>
+<li>This approach reduces the workload for <code>main.rs</code> and increases the coverage of integration
+testing.</li>
+</ul>
+</li>
+<li>Modules inside <code>models</code> should not depend on each other. If there are shared functionalities,
+implement them in the parent module and reference them as needed. The same applies to modules
+within <code>routes</code>.</li>
+</ul>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="code-style"><a class="header" href="#code-style">Code Style</a></h1>
+<h2 id="mvc-vs-microservices"><a class="header" href="#mvc-vs-microservices">MVC vs. Microservices</a></h2>
+<p>I prefer a bottom-up development approach. Using an architecture like MVC, which designs the
+database as a lower-level generic interface, and implementing various functionalities called by the
+API upper layer, aligns well with my personal style. This is the reason behind the creation of
+<code>models</code> and <code>routes</code>.</p>
+<p>However, when designing the entire Sylvia-IoT platform, I also aimed for modularity and chose a
+microservices-based approach (i.e., ABCD), strictly adhering to the principle of hierarchical
+dependencies.</p>
+<p>Even with a microservices architecture, as described in the previous section
+<a href="dev/dir.html"><strong>Directory Structure</strong></a>, when <code>main.rs</code> references the required <code>routes</code>, the entire
+project can still be compiled into a single executable file and run on a single machine. This
+design offers several deployment options, such as:</p>
+<ul>
+<li>Monolith: Running a single all-in-one executable on a single machine.</li>
+<li>Microservices cluster: Running each component independently on different machines, with each
+component setting up its own cluster.</li>
+<li>Monolith cluster: Running the all-in-one on multiple machines to form a clustered architecture.</li>
+</ul>
+<p>Sylvia-IoT embodies the combination of both MVC and microservices design 😊.</p>
+<h2 id="file-content-arrangement"><a class="header" href="#file-content-arrangement">File Content Arrangement</a></h2>
+<p>Each rs file is structured in the following way, with blank lines separating each section:</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use rust_builtin_modules;
+
+use 3rd_party_modules;
+
+use sylvia_iot_modules;
+
+use crate_modules;
+
+pub struct PubStructEnums {}
+
+struct PrvStructEnums {}
+
+pub const PUB_CONSTANTS;
+
+const PRV_CONSTANTS;
+
+pub pub_static_vars;
+
+static prv_static_vars;
+
+impl PubStructEnums {}
+
+pub fn pub_funcs {}
+
+impl PrvStructEnums {}
+
+fn prv_funcs {}
+<span class="boring">}</span></code></pre></pre>
+<p>The general order is as follows:</p>
+<ul>
+<li>Using modules</li>
+<li>Structures</li>
+<li>Constants</li>
+<li>Variables</li>
+<li>Functions (including structure function implementations)</li>
+</ul>
+<p>Within each section, <code>pub</code> comes before private.</p>
+<h2 id="model"><a class="header" href="#model">Model</a></h2>
+<p>The Model layer must provide a unified struct and trait interface.
+In the design philosophy of Sylvia-IoT, &quot;plug-and-play&quot; is a concept that is highly valued. Users
+should be able to choose appropriate implementations in different scenarios.</p>
+<h3 id="database-design"><a class="header" href="#database-design">Database Design</a></h3>
+<p>When providing CRUD operations, the following order must be followed:</p>
+<ul>
+<li>count</li>
+<li>list</li>
+<li>get</li>
+<li>add</li>
+<li>upsert</li>
+<li>update</li>
+<li>del</li>
+</ul>
+<p>Some points to note:</p>
+<ul>
+<li><strong>count</strong> and <strong>list</strong> should provide consistent parameters so that the API and UI can call count
+and list in a consistent manner.</li>
+<li>Logger should not be used in the <code>model</code>. Errors should be returned to the upper layer to print
+the messages.
+<ul>
+<li>When multiple APIs call the same <code>model</code>, errors printed from the model cannot determine who
+made the call.</li>
+</ul>
+</li>
+<li>When data cannot be retrieved, return <code>None</code> or an empty <code>Vec</code>, not an <code>Error</code>.</li>
+<li>Any database that can fulfill the &quot;complex query&quot; condition should be implementable using the same
+trait interface.
+<ul>
+<li>SQL, MongoDB meet this requirement.</li>
+<li>Redis cannot be designed in the form of a database.</li>
+</ul>
+</li>
+</ul>
+<h3 id="cache-design"><a class="header" href="#cache-design">Cache Design</a></h3>
+<ul>
+<li>Any <strong>key-value</strong> store that can fulfill low-complexity read and write should be implementable
+using the same trait interface.
+<ul>
+<li>Redis, language-specific maps meet this requirement.</li>
+<li>SQL, MongoDB can also be implemented through querying a single condition. Using SQL or MongoDB
+for cache implementation is allowed when the system does not want to install too many
+different tools.</li>
+</ul>
+</li>
+</ul>
+<h2 id="routes-http-api"><a class="header" href="#routes-http-api">Routes (HTTP API)</a></h2>
+<p>In this section, the documentation and rules for implementing APIs are provided.</p>
+<h3 id="verb-order"><a class="header" href="#verb-order">Verb Order</a></h3>
+<ul>
+<li>POST</li>
+<li>GET /count</li>
+<li>GET /list</li>
+<li>GET</li>
+<li>PUT</li>
+<li>PATCH</li>
+<li>DELETE</li>
+</ul>
+<h3 id="path"><a class="header" href="#path">Path</a></h3>
+<ul>
+<li><code>/[project]/api/v[version]/[function]</code></li>
+<li><code>/[project]/api/v[version]/[function]/[op]</code></li>
+<li><code>/[project]/api/v[version]/[function]/{id}</code></li>
+</ul>
+<p>There is a potential ambiguity: <code>[op]</code> and <code>{id}</code>. The former represents a fixed action, while the
+latter represents a variable object ID. When designing IDs, it is essential to avoid conflicts with
+the names of actions.</p>
+<blockquote>
+<p>When mounting routes using Actix Web, the fixed <code>[op]</code> should be placed before the variable
+<code>{id}</code>.</p>
+</blockquote>
+<p>For example, let's consider the Broker's
+<a href="https://github.com/woofdogtw/sylvia-iot-core/blob/main/sylvia-iot-broker/doc/api.md#contents"><strong>Device API</strong></a>:</p>
+<pre><code>- Device APIs
+    - POST /broker/api/v1/device                Create device
+    - POST /broker/api/v1/device/bulk           Bulk creating devices
+    - POST /broker/api/v1/device/bulk-delete    Bulk deleting devices
+    - GET  /broker/api/v1/device/count          Device count
+    - GET  /broker/api/v1/device/list           Device list
+    - GET  /broker/api/v1/device/{deviceId}     Get device information
+</code></pre>
+<p>Here, you can see that the POST method handles creating single devices, bulk creating devices, and
+bulk deleting devices. The <strong>bulk</strong>, <strong>bulk-delete</strong>, <strong>count</strong>, <strong>list</strong> are the previously
+mentioned <code>[op]</code>.
+The design of device IDs should avoid conflicts with <strong>count</strong> and <strong>list</strong>.</p>
+<h3 id="function-naming"><a class="header" href="#function-naming">Function Naming</a></h3>
+<p>The functions in <code>api.rs</code> are named as follows:</p>
+<pre><code>fn [method]_[function]_[op]() {}
+</code></pre>
+<p>Continuing with the previous device API example, the functions would be named like this:</p>
+<pre><code>fn post_device() {}
+fn post_device_bulk() {}
+fn post_device_bulk_del() {}
+fn get_device_count() {}
+fn get_device_list() {}
+fn get_device() {}
+</code></pre>
+<h3 id="request-and-response-naming"><a class="header" href="#request-and-response-naming">Request and Response Naming</a></h3>
+<p>Path variables, queries, and request bodies are defined in <code>request.rs</code>, while response bodies are
+defined in <code>response.rs</code>. The naming convention is as follows (pay attention to capitalization):</p>
+<pre><code>struct [Id]Path {}
+struct [Method][Function]Body {}
+struct Get[Function]Query {}
+</code></pre>
+<p>For example:</p>
+<pre><code>struct DeviceIdPath {}      // /device/{deviceId}
+struct PostDeviceBody {}
+struct GetDeviceListQuery {}
+</code></pre>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="writing-tests"><a class="header" href="#writing-tests">Writing Tests</a></h1>
+<p>Sylvia-IoT adopts the BDD (Behavior-Driven Development) approach for writing integration tests, and
+the chosen testing framework <a href="https://enokson.github.io/laboratory/"><strong>laboratory</strong></a> is based on
+<a href="https://mochajs.org/"><strong>Mocha</strong></a>.</p>
+<p>This section will focus on the principles and techniques for writing tests for libs, models, and
+routes.</p>
+<h2 id="teststate"><a class="header" href="#teststate">TestState</a></h2>
+<p>The <code>TestState</code> structure is used as a parameter for <code>SpecContext()</code>. It keeps track of several
+variables:</p>
+<ul>
+<li>Variables that exist for a long time and only need to be initialized once or very few times, such
+as <code>runtime</code> and <code>mongodb</code>.</li>
+<li>Resources that need to be released in <code>after</code>. Since test cases may exit abruptly, it is essential
+to release resources in <code>after</code>.</li>
+</ul>
+<h2 id="libs"><a class="header" href="#libs">libs</a></h2>
+<ul>
+<li>Simple functions can be tested directly for their inputs and outputs.</li>
+<li>Before testing, ensure to start the necessary infrastructure, such as RabbitMQ, EMQX, etc.</li>
+<li>For more complex scenarios that require services to be set up, you can create the services (e.g.,
+queue connections) in <code>before</code> and release them in <code>after</code>.</li>
+</ul>
+<h2 id="models"><a class="header" href="#models">models</a></h2>
+<ul>
+<li>Before testing, make sure to start MongoDB, Redis, and other databases.</li>
+<li>The test order should be R, C, U, D.
+<ul>
+<li><strong>R</strong>: Use <code>mongodb</code>, <code>sqlx</code>, or other native packages to create a test dataset, then test the
+results of model's get, count, and list functions.</li>
+<li><strong>C</strong>: Use model's add, upsert, or other functions to create data and validate its correctness
+using get.</li>
+<li><strong>U</strong>: Use model's add, upsert, or other functions to create a test dataset, then use update
+to modify the data, and finally validate the result using get.</li>
+<li><strong>D</strong>: Use model's add, upsert, or other functions to create a test dataset, then use delete
+to delete the data, and finally validate the result using get.</li>
+<li>Test <strong>R</strong> functionalities first to enable writing C, U, D test cases using unified code and
+determine if the same logic results in the same outcome for each database engine. When
+introducing new engines, you can write minimal test code for testing.</li>
+</ul>
+</li>
+<li>Use native packages for deleting in <code>after</code>. This is because you cannot guarantee that D-related
+functionalities are correctly implemented and tested before testing.</li>
+</ul>
+<h2 id="routes"><a class="header" href="#routes">routes</a></h2>
+<ul>
+<li>Although you can use Actix Web's <code>test::init_service()</code> as a virtual service, services required by
+middleware or API bridges need to be started using threads.</li>
+<li>You can use model trait interfaces for initializing test datasets and data validation after API
+requests.</li>
+<li>You can use model delete to delete test data in <code>after</code>.</li>
+</ul>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="appendix"><a class="header" href="#appendix">Appendix</a></h1>
+<p>Chapter Contents:</p>
+<ul>
+<li>Using resource origins.</li>
+<li>Supplementary projects.</li>
+</ul>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="data-sources"><a class="header" href="#data-sources">Data Sources</a></h1>
+<h2 id="icons"><a class="header" href="#icons">Icons</a></h2>
+<p>The icons used in this document are sourced from the following locations:</p>
+<ul>
+<li><a href="https://draw.io">draw.io</a></li>
+<li><a href="https://www.svgrepo.com/">SVG Repo</a></li>
+<li><a href="https://hub.docker.com/_/emqx">EMQX</a>
+<ul>
+<li>In the case where SVG Repo is unavailable, the EMQX icon used in the architecture diagram is
+copied from Docker Hub.</li>
+</ul>
+</li>
+</ul>
+<blockquote>
+<p>If there is any copyright infringement, please <a href="mailto:woofdogtw@hotmail.com"><strong>contact me</strong></a> to
+inform.</p>
+</blockquote>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="supplementary-projects"><a class="header" href="#supplementary-projects">Supplementary Projects</a></h1>
+<ul>
+<li><a href="https://github.com/woofdogtw/sylvia-iot-core/tree/main/sylvia-router">sylvia-router</a>
+<ul>
+<li>A basic routers that integrates auth/broker/coremgr/data components.</li>
+<li>Supports multiple WAN interfaces and a single LAN bridge.</li>
+<li>(Optional) Supports WiFi WAN and WiFi LAN.</li>
+</ul>
+</li>
+<li><a href="https://github.com/woofdogtw/sylvia-iot-core/tree/main/stress-simple">stress-simple</a>
+<ul>
+<li>A simple stress program for testing the forwarding speed of the Broker.</li>
+<li>Provides latency data for maximum, minimum, average, and P50/P80/P90/P95/P98/P99.</li>
+</ul>
+</li>
+<li><a href="https://github.com/woofdogtw/sylvia-iot-examples">sylvia-iot-examples</a>
+<ul>
+<li>Contains applications and network examples implemented using the SDK.</li>
+<li><strong>lora-ifroglab</strong>
+<ul>
+<li><a href="http://www.ifroglab.com/en/?p=6536">iFrogLab LoRa USB Dongle</a></li>
+<li>Implements corresponding network services and communicates directly with device endpoints.</li>
+</ul>
+</li>
+<li><strong>app-demo</strong>: Receives sensor data from the lora-ifroglab devices and displays temperature,
+humidity, RSSI, etc.</li>
+</ul>
+</li>
+<li><a href="https://github.com/woofdogtw/sylvia-iot-simple-ui">sylvia-iot-simple-ui</a>
+<ul>
+<li>Provides a simple Sylvia-IoT UI.</li>
+<li><strong>coremgr-cli</strong> provides complete functionality, and the UI provides necessary operational
+functions based on the screen layout.</li>
+<li>In addition to auth/broker/coremgr/data, it also integrates router and examples.</li>
+</ul>
+</li>
+<li><a href="https://github.com/woofdogtw/sylvia-iot-deployment">sylvia-iot-deployment</a>
+<ul>
+<li>Provides deployment solutions, such as K8S, and more.</li>
+</ul>
+</li>
+</ul>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+
+            </nav>
+
+        </div>
+
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+
+        <script src="elasticlunr.min.js"></script>
+        <script src="mark.min.js"></script>
+        <script src="searcher.js"></script>
+
+        <script src="clipboard.min.js"></script>
+        <script src="highlight.js"></script>
+        <script src="book.js"></script>
+
+        <!-- Custom JS scripts -->
+
+        <script>
+        window.addEventListener('load', function() {
+            window.setTimeout(window.print, 100);
+        });
+        </script>
+
+    </div>
+    </body>
+</html>
