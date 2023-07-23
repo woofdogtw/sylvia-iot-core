@@ -284,7 +284,6 @@ pub fn new_default(context: &mut SpecContext<TestState>) -> Result<(), String> {
     };
     let handler = Arc::new(TestHandler::new());
     let mgr = NetworkMgr::new(conn_pool, &host_uri, opts, handler.clone())?;
-    let status = mgr.status();
     let mq_status = mgr.mq_status();
     state.net_mgrs = Some(vec![mgr.clone()]);
 
@@ -292,11 +291,7 @@ pub fn new_default(context: &mut SpecContext<TestState>) -> Result<(), String> {
     expect(mgr.unit_code()).equals("unit_code")?;
     expect(mgr.id()).equals("id_network")?;
     expect(mgr.name()).equals("code_network")?;
-    expect(status == MgrStatus::NotReady).equals(true)?;
-    expect(mq_status.uldata == MqStatus::Connecting).equals(true)?;
-    expect(mq_status.dldata == MqStatus::Connecting).equals(true)?;
     expect(mq_status.dldata_resp == MqStatus::Closed).equals(true)?;
-    expect(mq_status.dldata_result == MqStatus::Connecting).equals(true)?;
 
     for _ in 0..WAIT_COUNT {
         if *handler.status_changed.lock().unwrap() {

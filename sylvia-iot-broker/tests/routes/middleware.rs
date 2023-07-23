@@ -9,8 +9,8 @@ use actix_web::{
 use chrono::Utc;
 use laboratory::{describe, expect, SpecContext, Suite};
 
-use sylvia_iot_broker::routes::middleware::{AuthService, GetTokenInfoData, RoleScopeType};
 use sylvia_iot_auth::models::Model;
+use sylvia_iot_broker::routes::middleware::{AuthService, GetTokenInfoData, RoleScopeType};
 use sylvia_iot_corelib::{err::ErrResp, role::Role};
 
 use super::{

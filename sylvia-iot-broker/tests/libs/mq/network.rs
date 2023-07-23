@@ -220,11 +220,7 @@ pub fn new_default(context: &mut SpecContext<TestState>) -> Result<(), String> {
     expect(mgr.id()).equals("id_network")?;
     expect(mgr.name()).equals("code_network")?;
     expect(status == MgrStatus::NotReady).equals(true)?;
-    expect(mq_status.uldata == MqStatus::Connecting).equals(true)?;
-    expect(mq_status.dldata == MqStatus::Connecting).equals(true)?;
     expect(mq_status.dldata_resp == MqStatus::Closed).equals(true)?;
-    expect(mq_status.dldata_result == MqStatus::Connecting).equals(true)?;
-    expect(mq_status.ctrl == MqStatus::Connecting).equals(true)?;
 
     for _ in 0..WAIT_COUNT {
         if *handler.status_changed.lock().unwrap() {

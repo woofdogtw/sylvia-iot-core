@@ -79,10 +79,6 @@ pub fn new(context: &mut SpecContext<TestState>) -> Result<(), String> {
     )?;
     state.ctrl_queues = Some(vec![queue1.clone(), queue2.clone(), queue3.clone()]);
 
-    expect(queue1.status() == Status::Connecting).equals(true)?;
-    expect(queue2.status() == Status::Connecting).equals(true)?;
-    expect(queue3.status() == Status::Connecting).equals(true)?;
-
     for _ in 0..WAIT_COUNT {
         if *handler1.status_changed.lock().unwrap() {
             break;

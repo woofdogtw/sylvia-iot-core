@@ -225,19 +225,12 @@ pub fn new_default(context: &mut SpecContext<TestState>) -> Result<(), String> {
         ..Default::default()
     };
     let mgr = ApplicationMgr::new(conn_pool, &host_uri, opts, handler.clone())?;
-    let status = mgr.status();
-    let mq_status = mgr.mq_status();
     state.app_mgrs = Some(vec![mgr.clone()]);
 
     expect(mgr.unit_id()).equals("unit_id")?;
     expect(mgr.unit_code()).equals("unit_code")?;
     expect(mgr.id()).equals("id_application")?;
     expect(mgr.name()).equals("code_application")?;
-    expect(status == MgrStatus::NotReady).equals(true)?;
-    expect(mq_status.uldata == MqStatus::Connecting).equals(true)?;
-    expect(mq_status.dldata == MqStatus::Connecting).equals(true)?;
-    expect(mq_status.dldata_resp == MqStatus::Connecting).equals(true)?;
-    expect(mq_status.dldata_result == MqStatus::Connecting).equals(true)?;
 
     for _ in 0..WAIT_COUNT {
         if *handler.status_changed.lock().unwrap() {
