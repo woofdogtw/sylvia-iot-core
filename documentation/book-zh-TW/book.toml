@@ -1,0 +1,9 @@
+[book]
+authors = ["Chien-Hong Chan"]
+language = "zh-TW"
+multilingual = false
+src = "src"
+title = "Sylvia-IoT 說明文件"
+
+[output.html]
+default-theme = "rust"

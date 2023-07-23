@@ -4,8 +4,9 @@
 
 ### Changed
 
-- Update dependencies.
+- Update Rust to 1.71.0 with GitHub Actions runner image 20230716.1.1.
 - Update action versions for GitHub CI.
+- Update dependencies.
 - **auth**: Update jquery and bootstrap version for default templates.
 
 ## 0.0.17 - 2023-07-14
