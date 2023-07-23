@@ -1,6 +1,6 @@
 [package]
 name = "sylvia-iot-broker"
-version = "0.0.18"
+version = "0.0.19"
 authors = ["Chien-Hong Chan"]
 description = "The message broker module of the Sylvia-IoT platform."
 edition = "2021"
@@ -13,11 +13,11 @@ actix-cors = "0.6.4"
 actix-http = "3.3.1"
 actix-service = "2.0.2"
 actix-web = { version = "4.3.1", default-features = false, features = ["rustls"] }
-actix-web-prom = "0.6.0"
+actix-web-prom = "0.7.0"
 async-stream = "0.3.5"
 async-trait = "0.1.72"
 chrono = { version = "0.4.26", default-features = false, features = ["serde"] }
-clap = { version = "4.3.17", default-features = false, features = ["std", "help", "usage", "error-context"] }
+clap = { version = "4.3.19", default-features = false, features = ["std", "help", "usage", "error-context"] }
 futures = "0.3.28"
 general-mq = { path="../general-mq" }
 hex = "0.4.3"

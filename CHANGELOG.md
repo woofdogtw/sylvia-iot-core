@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.0.19 - 2023-07-23
+
+### Changed
+
+- Update dependencies.
+
+### Fixed
+
+- **general-mq**: Fix bugs of establishing AMQP/MQTT connections after `connect()`.
+
 ## 0.0.18 - 2023-07-21
 
 ### Changed

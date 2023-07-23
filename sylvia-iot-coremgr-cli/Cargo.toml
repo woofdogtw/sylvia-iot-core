@@ -1,6 +1,6 @@
 [package]
 name = "sylvia-iot-coremgr-cli"
-version = "0.0.18"
+version = "0.0.19"
 authors = ["Chien-Hong Chan"]
 description = "The command-line tool for Sylvia-IoT core manager."
 edition = "2021"
@@ -10,7 +10,7 @@ repository = "https://github.com/woofdogtw/sylvia-iot-core.git"
 
 [dependencies]
 chrono = { version = "0.4.26", default-features = false, features = ["serde"] }
-clap = { version = "4.3.17", default-features = false, features = ["std", "help", "usage", "error-context"] }
+clap = { version = "4.3.19", default-features = false, features = ["std", "help", "usage", "error-context"] }
 dirs = "5.0.1"
 hex = "0.4.3"
 json5 = "0.4.1"

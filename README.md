@@ -4,7 +4,7 @@
 
 # sylvia-iot-core
 
-This contains core modules of Sylvia-IoT platform.
+The core modules of Sylvia-IoT platform.
 
 - [Documentation](https://woofdogtw.github.io/sylvia-iot-core)
     - [中文版](https://woofdogtw.github.io/sylvia-iot-core/book-zh-TW)
@@ -18,7 +18,7 @@ To release v0.1.0, there are some tasks to do:
 - [x] (Q1) build CI/CD with GitHub Actions for GitHub Releases, Docker Hub, and crates.io.
 - [X] (Q2) establish K8S environment to run v0.0.x Sylvia-IoT core.
 - [X] (Q3) **general-mq**: fix memory leak when processing received messages.
-- [ ] (Q3) **general-mq**: refine AMQP `connect()` for integration test.
+- [X] (Q3) **general-mq**: refine AMQP/MQTT `connect()` for integration test.
 - [X] (Q3) **broker**: provide control channel to publish events when changing devices for network (adapters) and application (adapters).
 - [X] (Q3) **sdk**: add a module for operating control channels.
 - [X] (Q3) **sdk**: add HTTP API functions for **Service** clients (of networks/applications) to refresh tokens automatically.
