@@ -1,4 +1,28 @@
 //! Provides the authentication middleware by sending the Bearer token to `sylvia-iot-auth`.
+//!
+//! Here is an example to wrap the auth middleware and how to get token information:
+//!
+//! ```rust
+//! use actix_web::{dev::HttpServiceFactory, web, HttpMessage, HttpRequest, HttpResponse, Responder};
+//! use sylvia_iot_sdk::middlewares::auth::{AuthService, FullTokenInfo};
+//!
+//! fn new_service() -> impl HttpServiceFactory {
+//!     let auth_uri = "http://localhost:1080/auth/api/v1/auth/tokeninfo";
+//!     web::scope("/").service(
+//!         web::resource("/api")
+//!             .wrap(AuthService::new(auth_uri.to_string()))
+//!             .route(web::get().to(api)),
+//!     )
+//! }
+//!
+//! async fn api(req: HttpRequest) -> impl Responder {
+//!     match req.extensions_mut().get::<FullTokenInfo>() {
+//!         None => (),
+//!         Some(info) => (),
+//!     }
+//!     HttpResponse::NoContent().finish()
+//! }
+//! ```
 
 use std::{
     cell::RefCell,
