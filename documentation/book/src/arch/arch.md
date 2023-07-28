@@ -14,7 +14,6 @@ Abbreviated as ABCD (laughs &#x1F60A;)
     - Provides the validity and information of access tokens for HTTP APIs, allowing APIs to
       determine whether to authorize access with the token.
     - Offers the authorization mechanism for OAuth2, currently supporting the following flows:
-    - 提供 OAuth2 的授權機制，目前支援下列流程：
         - Authorization code grant flow
             - Clients need to use a webview to display login and authorization pages.
             - Currently used by coremgr CLI.
@@ -41,7 +40,6 @@ Abbreviated as ABCD (laughs &#x1F60A;)
     - Units
         - Composed of one owner and multiple members.
         - Independently manage devices, applications, networks, and route (binding) rules.
-        - 可以獨立管理裝置、應用、網路、路由（綁定）規則。
     - Applications
         - Analyze data and present results based on device data.
     - Networks
