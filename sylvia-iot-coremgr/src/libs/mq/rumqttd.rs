@@ -26,11 +26,10 @@ pub fn start_rumqttd(
     };
     let mut config = Config {
         router: RouterConfig {
-            instant_ack: true,
+            max_connections: 10000,
+            max_outgoing_packet_count: 200,
             max_segment_size: 104857600,
             max_segment_count: 10,
-            max_read_len: 10240,
-            max_connections: 10000,
             ..Default::default()
         },
         v4: HashMap::new(),
@@ -51,10 +50,8 @@ pub fn start_rumqttd(
             next_connection_delay_ms: 1,
             connections: ConnectionSettings {
                 connection_timeout_ms: 5000,
-                throttle_delay_ms: 0,
                 max_payload_size: 1 * 1024 * 1024,
                 max_inflight_count: 200,
-                max_inflight_size: 1024,
                 auth: None,
                 dynamic_filters: true,
             },
@@ -84,10 +81,8 @@ pub fn start_rumqttd(
                         next_connection_delay_ms: 1,
                         connections: ConnectionSettings {
                             connection_timeout_ms: 5000,
-                            throttle_delay_ms: 0,
                             max_payload_size: 1 * 1024 * 1024,
                             max_inflight_count: 200,
-                            max_inflight_size: 1024,
                             auth: None,
                             dynamic_filters: true,
                         },
