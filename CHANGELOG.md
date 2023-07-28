@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.0.20 - 2023-07-30
+
+### Changed
+
+- Update dependencies.
+- **sdk**: Add example code  in Rust doc for auth middleware.
+
 ## 0.0.19 - 2023-07-23
 
 ### Changed
