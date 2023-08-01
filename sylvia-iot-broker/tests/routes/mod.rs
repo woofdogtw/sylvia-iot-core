@@ -1,5 +1,6 @@
 use std::{
     collections::HashMap,
+    error::Error as StdError,
     sync::{Arc, Mutex},
 };
 
@@ -17,13 +18,13 @@ use general_mq::{
     connection::GmqConnection,
     queue::{Event, EventHandler, GmqQueue, Message},
 };
-use sylvia_iot_auth::libs::config as sylvia_iot_auth_config;
+use sylvia_iot_auth::libs::config::{self as sylvia_iot_auth_config};
 use sylvia_iot_broker::{
     libs::{
         config::{self, Config},
         mq::{control, data, Connection},
     },
-    models::{self, ConnOptions, SqliteOptions},
+    models::{self, ConnOptions, Model, MongoDbModel, MongoDbOptions, SqliteModel, SqliteOptions},
     routes,
 };
 use sylvia_iot_corelib::constants::{DbEngine, MqEngine};
@@ -35,7 +36,7 @@ pub mod middleware;
 pub mod v1;
 
 use super::libs::libs::{conn_host_uri, remove_rabbitmq_queues};
-use libs::new_state;
+use libs::{create_application, create_network, create_unit, new_state};
 
 struct TestHandler;
 
@@ -69,6 +70,13 @@ pub fn suite() -> Suite<TestState> {
 
             let state = state.get_mut(STATE).unwrap();
             let runtime = state.runtime.as_ref().unwrap();
+            if let Some(model) = state.mongodb.as_ref() {
+                runtime.block_on(async {
+                    if let Err(e) = model.get_connection().drop(None).await {
+                        println!("remove mongodb database error: {}", e);
+                    }
+                })
+            }
             if let Some(state) = state.routes_state.as_mut() {
                 runtime.block_on(async {
                     clear_state(state).await;
@@ -104,37 +112,81 @@ fn stop_auth_svc(state: &TestState) {
 }
 
 fn fn_new_state(context: &mut SpecContext<TestState>) -> Result<(), String> {
-    let state = context.state.borrow();
-    let state = state.get(STATE).unwrap();
+    let mut state = context.state.borrow_mut();
+    let state = state.get_mut(STATE).unwrap();
     let runtime = state.runtime.as_ref().unwrap();
 
     let conf = Config {
         ..Default::default()
     };
-    let mut state = match runtime.block_on(async { routes::new_state("scope", &conf).await }) {
+    let mut rstate = match runtime.block_on(async { routes::new_state("scope", &conf).await }) {
         Err(e) => return Err(format!("default config error: {}", e)),
         Ok(state) => state,
     };
-    runtime.block_on(async { clear_state(&mut state).await });
-    expect(state.scope_path).to_equal("scope")?;
+    runtime.block_on(async { clear_state(&mut rstate).await });
+    expect(rstate.scope_path).to_equal("scope")?;
 
+    let unit = create_unit("unit", "user");
+    let application = create_application("application", "amqp://localhost", "unit");
+    let network = create_network("network", "mqtt://localhost", "unit");
+
+    let result: Result<MongoDbModel, Box<dyn StdError>> = runtime.block_on(async {
+        let model = MongoDbModel::new(&MongoDbOptions {
+            url: crate::TEST_MONGODB_URL.to_string(),
+            db: crate::TEST_MONGODB_DB.to_string(),
+            pool_size: None,
+        })
+        .await?;
+        model.unit().add(&unit).await?;
+        model.application().add(&application).await?;
+        model.network().add(&network).await?;
+        Ok(model)
+    });
+    state.mongodb = match result {
+        Err(e) => return Err(format!("create mongodb rsc error: {}", e)),
+        Ok(model) => Some(model),
+    };
     let conf = Config {
         db: Some(config::Db {
             engine: Some(DbEngine::MONGODB.to_string()),
+            mongodb: Some(config::MongoDb {
+                url: Some(crate::TEST_MONGODB_URL.to_string()),
+                database: Some(crate::TEST_MONGODB_DB.to_string()),
+                pool_size: None,
+            }),
             ..Default::default()
         }),
         ..Default::default()
     };
-    let mut state = match runtime.block_on(async { routes::new_state("scope", &conf).await }) {
+    let mut rstate = match runtime.block_on(async { routes::new_state("scope", &conf).await }) {
         Err(e) => return Err(format!("mongodb config error: {}", e)),
         Ok(state) => state,
     };
-    runtime.block_on(async { clear_state(&mut state).await });
-    expect(state.scope_path).to_equal("scope")?;
+    runtime.block_on(async { clear_state(&mut rstate).await });
+    expect(rstate.scope_path).to_equal("scope")?;
 
+    let result: Result<SqliteModel, Box<dyn StdError>> = runtime.block_on(async {
+        let mut path = std::env::temp_dir();
+        path.push(crate::TEST_SQLITE_PATH);
+        let model = SqliteModel::new(&SqliteOptions {
+            path: path.to_str().unwrap().to_string(),
+        })
+        .await?;
+        model.unit().add(&unit).await?;
+        model.application().add(&application).await?;
+        model.network().add(&network).await?;
+        Ok(model)
+    });
+    state.sqlite = match result {
+        Err(e) => return Err(format!("create sqlite rsc error: {}", e)),
+        Ok(model) => Some(model),
+    };
     let conf = Config {
         db: Some(config::Db {
             engine: Some(DbEngine::SQLITE.to_string()),
+            sqlite: Some(config::Sqlite {
+                path: Some(crate::TEST_SQLITE_PATH.to_string()),
+            }),
             ..Default::default()
         }),
         mq_channels: Some(config::MqChannels {
@@ -145,12 +197,12 @@ fn fn_new_state(context: &mut SpecContext<TestState>) -> Result<(), String> {
         }),
         ..Default::default()
     };
-    let mut state = match runtime.block_on(async { routes::new_state("scope", &conf).await }) {
+    let mut rstate = match runtime.block_on(async { routes::new_state("scope", &conf).await }) {
         Err(e) => return Err(format!("sqlite config error: {}", e)),
         Ok(state) => state,
     };
-    runtime.block_on(async { clear_state(&mut state).await });
-    expect(state.scope_path).to_equal("scope")?;
+    runtime.block_on(async { clear_state(&mut rstate).await });
+    expect(rstate.scope_path).to_equal("scope")?;
 
     let conf = Config {
         db: Some(config::Db {
@@ -165,12 +217,12 @@ fn fn_new_state(context: &mut SpecContext<TestState>) -> Result<(), String> {
         }),
         ..Default::default()
     };
-    let mut state = match runtime.block_on(async { routes::new_state("scope", &conf).await }) {
+    let mut rstate = match runtime.block_on(async { routes::new_state("scope", &conf).await }) {
         Err(e) => return Err(format!("test config error: {}", e)),
         Ok(state) => state,
     };
-    runtime.block_on(async { clear_state(&mut state).await });
-    expect(state.scope_path).to_equal("scope")
+    runtime.block_on(async { clear_state(&mut rstate).await });
+    expect(rstate.scope_path).to_equal("scope")
 }
 
 fn fn_new_service(context: &mut SpecContext<TestState>) -> Result<(), String> {

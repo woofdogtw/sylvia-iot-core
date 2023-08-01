@@ -788,7 +788,7 @@ pub fn mq_close(context: &mut SpecContext<TestState>) -> Result<(), String> {
     })
 }
 
-/// Test `close()` for a closed connection.
+/// Test `close()` for a closed queue.
 pub fn mq_close_after_close(context: &mut SpecContext<TestState>) -> Result<(), String> {
     let mut state = context.state.borrow_mut();
     let state = state.get_mut(STATE).unwrap();
@@ -862,7 +862,7 @@ pub fn mq_send_error(context: &mut SpecContext<TestState>) -> Result<(), String>
     );
     let queue = match Queue::new(opts) {
         Err(e) => return Err(format!("Queue::new() send error: {}", e)),
-        Ok(conn) => conn,
+        Ok(q) => q,
     };
     match state.runtime.block_on(queue.send_msg(vec![])) {
         Err(_) => (),
@@ -928,7 +928,7 @@ pub fn reconnect(context: &mut SpecContext<TestState>) -> Result<(), String> {
     })
 }
 
-/// Send unitcast data to one receiver.
+/// Send unicast data to one receiver.
 pub fn data_unicast_1to1(context: &mut SpecContext<TestState>) -> Result<(), String> {
     let mut state = context.state.borrow_mut();
     let state = state.get_mut(STATE).unwrap();
@@ -994,7 +994,7 @@ pub fn data_unicast_1to1(context: &mut SpecContext<TestState>) -> Result<(), Str
     })
 }
 
-/// Send unitcast data to 3 receivers.
+/// Send unicast data to 3 receivers.
 pub fn data_unicast_1to3(context: &mut SpecContext<TestState>) -> Result<(), String> {
     let mut state = context.state.borrow_mut();
     let state = state.get_mut(STATE).unwrap();
@@ -1360,7 +1360,8 @@ pub fn data_reliable(context: &mut SpecContext<TestState>) -> Result<(), String>
     })
 }
 
-/// Send reliable data by sending data to a closed queue then it may receive after connecting.
+/// Send unreliable data by sending data to a closed queue then it SHOULD receive after connecting
+/// because of AMQP.
 pub fn data_best_effort(context: &mut SpecContext<TestState>) -> Result<(), String> {
     let mut state = context.state.borrow_mut();
     let state = state.get_mut(STATE).unwrap();

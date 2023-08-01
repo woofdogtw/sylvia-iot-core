@@ -18,7 +18,7 @@ use crate::{
     Error,
 };
 
-/// Manages an MQTT queue.
+/// Manages a MQTT queue.
 #[derive(Clone)]
 pub struct MqttQueue {
     /// Options of the queue.

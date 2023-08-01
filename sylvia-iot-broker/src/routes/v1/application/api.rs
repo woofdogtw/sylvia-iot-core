@@ -251,16 +251,36 @@ pub async fn init(state: &State, ctrl_conf: &CfgCtrl) -> Result<(), Box<dyn StdE
         (list, cursor) = state.model.application().list(&opts, cursor).await?;
         for item in list.iter() {
             let url = Url::parse(item.host_uri.as_str())?;
-            add_manager(
-                FN_NAME,
-                state,
-                &url,
-                item.unit_id.as_str(),
-                item.unit_code.as_str(),
-                item.application_id.as_str(),
-                item.code.as_str(),
-            )
-            .await?;
+            let key = gen_mgr_key(item.unit_code.as_str(), item.name.as_str());
+            let opts = MgrOptions {
+                unit_id: item.unit_id.clone(),
+                unit_code: item.unit_code.clone(),
+                id: item.application_id.clone(),
+                name: item.name.clone(),
+                prefetch: Some(state.amqp_prefetch),
+                shared_prefix: Some(state.mqtt_shared_prefix.clone()),
+            };
+            let handler = MgrHandler {
+                model: state.model.clone(),
+                cache: state.cache.clone(),
+                network_mgrs: state.network_mgrs.clone(),
+                data_sender: state.data_sender.clone(),
+            };
+            let mgr =
+                match ApplicationMgr::new(state.mq_conns.clone(), &url, opts, Arc::new(handler)) {
+                    Err(e) => {
+                        error!("[{}] new manager for {} error: {}", FN_NAME, key, e);
+                        return Err(Box::new(ErrResp::ErrRsc(Some(e))));
+                    }
+                    Ok(mgr) => mgr,
+                };
+            {
+                state
+                    .application_mgrs
+                    .lock()
+                    .unwrap()
+                    .insert(key.clone(), mgr);
+            }
         }
         if cursor.is_none() {
             break;
