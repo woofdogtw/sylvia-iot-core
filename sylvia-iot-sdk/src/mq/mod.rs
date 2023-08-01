@@ -279,7 +279,7 @@ fn new_data_queues(
             let ctrl_opts = QueueOptions::Amqp(
                 AmqpQueueOptions {
                     name: format!("{}.{}.{}.ctrl", prefix, unit, opts.name.as_str()),
-                    is_recv: is_network,
+                    is_recv: true,
                     reliable: true,
                     broadcast: false,
                     prefetch,
@@ -347,7 +347,7 @@ fn new_data_queues(
             let ctrl_opts = QueueOptions::Mqtt(
                 MqttQueueOptions {
                     name: format!("{}.{}.{}.ctrl", prefix, unit, opts.name.as_str()),
-                    is_recv: is_network,
+                    is_recv: true,
                     reliable: true,
                     broadcast: false,
                     shared_prefix: opts.shared_prefix.clone(),
