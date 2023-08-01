@@ -108,7 +108,7 @@ impl NetworkMgr {
         let conn = get_connection(&conn_pool, host_uri)?;
 
         let (uldata, dldata, _, dldata_result) = new_data_queues(&conn, &opts, QUEUE_PREFIX, true)?;
-        let ctrl = new_ctrl_queues(&conn, &opts, QUEUE_PREFIX, true)?;
+        let ctrl = new_ctrl_queues(&conn, &opts, QUEUE_PREFIX)?;
 
         let mgr = NetworkMgr {
             opts: Arc::new(opts),

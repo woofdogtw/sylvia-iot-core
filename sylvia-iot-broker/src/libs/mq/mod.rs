@@ -176,13 +176,12 @@ async fn remove_connection(
     Ok(())
 }
 
-/// The utility function for creating application/network control queue with the following nameing:
+/// The utility function for creating application/network control queue with the following name:
 /// - `[prefix].[unit].[code].ctrl`
 fn new_ctrl_queues(
     conn: &Connection,
     opts: &Options,
     prefix: &str,
-    is_network: bool,
 ) -> Result<Arc<Mutex<Queue>>, String> {
     let ctrl: Arc<Mutex<Queue>>;
 
@@ -220,7 +219,7 @@ fn new_ctrl_queues(
             let ctrl_opts = QueueOptions::Amqp(
                 AmqpQueueOptions {
                     name: format!("{}.{}.{}.ctrl", prefix, unit, opts.name.as_str()),
-                    is_recv: !is_network,
+                    is_recv: false,
                     reliable: true,
                     broadcast: false,
                     prefetch,
@@ -234,7 +233,7 @@ fn new_ctrl_queues(
             let ctrl_opts = QueueOptions::Mqtt(
                 MqttQueueOptions {
                     name: format!("{}.{}.{}.ctrl", prefix, unit, opts.name.as_str()),
-                    is_recv: !is_network,
+                    is_recv: false,
                     reliable: true,
                     broadcast: false,
                     shared_prefix: opts.shared_prefix.clone(),
