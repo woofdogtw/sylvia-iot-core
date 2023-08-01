@@ -100,11 +100,9 @@ fn get_connection(
     host_uri: &Url,
 ) -> Result<Connection, String> {
     let uri = host_uri.to_string();
-    {
-        let mutex = conn_pool.lock().unwrap();
-        if let Some(conn) = mutex.get(&uri) {
-            return Ok(conn.clone());
-        }
+    let mut mutex = conn_pool.lock().unwrap();
+    if let Some(conn) = mutex.get(&uri) {
+        return Ok(conn.clone());
     }
 
     match host_uri.scheme() {
@@ -116,9 +114,7 @@ fn get_connection(
             let mut conn = AmqpConnection::new(opts)?;
             let _ = conn.connect();
             let conn = Connection::Amqp(conn, Arc::new(Mutex::new(0)));
-            {
-                conn_pool.lock().unwrap().insert(uri, conn.clone());
-            }
+            mutex.insert(uri, conn.clone());
             Ok(conn)
         }
         "mqtt" | "mqtts" => {
@@ -129,9 +125,7 @@ fn get_connection(
             let mut conn = MqttConnection::new(opts)?;
             let _ = conn.connect();
             let conn = Connection::Mqtt(conn, Arc::new(Mutex::new(0)));
-            {
-                conn_pool.lock().unwrap().insert(uri, conn.clone());
-            }
+            mutex.insert(uri, conn.clone());
             Ok(conn)
         }
         s => Err(format!("unsupport scheme {}", s)),
@@ -144,8 +138,9 @@ async fn remove_connection(
     host_uri: &String,
     count: isize,
 ) -> Result<(), Box<dyn StdError>> {
-    {
-        match conn_pool.lock().unwrap().get(host_uri) {
+    let conn = {
+        let mut mutex = conn_pool.lock().unwrap();
+        match mutex.get(host_uri) {
             None => return Ok(()),
             Some(conn) => match conn {
                 Connection::Amqp(_, counter) => {
@@ -164,8 +159,8 @@ async fn remove_connection(
                 }
             },
         }
-    }
-    let conn = { conn_pool.lock().unwrap().remove(host_uri) };
+        mutex.remove(host_uri)
+    };
     if let Some(conn) = conn {
         match conn {
             Connection::Amqp(mut conn, _) => {
