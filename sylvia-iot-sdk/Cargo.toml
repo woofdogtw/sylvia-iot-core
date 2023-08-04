@@ -1,6 +1,6 @@
 [package]
 name = "sylvia-iot-sdk"
-version = "0.0.21"
+version = "0.0.22"
 authors = ["Chien-Hong Chan"]
 description = "SDK for developing networks (adapters) and applications on Sylvia-IoT."
 edition = "2021"

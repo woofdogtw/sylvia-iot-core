@@ -282,12 +282,12 @@ pub async fn init(state: &State, ctrl_conf: &CfgCtrl) -> Result<(), Box<dyn StdE
                 None => "",
                 Some(unit_code) => unit_code.as_str(),
             };
-            let key = gen_mgr_key(unit_code, item.name.as_str());
+            let key = gen_mgr_key(unit_code, item.code.as_str());
             let opts = MgrOptions {
                 unit_id: unit_id.to_string(),
                 unit_code: unit_code.to_string(),
                 id: item.network_id.clone(),
-                name: item.name.clone(),
+                name: item.code.clone(),
                 prefetch: Some(state.amqp_prefetch),
                 shared_prefix: Some(state.mqtt_shared_prefix.clone()),
             };

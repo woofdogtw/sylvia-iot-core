@@ -1,6 +1,6 @@
 [package]
 name = "sylvia-iot-coremgr"
-version = "0.0.21"
+version = "0.0.22"
 authors = ["Chien-Hong Chan"]
 description = "The manager of Sylvia-IoT core modules."
 edition = "2021"

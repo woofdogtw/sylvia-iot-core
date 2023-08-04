@@ -251,12 +251,12 @@ pub async fn init(state: &State, ctrl_conf: &CfgCtrl) -> Result<(), Box<dyn StdE
         (list, cursor) = state.model.application().list(&opts, cursor).await?;
         for item in list.iter() {
             let url = Url::parse(item.host_uri.as_str())?;
-            let key = gen_mgr_key(item.unit_code.as_str(), item.name.as_str());
+            let key = gen_mgr_key(item.unit_code.as_str(), item.code.as_str());
             let opts = MgrOptions {
                 unit_id: item.unit_id.clone(),
                 unit_code: item.unit_code.clone(),
                 id: item.application_id.clone(),
-                name: item.name.clone(),
+                name: item.code.clone(),
                 prefetch: Some(state.amqp_prefetch),
                 shared_prefix: Some(state.mqtt_shared_prefix.clone()),
             };

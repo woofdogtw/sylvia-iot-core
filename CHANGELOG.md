@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.0.22 - 2023-08-04
+
+### Fixed
+
+- **broker**: Fix the ApplicationMgr/NetworkMgr name from **code** instead of **name**.
+
 ## 0.0.21 - 2023-08-04
 
 ### Changed
