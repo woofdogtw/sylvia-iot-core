@@ -1,5 +1,20 @@
 # Changelog
 
+## 0.0.21 - 2023-08-04
+
+### Changed
+
+- Update dependencies.
+- **documentation**: Add `rustfmt` section.
+
+### Fixed
+
+- **broker**: Fix init flow for adding ApplicationMgr/NetworkMgr.
+    - When adding a new instance, it causes other instances in the cluster to re-create ApplicationMgrs/NetworkMgrs.
+    - The root cause is that it uses broadcast control channel to init ApplicationMgrs/NetworkMgrs.
+- **broker**, **sdk**: Fix shared connection management for queues.
+    - To lock the connection mutex after allocating `Connection`s.
+
 ## 0.0.20 - 2023-07-28
 
 ### Changed

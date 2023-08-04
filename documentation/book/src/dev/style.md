@@ -1,5 +1,10 @@
 # Code Style
 
+## Using rustfmt
+
+Please make sure to **ALWAYS** use `rustfmt` to format all files. We recommend using VSCode with the
+**rust-analyzer extension** for writing code.
+
 ## MVC vs. Microservices
 
 I prefer a bottom-up development approach. Using an architecture like MVC, which designs the
