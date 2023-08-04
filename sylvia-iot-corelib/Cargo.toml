@@ -1,6 +1,6 @@
 [package]
 name = "sylvia-iot-corelib"
-version = "0.0.21"
+version = "0.0.22"
 authors = ["Chien-Hong Chan"]
 description = "Common libraries of Sylvia-IoT core modules."
 edition = "2021"
