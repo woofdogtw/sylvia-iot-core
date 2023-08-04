@@ -1,0 +1,1870 @@
+<!DOCTYPE HTML>
+<html lang="zh-TW" class="sidebar-visible no-js rust">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>Sylvia-IoT 說明文件</title>
+        <meta name="robots" content="noindex" />
+
+
+        <!-- Custom HTML head -->
+        
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff" />
+
+        <link rel="icon" href="favicon.svg">
+        <link rel="shortcut icon" href="favicon.png">
+        <link rel="stylesheet" href="css/variables.css">
+        <link rel="stylesheet" href="css/general.css">
+        <link rel="stylesheet" href="css/chrome.css">
+        <link rel="stylesheet" href="css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" href="highlight.css">
+        <link rel="stylesheet" href="tomorrow-night.css">
+        <link rel="stylesheet" href="ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+
+    </head>
+    <body>
+    <div id="body-container">
+        <!-- Provide site root to javascript -->
+        <script>
+            var path_to_root = "";
+            var default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "navy" : "rust";
+        </script>
+
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                var theme = localStorage.getItem('mdbook-theme');
+                var sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            var theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            var html = document.querySelector('html');
+            html.classList.remove('no-js')
+            html.classList.remove('rust')
+            html.classList.add(theme);
+            html.classList.add('js');
+        </script>
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            var html = document.querySelector('html');
+            var sidebar = null;
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+            }
+            html.classList.remove('sidebar-visible');
+            html.classList.add("sidebar-" + sidebar);
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <div class="sidebar-scrollbox">
+                <ol class="chapter"><li class="chapter-item expanded "><a href="index.html"><strong aria-hidden="true">1.</strong> 介紹</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="intro/overview.html"><strong aria-hidden="true">1.1.</strong> 什麼是 Sylvia-IoT？</a></li><li class="chapter-item expanded "><a href="intro/concept.html"><strong aria-hidden="true">1.2.</strong> 概念</a></li></ol></li><li class="chapter-item expanded "><a href="guide/index.html"><strong aria-hidden="true">2.</strong> 使用指南</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="guide/quick.html"><strong aria-hidden="true">2.1.</strong> 快速開始</a></li><li class="chapter-item expanded "><a href="guide/configuration.html"><strong aria-hidden="true">2.2.</strong> 設定檔</a></li></ol></li><li class="chapter-item expanded "><a href="arch/index.html"><strong aria-hidden="true">3.</strong> 內部架構</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="arch/arch.html"><strong aria-hidden="true">3.1.</strong> 架構</a></li><li class="chapter-item expanded "><a href="arch/flow.html"><strong aria-hidden="true">3.2.</strong> 資料流</a></li><li class="chapter-item expanded "><a href="arch/cache.html"><strong aria-hidden="true">3.3.</strong> 快取</a></li></ol></li><li class="chapter-item expanded "><a href="dev/index.html"><strong aria-hidden="true">4.</strong> 開發指南</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="dev/oauth2.html"><strong aria-hidden="true">4.1.</strong> OAuth2 認證</a></li><li class="chapter-item expanded "><a href="dev/network.html"><strong aria-hidden="true">4.2.</strong> 網路服務</a></li><li class="chapter-item expanded "><a href="dev/application.html"><strong aria-hidden="true">4.3.</strong> 應用服務</a></li><li class="chapter-item expanded "><a href="dev/core.html"><strong aria-hidden="true">4.4.</strong> Sylvia-IoT 核心</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="dev/dir.html"><strong aria-hidden="true">4.4.1.</strong> 目錄結構</a></li><li class="chapter-item expanded "><a href="dev/style.html"><strong aria-hidden="true">4.4.2.</strong> 程式碼風格</a></li><li class="chapter-item expanded "><a href="dev/testing.html"><strong aria-hidden="true">4.4.3.</strong> 撰寫測試</a></li></ol></li></ol></li><li class="chapter-item expanded "><a href="appendex/index.html"><strong aria-hidden="true">5.</strong> 附錄</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="appendex/source.html"><strong aria-hidden="true">5.1.</strong> 資料來源</a></li><li class="chapter-item expanded "><a href="appendex/repo.html"><strong aria-hidden="true">5.2.</strong> 輔助專案</a></li></ol></li></ol>
+            </div>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle"></div>
+        </nav>
+
+        <!-- Track and set sidebar scroll position -->
+        <script>
+            var sidebarScrollbox = document.querySelector('#sidebar .sidebar-scrollbox');
+            sidebarScrollbox.addEventListener('click', function(e) {
+                if (e.target.tagName === 'A') {
+                    sessionStorage.setItem('sidebar-scroll', sidebarScrollbox.scrollTop);
+                }
+            }, { passive: true });
+            var sidebarScrollTop = sessionStorage.getItem('sidebar-scroll');
+            sessionStorage.removeItem('sidebar-scroll');
+            if (sidebarScrollTop) {
+                // preserve sidebar scroll position when navigating via links within sidebar
+                sidebarScrollbox.scrollTop = sidebarScrollTop;
+            } else {
+                // scroll sidebar to current active section when navigating via "next/previous chapter" buttons
+                var activeSection = document.querySelector('#sidebar .active');
+                if (activeSection) {
+                    activeSection.scrollIntoView({ block: 'center' });
+                }
+            }
+        </script>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <button id="sidebar-toggle" class="icon-button" type="button" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </button>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">Sylvia-IoT 說明文件</h1>
+
+                    <div class="right-buttons">
+                        <a href="print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <p>這份文件會帶您逐步認識什麼是 <strong>Sylvia-IoT 物聯網平台</strong>，接著提供如何安裝與使用的說明。</p>
+<p>在初步了解 Sylvia-IoT 和使用方式後，會進一步介紹內部架構，讓您知道 Sylvia-IoT 的模組和運作原理，以及它在提升效能上的設計思維。</p>
+<p>開發指南，會先說明第三方的開發者或廠商該如何開發他們的應用或是網路服務。
+如果對 Sylvia-IoT 的核心開發有興趣的人，指南也提供了程式碼的架構以及風格。</p>
+<p>讓我們開始吧！</p>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="什麼是-sylvia-iot"><a class="header" href="#什麼是-sylvia-iot">什麼是 Sylvia-IoT？</a></h1>
+<p><strong>Sylvia-IoT</strong> 是一個物聯網平台，最主要的功能就是將裝置的訊息轉發給應用程式，或是應用程式發送命令給裝置。</p>
+<p><img src="intro/intro.svg" alt="Introduction" /></p>
+<p>上圖是一個簡單的說明。裝置（如感應器）會綁定某一種傳輸模組，透過網路閘道器或網路伺服器傳輸資料。
+Sylvia-IoT 就是一個提供訊息轉發的角色，每個應用程式可以訂閱他們關注的裝置來分析資料，或是傳輸資料到裝置。</p>
+<h2 id="特點"><a class="header" href="#特點">特點</a></h2>
+<p>使用 Sylvia-IoT 平台，對於各個供應商可以提供以下好處：</p>
+<ul>
+<li>裝置供應商（Device Provider）
+<ul>
+<li>可以更容易變更網路供應商的模組，無須變更應用程式即可無縫接軌。</li>
+</ul>
+</li>
+<li>網路供應商（Network Provider）
+<ul>
+<li>專注開發網路傳輸協定供裝置使用。</li>
+<li>可以開發連接器（adapter）連接 Sylvia-IoT 平台。</li>
+</ul>
+</li>
+<li>應用供應商（Application Provider）
+<ul>
+<li>可以隨時指定任意數量的應用接收來自同一個裝置的資料。</li>
+<li>透過 Sylvia-IoT 的通訊協定隔離，可以任意更換裝置的網路供應商而無須改寫程式碼。</li>
+</ul>
+</li>
+</ul>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="概念"><a class="header" href="#概念">概念</a></h1>
+<p>Sylvia-IoT 提供了 HTTP API 管理以下實體：</p>
+<ul>
+<li>使用者帳號（User Account）
+<ul>
+<li>透過使用者帳號可以存取 Sylvia-IoT 的管理介面。</li>
+<li>可以透過客戶端取得訪問令牌（access token）存取 HTTP API。</li>
+</ul>
+</li>
+<li>客戶端應用程式（Client）
+<ul>
+<li>存取 HTTP API 的實體。</li>
+<li>第三方可以透過 HTTP API 開發 Sylvia-IoT 的管理功能。</li>
+<li>透過 OAuth2 讓使用者授權客戶端存取資源。</li>
+</ul>
+</li>
+<li>單位（Unit）
+<ul>
+<li>每個單位可以指派一個擁有者和多個成員。</li>
+<li>每個單位可以管理自己的裝置、網路、應用。</li>
+</ul>
+</li>
+<li>裝置（Device）
+<ul>
+<li>如感應器、追蹤器等物聯網的終端裝置。</li>
+</ul>
+</li>
+<li>應用（Application）
+<ul>
+<li>依據需求，分析裝置的資料並呈現，比如智慧家電控制中心。</li>
+</ul>
+</li>
+<li>網路（Network）
+<ul>
+<li>依裝置的通訊需求，連接不同的網路伺服器來收送裝置資料。</li>
+<li>常見的通訊協定有 LoRa、WiFi 等。也可以直接使用 TCP/IP。</li>
+<li>可以開發網路連接器（network adapter），將既有的網路伺服器（network server，如 TTN、ChirpStack）和 Sylvia-IoT 整合。</li>
+</ul>
+</li>
+<li>路由規則（Routing Rules）
+<ul>
+<li>裝置和應用的關聯。</li>
+<li>可以將個別裝置透過網路位址（network address）綁定、或是將整個網路綁定到特定應用。</li>
+<li>多對多的關係。也就是多個裝置可以綁定一個應用，也可以一個裝置綁定多個應用。</li>
+</ul>
+</li>
+</ul>
+<h2 id="傳輸協定"><a class="header" href="#傳輸協定">傳輸協定</a></h2>
+<p>目前 Sylvia-IoT 支援以下協定，和應用與網路進行訊息傳輸：</p>
+<ul>
+<li>AMQP 0-9-1</li>
+<li>MQTT 3.1.1</li>
+</ul>
+<p>只要能符合明確名稱（不含萬用字元）的消息佇列模式（message queuing model）都可以支援。比如 AMQP 1.0、Apache Kafka、NATS 等。
+目前還不支援主題式發布訂閱（topic publish/subscribe）或廣播（broadcast）、多播（multicast）的模式。</p>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="使用指南"><a class="header" href="#使用指南">使用指南</a></h1>
+<p>本章內容：</p>
+<ul>
+<li>帶您快速運行一個可用的 Sylvia-IoT 並實際模擬接收裝置資料。</li>
+<li>提供完整的設定檔內容與概述。</li>
+</ul>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="快速開始"><a class="header" href="#快速開始">快速開始</a></h1>
+<p>本章節描述在 Ubuntu 20.04 環境的快速安裝步驟。</p>
+<blockquote>
+<p>目前的可執行檔採用 GLIBC 2.31 編譯，可以在 Ubuntu 20.04 或以上的 OS 執行。
+較舊的 OS 可以使用 <a href="https://hub.docker.com/r/woofdogtw/sylvia-iot-core"><strong>Docker 映像</strong></a>。
+相關的設定和環境變數將於 <a href="guide/configuration.html"><strong>設定檔</strong></a> 說明。</p>
+</blockquote>
+<h2 id="安裝工具"><a class="header" href="#安裝工具">安裝工具</a></h2>
+<pre><code class="language-shell">sudo apt -y install curl jq
+</code></pre>
+<h2 id="安裝-docker"><a class="header" href="#安裝-docker">安裝 Docker</a></h2>
+<p>這裡參考 <a href="https://docs.docker.com/engine/install/ubuntu/"><strong>Docker 官方網站</strong></a> 的安裝步驟。</p>
+<pre><code class="language-shell">sudo apt -y install apt-transport-https ca-certificates curl gnupg lsb-release
+curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
+echo &quot;deb [arch=amd64 signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable&quot; | sudo tee /etc/apt/sources.list.d/docker.list &gt; /dev/null
+sudo apt update
+sudo apt -y install docker-ce docker-ce-cli containerd.io docker-compose-plugin
+sudo usermod -aG docker $USER
+</code></pre>
+<blockquote>
+<p>記得重啟 shell 套用使用者權限。</p>
+</blockquote>
+<h2 id="安裝-mongodbrabbitmqemqx"><a class="header" href="#安裝-mongodbrabbitmqemqx">安裝 MongoDB、RabbitMQ、EMQX</a></h2>
+<p>啟動服務（版本和資料保存的資料夾可以視情形調整）：</p>
+<pre><code class="language-shell">export MONGODB_VER=6.0.8
+export RABBITMQ_VER=3.12.1
+export EMQX_VER=5.1.1
+
+export MONGODB_DIR=$HOME/db/mongodb
+export RABBITMQ_DIR=$HOME/db/rabbitmq
+export EMQX_DIR=$HOME/db/emqx
+
+mkdir -p $MONGODB_DIR
+docker run --rm --name mongodb -d \
+  -p 27017:27017 \
+  -v $MONGODB_DIR:/data/db \
+  mongo:$MONGODB_VER
+
+mkdir -p $RABBITMQ_DIR
+docker run --rm --name rabbitmq -d \
+  -e RABBITMQ_NODENAME=&quot;rabbit@localhost&quot; \
+  -p 5671:5671 -p 5672:5672 -p 15672:15672 \
+  -v $RABBITMQ_DIR:/var/lib/rabbitmq \
+  rabbitmq:$RABBITMQ_VER-management-alpine
+
+mkdir -p $EMQX_DIR
+docker run --rm --name emqx -d \
+  -e EMQX_LOADED_PLUGINS=&quot;emqx_dashboard|emqx_management|emqx_auth_mnesia&quot; \
+  -e EMQX_LOADED_MODULES=&quot;emqx_mod_acl_internal,emqx_mod_presence,emqx_mod_topic_metrics&quot; \
+  -p 1883:1883 -p 8883:8883 -p 18083:18083 \
+  -v $EMQX_DIR:/opt/emqx/data \
+  emqx/emqx:$EMQX_VER
+</code></pre>
+<blockquote>
+<p>這裡只是介紹 EMQX 需要使用的 plugin，下面的展示不會使用。您也可以先不啟動 EMQX。</p>
+</blockquote>
+<h2 id="下載-sylvia-iot"><a class="header" href="#下載-sylvia-iot">下載 Sylvia-IoT</a></h2>
+<pre><code class="language-shell">curl -LO https://github.com/woofdogtw/sylvia-iot-core/releases/latest/download/sylvia-iot-core.tar.xz
+curl -LO https://github.com/woofdogtw/sylvia-iot-core/releases/latest/download/sylvia-iot-coremgr-cli.tar.xz
+curl -L -o config.json5 https://github.com/woofdogtw/sylvia-iot-core/raw/main/files/config.json5.example
+tar xf sylvia-iot-core.tar.xz
+tar xf sylvia-iot-coremgr-cli.tar.xz
+</code></pre>
+<h2 id="修改-configjson5"><a class="header" href="#修改-configjson5">修改 config.json5</a></h2>
+<p>為了方便展示，這裡對範例的 config.json5 做了一些修改：</p>
+<ul>
+<li>由於這裡要展示的是 MongoDB，將所有的 <code>&quot;engine&quot;: &quot;sqlite&quot;</code> 改成 <code>&quot;engine&quot;: &quot;mongodb&quot;</code>。
+<pre><code>&quot;db&quot;: {
+    &quot;engine&quot;: &quot;mongodb&quot;,
+    ...
+},
+</code></pre>
+</li>
+<li>先不啟用 HTTPS，將憑證檔設定註解掉：
+<pre><code>//&quot;cacertFile&quot;: &quot;/etc/ssl/certs/ca-certificates.crt&quot;,
+//&quot;certFile&quot;: &quot;/home/user/rust/conf/certs/sylvia-iot.crt&quot;,
+//&quot;keyFile&quot;: &quot;/home/user/rust/conf/certs/sylvia-iot.key&quot;,
+</code></pre>
+</li>
+<li>建立一個資料夾作為靜態檔案的存放處，此處的例子是 <code>/home/user/static</code>。
+<pre><code>&quot;staticPath&quot;: &quot;/home/user/static&quot;,
+</code></pre>
+</li>
+<li>使用預設的登入頁面樣板，將範例的註解掉：
+<pre><code>&quot;templates&quot;: {      // Jinja2 template paths.
+    //&quot;login&quot;: &quot;/home/user/rust/static/login.j2&quot;,
+    //&quot;grant&quot;: &quot;/home/user/rust/static/grant.j2&quot;,
+},
+</code></pre>
+</li>
+<li>使用 <a href="https://github.com/bytebeamio/rumqtt"><strong>rumqttd</strong></a> 而非 EMQX：
+<pre><code>&quot;coremgr&quot;: {
+  ...
+  &quot;mq&quot;: {
+    &quot;engine&quot;: {
+      &quot;amqp&quot;: &quot;rabbitmq&quot;,
+      &quot;mqtt&quot;: &quot;rumqttd&quot;,
+    },
+    ...
+  },
+  ...
+},
+</code></pre>
+</li>
+</ul>
+<h2 id="設定初始資料"><a class="header" href="#設定初始資料">設定初始資料</a></h2>
+<p>先進入 MongoDB shell：</p>
+<pre><code class="language-shell">docker exec -it mongodb mongosh
+</code></pre>
+<p>在 MongoDB shell 介面建立基本資料：</p>
+<pre><code>use test1
+
+db.user.insertOne({
+  userId: 'admin',
+  account: 'admin',
+  email: 'admin',
+  createdAt: new Date(),
+  modifiedAt: new Date(),
+  verifiedAt: new Date(),
+  expiredAt: null,
+  disabledAt: null,
+  roles: {&quot;admin&quot;:true,&quot;dev&quot;:false},
+  password: '27258772d876ffcef7ca2c75d6f4e6bcd81c203bd3e93c0791c736e5a2df4afa',
+  salt: 'YsBsou2O',
+  name: 'Admin',
+  info: {}
+})
+
+db.client.insertOne({
+  clientId: 'public',
+  createdAt: new Date(),
+  modifiedAt: new Date(),
+  clientSecret: null,
+  redirectUris: ['http://localhost:1080/auth/oauth2/redirect'],
+  scopes: [],
+  userId: 'dev',
+  name: 'Public',
+  imageUrl: null
+})
+</code></pre>
+<p>接著按兩次 <code>Ctrl+C</code> 離開。</p>
+<h2 id="開始使用"><a class="header" href="#開始使用">開始使用</a></h2>
+<p>啟動 Sylvia-IoT core：</p>
+<pre><code class="language-shell">./sylvia-iot-core -f config.json5
+</code></pre>
+<p>如果程式沒有結束，表示已經啟動成功了 😊。</p>
+<p>另外開一個命令列視窗，使用 CLI 登入：</p>
+<pre><code class="language-shell">./sylvia-iot-coremgr-cli -f config.json5 login -a admin -p admin
+</code></pre>
+<p>將會看到如下的畫面（您看到的內容會有些不同）：</p>
+<pre><code>$ ./sylvia-iot-coremgr-cli -f config.json5 login -a admin -p admin
+{
+  &quot;access_token&quot;: &quot;ef9cf7cfc645f9092b9af62666d903c5a8e4579ff6941b479c1d9c9b63b0b634&quot;,
+  &quot;refresh_token&quot;: &quot;265983a08af706fbe2912ff2edb1750311d1b689e4dab3a83c4b494c4cf2d033&quot;,
+  &quot;token_type&quot;: &quot;bearer&quot;,
+  &quot;expires_in&quot;: 3599
+}
+OK (146 ms)
+</code></pre>
+<p>Access token 會自動被保留在 <code>$HOME/.sylvia-iot-coremgr-cli.json</code> 這個檔案中，CLI 會依據裡面的內容來存取 API。</p>
+<p>可以使用 <code>./sylvia-iot-coremgr-cli help</code> 查詢指令的使用方式。</p>
+<h2 id="建立資源"><a class="header" href="#建立資源">建立資源</a></h2>
+<p>為了方便使用 <a href="https://mosquitto.org/download/"><strong>mosquitto CLI</strong></a>，這裡我們分別以下的實體：</p>
+<ul>
+<li>一個單位，單位代碼是 <strong>demo</strong></li>
+<li>一個 MQTT 應用，應用代碼是 <strong>test-app-mqtt</strong></li>
+<li>一個 MQTT 網路，網路代碼是 <strong>test-net-mqtt</strong></li>
+<li>一個裝置，裝置網路位址為 <strong>01000461</strong></li>
+<li>一個路由，將該裝置綁定給應用</li>
+</ul>
+<p>過程會需要變更連線密碼為 <strong>password</strong>（您看到的內容會有些不同）：</p>
+<pre><code class="language-shell">UNIT_ID=$(./sylvia-iot-coremgr-cli -f config.json5 unit add -c demo -o admin -n 'Demo' | jq -r .unitId)
+APP_ID=$(./sylvia-iot-coremgr-cli -f config.json5 application add -c test-app-mqtt -u $UNIT_ID --host 'mqtt://localhost' -n 'TestApp-MQTT' | jq -r .applicationId)
+NET_ID=$(./sylvia-iot-coremgr-cli -f config.json5 network add -c test-net-mqtt -u $UNIT_ID --host 'mqtt://localhost' -n 'TestNet-MQTT' | jq -r .networkId)
+./sylvia-iot-coremgr-cli -f config.json5 application update -i $APP_ID -p password
+./sylvia-iot-coremgr-cli -f config.json5 network update -i $NET_ID -p password
+DEV_ID=$(./sylvia-iot-coremgr-cli -f config.json5 device add -u $UNIT_ID --netid $NET_ID -a 01000461 -n 01000461 | jq -r .deviceId)
+./sylvia-iot-coremgr-cli -f config.json5 device-route add -d $DEV_ID -a $APP_ID
+</code></pre>
+<h2 id="上傳裝置資料"><a class="header" href="#上傳裝置資料">上傳裝置資料</a></h2>
+<p>可以用以下指令安裝 mosquitto CLI：</p>
+<pre><code class="language-shell">sudo apt -y install mosquitto-clients
+</code></pre>
+<p>開啟一個 shell 訂閱應用主題（格式為 <code>broker.application.[單位代碼].[應用代碼].uldata</code>）：</p>
+<pre><code class="language-shell">mosquitto_sub -u test-app-mqtt -P password -t broker.application.demo.test-app-mqtt.uldata
+</code></pre>
+<p>開啟另一個 shell 模擬網路系統傳送裝置資料（主題格式為 <code>broker.network.[單位代碼].[網路代碼].uldata</code>）：</p>
+<pre><code class="language-shell">mosquitto_pub -u test-net-mqtt -P password -t broker.network.demo.test-net-mqtt.uldata -m '{&quot;time&quot;:&quot;2023-07-08T06:55:02.000Z&quot;,&quot;networkAddr&quot;:&quot;01000461&quot;,&quot;data&quot;:&quot;74657374&quot;}'
+</code></pre>
+<p>這時您應該會在訂閱的 shell 看到如下畫面（內容可能有些不同）：</p>
+<pre><code>$ mosquitto_sub -u test-app-mqtt -P password -t broker.application.demo.test-app-mqtt.uldata
+{&quot;dataId&quot;:&quot;1688799672075-iJ4YQeQ5Lyv4&quot;,&quot;time&quot;:&quot;2023-07-08T06:55:02.000Z&quot;,&quot;pub&quot;:&quot;2023-07-08T07:01:12.075Z&quot;,&quot;deviceId&quot;:&quot;1688798563252-aWcZVRML&quot;,&quot;networkId&quot;:&quot;1688798370824-RwAbBDFh&quot;,&quot;networkCode&quot;:&quot;test-net-mqtt&quot;,&quot;networkAddr&quot;:&quot;01000461&quot;,&quot;isPublic&quot;:true,&quot;profile&quot;:&quot;&quot;,&quot;data&quot;:&quot;74657374&quot;}
+</code></pre>
+<p>如果有看到資料，恭喜您完成基本的 Sylvia-IoT 的使用了（恭喜你解鎖成就 😆）！</p>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="設定檔"><a class="header" href="#設定檔">設定檔</a></h1>
+<p>本章節描述 Sylvia-IoT 的設定格式和用途。</p>
+<p>Sylvia-IoT 的設定支援四種來源，優先權依序為（高到低）：</p>
+<ul>
+<li>JSON5 設定檔</li>
+<li>命令列參數</li>
+<li>環境變數</li>
+<li>內部預設值（不一定存在，如為必填且不提供則會有錯誤訊息）</li>
+</ul>
+<p>JSON5 可以參考範例檔案，該檔案提供了完整的設定項目。
+本章節將會提供對應的說明。以下為設定的慣例：</p>
+<ul>
+<li>JSON5 的巢狀形式會以 <code>.</code> 來表示。</li>
+<li>命令列參數遇到 JSON5 的巢狀會以 <code>.</code> 來表示。</li>
+<li>命令列參數遇到 JSON5 為駝峰的情形，會以全小寫或是 <code>-</code> 尾隨小寫來表示。以下為例子：
+<ul>
+<li>JSON5 的 <code>server.httpPort</code> 對應 <code>--server.httpport</code>。</li>
+<li>JSON5 的 <code>broker.mqChannels</code> 對應 <code>--broker.mq-channels</code>。</li>
+</ul>
+</li>
+<li>環境變數全大寫。</li>
+<li>環境變數遇到 JSON5 的巢狀會以 <code>_</code> 來表示。</li>
+<li>環境變數遇到 JSON5 為駝峰的情形，會以全大寫或是 <code>_</code> 分開來表示。以下為例子：
+<ul>
+<li>JSON5 的 <code>server.httpPort</code> 對應 <code>SERVER_HTTP_PORT</code></li>
+<li>JSON5 的 <code>broker.mqChannels</code> 對應 <code>BROKER_MQCHANNELS</code></li>
+</ul>
+</li>
+</ul>
+<p>接下來是完整的表格說明。</p>
+<blockquote>
+<p>如有標示 <strong>參照範例</strong> 表示範例的 JSON5 有提供，或是可以使用 CLI <strong>help</strong> 指令查看支援的選項。</p>
+</blockquote>
+<h2 id="共同設定"><a class="header" href="#共同設定">共同設定</a></h2>
+<div class="table-wrapper"><table><thead><tr><th>JSON5</th><th>命令列參數</th><th>環境變數</th><th>預設值</th><th>說明</th></tr></thead><tbody>
+<tr><td>log.level</td><td>log.level</td><td>LOG_LEVEL</td><td>info</td><td>Log 等級。參照範例</td></tr>
+<tr><td>log.style</td><td>log.style</td><td>LOG_STYLE</td><td>json</td><td>Log 樣式。參照範例</td></tr>
+<tr><td>server.httpPort</td><td>log.httpport</td><td>SERVER_HTTP_PORT</td><td>1080</td><td>HTTP 監聽連接埠</td></tr>
+<tr><td>server.httpsPort</td><td>log.httpsport</td><td>SERVER_HTTPS_PORT</td><td>1443</td><td>HTTPS 監聽連接埠</td></tr>
+<tr><td>server.cacertFile</td><td>log.cacertfile</td><td>SERVER_CACERT_FILE</td><td></td><td>HTTPS 根憑證擋位置</td></tr>
+<tr><td>server.certFile</td><td>log.certfile</td><td>SERVER_CERT_FILE</td><td></td><td>HTTPS 憑證擋位置</td></tr>
+<tr><td>server.keyFile</td><td>log.keyfile</td><td>SERVER_KEY_FILE</td><td></td><td>HTTPS 私鑰位置</td></tr>
+<tr><td>server.staticPath</td><td>log.static</td><td>SERVER_STATIC_PATH</td><td></td><td>靜態檔案目錄位置</td></tr>
+</tbody></table>
+</div>
+<h3 id="詳細說明"><a class="header" href="#詳細說明">詳細說明</a></h3>
+<ul>
+<li>目前還未使用根憑證。</li>
+<li>必須同時使用憑證和私鑰才能啟用 HTTPS 服務。</li>
+</ul>
+<h2 id="api-scopes"><a class="header" href="#api-scopes">API Scopes</a></h2>
+<p>所有的 API 都需要透過在系統註冊的客戶端（client）以及訪問令牌（access token）才能存取。每一個令牌會記錄所屬的客戶端，只有經過授權的客戶端才能存取 API。</p>
+<p>當某個 API 對應的 <code>apiScopes</code> 的設定被開啟時，除非客戶端在註冊的時候有啟用這些 scope 並被使用者授權，取得的令牌才能存取該 API。</p>
+<p>命令列參數和環境變數都要是 JSON string，舉例：</p>
+<pre><code>--auth.api-scopes='{&quot;auth.tokeninfo.get&quot;:[]}'
+</code></pre>
+<p>您可以自行定義 scope 名稱，並套用到各個 API scope 中。可以參考下面<strong>認證服務</strong>的範例。</p>
+<h2 id="認證服務auth"><a class="header" href="#認證服務auth">認證服務（auth）</a></h2>
+<div class="table-wrapper"><table><thead><tr><th>JSON5</th><th>命令列參數</th><th>環境變數</th><th>預設值</th><th>說明</th></tr></thead><tbody>
+<tr><td>auth.db.engine</td><td>auth.db.engine</td><td>AUTH_DB_ENGINE</td><td>sqlite</td><td>使用的資料庫種類</td></tr>
+<tr><td>auth.db.mongodb.url</td><td>auth.db.mongodb.url</td><td>AUTH_DB_MONGODB_URL</td><td>mongodb://localhost:27017</td><td>MongoDB 連線的 URL</td></tr>
+<tr><td>auth.db.mongodb.database</td><td>auth.db.mongodb.database</td><td>AUTH_DB_MONGODB_DATABASE</td><td>auth</td><td>MongoDB 資料庫名稱</td></tr>
+<tr><td>auth.db.mongodb.poolSize</td><td>auth.db.mongodb.poolsize</td><td>AUTH_DB_MONGODB_POOLSIZE</td><td></td><td>MongoDB 最大連線數量</td></tr>
+<tr><td>auth.db.sqlite.path</td><td>auth.db.sqlite.path</td><td>AUTH_DB_SQLITE_PATH</td><td>auth.db</td><td>SQLite 檔案位置</td></tr>
+<tr><td>auth.db.templates.login</td><td>auth.db.templates</td><td>AUTH_TEMPLATES</td><td></td><td>登入頁面樣板位址</td></tr>
+<tr><td>auth.db.templates.grant</td><td>auth.db.templates</td><td>AUTH_TEMPLATES</td><td></td><td>授權頁面樣板位址</td></tr>
+<tr><td>auth.db.apiScopes</td><td>auth.api-scopes</td><td>AUTH_API_SCOPES</td><td></td><td>API 權限設定</td></tr>
+</tbody></table>
+</div>
+<h3 id="詳細說明-1"><a class="header" href="#詳細說明-1">詳細說明</a></h3>
+<ul>
+<li>templates（樣板）
+<ul>
+<li>使用 OAuth2 authorization code 授權流程需要使用的網頁。<strong>sylvia-iot-auth</strong> 有提供預設的頁面，而 Sylvia-IoT 允許您自訂符合自己風格的網頁。</li>
+<li>樣板使用 Jinja2 格式（相依 <a href="https://tera.netlify.app/"><strong>tera</strong></a> 套件）。</li>
+<li>命令列參數和環境變數都要用 JSON string，比如
+<pre><code>--auth.templates='{&quot;login&quot;:&quot;xxx&quot;}'
+</code></pre>
+</li>
+<li>詳細說明請參考 <a href="guide/../dev/oauth2.html"><strong>OAuth2 認證</strong></a>。</li>
+</ul>
+</li>
+<li>API scopes
+<ul>
+<li><strong>auth</strong> 模組提供了以下幾個 scope 可供設定給對應的 API，限制 client 可以存取的範圍：
+<ul>
+<li><code>auth.tokeninfo.get</code>: 授權 client 讀取令牌的資料。
+<ul>
+<li><code>GET /api/v1/auth/tokeninfo</code></li>
+</ul>
+</li>
+<li><code>auth.logout.post</code>: 授權 client 將令牌登出。
+<ul>
+<li><code>POST /auth/api/v1/auth/logout</code></li>
+</ul>
+</li>
+<li><code>user.get</code>: 授權 client 存取目前使用者的個人資料。
+<ul>
+<li><code>GET /api/v1/user</code></li>
+</ul>
+</li>
+<li><code>user.path</code>: 授權 client 修改目前使用者的個人資料。
+<ul>
+<li><code>PATCH /api/v1/user</code></li>
+</ul>
+</li>
+<li><code>user.get.admin</code>: 授權 client 取得系統所有使用者的資料。
+<ul>
+<li><code>GET /api/v1/user/count</code></li>
+<li><code>GET /api/v1/user/list</code></li>
+<li><code>GET /api/v1/user/{userId}</code></li>
+</ul>
+</li>
+<li><code>user.post.admin</code>: 授權 client 在系統建立新的使用者。
+<ul>
+<li><code>POST /api/v1/user</code></li>
+</ul>
+</li>
+<li><code>user.patch.admin</code>: 授權 client 修改系統任意使用者的資料。
+<ul>
+<li><code>PATCH /api/v1/user/{userId}</code></li>
+</ul>
+</li>
+<li><code>user.delete.admin</code>: 授權 client 刪除系統任意使用者的資料。
+<ul>
+<li><code>DELETE /api/v1/user/{userId}</code></li>
+</ul>
+</li>
+<li><code>client.get</code>: 授權 client 存取得系統所有客戶端資料。
+<ul>
+<li><code>GET /api/v1/client/count</code></li>
+<li><code>GET /api/v1/client/list</code></li>
+<li><code>GET /api/v1/client/{clientId}</code></li>
+</ul>
+</li>
+<li><code>client.post</code>: 授權 client 在系統建立新的客戶端。
+<ul>
+<li><code>POST /api/v1/client</code></li>
+</ul>
+</li>
+<li><code>client.patch</code>: 授權 client 修改系統任意客戶端的資料。
+<ul>
+<li><code>PATCH /api/v1/client/{clientId}</code></li>
+</ul>
+</li>
+<li><code>client.delete</code>: 授權 client 刪除系統任意客戶端的資料。
+<ul>
+<li><code>DELETE /api/v1/client/{clientId}</code></li>
+</ul>
+</li>
+<li><code>client.delete.user</code>: 授權 client 刪除系統任意使用者的所有客戶端。
+<ul>
+<li><code>DELETE /api/v1/client/user/{userId}</code></li>
+</ul>
+</li>
+</ul>
+</li>
+<li>舉例，在您的服務定義如下的 scope：
+<ul>
+<li><code>api.admin</code>: 僅能授權移除使用者的所有客戶端。</li>
+<li><code>api.rw</code>: 可以讀寫除了 <code>DELETE /api/v1/client/user/{userId}</code> 的所有 API。</li>
+<li><code>api.readonly</code>： 只能存取 GET API。</li>
+<li>取得令牌資料和登出，這兩個動作開放所有客戶端可以使用。</li>
+</ul>
+<pre><code>&quot;auth&quot;: {
+    ...
+    &quot;apiScopes&quot;: {
+        &quot;auth.tokeninfo.get&quot;: [],
+        &quot;auth.logout.post&quot;: [],
+        &quot;user.get&quot;: [&quot;api.rw&quot;, &quot;api.readonly&quot;],
+        &quot;user.patch&quot;: [&quot;api.rw&quot;],
+        &quot;user.post.admin&quot;: [&quot;api.rw&quot;],
+        &quot;user.get.admin&quot;: [&quot;api.rw&quot;, &quot;api.readonly&quot;],
+        &quot;user.patch.admin&quot;: [&quot;api.rw&quot;],
+        &quot;user.delete.admin&quot;: [&quot;api.rw&quot;],
+        &quot;client.post&quot;: [&quot;api.rw&quot;],
+        &quot;client.get&quot;: [&quot;api.rw&quot;, &quot;api.readonly&quot;],
+        &quot;client.patch&quot;: [&quot;api.rw&quot;],
+        &quot;client.delete&quot;: [&quot;api.rw&quot;],
+        &quot;client.delete.user&quot;: [&quot;api.admin&quot;],
+    },
+    ...
+}
+</code></pre>
+<ul>
+<li>以這個例子，註冊的客戶端可以任意勾選這三種 scope。之後使用者會在授權頁面得知這些訊息，並且決定是否授權客戶端。</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<h2 id="消息代理服務broker"><a class="header" href="#消息代理服務broker">消息代理服務（broker）</a></h2>
+<div class="table-wrapper"><table><thead><tr><th>JSON5</th><th>命令列參數</th><th>環境變數</th><th>預設值</th><th>說明</th></tr></thead><tbody>
+<tr><td>broker.auth</td><td>broker.auth</td><td>BROKER_AUTH</td><td>http://localhost:1080/auth</td><td>認證服務位址</td></tr>
+<tr><td>broker.db.engine</td><td>broker.db.engine</td><td>BROKER_DB_ENGINE</td><td>sqlite</td><td>使用的資料庫種類</td></tr>
+<tr><td>broker.db.mongodb.url</td><td>broker.db.mongodb.url</td><td>BROKER_DB_MONGODB_URL</td><td>mongodb://localhost:27017</td><td>MongoDB 連線的 URL</td></tr>
+<tr><td>broker.db.mongodb.database</td><td>broker.db.mongodb.database</td><td>BROKER_DB_MONGODB_DATABASE</td><td>auth</td><td>MongoDB 資料庫名稱</td></tr>
+<tr><td>broker.db.mongodb.poolSize</td><td>broker.db.mongodb.poolsize</td><td>BROKER_DB_MONGODB_POOLSIZE</td><td></td><td>MongoDB 最大連線數量</td></tr>
+<tr><td>broker.db.sqlite.path</td><td>broker.db.sqlite.path</td><td>BROKER_DB_SQLITE_PATH</td><td>auth.db</td><td>SQLite 檔案位置</td></tr>
+<tr><td>broker.cache.engine</td><td>broker.cache.engine</td><td>BROKER_CACHE_ENGINE</td><td>none</td><td>使用的快取種類</td></tr>
+<tr><td>broker.cache.memory.device</td><td>broker.cache.memory.device</td><td>BROKER_CACHE_MEMORY_DEVICE</td><td>1,000,000</td><td>Memory 對裝置的快取數量</td></tr>
+<tr><td>broker.cache.memory.deviceRoute</td><td>broker.cache.memory.device-route</td><td>BROKER_CACHE_MEMORY_DEVICE_ROUTE</td><td>1,000,000</td><td>Memory 對裝置路由的快取數量</td></tr>
+<tr><td>broker.cache.memory.networkRoute</td><td>broker.cache.memory.network-route</td><td>BROKER_CACHE_MEMORY_NETWORK_ROUTE</td><td>1,000,000</td><td>Memory 對網路路由的快取數量</td></tr>
+<tr><td>broker.mq.prefetch</td><td>broker.mq.prefetch</td><td>BROKER_MQ_PREFETCH</td><td>100</td><td>AMQP 消費者最大同時消費的數量</td></tr>
+<tr><td>broker.mq.sharedPrefix</td><td>broker.mq.sharedprefix</td><td>BROKER_MQ_SHAREDPREFIX</td><td>$share/sylvia-iot-broker/</td><td>MQTT shared subscription 的前綴</td></tr>
+<tr><td>broker.mqChannels.unit.url</td><td>broker.mq-channels.unit.url</td><td>BROKER_MQCHANNELS_UNIT_URL</td><td>amqp://localhost</td><td>單位的控制訊息位址</td></tr>
+<tr><td>broker.mqChannels.unit.prefetch</td><td>broker.mq-channels.unit.prefetch</td><td>BROKER_MQCHANNELS_UNIT_PREFETCH</td><td>100</td><td>單位的控制訊息 AMQP 消費者最大同時消費的數量</td></tr>
+<tr><td>broker.mqChannels.application.url</td><td>broker.mq-channels.application.url</td><td>BROKER_MQCHANNELS_APPLICATION_URL</td><td>amqp://localhost</td><td>應用的控制訊息位址</td></tr>
+<tr><td>broker.mqChannels.application.prefetch</td><td>broker.mq-channels.application.prefetch</td><td>BROKER_MQCHANNELS_APPLICATION_PREFETCH</td><td>100</td><td>應用的控制訊息 AMQP 消費者最大同時消費的數量</td></tr>
+<tr><td>broker.mqChannels.network.url</td><td>broker.mq-channels.network.url</td><td>BROKER_MQCHANNELS_NETWORK_URL</td><td>amqp://localhost</td><td>單位的控制訊息位址</td></tr>
+<tr><td>broker.mqChannels.network.prefetch</td><td>broker.mq-channels.network.prefetch</td><td>BROKER_MQCHANNELS_NETWORK_PREFETCH</td><td>100</td><td>單位的控制訊息 AMQP 消費者最大同時消費的數量</td></tr>
+<tr><td>broker.mqChannels.device.url</td><td>broker.mq-channels.device.url</td><td>BROKER_MQCHANNELS_DEVICE_URL</td><td>amqp://localhost</td><td>裝置的控制訊息位址</td></tr>
+<tr><td>broker.mqChannels.device.prefetch</td><td>broker.mq-channels.device.prefetch</td><td>BROKER_MQCHANNELS_DEVICE_PREFETCH</td><td>100</td><td>裝置的控制訊息 AMQP 消費者最大同時消費的數量</td></tr>
+<tr><td>broker.mqChannels.deviceRoute.url</td><td>broker.mq-channels.device-route.url</td><td>BROKER_MQCHANNELS_DEVICE_ROUTE_URL</td><td>amqp://localhost</td><td>裝置路由的控制訊息位址</td></tr>
+<tr><td>broker.mqChannels.deviceRoute.prefetch</td><td>broker.mq-channels.device-route.prefetch</td><td>BROKER_MQCHANNELS_DEVICE_ROUTE_PREFETCH</td><td>100</td><td>裝置路由的控制訊息 AMQP 消費者最大同時消費的數量</td></tr>
+<tr><td>broker.mqChannels.networkRoute.url</td><td>broker.mq-channels.network-route.url</td><td>BROKER_MQCHANNELS_NETWORK_ROUTE_URL</td><td>amqp://localhost</td><td>網路路由的控制訊息位址</td></tr>
+<tr><td>broker.mqChannels.networkRoute.prefetch</td><td>broker.mq-channels.network-route.prefetch</td><td>BROKER_MQCHANNELS_NETWORK_ROUTE_PREFETCH</td><td>100</td><td>網路路由的控制訊息 AMQP 消費者最大同時消費的數量</td></tr>
+<tr><td>broker.mqChannels.data.url</td><td>broker.mq-channels.data.url</td><td>BROKER_MQCHANNELS_DATA_URL</td><td></td><td>資料訊息位址</td></tr>
+<tr><td>broker.db.apiScopes</td><td>broker.api-scopes</td><td>BROKER_API_SCOPES</td><td></td><td>API 權限設定</td></tr>
+</tbody></table>
+</div>
+<h3 id="詳細說明-2"><a class="header" href="#詳細說明-2">詳細說明</a></h3>
+<ul>
+<li>
+<p>指定認證服務位址（<code>broker.auth</code>）的用意在檢查呼叫 API 的令牌的合法性，包含使用者帳號與客戶端。</p>
+</li>
+<li>
+<p>MQ channels:</p>
+<ul>
+<li>由於 Sylvia-IoT 訊息代理服務是決定效能的關鍵模組，會將許多設定放在記憶體中。這些設定需要透過 <strong>控制訊息（control channel message）</strong> 將 API 變更的內容透過訊息佇列傳遞到叢集的各個執行個體中。
+<ul>
+<li>相關訊息請見 <a href="guide/../arch/cache.html"><strong>快取</strong></a> 章節。</li>
+</ul>
+</li>
+<li><strong>data</strong> 是 <strong>資料訊息（data channel message）</strong>，將所有資料記錄到 <strong>sylvia-iot-data</strong> 模組中。
+<ul>
+<li>不指定參數（或是 JSON5 設定 <strong>null</strong>）就會不儲存任何資料。</li>
+<li>相關訊息請見 <a href="guide/../arch/flow.html"><strong>資料流</strong></a> 章節。</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>
+<p>API scopes: 請參考<strong>認證服務</strong>的說明。</p>
+</li>
+</ul>
+<h2 id="核心管理服務coremgr"><a class="header" href="#核心管理服務coremgr">核心管理服務（coremgr）</a></h2>
+<div class="table-wrapper"><table><thead><tr><th>JSON5</th><th>命令列參數</th><th>環境變數</th><th>預設值</th><th>說明</th></tr></thead><tbody>
+<tr><td>coremgr.auth</td><td>coremgr.auth</td><td>COREMGR_AUTH</td><td>http://localhost:1080/auth</td><td>認證服務位址</td></tr>
+<tr><td>coremgr.broker</td><td>coremgr.broker</td><td>COREMGR_BROKER</td><td>http://localhost:2080/broker</td><td>訊息代理服務位址</td></tr>
+<tr><td>coremgr.mq.engine.amqp</td><td>coremgr.mq.engine.amqp</td><td>COREMGR_MQ_ENGINE_AMQP</td><td>rabbitmq</td><td>AMQP 種類</td></tr>
+<tr><td>coremgr.mq.engine.mqtt</td><td>coremgr.mq.engine.mqtt</td><td>COREMGR_MQ_ENGINE_MQTT</td><td>emqx</td><td>MQTT 種類</td></tr>
+<tr><td>coremgr.mq.rabbitmq.username</td><td>coremgr.mq.rabbitmq.username</td><td>COREMGR_MQ_RABBITMQ_USERNAME</td><td>guest</td><td>RabbitMQ 管理者帳號</td></tr>
+<tr><td>coremgr.mq.rabbitmq.password</td><td>coremgr.mq.rabbitmq.password</td><td>COREMGR_MQ_RABBITMQ_PASSWORD</td><td>guest</td><td>RabbitMQ 管理者密碼</td></tr>
+<tr><td>coremgr.mq.rabbitmq.ttl</td><td>coremgr.mq.rabbitmq.ttl</td><td>COREMGR_MQ_RABBITMQ_TTL</td><td></td><td>RabbitMQ 預設佇列訊息存活長度（秒）</td></tr>
+<tr><td>coremgr.mq.rabbitmq.length</td><td>coremgr.mq.rabbitmq.length</td><td>COREMGR_MQ_RABBITMQ_LENGTH</td><td></td><td>RabbitMQ 預設佇列訊息最多個數</td></tr>
+<tr><td>coremgr.mq.rabbitmq.hosts</td><td>coremgr.mq.rabbitmq.hosts</td><td>COREMGR_MQ_RABBITMQ_HOSTS</td><td></td><td>（保留）</td></tr>
+<tr><td>coremgr.mq.emqx.apiKey</td><td>coremgr.mq.emqx.apikey</td><td>COREMGR_MQ_EMQX_APIKEY</td><td></td><td>EMQX 管理 API key</td></tr>
+<tr><td>coremgr.mq.emqx.apiSecret</td><td>coremgr.mq.emqx.apisecret</td><td>COREMGR_MQ_EMQX_APISECRET</td><td></td><td>EMQX 管理 API secret</td></tr>
+<tr><td>coremgr.mq.emqx.hosts</td><td>coremgr.mq.emqx.hosts</td><td>COREMGR_MQ_EMQX_HOSTS</td><td></td><td>（保留）</td></tr>
+<tr><td>coremgr.mq.rumqttd.mqttPort</td><td>coremgr.mq.rumqttd.mqtt-port</td><td>COREMGR_MQ_RUMQTTD_MQTT_PORT</td><td>1883</td><td>rumqttd MQTT 連接埠</td></tr>
+<tr><td>coremgr.mq.rumqttd.mqttsPort</td><td>coremgr.mq.rumqttd.mqtts-port</td><td>COREMGR_MQ_RUMQTTD_MQTTS_PORT</td><td>8883</td><td>rumqttd MQTTS 連接埠</td></tr>
+<tr><td>coremgr.mq.rumqttd.consolePort</td><td>coremgr.mq.rumqttd.console-port</td><td>COREMGR_MQ_RUMQTTD_CONSOLE_PORT</td><td>18083</td><td>rumqttd 管理 API 連接埠</td></tr>
+<tr><td>coremgr.mqChannels.data.url</td><td>coremgr.mq-channels.data.url</td><td>COREMGR_MQCHANNELS_DATA_URL</td><td></td><td>資料訊息位址</td></tr>
+</tbody></table>
+</div>
+<h3 id="詳細說明-3"><a class="header" href="#詳細說明-3">詳細說明</a></h3>
+<ul>
+<li>MQ channels:
+<ul>
+<li><strong>data</strong> 是 <strong>資料訊息（data channel message）</strong>
+<ul>
+<li>目前 coremgr 支援紀錄 GET API 以外的 HTTP 請求內容，開啟資料通道即可紀錄 API 使用歷程。</li>
+<li>不指定參數（或是 JSON5 設定 <strong>null</strong>）就會不儲存任何資料。</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<h2 id="核心管理服務管理介面coremgr-cli"><a class="header" href="#核心管理服務管理介面coremgr-cli">核心管理服務管理介面（coremgr-cli）</a></h2>
+<div class="table-wrapper"><table><thead><tr><th>JSON5</th><th>命令列參數</th><th>環境變數</th><th>預設值</th><th>說明</th></tr></thead><tbody>
+<tr><td>coremgrCli.auth</td><td>coremgr-cli.auth</td><td>COREMGRCLI_AUTH</td><td>http://localhost:1080/auth</td><td>認證服務位址</td></tr>
+<tr><td>coremgrCli.coremgr</td><td>coremgr-cli.coremgr</td><td>COREMGRCLI_COREMGR</td><td>http://localhost:3080/coremgr</td><td>核心管理服務位址</td></tr>
+<tr><td>coremgrCli.data</td><td>coremgr-cli.data</td><td>COREMGRCLI_DATA</td><td>http://localhost:4080/data</td><td>資料服務位址</td></tr>
+<tr><td>coremgrCli.clientId</td><td>coremgr-cli.client-id</td><td>COREMGRCLI_CLIENT_ID</td><td></td><td>命令列客戶端 ID</td></tr>
+<tr><td>coremgrCli.redirectUri</td><td>coremgr-cli.redirect-uri</td><td>COREMGRCLI_REDIRECT_URI</td><td></td><td>命令列客戶端重轉向網址</td></tr>
+</tbody></table>
+</div>
+<h2 id="資料服務data"><a class="header" href="#資料服務data">資料服務（data）</a></h2>
+<div class="table-wrapper"><table><thead><tr><th>JSON5</th><th>命令列參數</th><th>環境變數</th><th>預設值</th><th>說明</th></tr></thead><tbody>
+<tr><td>data.auth</td><td>data.auth</td><td>DATA_AUTH</td><td>http://localhost:1080/auth</td><td>認證服務位址</td></tr>
+<tr><td>data.broker</td><td>data.broker</td><td>DATA_BROKER</td><td>http://localhost:2080/broker</td><td>訊息代理服務位址</td></tr>
+<tr><td>data.db.engine</td><td>data.db.engine</td><td>DATA_DB_ENGINE</td><td>sqlite</td><td>使用的資料庫種類</td></tr>
+<tr><td>data.db.mongodb.url</td><td>data.db.mongodb.url</td><td>DATA_DB_MONGODB_URL</td><td>mongodb://localhost:27017</td><td>MongoDB 連線的 URL</td></tr>
+<tr><td>data.db.mongodb.database</td><td>data.db.mongodb.database</td><td>DATA_DB_MONGODB_DATABASE</td><td>data</td><td>MongoDB 資料庫名稱</td></tr>
+<tr><td>data.db.mongodb.poolSize</td><td>data.db.mongodb.poolsize</td><td>DATA_DB_MONGODB_POOLSIZE</td><td></td><td>MongoDB 最大連線數量</td></tr>
+<tr><td>data.db.sqlite.path</td><td>data.db.sqlite.path</td><td>DATA_DB_SQLITE_PATH</td><td>data.db</td><td>SQLite 檔案位置</td></tr>
+<tr><td>data.mqChannels.broker.url</td><td>data.mq-channels.broker.url</td><td>DATA_MQCHANNELS_BROKER_URL</td><td>amqp://localhost</td><td>資料訊息位址</td></tr>
+<tr><td>data.mqChannels.broker.prefetch</td><td>data.mq-channels.broker.prefetch</td><td>DATA_MQCHANNELS_BROKER_PREFETCH</td><td>100</td><td>資料訊息 AMQP 消費者最大同時消費的數量</td></tr>
+<tr><td>data.mqChannels.broker.sharedPrefix</td><td>data.mq-channels.broker.sharedprefix</td><td>DATA_MQCHANNELS_BROKER_SHAREDPREFIX</td><td>$share/sylvia-iot-data/</td><td>MQTT shared subscription 的前綴</td></tr>
+<tr><td>data.mqChannels.coremgr.url</td><td>data.mq-channels.coremgr.url</td><td>DATA_MQCHANNELS_COREMGR_URL</td><td>amqp://localhost</td><td>資料訊息位址</td></tr>
+<tr><td>data.mqChannels.coremgr.prefetch</td><td>data.mq-channels.coremgr.prefetch</td><td>DATA_MQCHANNELS_COREMGR_PREFETCH</td><td>100</td><td>資料訊息 AMQP 消費者最大同時消費的數量</td></tr>
+<tr><td>data.mqChannels.coremgr.sharedPrefix</td><td>data.mq-channels.coremgr.sharedprefix</td><td>DATA_MQCHANNELS_COREMGR_SHAREDPREFIX</td><td>$share/sylvia-iot-data/</td><td>MQTT shared subscription 的前綴</td></tr>
+</tbody></table>
+</div><div style="break-before: page; page-break-before: always;"></div><h1 id="內部架構"><a class="header" href="#內部架構">內部架構</a></h1>
+<p>本章內容：</p>
+<ul>
+<li>詳解 Sylvia-IoT 的各個元件。</li>
+<li>了解上行資料（uplink）與下行資料（downlink）的流程。</li>
+<li>介紹快取的機制。</li>
+</ul>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="架構"><a class="header" href="#架構">架構</a></h1>
+<p><img src="arch/arch.svg" alt="Architecture" /></p>
+<p>上面是 Sylvia-IoT 元件的示意圖。這章節我們將逐一解釋。</p>
+<h2 id="sylvia-iot-核心元件"><a class="header" href="#sylvia-iot-核心元件">Sylvia-IoT 核心元件</a></h2>
+<p>簡稱 ABCD（笑 😊）</p>
+<h3 id="auth-sylvia-iot-auth"><a class="header" href="#auth-sylvia-iot-auth">Auth (sylvia-iot-auth)</a></h3>
+<ul>
+<li>用途
+<ul>
+<li>為 HTTP API 提供令牌（access token）的合法性和資訊，讓 API 可以決定是否授權此令牌存取。</li>
+<li>提供 OAuth2 的授權機制，目前支援下列流程：
+<ul>
+<li>Authorization code grant flow
+<ul>
+<li>客戶端需使用 webview 顯示登入和授權頁面。</li>
+<li>目前 coremgr CLI 使用此流程。</li>
+</ul>
+</li>
+<li>Client credentials grant flow
+<ul>
+<li>目前保留此功能。</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>管理的實體
+<ul>
+<li>使用者帳號
+<ul>
+<li>使用者基本資料。</li>
+<li>權限（role）。</li>
+</ul>
+</li>
+<li>客戶端
+<ul>
+<li>HTTP API 的存取權限（scope）。</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>相依性
+<ul>
+<li>無。可獨立運作。</li>
+</ul>
+</li>
+</ul>
+<h3 id="broker-sylvia-iot-broker"><a class="header" href="#broker-sylvia-iot-broker">Broker (sylvia-iot-broker)</a></h3>
+<ul>
+<li>用途
+<ul>
+<li>管理和裝置相關的實體。</li>
+<li>綁定裝置和應用、轉發裝置資料給應用，或是接收應用發出的資料給裝置。</li>
+<li>（可選）將流經的網路、應用資料全部透過資料通道（data channel）送給 <strong>Data 服務</strong> 儲存或分析。</li>
+</ul>
+</li>
+<li>管理的實體
+<ul>
+<li>單位
+<ul>
+<li>由一個擁有者和多個成員組成。</li>
+<li>可以獨立管理裝置、應用、網路、路由（綁定）規則。</li>
+</ul>
+</li>
+<li>應用
+<ul>
+<li>解析裝置資料並依據需求分析數據和呈現結果。</li>
+</ul>
+</li>
+<li>網路
+<ul>
+<li>可以使用直接與 Sylvia-IoT 介面連接的服務，也可以使用連接器（adapter）將目前既有的網路服務（如 <a href="https://www.thethingsnetwork.org/"><strong>The Things Network (TTN)</strong></a> 或是 <a href="https://www.chirpstack.io/"><strong>ChirpStack</strong></a> 等）連接到 Slvia-IoT。</li>
+<li>一個網路位址可以用來傳輸一個裝置的資料。</li>
+<li>管理員（admin role）可以建立公用的網路。</li>
+</ul>
+</li>
+<li>裝置
+<ul>
+<li>每一個裝置表示一種終端的應用，比如追蹤器、電錶、感應器等。</li>
+<li>裝置需依附於一個網路下的網路位址才能傳輸資料。
+<ul>
+<li>可以將裝置依附於公用網路中，但需要透過管理員帳號（admin/manager roles）才能設定。</li>
+<li>每一個裝置有唯一的識別碼（device ID），應用如果依靠的是此識別碼，即使變更網路和位址，都可以無需變更應用的管理。</li>
+</ul>
+</li>
+<li>每一個裝置可以依據資料內容，給定一個裝置設定檔（profile）。
+<ul>
+<li>透過 profile，應用就可以快速解析資料而無需建立識別碼的對應表了。</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>路由規則
+<ul>
+<li>將裝置綁定到應用。
+<ul>
+<li>可以多對多。</li>
+</ul>
+</li>
+<li>將網路綁定到應用，所有該網路下的裝置都會被路由，亦即無須一台一台綁定。
+<ul>
+<li>可以多對多。</li>
+<li>不可以綁定公用網路。</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>相依性
+<ul>
+<li>需依賴 Auth 服務</li>
+</ul>
+</li>
+</ul>
+<h3 id="coremgr-sylvia-iot-coremgr"><a class="header" href="#coremgr-sylvia-iot-coremgr">Coremgr (sylvia-iot-coremgr)</a></h3>
+<ul>
+<li>用途
+<ul>
+<li>coremgr 即 core manager，負責管理 Sylvia-IoT 核心的元件。</li>
+<li>提供主要的 HTTP API 給外部直接存取。
+<ul>
+<li>Auth 僅開放認證／授權 API。使用者和客戶端管理仍需使用 coremgr API。</li>
+<li>透過橋接的方式間接使用 Auth、Broker HTTP API 來管理各種實體。</li>
+</ul>
+</li>
+<li>透過 management API 設定 RabbitMQ/EMQX 等訊息代理來建立佇列和對應的權限。
+<ul>
+<li>Broker 只負責管理實體間的關聯和 AMQP/MQTT 的連線，實際的 RabbitMQ/EMQX 的設定是靠 coremgr 進行設定。</li>
+</ul>
+</li>
+<li>（可選）將操作紀錄，包含新增、修改、刪除等，透過資料通道（data channel）送給 <strong>Data 服務</strong> 儲存或分析。</li>
+</ul>
+</li>
+<li>管理的實體
+<ul>
+<li>（無）</li>
+</ul>
+</li>
+<li>相依性
+<ul>
+<li>需依賴 Auth、Broker 服務。</li>
+<li>需依賴訊息代理的 management API。</li>
+</ul>
+</li>
+</ul>
+<h3 id="coremgr-cli-sylvia-iot-coremgr-cli"><a class="header" href="#coremgr-cli-sylvia-iot-coremgr-cli">Coremgr CLI (sylvia-iot-coremgr-cli)</a></h3>
+<ul>
+<li>用途
+<ul>
+<li>提供命令列介面（CLI）給使用者透過指令來設定 Sylvia-IoT。</li>
+</ul>
+</li>
+<li>相依性
+<ul>
+<li>需依賴 Auth、Coremgr 服務。Auth 僅使用認證／授權部分。</li>
+<li>可以相依 Data 服務來讀取歷史資料。</li>
+</ul>
+</li>
+</ul>
+<h3 id="控制通道-control-channal-vs-資料通道-data-channel"><a class="header" href="#控制通道-control-channal-vs-資料通道-data-channel">控制通道 (Control Channal) vs. 資料通道 (Data Channel)</a></h3>
+<ul>
+<li>控制通道用來傳輸實體（使用者、單位、裝置等）管理的訊息。一般分為：
+<ul>
+<li>Unicast（單播），一個訊息只有一個消費者，用於 Sylvia-IoT 推送訊息給網路或應用的時候。這個會在稍後的 <a href="arch/./flow.html"><strong>資料流</strong></a> 章節說明。</li>
+<li>Broadcast（廣播），用來廣播給 Sylvia-IoT 叢集中的各個核心程序。這個會在稍後的 <a href="arch/./cache.html"><strong>快取</strong></a> 章節說明。</li>
+</ul>
+</li>
+<li>資料通道用來傳輸裝置資料或歷史資料。
+<ul>
+<li>泛指 Application Data、Network Data、Coremgr OP Data。</li>
+<li>目前實作了 AMQP 0-9-1、MQTT 3.1.1 協議。也可以實作 AMQP 1.0、Kafka、NATS 等。</li>
+</ul>
+</li>
+</ul>
+<h4 id="general-mq"><a class="header" href="#general-mq">general-mq</a></h4>
+<p>Sylvia-IoT 使用 <a href="https://crates.io/crates/general-mq"><strong>general-mq</strong></a> 實現 unicast 和 broadcast，並隱藏了通訊協議的細節。</p>
+<p>只要在 general-mq 實作 AMQP 1.0、Kafka 等協議的 unicast/broadcast 模式，並在 coremgr 實作對應的 management API，即可讓 Sylvia-IoT 支援更多協議。</p>
+<h3 id="data-sylvia-iot-data"><a class="header" href="#data-sylvia-iot-data">Data (sylvia-iot-data)</a></h3>
+<ul>
+<li>用途
+<ul>
+<li>紀錄或分析資料通道中的資料。</li>
+</ul>
+</li>
+</ul>
+<p>這個模組比較特別的地方在於沒有特定的實作。目前 Sylvia-IoT Core 的 <strong>sylvia-iot-data</strong> 提供了原始資料的儲存和讀取。</p>
+<p>以下列出可以延伸的場景：</p>
+<ul>
+<li>規則引擎（rule engine）。
+<ul>
+<li>由於資料通道含有所有網路資料，可以將 Data 模組實作為一般 IoT 平台常見的規則引擎。</li>
+</ul>
+</li>
+<li>流處理（stream processing）。
+<ul>
+<li>可以將資料通道實作成 Kafka 佇列，進行流處理。</li>
+</ul>
+</li>
+</ul>
+<h2 id="訊息代理服務-message-brokers"><a class="header" href="#訊息代理服務-message-brokers">訊息代理服務 (Message Brokers)</a></h2>
+<blockquote>
+<p>這裡的訊息代理指的是 RabbitMQ、EMQX 等服務，不是 Sylvia-IoT Broker。
+除非特別強調 RabbitMQ、EMQX 等，本文件的「Broker」泛指 Sylvia-IoT Broker。</p>
+</blockquote>
+<p>幾個注意事項：</p>
+<ul>
+<li>由於 coremgr 需要透過 management API 設定佇列，必須提供相關的實作才能支援。目前 coremgr 支援的訊息代理服務如下：
+<ul>
+<li>RabbitMQ</li>
+<li>EMQX</li>
+<li>未來可以實作 Kafka 或其他協議，讓 Sylvia-IoT 的應用可以更廣泛。</li>
+</ul>
+</li>
+<li>Sylvia-IoT 的需求有以下模式：
+<ul>
+<li>Message queuing，即傳統的訊息模式（一個訊息只有一個消費者）。
+<ul>
+<li>MQTT 透過 shared subscription 實作。</li>
+</ul>
+</li>
+<li>Publish/Subscribe（推播／訂閱），用作控制通道（control channel）的廣播訊息。在 <a href="arch/./cache.html"><strong>快取</strong></a> 的章節會介紹。
+<ul>
+<li>AMQP 透過 fanout exchage 和 temorary queue 實作。</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<h3 id="rumqttd"><a class="header" href="#rumqttd">rumqttd</a></h3>
+<p>在 <a href="arch/../guide/quick.html"><strong>快速開始</strong></a> 章節中，我們使用了 <strong>sylvia-iot-core</strong> 作為範例。這個可執行檔本身包含了完整的 Auth/Broker/Coremgr/Data，以及 rumqttd。</p>
+<p>為了在小容量的環境也可以執行，<strong>sylvia-iot-core</strong> 內含了 <a href="https://github.com/bytebeamio/rumqtt"><strong>rumqttd</strong></a> MQTT broker。
+只要配合設定，就可以用 SQLite 作為資料庫，搭配 MQTT 傳遞訊息，以兩個檔案的規模，實現完整的 Sylvia-IoT 的功能。</p>
+<blockquote>
+<p>core 是集結完整功能的可執行檔。而 coremgr 只有管理部分，且不含 rumqttd。</p>
+</blockquote>
+<p>為了因應這個受限的環境，Sylvia-IoT 才採用了 rumqttd。
+Sylvia-IoT 目前沒有實作 rumqttd management API，請勿使用於叢集架構（cluster）。有佇列權限需求者也不建議使用這模式。</p>
+<h2 id="第三方元件-3rd-party-components"><a class="header" href="#第三方元件-3rd-party-components">第三方元件 (3rd Party Components)</a></h2>
+<h3 id="application-servers-network-servers"><a class="header" href="#application-servers-network-servers">Application Servers, Network Servers</a></h3>
+<p>應用和網路除了使用資料通道的訊息收送裝置資料，也可以透過客戶端存取 Sylvia-IoT HTTP API 和控制通道的訊息來打造自己的管理系統。</p>
+<h3 id="devices"><a class="header" href="#devices">Devices</a></h3>
+<p>裝置一般都和網路模組綁定；而 Sylvia-IoT 的「裝置」是指狹義的終端裝置，只處理應用所需要的資料。至於網路模組的部分是可以抽換的。</p>
+<p>舉個抽換網路模組的例子，假如裝置是使用樹莓派連接感應器進行特定的應用開發，網路的部分可以用 USB 隨時變更成不同的協議（LoRa 換成 WiFi，甚至是接網路線）。
+在 Sylvia-IoT 只需要修改裝置對應的網路和位址即可。</p>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="資料流"><a class="header" href="#資料流">資料流</a></h1>
+<p>本章節介紹 Sylvia-IoT 如何處理資料流，包含以下幾種：</p>
+<ul>
+<li>上行資料（uplink），裝置→應用。</li>
+<li>下行資料（downlink），應用→裝置。</li>
+<li>控制通道，Broker→網路。</li>
+<li>Coremgr 操作資料（operation），紀錄系統操作歷程。</li>
+</ul>
+<h2 id="上行資料-uplink"><a class="header" href="#上行資料-uplink">上行資料 (Uplink)</a></h2>
+<p><img src="arch/flow-uplink.svg" alt="Uplink" /></p>
+<p>當裝置的資料透過網路服務送到對應的佇列後，資料會以如下的方式被送至應用端：</p>
+<ol>
+<li>如格式正確，繼續下一步；否則直接丟棄。</li>
+<li>Broker 先直接將資料送往 Data 元件（透過佇列），以儲存完整的上行資料內容。</li>
+<li>掃描所有的裝置路由，並進行以下的動作：
+<ul>
+<li>送往對應應用的佇列。</li>
+<li>將送往應用的資料儲存到 Data 元件。</li>
+</ul>
+</li>
+<li>掃描所有的網路路由，並進行以下的動作：
+<ul>
+<li>比對是否已經在裝置路由階段就已發送。有就進行下一個網路路由動作，沒有就繼續以下動作。</li>
+<li>送往對應應用的佇列。</li>
+<li>將送往應用的資料儲存到 Data 元件。</li>
+</ul>
+</li>
+</ol>
+<blockquote>
+<p>步驟 4 的比對的動作，目的在於避免裝置路由與網路路由出現重疊的時候，造成重複發送的行為。</p>
+</blockquote>
+<h2 id="下行資料-downlink"><a class="header" href="#下行資料-downlink">下行資料 (Downlink)</a></h2>
+<p><img src="arch/flow-downlink.svg" alt="Downlink" /></p>
+<p>當應用服務將要送給裝置的資料發送到佇列後，資料會以如下的方式被送至裝置對應的網路服務：</p>
+<ol>
+<li>如格式正確，繼續下一步；否則透過 <code>resp</code> 佇列回應錯誤訊息。</li>
+<li>檢查目的裝置是否屬於該單位，如果是，繼續下一步；否則透過 <code>resp</code> 佇列回應錯誤訊息。</li>
+<li>將此資料新增 ID（唯一識別碼）作為獨立資料，然後送到 Data 元件儲存。</li>
+<li>在資料庫保留這筆資料的 ID 和來源的應用，便於日後回報這筆資料的傳送結果給應用服務。</li>
+<li>將資料（含資料 ID）發送到網路服務的佇列。</li>
+<li>如果發送到網路服務的佇列，將此資料的 ID 回報給應用服務，來追蹤傳送的結果。</li>
+</ol>
+<blockquote>
+<p>相較於上行資料，下行資料稍微複雜。主要的難題在於 <strong>要回報傳送的結果</strong>。</p>
+</blockquote>
+<p>Broker 沒有保留 <code>resp</code> 佇列讓網路服務回報資料的正確性，原因在 Broker 作為基礎設施，內容一定是正確的！
+網路服務只要專注於將資料送往裝置，並回報最後的結果即可。即使 Broker 送過去的資料已經無效，網路服務直接透過 <code>result</code> 佇列回報即可。</p>
+<p><img src="arch/flow-downlink-result.svg" alt="Downlink-Result" /></p>
+<p>當資料處理完成（無論成功與否），網路服務 <strong>必須</strong> 使用資料 ID 來回報給 Broker。順序如下：</p>
+<ol>
+<li>如格式正確，繼續下一步；否則直接丟棄。</li>
+<li>透過 ID，向 Data 元件提交結果的更新要求。</li>
+<li>抓取該 ID 所屬的應用服務資訊，並將結果回報給發送此下行資料的應用程式（確保其他應用不會收到）。</li>
+<li>如果步驟 3 成功，清除資料庫中的 ID 資訊。</li>
+</ol>
+<blockquote>
+<p>使用額外的 ID 資料庫的目的在於保留下行資料的來源應用，畢竟由應用 A 發送的資料，為什麼應用 B 要收到結果呢 😊？</p>
+</blockquote>
+<h2 id="控制通道-control-channel"><a class="header" href="#控制通道-control-channel">控制通道 (Control Channel)</a></h2>
+<p><img src="arch/flow-ctrl.svg" alt="Ctrl" /></p>
+<p>Broker 或是 coremgr 提供 API 可以讓網路服務隨時更新裝置的資料。不過靠著定期請求 API 來同步的效率不佳，且可能因為頻繁請求，影響路由的效能。
+Broker 提供了一個機制，當裝置資料有變更的時候，在 <code>broker.network.[單位代碼].[網路代碼].ctrl</code> 提供資訊給對應的網路服務。</p>
+<p>Sylvia-IoT 允許裝置變更依附的網路或是位址。當這個操作發生的時候，依據不同情境，網路服務會收到如下的訊息：</p>
+<ul>
+<li>從網路 A 變更為網路 B
+<ul>
+<li>通知網路 A，有一個特定位址被移除。</li>
+<li>通知網路 B，有一個特定位址被新增。</li>
+</ul>
+</li>
+<li>在網路 A 中變更位址
+<ul>
+<li>通知網路 A，有一個特定位址被移除。</li>
+<li>通知網路 A，有一個特定位址被新增。</li>
+</ul>
+</li>
+</ul>
+<h2 id="操作紀錄-operation-data"><a class="header" href="#操作紀錄-operation-data">操作紀錄 (Operation Data)</a></h2>
+<p><img src="arch/flow-opdata.svg" alt="OpData" /></p>
+<p>Coremgr 有一個可選的設定，用來儲存所有的系統操作紀錄（當然限定 coremgr HTTP API）。目前的範圍是 POST/PUT/PATCH/DELETE 等。</p>
+<p>如上圖，coremgr 會在 API 操作完畢後，記錄下列的資料：</p>
+<ul>
+<li>請求時間</li>
+<li>回應時間</li>
+<li>處理時間</li>
+<li>HTTP 狀態</li>
+<li>來源 IP 位址</li>
+<li>HTTP method</li>
+<li>（可選）HTTP 請求 body
+<ul>
+<li>會過濾 <code>data.password</code> 的內容。當請求中有 <code>password</code> 欄位時，會將其內容清空。保留 key 是為了提示此請求有修改密碼的動作。</li>
+</ul>
+</li>
+<li>使用者 ID</li>
+<li>客戶端 ID</li>
+</ul>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="快取"><a class="header" href="#快取">快取</a></h1>
+<p>在 <a href="arch/flow.html"><strong>資料流</strong></a> 章節的介紹，可以知道 Broker 最主要的任務就是「比對路由規則並轉發」。
+一般來說路由規則放在資料庫中，因此比對的速度將會成為關鍵瓶頸所在。尤其在同時間要轉發成千上萬筆資料的時候，對資料庫的壓力更是不言而喻。</p>
+<p>眾所周知，要減輕資料庫的最佳方案就是快取，而 Redis 是目前相當流行的一個解決方案。</p>
+<p>Sylvia-IoT 從最初的設計就希望能盡量簡單、盡可能同時採用最少的技術種類（您可以只使用 SQLite 和 MQTT 就運行完整的 Sylvia-IoT 功能）。
+在快取技術上，使用了程序記憶體（in-process-memory）的方案，也就是將資料儲存在程序本身的變數中，比對的過程無需使用網路和 IPC，直接存取自身的變數即可。</p>
+<blockquote>
+<p>目前 Broker 使用 <code>std::collections::HashMap</code> 實作。</p>
+</blockquote>
+<p><img src="arch/cache.svg" alt="Cache" /></p>
+<p>上圖簡介了 Sylvia-IoT 的快取機制。為了滿足叢集架構，引入了 broadcast 佇列實作 <strong>控制通道 (Control Channel)</strong>。
+為了保持資料的正確性，先更新資料庫，然後才更新快取。以下我們簡述步驟：</p>
+<ol>
+<li>使用者透過 HTTP API 修改路由規則。</li>
+<li>和正常的 API 實作一樣，直接操作資料庫。</li>
+<li>在 HTTP 回應前，先發送一個更新訊息到控制通道。內容含有必要的更新的資料（名稱等非必要的內容就不在其中）。</li>
+<li>在回應 HTTP 的同時，控制通道會向叢集中的所有程序發送更新訊息。</li>
+<li>程序收到後，變更變數的內容。</li>
+</ol>
+<blockquote>
+<p>為了簡單，目前的實作大多是刪除快取資料（步驟 3 的內容是刪除動作），然後利用 cache-miss 填補內容。</p>
+</blockquote>
+<p>這邊探討幾個特殊狀況：</p>
+<ul>
+<li>Broker 快取的設計採用「最終一致性（eventual consistency）」。在步驟 3 之後，可能還會有短暫的時間採用舊的路由，但是這段時間通常不會太久（幾十或幾百毫秒內，或許更短）。</li>
+<li>為了避免資料不一致，當程序偵測到與控制通道的佇列有重新連線的情形時，會將快取內容完全清空，等 cache-miss 的時候從資料庫讀取資料。</li>
+</ul>
+<blockquote>
+<p><a href="arch/../guide/configuration.html"><strong>設定檔</strong></a> 章節中的 <code>mqChannels</code>，裡面有許多關於各個 API 對應的控制通道設定。</p>
+</blockquote>
+<p>靠著程序內的變數作為快取，正是 Sylvia-IoT Broker 可以做到高效轉發的秘訣唷 😊。</p>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="開發指南"><a class="header" href="#開發指南">開發指南</a></h1>
+<p>本章內容：</p>
+<ul>
+<li>OAuth2 認證流程。</li>
+<li>開發網路服務。</li>
+<li>開發應用服務。</li>
+<li>開發和貢獻 Sylvia-IoT 核心。</li>
+</ul>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="oauth2-認證"><a class="header" href="#oauth2-認證">OAuth2 認證</a></h1>
+<p>Sylvia-IoT 的 HTTP API 需要透過 OAuth2 取得令牌（access token）來存取。以下列出幾種需要使用 OAuth2 認證和取得授權令牌的場景：</p>
+<ul>
+<li>存取 Sylvia-IoT HTTP API</li>
+<li>開發網路、應用需要整合 <strong>sylvia-iot-auth</strong> 的使用者帳號以及令牌認證。</li>
+</ul>
+<p><strong>sylvia-iot-auth</strong> 提供了基本的登入和授權頁面，本章也會描述如何開發自己需要的頁面。</p>
+<h2 id="開始之前"><a class="header" href="#開始之前">開始之前</a></h2>
+<p>在這之前您需要先建立第一個帳號和客戶端。在 <a href="dev/../guide/quick.html"><strong>快速開始</strong></a> 我們建立了如下的資源：</p>
+<ul>
+<li>使用者帳號：名稱是 <strong>admin</strong>，密碼是 <strong>admin</strong>。</li>
+<li>客戶端：ID 是 <strong>public</strong>，重新轉向位址是 <strong>http://localhost:1080/auth/oauth2/redirect</strong>。</li>
+</ul>
+<p>使用 <strong>coremgr-cli</strong> 可以使用上述的資訊取得令牌，如果您想建立自己的帳號和客戶端，除了使用 CLI，以下將說明帳號的細節。</p>
+<ul>
+<li>帳號的部分，密碼是結合了 <strong>鹽</strong>（salt）和 <a href="https://en.wikipedia.org/wiki/PBKDF2"><strong>PBKDF2</strong></a> 加密的結果，迭代次數 <strong>10000</strong>。
+把 <code>salt</code> 和 <code>password</code> 替換成您指定的鹽和雜湊運算後的密碼即可。其他欄位也可以替換成您指定的。</li>
+<li>客戶端的部分，替換 <code>clientId</code> 和 <code>redirectUri</code>。重新導向網址（redirect URI）的部分需要帶入客戶端的位址。
+假如您的服務需要透過 <strong>http://localhost</strong> 或是 <strong>https://network.example.com</strong> 存取，且接收 authorization code 的路徑在 <strong>/network/redirect</strong>，那內容可以填入 <code>[&quot;http://localhost/network/redirect&quot;,&quot;https://network.example.com/network/redirect&quot;]</code>。</li>
+</ul>
+<h2 id="使用瀏覽器和-curl"><a class="header" href="#使用瀏覽器和-curl">使用瀏覽器和 curl</a></h2>
+<p>這裡我們介紹如何登入帳號密碼，並取得會話 ID（session ID）來進入授權頁面取取得令牌，以下範例採用 <a href="dev/../guide/quick.html"><strong>快速開始</strong></a> 建立的帳號和客戶端。</p>
+<p>打開瀏覽器，網址輸入 <code>http://localhost:1080/auth/oauth2/auth?response_type=code&amp;redirect_uri=http%3A%2F%2Flocalhost%3A1080%2Fauth%2Foauth2%2Fredirect&amp;client_id=public</code></p>
+<p>輸入帳號密碼，如果能導向到授權畫面就表示登入成功。此時畫面會印出此客戶端需要使用的 API scope，如果同意就按下 <strong>Accept</strong> 按鈕，接著瀏覽器的網址會呈現如下的樣子（您的內容會有些不同）：</p>
+<pre><code>http://localhost:1080/auth/oauth2/redirect?code=62a801a7d6ceaf2d1018cbac60a6b3d1744295016214bfec6214397d73368278
+</code></pre>
+<p>其中 <code>code</code> 就是 authorization code，請於 30 秒內使用 curl 指令取得令牌：</p>
+<pre><code class="language-shell">curl -X POST http://localhost:1080/auth/oauth2/token -d 'grant_type=authorization_code&amp;code=62a801a7d6ceaf2d1018cbac60a6b3d1744295016214bfec6214397d73368278&amp;redirect_uri=http%3A%2F%2Flocalhost%3A1080%2Fauth%2Foauth2%2Fredirect&amp;client_id=public'
+</code></pre>
+<p>看到以下畫面表示取得令牌（您的內容會有些不同）：</p>
+<pre><code>{&quot;access_token&quot;:&quot;fecc5af17e254e6c5a561b7acc900c8f0449a42e77f07a19261c2e6cff518ec8&quot;,&quot;refresh_token&quot;:&quot;5905fc23f65ca7ed92bc7be74e33fc3e79cd8bce2c9ef2ef1bb368caaf6c07f0&quot;,&quot;token_type&quot;:&quot;bearer&quot;,&quot;expires_in&quot;:3599,&quot;scope&quot;:&quot;&quot;}
+</code></pre>
+<h2 id="使用-curl"><a class="header" href="#使用-curl">使用 curl</a></h2>
+<p>如果您要使用 curl 指令來輔助程式開發，可以使用下面的幾個步驟。先使用以下指令登入並取得 session ID：</p>
+<pre><code class="language-shell">curl -v -X POST http://localhost:1080/auth/oauth2/login -d 'state=response_type%3Dcode%26client_id%3Dpublic%26redirect_uri%3Dhttp%253A%252F%252Flocalhost%253A1080%252Fauth%252Foauth2%252Fredirect&amp;account=admin&amp;password=admin'
+</code></pre>
+<p>看到如下的回應即表示成功（您的內容會有些不同）：</p>
+<pre><code>&lt; HTTP/1.1 302 Found
+&lt; content-length: 0
+&lt; access-control-allow-credentials: true
+&lt; location: /auth/oauth2/authorize?response_type=code&amp;client_id=public&amp;redirect_uri=http%3A%2F%2Flocalhost%3A1080%2Fauth%2Foauth2%2Fredirect&amp;session_id=6643a450b4d678f7d0223fde9e118a2733f1958aa3fc55d616ec278e83d7a06a
+&lt; vary: Origin, Access-Control-Request-Method, Access-Control-Request-Headers
+&lt; access-control-expose-headers: location
+&lt; date: Sat, 15 Jul 2023 04:25:21 GMT
+</code></pre>
+<p>將 <strong>location</strong> 中的 <code>session_id</code> 內容保留，並於 60 秒內帶入下一個 HTTP 請求：</p>
+<pre><code class="language-shell">curl -v -X POST http://localhost:1080/auth/oauth2/authorize -d 'allow=yes&amp;session_id=6643a450b4d678f7d0223fde9e118a2733f1958aa3fc55d616ec278e83d7a06a&amp;client_id=public&amp;response_type=code&amp;redirect_uri=http%3A%2F%2Flocalhost%3A1080%2Fauth%2Foauth2%2Fredirect'
+</code></pre>
+<p>看到如下的回應即表示成功（您的內容會有些不同）：</p>
+<pre><code>&lt; HTTP/1.1 302 Found
+&lt; content-length: 0
+&lt; access-control-allow-credentials: true
+&lt; location: http://localhost:1080/auth/oauth2/redirect?code=eee02ae34b6c93f955ebf244bccec2b7e6534e1a8dc451a2ed92a790be7b14bb
+&lt; vary: Origin, Access-Control-Request-Method, Access-Control-Request-Headers
+&lt; access-control-expose-headers: location
+&lt; date: Sat, 15 Jul 2023 04:40:36 GMT
+</code></pre>
+<p>其中 <strong>location</strong> 中的 <code>code</code> 就是 authorization code，請於 30 秒內使用 curl 指令取得令牌：</p>
+<pre><code class="language-shell">curl -X POST http://localhost:1080/auth/oauth2/token -d 'grant_type=authorization_code&amp;code=eee02ae34b6c93f955ebf244bccec2b7e6534e1a8dc451a2ed92a790be7b14bb&amp;redirect_uri=http%3A%2F%2Flocalhost%3A1080%2Fauth%2Foauth2%2Fredirect&amp;client_id=public'
+</code></pre>
+<p>看到以下畫面表示取得令牌（您的內容會有些不同）：</p>
+<pre><code>{&quot;access_token&quot;:&quot;6994982614dc9f6f2bff08169f7636873531686c34c02fbd6bb45655c8f24b13&quot;,&quot;refresh_token&quot;:&quot;387822850a8fa9a474c413b62a17d9f218204ddcaad51ca475448827b83972fe&quot;,&quot;token_type&quot;:&quot;bearer&quot;,&quot;expires_in&quot;:3599,&quot;scope&quot;:&quot;&quot;}
+</code></pre>
+<h2 id="認證流程的端點endpoint"><a class="header" href="#認證流程的端點endpoint">認證流程的端點（endpoint）</a></h2>
+<ul>
+<li><code>GET /auth/oauth2/auth</code>
+<ul>
+<li>驗證客戶端的基本訊息，成功就重新導向至下一個 endpoint。</li>
+<li>Query 參數：
+<ul>
+<li><code>response_type</code>: 必須為 <code>code</code>。</li>
+<li><code>client_id</code>: 客戶端識別碼。</li>
+<li><code>redirect_uri</code>: 重新導向位址。此位址將是接收 authorization code 的 endpoint。</li>
+<li><code>scope</code>: (<strong>可選</strong>) 希望存取的權限範圍。</li>
+<li><code>state</code>: (<strong>可選</strong>) 會在拿到 authorization code 的時候附上。一般用來保留前一次所在的頁面訊息，供登入後返回用。</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><code>GET /auth/oauth2/login</code>
+<ul>
+<li>顯示帳號登入畫面。</li>
+<li>Query 參數會在前一個步驟後自動帶入。
+<ul>
+<li><code>state</code>: (自動產生)</li>
+</ul>
+</li>
+<li>按下登入按鈕需要觸發下一步的 HTTP 請求。</li>
+</ul>
+</li>
+<li><code>POST /auth/oauth2/login</code>
+<ul>
+<li>登入帳號密碼，成功就重新導向至下一個 endpoint。</li>
+<li>HTTP body 參數：
+<ul>
+<li><code>account</code>: 帳號名稱。</li>
+<li><code>password</code>: 密碼。
+<ul>
+<li>由於使用明碼，建議使用 HTTPS 以及可信任的瀏覽器元件（webview）。</li>
+</ul>
+</li>
+<li><code>state</code>: 前一個步驟中的 state 內容。</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><code>GET /auth/oauth2/authorize</code>
+<ul>
+<li>認證客戶端參數與 session ID，然後顯示客戶端的權限需求。</li>
+<li>Query 參數會在前一個步驟後自動帶入。
+<ul>
+<li>(同 <code>GET /auth/oauth2/auth</code>)</li>
+<li><code>session_id</code>: 此次登入流程的 session ID。目前保留 60 秒。</li>
+</ul>
+</li>
+<li>按下允許或拒絕按鈕需要觸發下一步的 HTTP 請求。</li>
+</ul>
+</li>
+<li><code>POST /auth/oauth2/authorize</code>
+<ul>
+<li>認證客戶端並產生 authorization code。成功或錯誤都會重新導向至客戶端指定的位址。</li>
+<li>HTTP body 參數：
+<ul>
+<li>(同 <code>GET /auth/oauth2/authorize</code> query)</li>
+<li><code>allow</code>: <code>yes</code> 表示允許，其餘表示拒絕。</li>
+</ul>
+</li>
+<li>重新導向的參數：
+<ul>
+<li><code>code</code>: authorization code。需在 30 秒內將此內容帶入下一步的 HTTP 請求中。</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><code>POST /auth/oauth2/token</code>
+<ul>
+<li>認證客戶端資訊以及 authorization code，並產生令牌。</li>
+<li>HTTP body 參數：
+<ul>
+<li><code>grant_type</code>: 必須為 <code>authorization_code</code>。</li>
+<li><code>code</code>: authorization code 的值。</li>
+<li><code>redirect_uri</code>: 客戶端得重新導向位址。</li>
+<li><code>client_id</code>: 客戶端識別碼。</li>
+</ul>
+</li>
+<li>回傳內容：
+<ul>
+<li><code>access_token</code>: 令牌。可存取 Sylvia-IoT HTTP API。</li>
+<li><code>refresh_token</code>: 當令牌失效時，以此重新取得令牌。</li>
+<li><code>token_type</code>: <code>bearer</code>。</li>
+<li><code>expires_in</code>: 過期時間（秒）。</li>
+<li><code>scope</code>: 存取權限範圍。</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><code>POST /auth/oauth2/refresh</code>
+<ul>
+<li>重新取得令牌。</li>
+<li>HTTP body 參數：
+<ul>
+<li><code>grant_type</code>: 必須為 <code>refresh_token</code>。</li>
+<li><code>refresh_token</code>: refresh token 的值。</li>
+<li><code>scope</code>: (<strong>可選</strong>) 存取權限範圍。</li>
+<li><code>client_id</code>: (<strong>可選</strong>) 客戶端識別碼。</li>
+</ul>
+</li>
+<li>回傳內容：同 <code>POST /auth/oauth2/token</code> 的回傳內容。</li>
+</ul>
+</li>
+</ul>
+<h2 id="開發自己的樣板"><a class="header" href="#開發自己的樣板">開發自己的樣板</a></h2>
+<p>參考 <a href="https://github.com/woofdogtw/sylvia-iot-core/blob/main/sylvia-iot-auth/src/routes/oauth2/template.rs"><strong>原始版本</strong></a> 並注意要預留的 Jinja2 變數 <code>{{ }}</code>。</p>
+<p>在帳號登入畫面，請預留以下的變數：</p>
+<ul>
+<li><code>scope_path</code>: 這個用來決定按下「登入」按鈕時要發送 <code>POST /login</code> 請求的位址。
+<ul>
+<li>Sylvia-IoT 的預設是 <code>SCHEME://SERVER_HOST/auth</code>。<code>SCHEME://SERVER_HOST</code> 是 <code>GET /auth</code> 時候的資訊。</li>
+</ul>
+</li>
+<li><code>state</code>: 當 <code>GET /auth</code> 成功時，<strong>sylvia-iot-auth</strong> 會產生 state 內容並帶入樣板中。</li>
+</ul>
+<p>在客戶端授權畫面，請預留以下的變數：</p>
+<ul>
+<li><code>scope_path</code>: 這個用來決定按下「登入」按鈕時要發送 <code>POST /authorize</code> 請求的位址。
+<ul>
+<li>Sylvia-IoT 的預設是 <code>SCHEME://SERVER_HOST/auth</code>。<code>SCHEME://SERVER_HOST</code> 是 <code>POST /login</code> 時候的資訊。</li>
+</ul>
+</li>
+<li>其餘參數請參考前面 endpoint 中 <code>GET /auth/oauth2/authorize</code> 的敘述。</li>
+</ul>
+<p>您可以只實作登入或是授權網頁的內容，並且提供 <a href="dev/../guide/configuration.html"><strong>設定檔</strong></a> 中的下列參數：</p>
+<ul>
+<li><code>auth.db.templates.login</code>: 登入頁面樣板的路徑。</li>
+<li><code>auth.db.templates.grant</code>: 授權頁面樣板的路徑。</li>
+</ul>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="網路服務"><a class="header" href="#網路服務">網路服務</a></h1>
+<p>本章節簡述開發網路服務的幾個要點，包含：</p>
+<ul>
+<li>資料通道 (Data Channel)</li>
+<li>控制通道 (Control Channel)</li>
+<li>Rust 使用 <a href="https://crates.io/crates/sylvia-iot-sdk"><strong>SDK</strong></a> 連接通道</li>
+</ul>
+<p>在開始本章之前，請先確保已經研讀過 <a href="dev/../arch/flow.html"><strong>資料流</strong></a> 章節並了解佇列和相關資料的產生與消費時機。</p>
+<h2 id="佇列與資料格式"><a class="header" href="#佇列與資料格式">佇列與資料格式</a></h2>
+<ul>
+<li>
+<p><a href="https://github.com/woofdogtw/sylvia-iot-core/blob/main/sylvia-iot-broker/doc/message.md#between-broker-and-network"><strong>這份文件</strong></a> 定義了 Broker 與網路服務佇列的資料內容。</p>
+</li>
+<li>
+<p>無論資料通道或控制通道，都是使用單播模式（unicast）。特性如下：</p>
+<ul>
+<li>AMQP 屬性：
+<ul>
+<li>durable: true</li>
+<li>exclusive: false</li>
+<li>auto-delete: false</li>
+<li>ttl: 產生 network 時決定</li>
+<li>max-length: 產生 network 時決定</li>
+</ul>
+</li>
+<li>MQTT 屬性：
+<ul>
+<li>QoS: Broker 端為 1</li>
+<li>clean session: Broker 端為 true</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>
+<p>在 <a href="dev/../arch/flow.html"><strong>資料流</strong></a> 章節有提到，網路服務在處理下行資料時需要保留 <code>dataId</code>，以便後續回報結果。</p>
+<ul>
+<li>對於未回報的下行資料，對 Broker 沒有影響。
+<ul>
+<li>目前只保留一天。如未回報則永遠呈現無為報狀態。</li>
+</ul>
+</li>
+<li>應用服務可以自行決定太久沒有回報的下行資料該如何處理。</li>
+</ul>
+</li>
+<li>
+<p>關於 <code>result</code> 的規則：</p>
+<ul>
+<li>小於 0 表示進行中。
+<ul>
+<li>-2: 表示資料正在往網路服務傳送中。由 Broker 在儲存到資料庫前設定。</li>
+<li>-1: 表示網路服務已經接收到。須由網路服務透過 <code>result</code> 佇列回報 -1。</li>
+</ul>
+</li>
+<li>0 或是正數表示處理完成。此時會從 dldata 資料庫中移除，之後的任何回報都無法再傳回應用端。
+<ul>
+<li>都由網路服務回報。</li>
+<li>0: 成功發送到裝置端，或是裝置端回覆了成功。</li>
+<li>正數: 無法發送到裝置端，或是裝置端回覆了錯誤。</li>
+</ul>
+</li>
+</ul>
+<blockquote>
+<p>由於目前是由網路服務定義結果，應用端仍需知道該裝置目前綁定到哪個網路。建議開發網路服務時，跟著以上的規則，可以讓應用端的呈現更加一致化。</p>
+</blockquote>
+</li>
+</ul>
+<h2 id="rust-使用-sdk"><a class="header" href="#rust-使用-sdk">Rust 使用 SDK</a></h2>
+<p>針對 Rust 開發人員，目前提供了 SDK 協助開發人員開發網路服務，在 <a href="dev/../appendex/repo.html"><strong>附錄</strong></a> 章節也有提供使用範例。這裡介紹幾個使用的技巧：</p>
+<ul>
+<li>通道的維護都寫在 <code>mq</code> 模組中的 <code>NetworkMgr</code> 中。</li>
+<li>一個 <code>NetworkMgr</code> 對應一個網路服務。</li>
+<li>只要管理 <code>NetworkMgr</code> 即可，無需自行管理所有佇列的連線狀態和 AMQP/MQTT 的屬性。</li>
+<li>註冊 <code>EventHandler</code> 可即時於佇列狀態改變或是資料送達時收到。</li>
+<li>可以透過 <code>send_uldata()</code> 和 <code>send_dldata_result()</code> 傳送資料給 Broker。</li>
+</ul>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="應用服務"><a class="header" href="#應用服務">應用服務</a></h1>
+<p>本章節簡述開發應用服務的幾個要點，包含：</p>
+<ul>
+<li>資料通道 (Data Channel)</li>
+<li>Rust 使用 <a href="https://crates.io/crates/sylvia-iot-sdk"><strong>SDK</strong></a> 連接通道</li>
+</ul>
+<p>在開始本章之前，請先確保已經研讀過 <a href="dev/../arch/flow.html"><strong>資料流</strong></a> 章節並了解佇列和相關資料的產生與消費時機。</p>
+<h2 id="佇列與資料格式-1"><a class="header" href="#佇列與資料格式-1">佇列與資料格式</a></h2>
+<ul>
+<li><a href="https://github.com/woofdogtw/sylvia-iot-core/blob/main/sylvia-iot-broker/doc/message.md#between-broker-and-application"><strong>這份文件</strong></a> 定義了 Broker 與應用服務佇列的資料內容。</li>
+<li>資料通道使用單播模式（unicast）。特性如下：
+<ul>
+<li>AMQP 屬性：
+<ul>
+<li>durable: true</li>
+<li>exclusive: false</li>
+<li>auto-delete: false</li>
+<li>ttl: 產生 network 時決定</li>
+<li>max-length: 產生 network 時決定</li>
+</ul>
+</li>
+<li>MQTT 屬性：
+<ul>
+<li>QoS: Broker 端為 1</li>
+<li>clean session: Broker 端為 true</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>在 <a href="dev/../arch/flow.html"><strong>資料流</strong></a> 章節有提到，下行資料透過 <code>dldata</code> 佇列傳送給 Broker 後，Broker 會立即回報結果。
+<ul>
+<li><code>correlationId</code> 建議唯一。如果應用服務同時發送大量的下行資料，就要靠此 correlation ID 才能追蹤每一筆的傳輸是否有被正確送往網路服務。</li>
+<li>如果有成功被處理，將會回應 <code>dataId</code>。應用服務可以透過資料 ID 追蹤這筆下行資料在網路服務的處理情形。</li>
+</ul>
+</li>
+<li>下行資料中，可以選擇使用 <code>deviceId</code> 或是 <code>networkCode</code>+<code>networkAddr</code> 的方式指定目的裝置。
+<ul>
+<li>如果裝置是在 <strong>公用網路</strong> 上，一定要使用 <code>deviceId</code>。Sylvia-IoT 用這方式避免應用服務任意傳輸資料到不屬於他們單位的裝置。</li>
+</ul>
+</li>
+<li>目前還沒有支援控制通道。裝置的變更就要依靠應用服務自行請求 Sylvia-IoT HTTP API，或是自己維護裝置的列表。</li>
+</ul>
+<h2 id="rust-使用-sdk-1"><a class="header" href="#rust-使用-sdk-1">Rust 使用 SDK</a></h2>
+<p>針對 Rust 開發人員，目前提供了 SDK 協助開發人員開發應用服務，在 <a href="dev/../appendex/repo.html"><strong>附錄</strong></a> 章節也有提供使用範例。這裡介紹幾個使用的技巧：</p>
+<ul>
+<li>通道的維護都寫在 <code>mq</code> 模組中的 <code>ApplicationMgr</code> 中。</li>
+<li>一個 <code>ApplicationMgr</code> 對應一個應用服務。</li>
+<li>只要管理 <code>ApplicationMgr</code> 即可，無需自行管理所有佇列的連線狀態和 AMQP/MQTT 的屬性。</li>
+<li>註冊 <code>EventHandler</code> 可即時於佇列狀態改變或是資料送達時收到。</li>
+<li>可以透過 <code>send_dldata()</code> 傳送資料給 Broker。</li>
+</ul>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="sylvia-iot-核心"><a class="header" href="#sylvia-iot-核心">Sylvia-IoT 核心</a></h1>
+<p>如果您對 Sylvia-IoT 有興趣，且希望能開發核心（就是 ABCD 😊）的相關功能，本章節將介紹一些程式碼的結構和注意事項。</p>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="目錄結構"><a class="header" href="#目錄結構">目錄結構</a></h1>
+<p>這裡說明 Sylvia-IoT 各個元件的目錄和檔案的編排結構。</p>
+<pre><code>[project]/
+├── doc/
+│   ├── api.md
+│   ├── cache.md
+│   ├── message.md
+│   └── schema.md
+├── src/
+│   ├── bin/
+│   │   ├── [project].rs
+│   │   ├── [bin1].rs
+│   │   ├── [bin2].rs
+│   │   └── ...
+│   ├── libs/
+│   │   ├── config..rs
+│   │   ├── [lib1]/
+│   │   ├── [lib2].rs
+│   │   └── ...
+│   ├── models/
+│   │   ├── [engine1]/
+│   │   │   ├── [table1].rs
+│   │   │   ├── [table2].rs
+│   │   │   └── ...
+│   │   ├── [engine2]/
+│   │   │   ├── [table1].rs
+│   │   │   ├── [table2].rs
+│   │   │   └── ...
+│   │   ├── [table1].rs
+│   │   ├── [table2].rs
+│   │   └── ...
+│   └── routes/
+│       ├── v1/
+│       │   ├── [api1]/
+│       │   │   ├── api.rs
+│       │   │   ├── request.rs
+│       │   │   └── response.rs
+│       │   ├── [api2]/
+│       │   │   ├── api.rs
+│       │   │   ├── request.rs
+│       │   │   └── response.rs
+│       │   └── ...
+│       ├── v2/
+│       ├── [non-versioned-api]/
+│       ├── ...
+│       └── middleware.rs
+├── tests/
+│   ├── libs/
+│   │   ├── config..rs
+│   │   ├── [lib1]/
+│   │   ├── [lib2].rs
+│   │   └── ...
+│   ├── models/
+│   │   ├── [engine1]/
+│   │   │   ├── [table1].rs
+│   │   │   ├── [table2].rs
+│   │   │   └── ...
+│   │   ├── [engine2]/
+│   │   │   ├── [table1].rs
+│   │   │   ├── [table2].rs
+│   │   │   └── ...
+│   │   ├── [table1].rs
+│   │   ├── [table2].rs
+│   │   └── ...
+│   └── routes/
+│       ├── v1/
+│       │   ├── [api1]/
+│       │   │   ├── api.rs
+│       │   │   ├── request.rs
+│       │   │   └── response.rs
+│       │   ├── [api2]/
+│       │   │   ├── api.rs
+│       │   │   ├── request.rs
+│       │   │   └── response.rs
+│       │   └── ...
+│       ├── v2/
+│       ├── [non-versioned-api]/
+│       ├── ...
+│       └── middleware.rs
+├── Cargo.toml
+├── LICENSE
+└── README.md
+</code></pre>
+<p>這邊列出幾個要點：</p>
+<ul>
+<li><code>bin</code>: 要有一個和專案同名的 rs 檔案。</li>
+<li><code>doc</code>: 完整的文件要放在這。</li>
+<li><code>libs</code>: 資料庫、API 以外的放在這裡。</li>
+<li><code>models</code>: 以表格為主的設計，並使用資料庫引擎區隔。</li>
+<li><code>routes</code>: HTTP API 的實作。
+<ul>
+<li>除了實作標準 API，如 OAuth2，其他都需要用版本來區隔。</li>
+</ul>
+</li>
+<li><code>tests</code>: 和 <code>src</code> 一一對應。</li>
+</ul>
+<h2 id="相依性"><a class="header" href="#相依性">相依性</a></h2>
+<ul>
+<li>libs、models 不相依其他資料夾。</li>
+<li>routes
+<ul>
+<li>整個專案程式碼的初始化集中在 <code>routes/mod.rs</code>。</li>
+<li>除了可以讓 main.rs 做最少的事情，也能增加整合測試的覆蓋範圍。</li>
+</ul>
+</li>
+<li>models 內部的模組彼此不相依。如有共用功能，請在父模組實現然後引用。routes 內部的模組亦同。</li>
+</ul>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="程式碼風格"><a class="header" href="#程式碼風格">程式碼風格</a></h1>
+<h2 id="使用-rustfmt"><a class="header" href="#使用-rustfmt">使用 rustfmt</a></h2>
+<p>所有檔案請 <strong>一定</strong> 要使用 <code>rustfmt</code> 格式化。這邊建議使用 VSCode 搭配 <strong>rust-analyzer 擴充</strong> 來撰寫程式碼。</p>
+<h2 id="mvc-vs-微服務"><a class="header" href="#mvc-vs-微服務">MVC vs. 微服務</a></h2>
+<p>本人習慣 bottom-up 的開發模式。使用像是 MVC 這樣將資料庫設計為底層的通用介面、並且由 API 上層依據其所需呼叫來實現各種功能，比較符合本人習慣的風格。
+這就是 <code>models</code>、<code>routes</code> 的由來。</p>
+<p>不過在設計整個 Sylvia-IoT 平台時，也是盡可能朝向模組化的方向進行，於是採用了微服務的方式設計（就是 ABCD），並且嚴格遵守樹狀相依的原則。</p>
+<p>即使是微服務的架構，如前一章節 <a href="dev/dir.html"><strong>目錄結構</strong></a> 所述，只要 main.rs 引用了需要的 routes，依舊可以編譯成單一可執行檔並放在一台機器中執行。
+這樣的設計優點在於部署的方式可以很靈活，比如：</p>
+<ul>
+<li>單體：單一機器執行單一 all-in-one 可執行檔。</li>
+<li>微服務叢集：將各個元件獨立運行在各個機器中，且每個元件可以自己架設叢集。</li>
+<li>單體叢集：將 all-in-one 運作在多台機器中，形成叢集的架構。</li>
+</ul>
+<p>Sylvia-IoT 就是集 MVC 與微服務於一身的設計 😊。</p>
+<h2 id="檔案內容編排"><a class="header" href="#檔案內容編排">檔案內容編排</a></h2>
+<p>每一個 rs 的檔案內容會以如下的方式編排，每一個區塊之間要有空白行隔開：</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use rust_builtin_modules;
+
+use 3rd_party_modules;
+
+use sylvia_iot_modules;
+
+use crate_modules;
+
+pub struct PubStructEnums {}
+
+struct PrvStructEnums {}
+
+pub const PUB_CONSTANTS;
+
+const PRV_CONSTANTS;
+
+pub pub_static_vars;
+
+static prv_static_vars;
+
+impl PubStructEnums {}
+
+pub fn pub_funcs {}
+
+impl PrvStructEnums {}
+
+fn prv_funcs {}
+<span class="boring">}</span></code></pre></pre>
+<p>大致上的順序就是：</p>
+<ul>
+<li>引用模組</li>
+<li>結構</li>
+<li>常數</li>
+<li>變數</li>
+<li>函數（包含結構的函數實作）</li>
+</ul>
+<p>而其中又以 <code>pub</code> 放在 private 前面。</p>
+<h2 id="model"><a class="header" href="#model">Model</a></h2>
+<p>Model 層必須提供統一的 struct 以及 trait 介面。
+Sylvia-IoT 設計理念中，「任意抽換」是一個相當重視的概念。要盡可能讓使用者於不同的場景下選擇合適的實作。</p>
+<h3 id="資料庫設計"><a class="header" href="#資料庫設計">資料庫設計</a></h3>
+<p>在提供 CRUD 的順序須遵守以下規則：</p>
+<ul>
+<li>count</li>
+<li>list</li>
+<li>get</li>
+<li>add</li>
+<li>upsert</li>
+<li>update</li>
+<li>del</li>
+</ul>
+<p>幾個注意事項：</p>
+<ul>
+<li><strong>count</strong> 與 <strong>list</strong> 需提供一致的參數，讓 API 和 UI 呈現的時候可以用一致的方式呼叫 count 和 list。</li>
+<li>不可以在 model 中使用 logger，需要回傳 error 由上層來印出訊息。
+<ul>
+<li>當有多個 API 呼叫同一個 model，無法從 model 中印出的錯誤訊息判斷是由誰呼叫的。</li>
+</ul>
+</li>
+<li>當取不到資料的時候，要回 <code>None</code> 或是空的 <code>Vec</code>，而不是 <code>Error</code>。</li>
+<li>只要能滿足「複雜查詢」條件的資料庫，都應該要可以使用相同的 trait 介面實作。
+<ul>
+<li>SQL、MongoDB 等皆符合此要求。</li>
+<li>Redis 無法設計為資料庫形式。</li>
+</ul>
+</li>
+</ul>
+<h3 id="快取設計"><a class="header" href="#快取設計">快取設計</a></h3>
+<ul>
+<li>能滿足低複雜度的 <strong>key-value</strong> 讀寫者，都要可以使用相同的 trait 介面實作。
+<ul>
+<li>Redis、程式語言的 map 都符合此要求。</li>
+<li>SQL、MongoDB 等也可以透過查詢單一條件來實現。當系統不想安裝太多種工具時，使用 SQL、MongoDB 的快取介面實作也是允許的。</li>
+</ul>
+</li>
+</ul>
+<h2 id="routeshttp-api"><a class="header" href="#routeshttp-api">Routes（HTTP API）</a></h2>
+<p>這邊提供 API 的文件和實作上需要遵守的規則。</p>
+<h3 id="動詞順序"><a class="header" href="#動詞順序">動詞順序</a></h3>
+<ul>
+<li>POST</li>
+<li>GET /count</li>
+<li>GET /list</li>
+<li>GET</li>
+<li>PUT</li>
+<li>PATCH</li>
+<li>DELETE</li>
+</ul>
+<h3 id="路徑"><a class="header" href="#路徑">路徑</a></h3>
+<ul>
+<li><code>/[project]/api/v[version]/[function]</code></li>
+<li><code>/[project]/api/v[version]/[function]/[op]</code></li>
+<li><code>/[project]/api/v[version]/[function]/{id}</code></li>
+</ul>
+<p>上面有個歧義處：<code>[op]</code> 和 <code>{id}</code>。前者是固定的行為，後者是會變動的對象 ID。設計 ID 的時候要盡量避免與行為的名稱衝突。</p>
+<blockquote>
+<p>使用 Actix Web 掛載路由的時候，須將固定的 <code>[op]</code> 放在變數 <code>{id}</code> 的前面。</p>
+</blockquote>
+<p>這邊舉 Broker 的 <a href="https://github.com/woofdogtw/sylvia-iot-core/blob/main/sylvia-iot-broker/doc/api.md#contents"><strong>Device API</strong></a> 為例子：</p>
+<pre><code>- Device APIs
+    - POST /broker/api/v1/device                Create device
+    - POST /broker/api/v1/device/bulk           Bulk creating devices
+    - POST /broker/api/v1/device/bulk-delete    Bulk deleting devices
+    - GET  /broker/api/v1/device/count          Device count
+    - GET  /broker/api/v1/device/list           Device list
+    - GET  /broker/api/v1/device/{deviceId}     Get device information
+</code></pre>
+<p>可以看見 POST 同時有建立單一、建立多筆、刪除多筆的行為，其中 <strong>bulk</strong>、<strong>bulk-delete</strong>、<strong>count</strong>、<strong>list</strong> 就是前述的 <code>[op]</code>。
+而裝置 ID 的設計上要避免和 <strong>count</strong> 和 <strong>list</strong> 衝突。</p>
+<h3 id="函數命名"><a class="header" href="#函數命名">函數命名</a></h3>
+<p><code>api.rs</code> 的函數命名方式如下：</p>
+<pre><code>fn [method]_[function]_[op]() {}
+</code></pre>
+<p>一樣舉剛才的 device API 為例子，函數會以下面的方式命名：</p>
+<pre><code>fn post_device() {}
+fn post_device_bulk() {}
+fn post_device_bulk_del() {}
+fn get_device_count() {}
+fn get_device_list() {}
+fn get_device() {}
+</code></pre>
+<h3 id="請求與回應命名"><a class="header" href="#請求與回應命名">請求與回應命名</a></h3>
+<p>路徑變數、query、 request body 定義在 <code>request.rs</code> 中；response body 則是定義在 <code>response.rs</code> 中。命名如下（注意大小寫）：</p>
+<pre><code>struct [Id]Path {}
+struct [Method][Function]Body {}
+struct Get[Function]Query {}
+</code></pre>
+<p>舉例如下：</p>
+<pre><code>struct DeviceIdPath {}      // /device/{deviceId}
+struct PostDeviceBody {}
+struct GetDeviceListQuery {}
+</code></pre>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="撰寫測試"><a class="header" href="#撰寫測試">撰寫測試</a></h1>
+<p>Sylvia-IoT 採用 BDD 模式撰寫整合測試，框架則是選擇仿照 <a href="https://mochajs.org/"><strong>Mocha</strong></a> 的 <a href="https://enokson.github.io/laboratory/"><strong>laboratory</strong></a>。</p>
+<p>本章節將針對 libs、models、routes 描述撰寫測試時的原則和技巧。</p>
+<h2 id="teststate"><a class="header" href="#teststate">TestState</a></h2>
+<p><code>TestState</code> 結構用來作為 <code>SpecContext()</code> 的參數。保存幾種變數：</p>
+<ul>
+<li>長期存在，且只需初始化一次或很少次的。如 <code>runtime</code>、<code>mongodb</code> 等。</li>
+<li>需要確保在 <code>after</code> 被釋放的資源。由於測試項目都可能在執行到一半的時候離開，一定要記得在 <code>after</code> 釋放。</li>
+</ul>
+<h2 id="libs"><a class="header" href="#libs">libs</a></h2>
+<ul>
+<li>簡單的函數可以直接測試輸入、輸出。</li>
+<li>在測試前務必先啟動把所需的基礎設施，比如 RabbitMQ、EMQX 等。</li>
+<li>需要架設服務的複雜場景，可以在 <code>before</code> 建立服務（比如佇列的連線），並於 <code>after</code> 釋放。</li>
+</ul>
+<h2 id="models"><a class="header" href="#models">models</a></h2>
+<ul>
+<li>在測試前務必先啟動 MongoDB、Redis 等資料庫。</li>
+<li>撰寫測試的順序為 R、C、U、D。
+<ul>
+<li><strong>R</strong>: 使用 <code>mongodb</code>、<code>sqlx</code> 等原生套件建立測試資料集，然後測試 model 的 get、count、list 的結果。</li>
+<li><strong>C</strong>: 使用 model 的 add、upsert 等函數建立資料，並且使用 get 驗證內容的正確性。</li>
+<li><strong>U</strong>: 使用 model 的 add、upsert 等函數建立測試資料集，接著用 update 修改資料，最後使用 get 來驗證結果。</li>
+<li><strong>D</strong>: 使用 model 的 add、upsert 等函數建立測試資料集，接著用 delete 修改資料，最後使用 get 來驗證結果。</li>
+<li>先測試 <strong>R</strong> 的功能，用意在撰寫 C、U、D 的時候可以使用統一的程式碼來撰寫測試項目，看看同一個邏輯是否可以在每一種資料庫引擎都是一樣的結果。之後引進新的引擎時，就可以寫最少的測試程式碼進行測試。</li>
+</ul>
+</li>
+<li>在 <code>after</code> 刪除的時候使用原生的套件進行。因為在測試前無法保證 D 相關的功能都已經正確被實作和測試。</li>
+</ul>
+<h2 id="routes"><a class="header" href="#routes">routes</a></h2>
+<ul>
+<li>雖然可以使用 Actix Web 的 <code>test::init_service()</code> 作為虛擬服務，但 middleware 或是 API bridge 背後所需要的服務，都需要先用 thread 啟動。</li>
+<li>可以使用 model trait 介面進行測試資料集的初始化，以及作為 API 請求後的資料檢查。</li>
+<li>可以使用 model delete 在 <code>after</code> 時候刪除測試資料。</li>
+</ul>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="附錄"><a class="header" href="#附錄">附錄</a></h1>
+<p>本章內容：</p>
+<ul>
+<li>使用資源的來源。</li>
+<li>一些輔助的專案。</li>
+</ul>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="資料來源"><a class="header" href="#資料來源">資料來源</a></h1>
+<h2 id="圖片"><a class="header" href="#圖片">圖片</a></h2>
+<p>本文件的圖示來源有以下幾個：</p>
+<ul>
+<li><a href="https://draw.io">draw.io</a></li>
+<li><a href="https://www.svgrepo.com/">SVG Repo</a></li>
+<li><a href="https://hub.docker.com/_/emqx">EMQX</a>
+<ul>
+<li>由於 SVG Repo 找不到，架構圖的 EMQX 圖示就從 Docker Hub 複製使用。</li>
+</ul>
+</li>
+</ul>
+<blockquote>
+<p>如有侵權煩請 <a href="mailto:woofdogtw@hotmail.com"><strong>來信</strong></a> 告知。</p>
+</blockquote>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="輔助專案"><a class="header" href="#輔助專案">輔助專案</a></h1>
+<ul>
+<li><a href="https://github.com/woofdogtw/sylvia-iot-core/tree/main/sylvia-router">sylvia-router</a>
+<ul>
+<li>整合 auth/broker/coremgr/data 的基本路由器。</li>
+<li>支援多 WAN interface 和單一 LAN bridge。</li>
+<li>（可選）支援 WiFi WAN 和 WiFi LAN。</li>
+</ul>
+</li>
+<li><a href="https://github.com/woofdogtw/sylvia-iot-core/tree/main/stress-simple">stress-simple</a>
+<ul>
+<li>簡易的壓力程式，可以測試 Broker 的轉發速度。</li>
+<li>提供最大、最小、平均值、P50/P80/P90/P95/P98/P99 的延遲數據。</li>
+</ul>
+</li>
+<li><a href="https://github.com/woofdogtw/sylvia-iot-examples">sylvia-iot-examples</a>
+<ul>
+<li>使用 SDK 實作的應用和網路範例。</li>
+<li><strong>lora-ifroglab</strong>
+<ul>
+<li><a href="http://www.ifroglab.com/en/?p=6536">iFrogLab LoRa USB Dongle</a></li>
+<li>實作對應的網路服務並直接和裝置端對送。</li>
+</ul>
+</li>
+<li><strong>app-demo</strong>: 接收 lora-ifroglab 裝置的感應器資料並顯示。有溫度、濕度、RSSI 等。</li>
+</ul>
+</li>
+<li><a href="https://github.com/woofdogtw/sylvia-iot-simple-ui">sylvia-iot-simple-ui</a>
+<ul>
+<li>提供簡易的 Sylvia-IoT UI。</li>
+<li><strong>coremgr-cli</strong> 提供完整的功能，UI 依據畫面排版提供必要的操作功能。</li>
+<li>除了 auth/broker/coremgr/data，還整合了 router 和 examples。</li>
+</ul>
+</li>
+<li><a href="https://github.com/woofdogtw/sylvia-iot-deployment">sylvia-iot-deployment</a>
+<ul>
+<li>提供部署的方案，如 K8S 等。</li>
+</ul>
+</li>
+</ul>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+
+            </nav>
+
+        </div>
+
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+
+        <script src="elasticlunr.min.js"></script>
+        <script src="mark.min.js"></script>
+        <script src="searcher.js"></script>
+
+        <script src="clipboard.min.js"></script>
+        <script src="highlight.js"></script>
+        <script src="book.js"></script>
+
+        <!-- Custom JS scripts -->
+
+        <script>
+        window.addEventListener('load', function() {
+            window.setTimeout(window.print, 100);
+        });
+        </script>
+
+    </div>
+    </body>
+</html>
