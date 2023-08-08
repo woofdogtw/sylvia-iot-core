@@ -18,6 +18,7 @@
         - [Directory Structure](dev/dir.md)
         - [Code Style](dev/style.md)
         - [Writing Tests](dev/testing.md)
+    - [Cross-Platform Compilation](dev/cross.md)
 - [Appendix](appendex/README.md)
     - [Data Sources](appendex/source.md)
     - [Supplementary Projects](appendex/repo.md)

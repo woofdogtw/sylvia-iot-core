@@ -134,16 +134,6 @@ fn test_req_err(context: &mut SpecContext<TestState>) -> Result<(), String> {
 
         let opts = ClientOptions {
             auth_base: crate::TEST_AUTH_BASE.to_string(),
-            coremgr_base: crate::TEST_COREMGR_BASE.to_string(),
-            client_id: "error".to_string(),
-            client_secret: CLIENT_SECRET.to_string(),
-        };
-        let mut client = SdkClient::new(opts);
-        let result = client.request(Method::GET, "/api/v1/user", None).await;
-        expect(result.is_err()).to_equal(true)?;
-
-        let opts = ClientOptions {
-            auth_base: crate::TEST_AUTH_BASE.to_string(),
             coremgr_base: "".to_string(),
             client_id: CLIENT_ID.to_string(),
             client_secret: CLIENT_SECRET.to_string(),

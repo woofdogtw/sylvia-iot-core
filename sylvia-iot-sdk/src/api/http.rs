@@ -15,11 +15,12 @@
 //! async fn main() {
 //!     let opts = ClientOptions {
 //!         auth_base: "http://localhost:1080/auth".to_string(),
+//!         coremgr_base: "http://localhost:1080/coremgr".to_string(),
 //!         client_id: "ADAPTER_CLIENT_ID".to_string(),
 //!         client_secret: "ADAPTER_CLIENT_SECRET".to_string(),
 //!     };
 //!     let mut client = Client::new(opts);
-//!     let url = "http://localhost:1080/coremgr/api/v1/user";
+//!     let url = "/api/v1/user";
 //!     match client.request(Method::GET, url, None).await {
 //!         Err(e) => {
 //!             // Handle error.

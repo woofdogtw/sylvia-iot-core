@@ -10,6 +10,7 @@
 //! - uldata: device uplink data from the network to the broker.
 //! - dldata: downlink data from the broker to the network.
 //! - dldata-result: the data process result from the network.
+//! - ctrl: the control messages from the broker to the network
 
 use std::{
     collections::HashMap,

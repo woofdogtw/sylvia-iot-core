@@ -18,6 +18,7 @@
         - [目錄結構](dev/dir.md)
         - [程式碼風格](dev/style.md)
         - [撰寫測試](dev/testing.md)
+    - [跨平台編譯](dev/cross.md)
 - [附錄](appendex/README.md)
     - [資料來源](appendex/source.md)
     - [輔助專案](appendex/repo.md)
