@@ -17,5 +17,8 @@
     - 提供簡易的 Sylvia-IoT UI。
     - **coremgr-cli** 提供完整的功能，UI 依據畫面排版提供必要的操作功能。
     - 除了 auth/broker/coremgr/data，還整合了 router 和 examples。
+- [sylvia-iot-go](https://github.com/woofdogtw/sylvia-iot-go)
+    - Go 實作的元件。
+    - 含有 **general-mq**、**sdk** 等。
 - [sylvia-iot-deployment](https://github.com/woofdogtw/sylvia-iot-deployment)
     - 提供部署的方案，如 K8S 等。

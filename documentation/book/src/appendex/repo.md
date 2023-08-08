@@ -19,5 +19,8 @@
     - **coremgr-cli** provides complete functionality, and the UI provides necessary operational
       functions based on the screen layout.
     - In addition to auth/broker/coremgr/data, it also integrates router and examples.
+- [sylvia-iot-go](https://github.com/woofdogtw/sylvia-iot-go)
+    - Components implemented in Go.
+    - Includes **general-mq**, **sdk**, etc.
 - [sylvia-iot-deployment](https://github.com/woofdogtw/sylvia-iot-deployment)
     - Provides deployment solutions, such as K8S, and more.

@@ -136,7 +136,6 @@ use test1
 db.user.insertOne({
   userId: 'admin',
   account: 'admin',
-  email: 'admin',
   createdAt: new Date(),
   modifiedAt: new Date(),
   verifiedAt: new Date(),

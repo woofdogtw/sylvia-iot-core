@@ -5,6 +5,38 @@
 Please make sure to **ALWAYS** use `rustfmt` to format all files. We recommend using VSCode with the
 **rust-analyzer extension** for writing code.
 
+Below is the author's development environment for your reference:
+
+- VSCode Extensions
+    - **CodeLLDB** (Vadim Chugunov)
+    - **crates** (Seray Uzgur)
+    - **Docker** (Microsoft)
+    - **GitHub Actions** (Mathieu Dutour)
+    - **rust-analyzer** (The Rust Programming Language)
+    - **YAML** (Red Hat)
+- VSCode Settings
+    ```json
+    {
+        "crates.listPreReleases": true,
+        "editor.formatOnSave": true,
+        "editor.renderWhitespace": "all",
+        "editor.roundedSelection": false,
+        "editor.tabSize": 4,
+        "files.eol": "\n",
+        "rust-analyzer.inlayHints.chainingHints.enable": false,
+        "rust-analyzer.inlayHints.closingBraceHints.enable": false,
+        "rust-analyzer.inlayHints.parameterHints.enable": false,
+        "rust-analyzer.inlayHints.typeHints.enable": false,
+        "rust-analyzer.server.extraEnv": {
+            "RUSTFLAGS": "-C instrument-coverage"
+        }
+    }
+    ```
+
+    > The use of the `-C instrument-coverage` environment variable is due to the author's need to generate coverage reports during testing. Adding this variable prevents recompilation triggered by saving and running tests. Below is the command for running tests:
+    >
+    > `RUSTFLAGS="-C instrument-coverage" cargo test -p $PROJ --test integration_test -- --nocapture`
+
 ## MVC vs. Microservices
 
 I prefer a bottom-up development approach. Using an architecture like MVC, which designs the

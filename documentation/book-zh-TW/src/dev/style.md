@@ -4,6 +4,38 @@
 
 所有檔案請 **一定** 要使用 `rustfmt` 格式化。這邊建議使用 VSCode 搭配 **rust-analyzer 擴充** 來撰寫程式碼。
 
+以下提供筆者的開發環境供大家參考：
+
+- VSCode 擴充
+    - **CodeLLDB** (Vadim Chugunov)
+    - **crates** (Seray Uzgur)
+    - **Docker** (Microsoft)
+    - **GitHub Actions** (Mathieu Dutour)
+    - **rust-analyzer** (The Rust Programming Language)
+    - **YAML** (Red Hat)
+- VSCode 設定
+    ```json
+    {
+        "crates.listPreReleases": true,
+        "editor.formatOnSave": true,
+        "editor.renderWhitespace": "all",
+        "editor.roundedSelection": false,
+        "editor.tabSize": 4,
+        "files.eol": "\n",
+        "rust-analyzer.inlayHints.chainingHints.enable": false,
+        "rust-analyzer.inlayHints.closingBraceHints.enable": false,
+        "rust-analyzer.inlayHints.parameterHints.enable": false,
+        "rust-analyzer.inlayHints.typeHints.enable": false,
+        "rust-analyzer.server.extraEnv": {
+            "RUSTFLAGS": "-C instrument-coverage"
+        }
+    }
+    ```
+
+    > 使用 `-C instrument-coverage` 環境變數，是因為筆者執行測試需要產生覆蓋率報告，添加這個可以避免存檔和測試觸發重新編譯。下面是測試的指令：
+    >
+    > `RUSTFLAGS="-C instrument-coverage" cargo test -p $PROJ --test integration_test -- --nocapture`
+
 ## MVC vs. 微服務
 
 本人習慣 bottom-up 的開發模式。使用像是 MVC 這樣將資料庫設計為底層的通用介面、並且由 API 上層依據其所需呼叫來實現各種功能，比較符合本人習慣的風格。
