@@ -213,6 +213,10 @@ impl GmqQueue for AmqpQueue {
             }
         };
 
+        let mut prop = BasicProperties::default();
+        if self.opts.reliable {
+            prop.with_persistence(true);
+        }
         let mut args = match self.opts.reliable {
             false => BasicPublishArguments::default(),
             true => BasicPublishArguments {
@@ -226,9 +230,7 @@ impl GmqQueue for AmqpQueue {
             args.routing_key(self.opts.name.clone());
         }
 
-        channel
-            .basic_publish(BasicProperties::default(), payload, args)
-            .await?;
+        channel.basic_publish(prop, payload, args).await?;
         Ok(())
     }
 }
