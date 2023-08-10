@@ -213,7 +213,15 @@ fn init_config() -> Result<AppConfig, Box<dyn StdError>> {
 
     if let Some(v) = args.get_one::<String>("file") {
         let conf_str = fs::read_to_string(v)?;
-        return Ok(json5::from_str(conf_str.as_str())?);
+        let conf: AppConfig = json5::from_str(conf_str.as_str())?;
+        return Ok(AppConfig {
+            log: logger::apply_default(&conf.log),
+            server: server_config::apply_default(&conf.server),
+            auth: auth_libs::config::apply_default(&conf.auth),
+            broker: broker_libs::config::apply_default(&conf.broker),
+            coremgr: coremgr_libs::config::apply_default(&conf.coremgr),
+            data: data_libs::config::apply_default(&conf.data),
+        });
     }
 
     Ok(AppConfig {
