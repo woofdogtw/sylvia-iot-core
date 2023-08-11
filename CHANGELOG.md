@@ -1,5 +1,21 @@
 # Changelog
 
+## 0.0.23 - 2023-08-11
+
+### Changed
+
+- Update dependencies.
+- **documentation**
+    - Add the cross platform compilation chapter.
+    - Add IDE configuration examples.
+    - Add Go projects.
+
+### Fixed
+
+- Fix bugs that init flow does not apply default configurations for JSON5.
+- **general-mq**: Use **persistent** delivery mode when sending data with reliable queues.
+- **sdk**: Fix `mq` examples in docs.
+
 ## 0.0.22 - 2023-08-04
 
 ### Fixed
@@ -26,7 +42,7 @@
 ### Changed
 
 - Update dependencies.
-- **sdk**: Add example code  in Rust doc for auth middleware.
+- **sdk**: Add example code in Rust doc for auth middleware.
 
 ## 0.0.19 - 2023-07-23
 

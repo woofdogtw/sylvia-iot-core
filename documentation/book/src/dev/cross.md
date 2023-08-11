@@ -33,7 +33,7 @@ cargo build --target=aarch64-unknown-linux-gnu -p sylvia-iot-coremgr
 
 ```shell
 rustup target add armv7-unknown-linux-gnueabihf
-sudo apt install gcc-arm-linux-gnueabihf
-echo -e "[target.armv7-unknown-linux-gnueabihf]\nlinker = \"arm-linux-gnueabihf-gcc\"\n" > ~/.cargo/config
+sudo apt -y install gcc-arm-linux-gnueabihf
+echo -e "[target.armv7-unknown-linux-gnueabihf]\nlinker = \"arm-linux-gnueabihf-gcc\"\n" >> ~/.cargo/config
 cargo build --target=armv7-unknown-linux-gnueabihf -p sylvia-iot-coremgr
 ```

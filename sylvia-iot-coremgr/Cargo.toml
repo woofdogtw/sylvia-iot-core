@@ -1,6 +1,6 @@
 [package]
 name = "sylvia-iot-coremgr"
-version = "0.0.22"
+version = "0.0.23"
 authors = ["Chien-Hong Chan"]
 description = "The manager of Sylvia-IoT core modules."
 edition = "2021"
@@ -19,7 +19,7 @@ async-stream = "0.3.5"
 async-trait = "0.1.72"
 base64 = "0.21.2"
 chrono = { version = "0.4.26", default-features = false, features = ["serde"] }
-clap = { version = "4.3.19", default-features = false, features = ["std", "help", "usage", "error-context"] }
+clap = { version = "4.3.21", default-features = false, features = ["std", "help", "usage", "error-context"] }
 csv = "1.2.2"
 futures = "0.3.28"
 futures-util = "0.3.28"
@@ -31,13 +31,13 @@ reqwest = { version = "0.11.18", default-features = false, features = ["json", "
 rumqttd = "0.16.0"
 rustls = "0.20.8"
 rustls-pemfile = "1.0.3"
-serde = { version = "1.0.181", features = ["derive"] }
+serde = { version = "1.0.183", features = ["derive"] }
 serde_json = "1.0.104"
 serde_urlencoded = "0.7.1"
 sylvia-iot-auth = { path="../sylvia-iot-auth" }
 sylvia-iot-broker = { path="../sylvia-iot-broker" }
 sylvia-iot-corelib = { path="../sylvia-iot-corelib" }
-tokio = { version = "1.29.1", features = ["io-util", "macros", "rt-multi-thread", "time"] }
+tokio = { version = "1.30.0", features = ["io-util", "macros", "rt-multi-thread", "time"] }
 url = "2.4.0"
 
 [dev-dependencies]

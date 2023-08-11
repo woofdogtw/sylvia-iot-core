@@ -1,6 +1,6 @@
 [package]
 name = "sylvia-router"
-version = "0.0.22"
+version = "0.0.23"
 authors = ["Chien-Hong Chan"]
 description = "A simple router application with full Sylvia-IoT core components."
 edition = "2021"
@@ -15,14 +15,14 @@ actix-http = "3.3.1"
 actix-web = { version = "4.3.1", default-features = false, features = ["rustls"] }
 actix-web-prom = "0.7.0"
 chrono = { version = "0.4.26", default-features = false, features = ["serde"] }
-clap = { version = "4.3.19", default-features = false, features = ["std", "help", "usage", "error-context"] }
+clap = { version = "4.3.21", default-features = false, features = ["std", "help", "usage", "error-context"] }
 ipnet = "2.8.0"
 json5 = "0.4.1"
 log = "0.4.19"
 reqwest = { version = "0.11.18", default-features = false, features = ["json", "rustls-tls"] }
 rustls = "0.20.8"
 rustls-pemfile = "1.0.3"
-serde = { version = "1.0.181", features = ["derive"] }
+serde = { version = "1.0.183", features = ["derive"] }
 serde_json = "1.0.104"
 serde_urlencoded = "0.7.1"
 shell-escape = "0.1.5"
@@ -34,7 +34,7 @@ sylvia-iot-coremgr-cli = { path="../sylvia-iot-coremgr-cli" }
 sylvia-iot-data = { path="../sylvia-iot-data" }
 sylvia-iot-sdk = { path="../sylvia-iot-sdk" }
 sysinfo = "0.29.7"
-tokio = { version = "1.29.1", features = ["io-util", "macros", "rt-multi-thread", "time"] }
+tokio = { version = "1.30.0", features = ["io-util", "macros", "rt-multi-thread", "time"] }
 
 [profile.release]
 codegen-units = 1
