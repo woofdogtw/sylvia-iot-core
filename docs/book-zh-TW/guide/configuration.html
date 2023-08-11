@@ -1,0 +1,524 @@
+<!DOCTYPE HTML>
+<html lang="zh-TW" class="sidebar-visible no-js rust">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>設定檔 - Sylvia-IoT 說明文件</title>
+
+
+        <!-- Custom HTML head -->
+        
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff" />
+
+        <link rel="icon" href="../favicon.svg">
+        <link rel="shortcut icon" href="../favicon.png">
+        <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+        <link rel="stylesheet" href="../css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" href="../highlight.css">
+        <link rel="stylesheet" href="../tomorrow-night.css">
+        <link rel="stylesheet" href="../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+
+    </head>
+    <body>
+    <div id="body-container">
+        <!-- Provide site root to javascript -->
+        <script>
+            var path_to_root = "../";
+            var default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "navy" : "rust";
+        </script>
+
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                var theme = localStorage.getItem('mdbook-theme');
+                var sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            var theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            var html = document.querySelector('html');
+            html.classList.remove('no-js')
+            html.classList.remove('rust')
+            html.classList.add(theme);
+            html.classList.add('js');
+        </script>
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            var html = document.querySelector('html');
+            var sidebar = null;
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+            }
+            html.classList.remove('sidebar-visible');
+            html.classList.add("sidebar-" + sidebar);
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <div class="sidebar-scrollbox">
+                <ol class="chapter"><li class="chapter-item expanded "><a href="../index.html"><strong aria-hidden="true">1.</strong> 介紹</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../intro/overview.html"><strong aria-hidden="true">1.1.</strong> 什麼是 Sylvia-IoT？</a></li><li class="chapter-item expanded "><a href="../intro/concept.html"><strong aria-hidden="true">1.2.</strong> 概念</a></li></ol></li><li class="chapter-item expanded "><a href="../guide/index.html"><strong aria-hidden="true">2.</strong> 使用指南</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../guide/quick.html"><strong aria-hidden="true">2.1.</strong> 快速開始</a></li><li class="chapter-item expanded "><a href="../guide/configuration.html" class="active"><strong aria-hidden="true">2.2.</strong> 設定檔</a></li></ol></li><li class="chapter-item expanded "><a href="../arch/index.html"><strong aria-hidden="true">3.</strong> 內部架構</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../arch/arch.html"><strong aria-hidden="true">3.1.</strong> 架構</a></li><li class="chapter-item expanded "><a href="../arch/flow.html"><strong aria-hidden="true">3.2.</strong> 資料流</a></li><li class="chapter-item expanded "><a href="../arch/cache.html"><strong aria-hidden="true">3.3.</strong> 快取</a></li></ol></li><li class="chapter-item expanded "><a href="../dev/index.html"><strong aria-hidden="true">4.</strong> 開發指南</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../dev/oauth2.html"><strong aria-hidden="true">4.1.</strong> OAuth2 認證</a></li><li class="chapter-item expanded "><a href="../dev/network.html"><strong aria-hidden="true">4.2.</strong> 網路服務</a></li><li class="chapter-item expanded "><a href="../dev/application.html"><strong aria-hidden="true">4.3.</strong> 應用服務</a></li><li class="chapter-item expanded "><a href="../dev/core.html"><strong aria-hidden="true">4.4.</strong> Sylvia-IoT 核心</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../dev/dir.html"><strong aria-hidden="true">4.4.1.</strong> 目錄結構</a></li><li class="chapter-item expanded "><a href="../dev/style.html"><strong aria-hidden="true">4.4.2.</strong> 程式碼風格</a></li><li class="chapter-item expanded "><a href="../dev/testing.html"><strong aria-hidden="true">4.4.3.</strong> 撰寫測試</a></li></ol></li><li class="chapter-item expanded "><a href="../dev/cross.html"><strong aria-hidden="true">4.5.</strong> 跨平台編譯</a></li></ol></li><li class="chapter-item expanded "><a href="../appendex/index.html"><strong aria-hidden="true">5.</strong> 附錄</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../appendex/source.html"><strong aria-hidden="true">5.1.</strong> 資料來源</a></li><li class="chapter-item expanded "><a href="../appendex/repo.html"><strong aria-hidden="true">5.2.</strong> 輔助專案</a></li></ol></li></ol>
+            </div>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle"></div>
+        </nav>
+
+        <!-- Track and set sidebar scroll position -->
+        <script>
+            var sidebarScrollbox = document.querySelector('#sidebar .sidebar-scrollbox');
+            sidebarScrollbox.addEventListener('click', function(e) {
+                if (e.target.tagName === 'A') {
+                    sessionStorage.setItem('sidebar-scroll', sidebarScrollbox.scrollTop);
+                }
+            }, { passive: true });
+            var sidebarScrollTop = sessionStorage.getItem('sidebar-scroll');
+            sessionStorage.removeItem('sidebar-scroll');
+            if (sidebarScrollTop) {
+                // preserve sidebar scroll position when navigating via links within sidebar
+                sidebarScrollbox.scrollTop = sidebarScrollTop;
+            } else {
+                // scroll sidebar to current active section when navigating via "next/previous chapter" buttons
+                var activeSection = document.querySelector('#sidebar .active');
+                if (activeSection) {
+                    activeSection.scrollIntoView({ block: 'center' });
+                }
+            }
+        </script>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <button id="sidebar-toggle" class="icon-button" type="button" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </button>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">Sylvia-IoT 說明文件</h1>
+
+                    <div class="right-buttons">
+                        <a href="../print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="設定檔"><a class="header" href="#設定檔">設定檔</a></h1>
+<p>本章節描述 Sylvia-IoT 的設定格式和用途。</p>
+<p>Sylvia-IoT 的設定支援四種來源，優先權依序為（高到低）：</p>
+<ul>
+<li>JSON5 設定檔</li>
+<li>命令列參數</li>
+<li>環境變數</li>
+<li>內部預設值（不一定存在，如為必填且不提供則會有錯誤訊息）</li>
+</ul>
+<p>JSON5 可以參考範例檔案，該檔案提供了完整的設定項目。
+本章節將會提供對應的說明。以下為設定的慣例：</p>
+<ul>
+<li>JSON5 的巢狀形式會以 <code>.</code> 來表示。</li>
+<li>命令列參數遇到 JSON5 的巢狀會以 <code>.</code> 來表示。</li>
+<li>命令列參數遇到 JSON5 為駝峰的情形，會以全小寫或是 <code>-</code> 尾隨小寫來表示。以下為例子：
+<ul>
+<li>JSON5 的 <code>server.httpPort</code> 對應 <code>--server.httpport</code>。</li>
+<li>JSON5 的 <code>broker.mqChannels</code> 對應 <code>--broker.mq-channels</code>。</li>
+</ul>
+</li>
+<li>環境變數全大寫。</li>
+<li>環境變數遇到 JSON5 的巢狀會以 <code>_</code> 來表示。</li>
+<li>環境變數遇到 JSON5 為駝峰的情形，會以全大寫或是 <code>_</code> 分開來表示。以下為例子：
+<ul>
+<li>JSON5 的 <code>server.httpPort</code> 對應 <code>SERVER_HTTP_PORT</code></li>
+<li>JSON5 的 <code>broker.mqChannels</code> 對應 <code>BROKER_MQCHANNELS</code></li>
+</ul>
+</li>
+</ul>
+<p>接下來是完整的表格說明。</p>
+<blockquote>
+<p>如有標示 <strong>參照範例</strong> 表示範例的 JSON5 有提供，或是可以使用 CLI <strong>help</strong> 指令查看支援的選項。</p>
+</blockquote>
+<h2 id="共同設定"><a class="header" href="#共同設定">共同設定</a></h2>
+<div class="table-wrapper"><table><thead><tr><th>JSON5</th><th>命令列參數</th><th>環境變數</th><th>預設值</th><th>說明</th></tr></thead><tbody>
+<tr><td>log.level</td><td>log.level</td><td>LOG_LEVEL</td><td>info</td><td>Log 等級。參照範例</td></tr>
+<tr><td>log.style</td><td>log.style</td><td>LOG_STYLE</td><td>json</td><td>Log 樣式。參照範例</td></tr>
+<tr><td>server.httpPort</td><td>log.httpport</td><td>SERVER_HTTP_PORT</td><td>1080</td><td>HTTP 監聽連接埠</td></tr>
+<tr><td>server.httpsPort</td><td>log.httpsport</td><td>SERVER_HTTPS_PORT</td><td>1443</td><td>HTTPS 監聽連接埠</td></tr>
+<tr><td>server.cacertFile</td><td>log.cacertfile</td><td>SERVER_CACERT_FILE</td><td></td><td>HTTPS 根憑證擋位置</td></tr>
+<tr><td>server.certFile</td><td>log.certfile</td><td>SERVER_CERT_FILE</td><td></td><td>HTTPS 憑證擋位置</td></tr>
+<tr><td>server.keyFile</td><td>log.keyfile</td><td>SERVER_KEY_FILE</td><td></td><td>HTTPS 私鑰位置</td></tr>
+<tr><td>server.staticPath</td><td>log.static</td><td>SERVER_STATIC_PATH</td><td></td><td>靜態檔案目錄位置</td></tr>
+</tbody></table>
+</div>
+<h3 id="詳細說明"><a class="header" href="#詳細說明">詳細說明</a></h3>
+<ul>
+<li>目前還未使用根憑證。</li>
+<li>必須同時使用憑證和私鑰才能啟用 HTTPS 服務。</li>
+</ul>
+<h2 id="api-scopes"><a class="header" href="#api-scopes">API Scopes</a></h2>
+<p>所有的 API 都需要透過在系統註冊的客戶端（client）以及訪問令牌（access token）才能存取。每一個令牌會記錄所屬的客戶端，只有經過授權的客戶端才能存取 API。</p>
+<p>當某個 API 對應的 <code>apiScopes</code> 的設定被開啟時，除非客戶端在註冊的時候有啟用這些 scope 並被使用者授權，取得的令牌才能存取該 API。</p>
+<p>命令列參數和環境變數都要是 JSON string，舉例：</p>
+<pre><code>--auth.api-scopes='{&quot;auth.tokeninfo.get&quot;:[]}'
+</code></pre>
+<p>您可以自行定義 scope 名稱，並套用到各個 API scope 中。可以參考下面<strong>認證服務</strong>的範例。</p>
+<h2 id="認證服務auth"><a class="header" href="#認證服務auth">認證服務（auth）</a></h2>
+<div class="table-wrapper"><table><thead><tr><th>JSON5</th><th>命令列參數</th><th>環境變數</th><th>預設值</th><th>說明</th></tr></thead><tbody>
+<tr><td>auth.db.engine</td><td>auth.db.engine</td><td>AUTH_DB_ENGINE</td><td>sqlite</td><td>使用的資料庫種類</td></tr>
+<tr><td>auth.db.mongodb.url</td><td>auth.db.mongodb.url</td><td>AUTH_DB_MONGODB_URL</td><td>mongodb://localhost:27017</td><td>MongoDB 連線的 URL</td></tr>
+<tr><td>auth.db.mongodb.database</td><td>auth.db.mongodb.database</td><td>AUTH_DB_MONGODB_DATABASE</td><td>auth</td><td>MongoDB 資料庫名稱</td></tr>
+<tr><td>auth.db.mongodb.poolSize</td><td>auth.db.mongodb.poolsize</td><td>AUTH_DB_MONGODB_POOLSIZE</td><td></td><td>MongoDB 最大連線數量</td></tr>
+<tr><td>auth.db.sqlite.path</td><td>auth.db.sqlite.path</td><td>AUTH_DB_SQLITE_PATH</td><td>auth.db</td><td>SQLite 檔案位置</td></tr>
+<tr><td>auth.db.templates.login</td><td>auth.db.templates</td><td>AUTH_TEMPLATES</td><td></td><td>登入頁面樣板位址</td></tr>
+<tr><td>auth.db.templates.grant</td><td>auth.db.templates</td><td>AUTH_TEMPLATES</td><td></td><td>授權頁面樣板位址</td></tr>
+<tr><td>auth.db.apiScopes</td><td>auth.api-scopes</td><td>AUTH_API_SCOPES</td><td></td><td>API 權限設定</td></tr>
+</tbody></table>
+</div>
+<h3 id="詳細說明-1"><a class="header" href="#詳細說明-1">詳細說明</a></h3>
+<ul>
+<li>templates（樣板）
+<ul>
+<li>使用 OAuth2 authorization code 授權流程需要使用的網頁。<strong>sylvia-iot-auth</strong> 有提供預設的頁面，而 Sylvia-IoT 允許您自訂符合自己風格的網頁。</li>
+<li>樣板使用 Jinja2 格式（相依 <a href="https://tera.netlify.app/"><strong>tera</strong></a> 套件）。</li>
+<li>命令列參數和環境變數都要用 JSON string，比如
+<pre><code>--auth.templates='{&quot;login&quot;:&quot;xxx&quot;}'
+</code></pre>
+</li>
+<li>詳細說明請參考 <a href="../dev/oauth2.html"><strong>OAuth2 認證</strong></a>。</li>
+</ul>
+</li>
+<li>API scopes
+<ul>
+<li><strong>auth</strong> 模組提供了以下幾個 scope 可供設定給對應的 API，限制 client 可以存取的範圍：
+<ul>
+<li><code>auth.tokeninfo.get</code>: 授權 client 讀取令牌的資料。
+<ul>
+<li><code>GET /api/v1/auth/tokeninfo</code></li>
+</ul>
+</li>
+<li><code>auth.logout.post</code>: 授權 client 將令牌登出。
+<ul>
+<li><code>POST /auth/api/v1/auth/logout</code></li>
+</ul>
+</li>
+<li><code>user.get</code>: 授權 client 存取目前使用者的個人資料。
+<ul>
+<li><code>GET /api/v1/user</code></li>
+</ul>
+</li>
+<li><code>user.path</code>: 授權 client 修改目前使用者的個人資料。
+<ul>
+<li><code>PATCH /api/v1/user</code></li>
+</ul>
+</li>
+<li><code>user.get.admin</code>: 授權 client 取得系統所有使用者的資料。
+<ul>
+<li><code>GET /api/v1/user/count</code></li>
+<li><code>GET /api/v1/user/list</code></li>
+<li><code>GET /api/v1/user/{userId}</code></li>
+</ul>
+</li>
+<li><code>user.post.admin</code>: 授權 client 在系統建立新的使用者。
+<ul>
+<li><code>POST /api/v1/user</code></li>
+</ul>
+</li>
+<li><code>user.patch.admin</code>: 授權 client 修改系統任意使用者的資料。
+<ul>
+<li><code>PATCH /api/v1/user/{userId}</code></li>
+</ul>
+</li>
+<li><code>user.delete.admin</code>: 授權 client 刪除系統任意使用者的資料。
+<ul>
+<li><code>DELETE /api/v1/user/{userId}</code></li>
+</ul>
+</li>
+<li><code>client.get</code>: 授權 client 存取得系統所有客戶端資料。
+<ul>
+<li><code>GET /api/v1/client/count</code></li>
+<li><code>GET /api/v1/client/list</code></li>
+<li><code>GET /api/v1/client/{clientId}</code></li>
+</ul>
+</li>
+<li><code>client.post</code>: 授權 client 在系統建立新的客戶端。
+<ul>
+<li><code>POST /api/v1/client</code></li>
+</ul>
+</li>
+<li><code>client.patch</code>: 授權 client 修改系統任意客戶端的資料。
+<ul>
+<li><code>PATCH /api/v1/client/{clientId}</code></li>
+</ul>
+</li>
+<li><code>client.delete</code>: 授權 client 刪除系統任意客戶端的資料。
+<ul>
+<li><code>DELETE /api/v1/client/{clientId}</code></li>
+</ul>
+</li>
+<li><code>client.delete.user</code>: 授權 client 刪除系統任意使用者的所有客戶端。
+<ul>
+<li><code>DELETE /api/v1/client/user/{userId}</code></li>
+</ul>
+</li>
+</ul>
+</li>
+<li>舉例，在您的服務定義如下的 scope：
+<ul>
+<li><code>api.admin</code>: 僅能授權移除使用者的所有客戶端。</li>
+<li><code>api.rw</code>: 可以讀寫除了 <code>DELETE /api/v1/client/user/{userId}</code> 的所有 API。</li>
+<li><code>api.readonly</code>： 只能存取 GET API。</li>
+<li>取得令牌資料和登出，這兩個動作開放所有客戶端可以使用。</li>
+</ul>
+<pre><code>&quot;auth&quot;: {
+    ...
+    &quot;apiScopes&quot;: {
+        &quot;auth.tokeninfo.get&quot;: [],
+        &quot;auth.logout.post&quot;: [],
+        &quot;user.get&quot;: [&quot;api.rw&quot;, &quot;api.readonly&quot;],
+        &quot;user.patch&quot;: [&quot;api.rw&quot;],
+        &quot;user.post.admin&quot;: [&quot;api.rw&quot;],
+        &quot;user.get.admin&quot;: [&quot;api.rw&quot;, &quot;api.readonly&quot;],
+        &quot;user.patch.admin&quot;: [&quot;api.rw&quot;],
+        &quot;user.delete.admin&quot;: [&quot;api.rw&quot;],
+        &quot;client.post&quot;: [&quot;api.rw&quot;],
+        &quot;client.get&quot;: [&quot;api.rw&quot;, &quot;api.readonly&quot;],
+        &quot;client.patch&quot;: [&quot;api.rw&quot;],
+        &quot;client.delete&quot;: [&quot;api.rw&quot;],
+        &quot;client.delete.user&quot;: [&quot;api.admin&quot;],
+    },
+    ...
+}
+</code></pre>
+<ul>
+<li>以這個例子，註冊的客戶端可以任意勾選這三種 scope。之後使用者會在授權頁面得知這些訊息，並且決定是否授權客戶端。</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<h2 id="消息代理服務broker"><a class="header" href="#消息代理服務broker">消息代理服務（broker）</a></h2>
+<div class="table-wrapper"><table><thead><tr><th>JSON5</th><th>命令列參數</th><th>環境變數</th><th>預設值</th><th>說明</th></tr></thead><tbody>
+<tr><td>broker.auth</td><td>broker.auth</td><td>BROKER_AUTH</td><td>http://localhost:1080/auth</td><td>認證服務位址</td></tr>
+<tr><td>broker.db.engine</td><td>broker.db.engine</td><td>BROKER_DB_ENGINE</td><td>sqlite</td><td>使用的資料庫種類</td></tr>
+<tr><td>broker.db.mongodb.url</td><td>broker.db.mongodb.url</td><td>BROKER_DB_MONGODB_URL</td><td>mongodb://localhost:27017</td><td>MongoDB 連線的 URL</td></tr>
+<tr><td>broker.db.mongodb.database</td><td>broker.db.mongodb.database</td><td>BROKER_DB_MONGODB_DATABASE</td><td>auth</td><td>MongoDB 資料庫名稱</td></tr>
+<tr><td>broker.db.mongodb.poolSize</td><td>broker.db.mongodb.poolsize</td><td>BROKER_DB_MONGODB_POOLSIZE</td><td></td><td>MongoDB 最大連線數量</td></tr>
+<tr><td>broker.db.sqlite.path</td><td>broker.db.sqlite.path</td><td>BROKER_DB_SQLITE_PATH</td><td>auth.db</td><td>SQLite 檔案位置</td></tr>
+<tr><td>broker.cache.engine</td><td>broker.cache.engine</td><td>BROKER_CACHE_ENGINE</td><td>none</td><td>使用的快取種類</td></tr>
+<tr><td>broker.cache.memory.device</td><td>broker.cache.memory.device</td><td>BROKER_CACHE_MEMORY_DEVICE</td><td>1,000,000</td><td>Memory 對裝置的快取數量</td></tr>
+<tr><td>broker.cache.memory.deviceRoute</td><td>broker.cache.memory.device-route</td><td>BROKER_CACHE_MEMORY_DEVICE_ROUTE</td><td>1,000,000</td><td>Memory 對裝置路由的快取數量</td></tr>
+<tr><td>broker.cache.memory.networkRoute</td><td>broker.cache.memory.network-route</td><td>BROKER_CACHE_MEMORY_NETWORK_ROUTE</td><td>1,000,000</td><td>Memory 對網路路由的快取數量</td></tr>
+<tr><td>broker.mq.prefetch</td><td>broker.mq.prefetch</td><td>BROKER_MQ_PREFETCH</td><td>100</td><td>AMQP 消費者最大同時消費的數量</td></tr>
+<tr><td>broker.mq.sharedPrefix</td><td>broker.mq.sharedprefix</td><td>BROKER_MQ_SHAREDPREFIX</td><td>$share/sylvia-iot-broker/</td><td>MQTT shared subscription 的前綴</td></tr>
+<tr><td>broker.mqChannels.unit.url</td><td>broker.mq-channels.unit.url</td><td>BROKER_MQCHANNELS_UNIT_URL</td><td>amqp://localhost</td><td>單位的控制訊息位址</td></tr>
+<tr><td>broker.mqChannels.unit.prefetch</td><td>broker.mq-channels.unit.prefetch</td><td>BROKER_MQCHANNELS_UNIT_PREFETCH</td><td>100</td><td>單位的控制訊息 AMQP 消費者最大同時消費的數量</td></tr>
+<tr><td>broker.mqChannels.application.url</td><td>broker.mq-channels.application.url</td><td>BROKER_MQCHANNELS_APPLICATION_URL</td><td>amqp://localhost</td><td>應用的控制訊息位址</td></tr>
+<tr><td>broker.mqChannels.application.prefetch</td><td>broker.mq-channels.application.prefetch</td><td>BROKER_MQCHANNELS_APPLICATION_PREFETCH</td><td>100</td><td>應用的控制訊息 AMQP 消費者最大同時消費的數量</td></tr>
+<tr><td>broker.mqChannels.network.url</td><td>broker.mq-channels.network.url</td><td>BROKER_MQCHANNELS_NETWORK_URL</td><td>amqp://localhost</td><td>單位的控制訊息位址</td></tr>
+<tr><td>broker.mqChannels.network.prefetch</td><td>broker.mq-channels.network.prefetch</td><td>BROKER_MQCHANNELS_NETWORK_PREFETCH</td><td>100</td><td>單位的控制訊息 AMQP 消費者最大同時消費的數量</td></tr>
+<tr><td>broker.mqChannels.device.url</td><td>broker.mq-channels.device.url</td><td>BROKER_MQCHANNELS_DEVICE_URL</td><td>amqp://localhost</td><td>裝置的控制訊息位址</td></tr>
+<tr><td>broker.mqChannels.device.prefetch</td><td>broker.mq-channels.device.prefetch</td><td>BROKER_MQCHANNELS_DEVICE_PREFETCH</td><td>100</td><td>裝置的控制訊息 AMQP 消費者最大同時消費的數量</td></tr>
+<tr><td>broker.mqChannels.deviceRoute.url</td><td>broker.mq-channels.device-route.url</td><td>BROKER_MQCHANNELS_DEVICE_ROUTE_URL</td><td>amqp://localhost</td><td>裝置路由的控制訊息位址</td></tr>
+<tr><td>broker.mqChannels.deviceRoute.prefetch</td><td>broker.mq-channels.device-route.prefetch</td><td>BROKER_MQCHANNELS_DEVICE_ROUTE_PREFETCH</td><td>100</td><td>裝置路由的控制訊息 AMQP 消費者最大同時消費的數量</td></tr>
+<tr><td>broker.mqChannels.networkRoute.url</td><td>broker.mq-channels.network-route.url</td><td>BROKER_MQCHANNELS_NETWORK_ROUTE_URL</td><td>amqp://localhost</td><td>網路路由的控制訊息位址</td></tr>
+<tr><td>broker.mqChannels.networkRoute.prefetch</td><td>broker.mq-channels.network-route.prefetch</td><td>BROKER_MQCHANNELS_NETWORK_ROUTE_PREFETCH</td><td>100</td><td>網路路由的控制訊息 AMQP 消費者最大同時消費的數量</td></tr>
+<tr><td>broker.mqChannels.data.url</td><td>broker.mq-channels.data.url</td><td>BROKER_MQCHANNELS_DATA_URL</td><td></td><td>資料訊息位址</td></tr>
+<tr><td>broker.db.apiScopes</td><td>broker.api-scopes</td><td>BROKER_API_SCOPES</td><td></td><td>API 權限設定</td></tr>
+</tbody></table>
+</div>
+<h3 id="詳細說明-2"><a class="header" href="#詳細說明-2">詳細說明</a></h3>
+<ul>
+<li>
+<p>指定認證服務位址（<code>broker.auth</code>）的用意在檢查呼叫 API 的令牌的合法性，包含使用者帳號與客戶端。</p>
+</li>
+<li>
+<p>MQ channels:</p>
+<ul>
+<li>由於 Sylvia-IoT 訊息代理服務是決定效能的關鍵模組，會將許多設定放在記憶體中。這些設定需要透過 <strong>控制訊息（control channel message）</strong> 將 API 變更的內容透過訊息佇列傳遞到叢集的各個執行個體中。
+<ul>
+<li>相關訊息請見 <a href="../arch/cache.html"><strong>快取</strong></a> 章節。</li>
+</ul>
+</li>
+<li><strong>data</strong> 是 <strong>資料訊息（data channel message）</strong>，將所有資料記錄到 <strong>sylvia-iot-data</strong> 模組中。
+<ul>
+<li>不指定參數（或是 JSON5 設定 <strong>null</strong>）就會不儲存任何資料。</li>
+<li>相關訊息請見 <a href="../arch/flow.html"><strong>資料流</strong></a> 章節。</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>
+<p>API scopes: 請參考<strong>認證服務</strong>的說明。</p>
+</li>
+</ul>
+<h2 id="核心管理服務coremgr"><a class="header" href="#核心管理服務coremgr">核心管理服務（coremgr）</a></h2>
+<div class="table-wrapper"><table><thead><tr><th>JSON5</th><th>命令列參數</th><th>環境變數</th><th>預設值</th><th>說明</th></tr></thead><tbody>
+<tr><td>coremgr.auth</td><td>coremgr.auth</td><td>COREMGR_AUTH</td><td>http://localhost:1080/auth</td><td>認證服務位址</td></tr>
+<tr><td>coremgr.broker</td><td>coremgr.broker</td><td>COREMGR_BROKER</td><td>http://localhost:2080/broker</td><td>訊息代理服務位址</td></tr>
+<tr><td>coremgr.mq.engine.amqp</td><td>coremgr.mq.engine.amqp</td><td>COREMGR_MQ_ENGINE_AMQP</td><td>rabbitmq</td><td>AMQP 種類</td></tr>
+<tr><td>coremgr.mq.engine.mqtt</td><td>coremgr.mq.engine.mqtt</td><td>COREMGR_MQ_ENGINE_MQTT</td><td>emqx</td><td>MQTT 種類</td></tr>
+<tr><td>coremgr.mq.rabbitmq.username</td><td>coremgr.mq.rabbitmq.username</td><td>COREMGR_MQ_RABBITMQ_USERNAME</td><td>guest</td><td>RabbitMQ 管理者帳號</td></tr>
+<tr><td>coremgr.mq.rabbitmq.password</td><td>coremgr.mq.rabbitmq.password</td><td>COREMGR_MQ_RABBITMQ_PASSWORD</td><td>guest</td><td>RabbitMQ 管理者密碼</td></tr>
+<tr><td>coremgr.mq.rabbitmq.ttl</td><td>coremgr.mq.rabbitmq.ttl</td><td>COREMGR_MQ_RABBITMQ_TTL</td><td></td><td>RabbitMQ 預設佇列訊息存活長度（秒）</td></tr>
+<tr><td>coremgr.mq.rabbitmq.length</td><td>coremgr.mq.rabbitmq.length</td><td>COREMGR_MQ_RABBITMQ_LENGTH</td><td></td><td>RabbitMQ 預設佇列訊息最多個數</td></tr>
+<tr><td>coremgr.mq.rabbitmq.hosts</td><td>coremgr.mq.rabbitmq.hosts</td><td>COREMGR_MQ_RABBITMQ_HOSTS</td><td></td><td>（保留）</td></tr>
+<tr><td>coremgr.mq.emqx.apiKey</td><td>coremgr.mq.emqx.apikey</td><td>COREMGR_MQ_EMQX_APIKEY</td><td></td><td>EMQX 管理 API key</td></tr>
+<tr><td>coremgr.mq.emqx.apiSecret</td><td>coremgr.mq.emqx.apisecret</td><td>COREMGR_MQ_EMQX_APISECRET</td><td></td><td>EMQX 管理 API secret</td></tr>
+<tr><td>coremgr.mq.emqx.hosts</td><td>coremgr.mq.emqx.hosts</td><td>COREMGR_MQ_EMQX_HOSTS</td><td></td><td>（保留）</td></tr>
+<tr><td>coremgr.mq.rumqttd.mqttPort</td><td>coremgr.mq.rumqttd.mqtt-port</td><td>COREMGR_MQ_RUMQTTD_MQTT_PORT</td><td>1883</td><td>rumqttd MQTT 連接埠</td></tr>
+<tr><td>coremgr.mq.rumqttd.mqttsPort</td><td>coremgr.mq.rumqttd.mqtts-port</td><td>COREMGR_MQ_RUMQTTD_MQTTS_PORT</td><td>8883</td><td>rumqttd MQTTS 連接埠</td></tr>
+<tr><td>coremgr.mq.rumqttd.consolePort</td><td>coremgr.mq.rumqttd.console-port</td><td>COREMGR_MQ_RUMQTTD_CONSOLE_PORT</td><td>18083</td><td>rumqttd 管理 API 連接埠</td></tr>
+<tr><td>coremgr.mqChannels.data.url</td><td>coremgr.mq-channels.data.url</td><td>COREMGR_MQCHANNELS_DATA_URL</td><td></td><td>資料訊息位址</td></tr>
+</tbody></table>
+</div>
+<h3 id="詳細說明-3"><a class="header" href="#詳細說明-3">詳細說明</a></h3>
+<ul>
+<li>MQ channels:
+<ul>
+<li><strong>data</strong> 是 <strong>資料訊息（data channel message）</strong>
+<ul>
+<li>目前 coremgr 支援紀錄 GET API 以外的 HTTP 請求內容，開啟資料通道即可紀錄 API 使用歷程。</li>
+<li>不指定參數（或是 JSON5 設定 <strong>null</strong>）就會不儲存任何資料。</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<h2 id="核心管理服務管理介面coremgr-cli"><a class="header" href="#核心管理服務管理介面coremgr-cli">核心管理服務管理介面（coremgr-cli）</a></h2>
+<div class="table-wrapper"><table><thead><tr><th>JSON5</th><th>命令列參數</th><th>環境變數</th><th>預設值</th><th>說明</th></tr></thead><tbody>
+<tr><td>coremgrCli.auth</td><td>coremgr-cli.auth</td><td>COREMGRCLI_AUTH</td><td>http://localhost:1080/auth</td><td>認證服務位址</td></tr>
+<tr><td>coremgrCli.coremgr</td><td>coremgr-cli.coremgr</td><td>COREMGRCLI_COREMGR</td><td>http://localhost:3080/coremgr</td><td>核心管理服務位址</td></tr>
+<tr><td>coremgrCli.data</td><td>coremgr-cli.data</td><td>COREMGRCLI_DATA</td><td>http://localhost:4080/data</td><td>資料服務位址</td></tr>
+<tr><td>coremgrCli.clientId</td><td>coremgr-cli.client-id</td><td>COREMGRCLI_CLIENT_ID</td><td></td><td>命令列客戶端 ID</td></tr>
+<tr><td>coremgrCli.redirectUri</td><td>coremgr-cli.redirect-uri</td><td>COREMGRCLI_REDIRECT_URI</td><td></td><td>命令列客戶端重轉向網址</td></tr>
+</tbody></table>
+</div>
+<h2 id="資料服務data"><a class="header" href="#資料服務data">資料服務（data）</a></h2>
+<div class="table-wrapper"><table><thead><tr><th>JSON5</th><th>命令列參數</th><th>環境變數</th><th>預設值</th><th>說明</th></tr></thead><tbody>
+<tr><td>data.auth</td><td>data.auth</td><td>DATA_AUTH</td><td>http://localhost:1080/auth</td><td>認證服務位址</td></tr>
+<tr><td>data.broker</td><td>data.broker</td><td>DATA_BROKER</td><td>http://localhost:2080/broker</td><td>訊息代理服務位址</td></tr>
+<tr><td>data.db.engine</td><td>data.db.engine</td><td>DATA_DB_ENGINE</td><td>sqlite</td><td>使用的資料庫種類</td></tr>
+<tr><td>data.db.mongodb.url</td><td>data.db.mongodb.url</td><td>DATA_DB_MONGODB_URL</td><td>mongodb://localhost:27017</td><td>MongoDB 連線的 URL</td></tr>
+<tr><td>data.db.mongodb.database</td><td>data.db.mongodb.database</td><td>DATA_DB_MONGODB_DATABASE</td><td>data</td><td>MongoDB 資料庫名稱</td></tr>
+<tr><td>data.db.mongodb.poolSize</td><td>data.db.mongodb.poolsize</td><td>DATA_DB_MONGODB_POOLSIZE</td><td></td><td>MongoDB 最大連線數量</td></tr>
+<tr><td>data.db.sqlite.path</td><td>data.db.sqlite.path</td><td>DATA_DB_SQLITE_PATH</td><td>data.db</td><td>SQLite 檔案位置</td></tr>
+<tr><td>data.mqChannels.broker.url</td><td>data.mq-channels.broker.url</td><td>DATA_MQCHANNELS_BROKER_URL</td><td>amqp://localhost</td><td>資料訊息位址</td></tr>
+<tr><td>data.mqChannels.broker.prefetch</td><td>data.mq-channels.broker.prefetch</td><td>DATA_MQCHANNELS_BROKER_PREFETCH</td><td>100</td><td>資料訊息 AMQP 消費者最大同時消費的數量</td></tr>
+<tr><td>data.mqChannels.broker.sharedPrefix</td><td>data.mq-channels.broker.sharedprefix</td><td>DATA_MQCHANNELS_BROKER_SHAREDPREFIX</td><td>$share/sylvia-iot-data/</td><td>MQTT shared subscription 的前綴</td></tr>
+<tr><td>data.mqChannels.coremgr.url</td><td>data.mq-channels.coremgr.url</td><td>DATA_MQCHANNELS_COREMGR_URL</td><td>amqp://localhost</td><td>資料訊息位址</td></tr>
+<tr><td>data.mqChannels.coremgr.prefetch</td><td>data.mq-channels.coremgr.prefetch</td><td>DATA_MQCHANNELS_COREMGR_PREFETCH</td><td>100</td><td>資料訊息 AMQP 消費者最大同時消費的數量</td></tr>
+<tr><td>data.mqChannels.coremgr.sharedPrefix</td><td>data.mq-channels.coremgr.sharedprefix</td><td>DATA_MQCHANNELS_COREMGR_SHAREDPREFIX</td><td>$share/sylvia-iot-data/</td><td>MQTT shared subscription 的前綴</td></tr>
+</tbody></table>
+</div>
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../guide/quick.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next" href="../arch/index.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../guide/quick.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next" href="../arch/index.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+
+        <script src="../elasticlunr.min.js"></script>
+        <script src="../mark.min.js"></script>
+        <script src="../searcher.js"></script>
+
+        <script src="../clipboard.min.js"></script>
+        <script src="../highlight.js"></script>
+        <script src="../book.js"></script>
+
+        <!-- Custom JS scripts -->
+
+
+    </div>
+    </body>
+</html>
