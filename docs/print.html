@@ -2076,8 +2076,8 @@ cargo build --target=aarch64-unknown-linux-gnu -p sylvia-iot-coremgr
 </code></pre>
 <h2 id="raspberry-pi-os-32-bit"><a class="header" href="#raspberry-pi-os-32-bit">Raspberry Pi OS 32-bit</a></h2>
 <pre><code class="language-shell">rustup target add armv7-unknown-linux-gnueabihf
-sudo apt install gcc-arm-linux-gnueabihf
-echo -e &quot;[target.armv7-unknown-linux-gnueabihf]\nlinker = \&quot;arm-linux-gnueabihf-gcc\&quot;\n&quot; &gt; ~/.cargo/config
+sudo apt -y install gcc-arm-linux-gnueabihf
+echo -e &quot;[target.armv7-unknown-linux-gnueabihf]\nlinker = \&quot;arm-linux-gnueabihf-gcc\&quot;\n&quot; &gt;&gt; ~/.cargo/config
 cargo build --target=armv7-unknown-linux-gnueabihf -p sylvia-iot-coremgr
 </code></pre>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="appendix"><a class="header" href="#appendix">Appendix</a></h1>
