@@ -156,6 +156,7 @@ JSON5 可以參考範例檔案，該檔案提供了完整的設定項目。
 | broker.cache.memory.deviceRoute           | broker.cache.memory.device-route          | BROKER_CACHE_MEMORY_DEVICE_ROUTE          | 1,000,000                     | Memory 對裝置路由的快取數量 |
 | broker.cache.memory.networkRoute          | broker.cache.memory.network-route         | BROKER_CACHE_MEMORY_NETWORK_ROUTE         | 1,000,000                     | Memory 對網路路由的快取數量 |
 | broker.mq.prefetch                        | broker.mq.prefetch                        | BROKER_MQ_PREFETCH                        | 100                           | AMQP 消費者最大同時消費的數量 |
+| broker.mq.persistent                      | broker.mq.persistent                      | BROKER_MQ_PERSISTENT                      | false                         | AMQP 產生者使用持久性傳送 |
 | broker.mq.sharedPrefix                    | broker.mq.sharedprefix                    | BROKER_MQ_SHAREDPREFIX                    | $share/sylvia-iot-broker/     | MQTT shared subscription 的前綴 |
 | broker.mqChannels.unit.url                | broker.mq-channels.unit.url               | BROKER_MQCHANNELS_UNIT_URL                | amqp://localhost              | 單位的控制訊息位址 |
 | broker.mqChannels.unit.prefetch           | broker.mq-channels.unit.prefetch          | BROKER_MQCHANNELS_UNIT_PREFETCH           | 100                           | 單位的控制訊息 AMQP 消費者最大同時消費的數量 |
@@ -170,6 +171,7 @@ JSON5 可以參考範例檔案，該檔案提供了完整的設定項目。
 | broker.mqChannels.networkRoute.url        | broker.mq-channels.network-route.url      | BROKER_MQCHANNELS_NETWORK_ROUTE_URL       | amqp://localhost              | 網路路由的控制訊息位址 |
 | broker.mqChannels.networkRoute.prefetch   | broker.mq-channels.network-route.prefetch | BROKER_MQCHANNELS_NETWORK_ROUTE_PREFETCH  | 100                           | 網路路由的控制訊息 AMQP 消費者最大同時消費的數量 |
 | broker.mqChannels.data.url                | broker.mq-channels.data.url               | BROKER_MQCHANNELS_DATA_URL                |                               | 資料訊息位址 |
+| broker.mqChannels.data.persistent         | broker.mq-channels.data.persistent        | BROKER_MQCHANNELS_DATA_PERSISTENT         | false                         | 資料訊息使用持久性傳送 |
 | broker.db.apiScopes                       | broker.api-scopes                         | BROKER_API_SCOPES                         |                               | API 權限設定 |
 
 ### 詳細說明
@@ -187,24 +189,25 @@ JSON5 可以參考範例檔案，該檔案提供了完整的設定項目。
 
 ## 核心管理服務（coremgr）
 
-| JSON5                             | 命令列參數                        | 環境變數                          | 預設值                        | 說明 |
-| -                                 | -                                 | -                                 | -                             | - |
-| coremgr.auth                      | coremgr.auth                      | COREMGR_AUTH                      | http://localhost:1080/auth    | 認證服務位址 |
-| coremgr.broker                    | coremgr.broker                    | COREMGR_BROKER                    | http://localhost:2080/broker  | 訊息代理服務位址 |
-| coremgr.mq.engine.amqp            | coremgr.mq.engine.amqp            | COREMGR_MQ_ENGINE_AMQP            | rabbitmq                      | AMQP 種類 |
-| coremgr.mq.engine.mqtt            | coremgr.mq.engine.mqtt            | COREMGR_MQ_ENGINE_MQTT            | emqx                          | MQTT 種類 |
-| coremgr.mq.rabbitmq.username      | coremgr.mq.rabbitmq.username      | COREMGR_MQ_RABBITMQ_USERNAME      | guest                         | RabbitMQ 管理者帳號 |
-| coremgr.mq.rabbitmq.password      | coremgr.mq.rabbitmq.password      | COREMGR_MQ_RABBITMQ_PASSWORD      | guest                         | RabbitMQ 管理者密碼 |
-| coremgr.mq.rabbitmq.ttl           | coremgr.mq.rabbitmq.ttl           | COREMGR_MQ_RABBITMQ_TTL           |                               | RabbitMQ 預設佇列訊息存活長度（秒） |
-| coremgr.mq.rabbitmq.length        | coremgr.mq.rabbitmq.length        | COREMGR_MQ_RABBITMQ_LENGTH        |                               | RabbitMQ 預設佇列訊息最多個數 |
-| coremgr.mq.rabbitmq.hosts         | coremgr.mq.rabbitmq.hosts         | COREMGR_MQ_RABBITMQ_HOSTS         |                               | （保留） |
-| coremgr.mq.emqx.apiKey            | coremgr.mq.emqx.apikey            | COREMGR_MQ_EMQX_APIKEY            |                               | EMQX 管理 API key |
-| coremgr.mq.emqx.apiSecret         | coremgr.mq.emqx.apisecret         | COREMGR_MQ_EMQX_APISECRET         |                               | EMQX 管理 API secret |
-| coremgr.mq.emqx.hosts             | coremgr.mq.emqx.hosts             | COREMGR_MQ_EMQX_HOSTS             |                               | （保留） |
-| coremgr.mq.rumqttd.mqttPort       | coremgr.mq.rumqttd.mqtt-port      | COREMGR_MQ_RUMQTTD_MQTT_PORT      | 1883                          | rumqttd MQTT 連接埠 |
-| coremgr.mq.rumqttd.mqttsPort      | coremgr.mq.rumqttd.mqtts-port     | COREMGR_MQ_RUMQTTD_MQTTS_PORT     | 8883                          | rumqttd MQTTS 連接埠 |
-| coremgr.mq.rumqttd.consolePort    | coremgr.mq.rumqttd.console-port   | COREMGR_MQ_RUMQTTD_CONSOLE_PORT   | 18083                         | rumqttd 管理 API 連接埠 |
-| coremgr.mqChannels.data.url       | coremgr.mq-channels.data.url      | COREMGR_MQCHANNELS_DATA_URL       |                               | 資料訊息位址 |
+| JSON5                                 | 命令列參數                            | 環境變數                              | 預設值                        | 說明 |
+| -                                     | -                                     | -                                     | -                             | - |
+| coremgr.auth                          | coremgr.auth                          | COREMGR_AUTH                          | http://localhost:1080/auth    | 認證服務位址 |
+| coremgr.broker                        | coremgr.broker                        | COREMGR_BROKER                        | http://localhost:2080/broker  | 訊息代理服務位址 |
+| coremgr.mq.engine.amqp                | coremgr.mq.engine.amqp                | COREMGR_MQ_ENGINE_AMQP                | rabbitmq                      | AMQP 種類 |
+| coremgr.mq.engine.mqtt                | coremgr.mq.engine.mqtt                | COREMGR_MQ_ENGINE_MQTT                | emqx                          | MQTT 種類 |
+| coremgr.mq.rabbitmq.username          | coremgr.mq.rabbitmq.username          | COREMGR_MQ_RABBITMQ_USERNAME          | guest                         | RabbitMQ 管理者帳號 |
+| coremgr.mq.rabbitmq.password          | coremgr.mq.rabbitmq.password          | COREMGR_MQ_RABBITMQ_PASSWORD          | guest                         | RabbitMQ 管理者密碼 |
+| coremgr.mq.rabbitmq.ttl               | coremgr.mq.rabbitmq.ttl               | COREMGR_MQ_RABBITMQ_TTL               |                               | RabbitMQ 預設佇列訊息存活長度（秒） |
+| coremgr.mq.rabbitmq.length            | coremgr.mq.rabbitmq.length            | COREMGR_MQ_RABBITMQ_LENGTH            |                               | RabbitMQ 預設佇列訊息最多個數 |
+| coremgr.mq.rabbitmq.hosts             | coremgr.mq.rabbitmq.hosts             | COREMGR_MQ_RABBITMQ_HOSTS             |                               | （保留） |
+| coremgr.mq.emqx.apiKey                | coremgr.mq.emqx.apikey                | COREMGR_MQ_EMQX_APIKEY                |                               | EMQX 管理 API key |
+| coremgr.mq.emqx.apiSecret             | coremgr.mq.emqx.apisecret             | COREMGR_MQ_EMQX_APISECRET             |                               | EMQX 管理 API secret |
+| coremgr.mq.emqx.hosts                 | coremgr.mq.emqx.hosts                 | COREMGR_MQ_EMQX_HOSTS                 |                               | （保留） |
+| coremgr.mq.rumqttd.mqttPort           | coremgr.mq.rumqttd.mqtt-port          | COREMGR_MQ_RUMQTTD_MQTT_PORT          | 1883                          | rumqttd MQTT 連接埠 |
+| coremgr.mq.rumqttd.mqttsPort          | coremgr.mq.rumqttd.mqtts-port         | COREMGR_MQ_RUMQTTD_MQTTS_PORT         | 8883                          | rumqttd MQTTS 連接埠 |
+| coremgr.mq.rumqttd.consolePort        | coremgr.mq.rumqttd.console-port       | COREMGR_MQ_RUMQTTD_CONSOLE_PORT       | 18083                         | rumqttd 管理 API 連接埠 |
+| coremgr.mqChannels.data.url           | coremgr.mq-channels.data.url          | COREMGR_MQCHANNELS_DATA_URL           |                               | 資料訊息位址 |
+| coremgr.mqChannels.data.persistent    | coremgr.mq-channels.data.persistent   | COREMGR_MQCHANNELS_DATA_PERSISTENT    | false                         | 資料訊息使用持久性傳送 |
 
 ### 詳細說明
 

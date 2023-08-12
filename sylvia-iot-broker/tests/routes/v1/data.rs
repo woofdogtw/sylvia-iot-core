@@ -19,7 +19,10 @@ use general_mq::{
     AmqpConnection, AmqpConnectionOptions, AmqpQueueOptions, MqttConnection, MqttConnectionOptions,
     MqttQueueOptions, Queue, QueueOptions,
 };
-use sylvia_iot_broker::libs::mq::{data, Connection, MgrStatus};
+use sylvia_iot_broker::libs::{
+    config,
+    mq::{data, Connection, MgrStatus},
+};
 use sylvia_iot_corelib::strings::time_str;
 
 use super::{application, device, device_route, libs, network, unit, STATE, TOKEN_MANAGER};
@@ -303,7 +306,15 @@ pub fn before_all_fn(state: &mut HashMap<&'static str, TestState>) -> () {
     // data_sender during creating ApplicationMgr/NetworkMgr.
     let url = Url::parse(data_ch_host).unwrap();
     let handler = Arc::new(TestHandler::new());
-    routes_state.data_sender = Some(data::new(&routes_state.mq_conns, &url, handler).unwrap());
+    routes_state.data_sender = Some(
+        data::new(
+            &routes_state.mq_conns,
+            &url,
+            config::DEF_MQ_PERSISTENT,
+            handler,
+        )
+        .unwrap(),
+    );
 
     let unit = unit::request::PostUnit {
         data: unit::request::PostUnitData {

@@ -1463,6 +1463,109 @@ pub fn data_best_effort(context: &mut SpecContext<TestState>) -> Result<(), Stri
     })
 }
 
+/// Send persistent data by sending data to a closed queue then it will receive after connecting.
+pub fn data_persistent(context: &mut SpecContext<TestState>) -> Result<(), String> {
+    let mut state = context.state.borrow_mut();
+    let state = state.get_mut(STATE).unwrap();
+    let mut resources = Resources::default();
+
+    let opts = AmqpQueueOptions {
+        name: "name".to_string(),
+        reliable: true,
+        persistent: true,
+        ..Default::default()
+    };
+    let handlers = create_msg_rsc(state, &mut resources, &opts, 1)?;
+
+    for queue in resources.queues.iter() {
+        state
+            .runtime
+            .block_on(wait_connected(queue.as_ref(), RETRY_10MS))?;
+    }
+
+    let handler = match handlers.get(0) {
+        None => return Err(format!("should have a handler")),
+        Some(handler) => handler,
+    };
+
+    state.runtime.block_on(async move {
+        let queue = match resources.queues.get_mut(0) {
+            None => return Err(format!("should have send queue")),
+            Some(q) => q,
+        };
+        if let Err(e) = queue.send_msg(b"1".to_vec()).await {
+            return Err(format!("send 1 error: {}", e));
+        }
+        let mut retry = 150;
+        while retry > 0 {
+            time::sleep(Duration::from_millis(10)).await;
+            let len;
+            {
+                len = handler.recv_messages.lock().unwrap().len();
+            }
+            if len == 1 {
+                let msg = match get_message(handler.recv_messages.lock().unwrap().as_slice(), 0) {
+                    Err(e) => return Err(format!("cannot get message[0]: {}", e)),
+                    Ok(s) => s,
+                };
+                if !msg.eq("1") {
+                    return Err(format!("should receive 1, not {}", msg.as_str()));
+                }
+                break;
+            }
+            retry = retry - 1;
+        }
+        if retry == 0 {
+            return Err(format!("cannot receive 1"));
+        }
+
+        let queue = match resources.queues.get_mut(1) {
+            None => return Err(format!("should have recv queue")),
+            Some(q) => q,
+        };
+        if let Err(e) = queue.close().await {
+            return Err(format!("close recv error: {}", e));
+        }
+        let queue = match resources.queues.get_mut(0) {
+            None => return Err(format!("should have send queue - 2")),
+            Some(q) => q,
+        };
+        if let Err(e) = queue.send_msg(b"2".to_vec()).await {
+            return Err(format!("send 2 error: {}", e));
+        }
+        let queue = match resources.queues.get_mut(1) {
+            None => return Err(format!("should have recv queue - 2")),
+            Some(q) => q,
+        };
+        if let Err(e) = queue.connect() {
+            return Err(format!("connect recv error: {}", e));
+        }
+        let mut retry = 150;
+        while retry > 0 {
+            time::sleep(Duration::from_millis(10)).await;
+            let len;
+            {
+                len = handler.recv_messages.lock().unwrap().len();
+            }
+            if len == 2 {
+                let msg = match get_message(handler.recv_messages.lock().unwrap().as_slice(), 1) {
+                    Err(e) => return Err(format!("cannot get message[1]: {}", e)),
+                    Ok(s) => s,
+                };
+                if !msg.eq("2") {
+                    return Err(format!("should receive 2, not {}", msg.as_str()));
+                }
+                break;
+            }
+            retry = retry - 1;
+        }
+        if retry == 0 {
+            return Err(format!("cannot receive 2"));
+        }
+        Ok(())
+    })
+}
+
 /// Test NACK and then the queue will receive the data again.
 pub fn data_nack(context: &mut SpecContext<TestState>) -> Result<(), String> {
     let mut state = context.state.borrow_mut();

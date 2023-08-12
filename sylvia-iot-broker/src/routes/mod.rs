@@ -56,6 +56,7 @@ pub struct State {
     /// For example, `http://localhost:1080/auth`.
     pub auth_base: String,
     pub amqp_prefetch: u16,
+    pub amqp_persistent: bool,
     pub mqtt_shared_prefix: String,
     /// The client for internal HTTP requests.
     pub client: reqwest::Client,
@@ -210,7 +211,8 @@ pub async fn new_state(
         model,
         cache,
         auth_base,
-        amqp_prefetch: *mq_conf.prefetch.as_ref().unwrap(),
+        amqp_prefetch: mq_conf.prefetch.unwrap(),
+        amqp_persistent: mq_conf.persistent.unwrap(),
         mqtt_shared_prefix: mq_conf.shared_prefix.as_ref().unwrap().to_string(),
         client: reqwest::Client::new(),
         mq_conns,
@@ -301,8 +303,12 @@ pub fn new_data_sender(
             Ok(url) => url,
         },
     };
+    let persistent = match config.persistent {
+        None => false,
+        Some(persistent) => persistent,
+    };
 
-    match mq::data::new(conn_pool, &url, Arc::new(DataSenderHandler {})) {
+    match mq::data::new(conn_pool, &url, persistent, Arc::new(DataSenderHandler {})) {
         Err(e) => Err(Box::new(IoError::new(ErrorKind::InvalidInput, e))),
         Ok(q) => Ok(q),
     }

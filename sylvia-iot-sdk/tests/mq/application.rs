@@ -265,6 +265,7 @@ pub fn new_manual(context: &mut SpecContext<TestState>) -> Result<(), String> {
         id: "id_application".to_string(),
         name: "code_application".to_string(),
         prefetch: Some(0),
+        persistent: Some(false),
         shared_prefix: state.mqtt_shared_prefix.clone(),
         ..Default::default()
     };
@@ -277,6 +278,7 @@ pub fn new_manual(context: &mut SpecContext<TestState>) -> Result<(), String> {
         id: "id_application".to_string(),
         name: "code_application".to_string(),
         prefetch: Some(1),
+        persistent: Some(true),
         shared_prefix: state.mqtt_shared_prefix.clone(),
         ..Default::default()
     };

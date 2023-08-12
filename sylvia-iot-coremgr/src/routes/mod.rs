@@ -213,8 +213,12 @@ fn new_data_sender(
             Ok(url) => url,
         },
     };
+    let persistent = match config.persistent {
+        None => false,
+        Some(persistent) => persistent,
+    };
 
-    match mq::data::new(conn_pool, &url, Arc::new(DataSenderHandler {})) {
+    match mq::data::new(conn_pool, &url, persistent, Arc::new(DataSenderHandler {})) {
         Err(e) => Err(Box::new(IoError::new(ErrorKind::InvalidInput, e))),
         Ok(q) => Ok(q),
     }

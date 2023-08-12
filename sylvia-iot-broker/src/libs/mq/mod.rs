@@ -76,6 +76,7 @@ pub struct Options {
     /// AMQP prefetch option.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub prefetch: Option<u16>,
+    pub persistent: bool,
     /// MQTT shared queue prefix option.
     #[serde(rename = "sharedPrefix", skip_serializing_if = "Option::is_none")]
     pub shared_prefix: Option<String>,
@@ -308,6 +309,7 @@ fn new_data_queues(
                     name: format!("{}.{}.{}.uldata", prefix, unit, opts.name.as_str()),
                     is_recv: is_network,
                     reliable: true,
+                    persistent: opts.persistent,
                     broadcast: false,
                     prefetch,
                     ..Default::default()
@@ -319,6 +321,7 @@ fn new_data_queues(
                     name: format!("{}.{}.{}.dldata", prefix, unit, opts.name.as_str()),
                     is_recv: !is_network,
                     reliable: true,
+                    persistent: opts.persistent,
                     broadcast: false,
                     prefetch,
                     ..Default::default()
@@ -330,6 +333,7 @@ fn new_data_queues(
                     name: format!("{}.{}.{}.dldata-resp", prefix, unit, opts.name.as_str()),
                     is_recv: is_network,
                     reliable: true,
+                    persistent: opts.persistent,
                     broadcast: false,
                     prefetch,
                     ..Default::default()
@@ -341,6 +345,7 @@ fn new_data_queues(
                     name: format!("{}.{}.{}.dldata-result", prefix, unit, opts.name.as_str()),
                     is_recv: is_network,
                     reliable: true,
+                    persistent: opts.persistent,
                     broadcast: false,
                     prefetch,
                     ..Default::default()

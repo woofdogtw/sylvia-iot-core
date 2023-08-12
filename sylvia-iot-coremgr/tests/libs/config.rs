@@ -50,7 +50,11 @@ pub fn read_args(_context: &mut SpecContext<TestState>) -> Result<(), String> {
     expect(rumqttd.mqtts_port).to_equal(Some(config::DEF_RUMQTTD_MQTTS_PORT))?;
     expect(rumqttd.console_port).to_equal(Some(config::DEF_RUMQTTD_CONSOLE_PORT))?;
     let mq_channels_conf = conf.mq_channels.as_ref().unwrap();
-    expect(mq_channels_conf.data.is_none()).to_equal(true)?;
+    expect(mq_channels_conf.data.is_some()).to_equal(true)?;
+    let data_conf = mq_channels_conf.data.as_ref().unwrap();
+    expect(data_conf.url.is_none()).to_equal(true)?;
+    expect(data_conf.persistent.is_some()).to_equal(true)?;
+    expect(data_conf.persistent.unwrap()).to_equal(config::DEF_MQ_PERSISTENT)?;
 
     // Modified default by command-line arguments.
     let args = vec![
@@ -87,6 +91,8 @@ pub fn read_args(_context: &mut SpecContext<TestState>) -> Result<(), String> {
         "113",
         "--coremgr.mq-channels.data.url",
         "url1",
+        "--coremgr.mq-channels.data.persistent",
+        "false",
     ];
     let args = config::reg_args(Command::new("test")).get_matches_from(args);
     let conf = config::read_args(&args);
@@ -137,6 +143,8 @@ pub fn read_args(_context: &mut SpecContext<TestState>) -> Result<(), String> {
     let data_conf = mq_channels_conf.data.as_ref().unwrap();
     expect(data_conf.url.is_some()).to_equal(true)?;
     expect(data_conf.url.as_ref().unwrap().as_str()).to_equal("url1")?;
+    expect(data_conf.persistent.is_some()).to_equal(true)?;
+    expect(data_conf.persistent.unwrap()).to_equal(false)?;
 
     let args = vec![
         "test",
@@ -144,6 +152,8 @@ pub fn read_args(_context: &mut SpecContext<TestState>) -> Result<(), String> {
         "",
         "--coremgr.mq.emqx.hosts",
         "",
+        "--coremgr.mq-channels.data.persistent",
+        "true",
     ];
     let args = config::reg_args(Command::new("test")).get_matches_from(args);
     let conf = config::read_args(&args);
@@ -153,6 +163,12 @@ pub fn read_args(_context: &mut SpecContext<TestState>) -> Result<(), String> {
     expect(conf.mq.as_ref().unwrap().emqx.is_some()).to_equal(true)?;
     let emqx = conf.mq.as_ref().unwrap().emqx.as_ref().unwrap();
     expect(emqx.hosts.is_none()).to_equal(true)?;
+    let mq_channels_conf = conf.mq_channels.as_ref().unwrap();
+    expect(mq_channels_conf.data.is_some()).to_equal(true)?;
+    let data_conf = mq_channels_conf.data.as_ref().unwrap();
+    expect(data_conf.url.is_none()).to_equal(true)?;
+    expect(data_conf.persistent.is_some()).to_equal(true)?;
+    expect(data_conf.persistent.unwrap()).to_equal(true)?;
 
     // Test wrong command-line arguments.
     let args = vec![
@@ -197,6 +213,7 @@ pub fn read_args(_context: &mut SpecContext<TestState>) -> Result<(), String> {
     env::set_var(&OsStr::new("COREMGR_MQ_RUMQTTD_MQTTS_PORT"), "122");
     env::set_var(&OsStr::new("COREMGR_MQ_RUMQTTD_CONSOLE_PORT"), "123");
     env::set_var(&OsStr::new("COREMGR_MQCHANNELS_DATA_URL"), "url2");
+    env::set_var(&OsStr::new("COREMGR_MQCHANNELS_DATA_PERSISTENT"), "false");
     let conf = config::read_args(&args);
     expect(conf.auth.is_some()).to_equal(true)?;
     expect(conf.auth.as_ref().unwrap().as_str()).to_equal("sylvia21")?;
@@ -216,9 +233,9 @@ pub fn read_args(_context: &mut SpecContext<TestState>) -> Result<(), String> {
     expect(rabbitmq.password.is_some()).to_equal(true)?;
     expect(rabbitmq.password.as_ref().unwrap().as_str()).to_equal("rabbitpass2")?;
     expect(rabbitmq.ttl.is_some()).to_equal(true)?;
-    expect(*rabbitmq.ttl.as_ref().unwrap()).to_equal(21)?;
+    expect(rabbitmq.ttl.unwrap()).to_equal(21)?;
     expect(rabbitmq.length.is_some()).to_equal(true)?;
-    expect(*rabbitmq.length.as_ref().unwrap()).to_equal(22)?;
+    expect(rabbitmq.length.unwrap()).to_equal(22)?;
     expect(rabbitmq.hosts.is_some()).to_equal(true)?;
     let hosts = rabbitmq.hosts.as_ref().unwrap();
     expect(hosts.len()).to_equal(1)?;
@@ -247,6 +264,8 @@ pub fn read_args(_context: &mut SpecContext<TestState>) -> Result<(), String> {
     let data_conf = mq_channels_conf.data.as_ref().unwrap();
     expect(data_conf.url.is_some()).to_equal(true)?;
     expect(data_conf.url.as_ref().unwrap().as_str()).to_equal("url2")?;
+    expect(data_conf.persistent.is_some()).to_equal(true)?;
+    expect(data_conf.persistent.unwrap()).to_equal(false)?;
 
     env::set_var(&OsStr::new("COREMGR_MQ_RABBITMQ_HOSTS"), "");
     env::set_var(&OsStr::new("COREMGR_MQ_EMQX_HOSTS"), "");
@@ -268,6 +287,7 @@ pub fn read_args(_context: &mut SpecContext<TestState>) -> Result<(), String> {
     env::set_var(&OsStr::new("COREMGR_MQ_RUMQTTD_MQTT_PORT"), "12_000");
     env::set_var(&OsStr::new("COREMGR_MQ_RUMQTTD_MQTTS_PORT"), "12_000");
     env::set_var(&OsStr::new("COREMGR_MQ_RUMQTTD_CONSOLE_PORT"), "12_000");
+    env::set_var(&OsStr::new("COREMGR_MQCHANNELS_DATA_PERSISTENT"), "0");
     let conf = config::read_args(&args);
     expect(conf.mq.is_some()).to_equal(true)?;
     expect(conf.mq.as_ref().unwrap().engine.is_some()).to_equal(true)?;
@@ -287,6 +307,11 @@ pub fn read_args(_context: &mut SpecContext<TestState>) -> Result<(), String> {
     expect(rumqttd.mqtt_port).to_equal(Some(config::DEF_RUMQTTD_MQTT_PORT))?;
     expect(rumqttd.mqtts_port).to_equal(Some(config::DEF_RUMQTTD_MQTTS_PORT))?;
     expect(rumqttd.console_port).to_equal(Some(config::DEF_RUMQTTD_CONSOLE_PORT))?;
+    let mq_channels_conf = conf.mq_channels.as_ref().unwrap();
+    expect(mq_channels_conf.data.is_some()).to_equal(true)?;
+    let data_conf = mq_channels_conf.data.as_ref().unwrap();
+    expect(data_conf.persistent.is_some()).to_equal(true)?;
+    expect(data_conf.persistent.unwrap()).to_equal(config::DEF_MQ_PERSISTENT)?;
 
     // Test command-line arguments overwrite environment variables.
     let args = vec![
@@ -323,6 +348,8 @@ pub fn read_args(_context: &mut SpecContext<TestState>) -> Result<(), String> {
         "133",
         "--coremgr.mq-channels.data.url",
         "url3",
+        "--coremgr.mq-channels.data.persistent",
+        "false",
     ];
     env::set_var(&OsStr::new("COREMGR_AUTH"), "sylvia41");
     env::set_var(&OsStr::new("COREMGR_BROKER"), "sylvia42");
@@ -346,6 +373,7 @@ pub fn read_args(_context: &mut SpecContext<TestState>) -> Result<(), String> {
     env::set_var(&OsStr::new("COREMGR_MQ_RUMQTTD_MQTTS_PORT"), "142");
     env::set_var(&OsStr::new("COREMGR_MQ_RUMQTTD_CONSOLE_PORT"), "143");
     env::set_var(&OsStr::new("COREMGR_MQCHANNELS_DATA_URL"), "url4");
+    env::set_var(&OsStr::new("COREMGR_MQCHANNELS_DATA_PERSISTENT"), "true");
     let args = config::reg_args(Command::new("test")).get_matches_from(args);
     let conf = config::read_args(&args);
     expect(conf.auth.is_some()).to_equal(true)?;
@@ -394,7 +422,9 @@ pub fn read_args(_context: &mut SpecContext<TestState>) -> Result<(), String> {
     expect(mq_channels_conf.data.is_some()).to_equal(true)?;
     let data_conf = mq_channels_conf.data.as_ref().unwrap();
     expect(data_conf.url.is_some()).to_equal(true)?;
-    expect(data_conf.url.as_ref().unwrap().as_str()).to_equal("url3")
+    expect(data_conf.url.as_ref().unwrap().as_str()).to_equal("url3")?;
+    expect(data_conf.persistent.is_some()).to_equal(true)?;
+    expect(data_conf.persistent.unwrap()).to_equal(false)
 }
 
 /// Test [`config::apply_default`].
@@ -545,7 +575,11 @@ pub fn apply_default(_context: &mut SpecContext<TestState>) -> Result<(), String
     expect(rabbitmq.ttl.is_none()).to_equal(true)?;
     expect(rabbitmq.length.is_none()).to_equal(true)?;
     let mq_channels_conf = conf.mq_channels.as_ref().unwrap();
-    expect(mq_channels_conf.data.is_none()).to_equal(true)?;
+    expect(mq_channels_conf.data.is_some()).to_equal(true)?;
+    let data_conf = mq_channels_conf.data.as_ref().unwrap();
+    expect(data_conf.url.is_none()).to_equal(true)?;
+    expect(data_conf.persistent.is_some()).to_equal(true)?;
+    expect(data_conf.persistent.unwrap()).to_equal(config::DEF_MQ_PERSISTENT)?;
 
     let conf = Config {
         auth: Some("sylvia2".to_string()),
@@ -602,6 +636,7 @@ pub fn apply_default(_context: &mut SpecContext<TestState>) -> Result<(), String
         mq_channels: Some(config::MqChannels {
             data: Some(config::CoremgrData {
                 url: Some("url9".to_string()),
+                persistent: Some(false),
             }),
         }),
     };
@@ -624,9 +659,9 @@ pub fn apply_default(_context: &mut SpecContext<TestState>) -> Result<(), String
     expect(rabbitmq.password.is_some()).to_equal(true)?;
     expect(rabbitmq.password.as_ref().unwrap().as_str()).to_equal("rabbitpass2")?;
     expect(rabbitmq.ttl.is_some()).to_equal(true)?;
-    expect(*rabbitmq.ttl.as_ref().unwrap()).to_equal(100)?;
+    expect(rabbitmq.ttl.unwrap()).to_equal(100)?;
     expect(rabbitmq.length.is_some()).to_equal(true)?;
-    expect(*rabbitmq.length.as_ref().unwrap()).to_equal(1000)?;
+    expect(rabbitmq.length.unwrap()).to_equal(1000)?;
     expect(rabbitmq.hosts.is_some()).to_equal(true)?;
     let hosts = rabbitmq.hosts.as_ref().unwrap();
     expect(hosts.len()).to_equal(2)?;
@@ -662,5 +697,7 @@ pub fn apply_default(_context: &mut SpecContext<TestState>) -> Result<(), String
     expect(mq_channels_conf.data.is_some()).to_equal(true)?;
     let data_conf = mq_channels_conf.data.as_ref().unwrap();
     expect(data_conf.url.is_some()).to_equal(true)?;
-    expect(data_conf.url.as_ref().unwrap().as_str()).to_equal("url9")
+    expect(data_conf.url.as_ref().unwrap().as_str()).to_equal("url9")?;
+    expect(data_conf.persistent.is_some()).to_equal(true)?;
+    expect(data_conf.persistent.unwrap()).to_equal(false)
 }

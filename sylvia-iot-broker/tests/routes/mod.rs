@@ -192,6 +192,7 @@ fn fn_new_state(context: &mut SpecContext<TestState>) -> Result<(), String> {
         mq_channels: Some(config::MqChannels {
             data: Some(config::BrokerData {
                 url: Some(config::DEF_MQ_CHANNEL_URL.to_string()),
+                ..Default::default()
             }),
             ..Default::default()
         }),
@@ -212,6 +213,7 @@ fn fn_new_state(context: &mut SpecContext<TestState>) -> Result<(), String> {
         mq_channels: Some(config::MqChannels {
             data: Some(config::BrokerData {
                 url: Some(crate::TEST_MQTT_HOST_URI.to_string()),
+                ..Default::default()
             }),
             ..Default::default()
         }),
@@ -314,7 +316,12 @@ fn fn_new_service(context: &mut SpecContext<TestState>) -> Result<(), String> {
         false,
         Arc::new(TestHandler {}),
     )?;
-    let data_sender = data::new(&mq_conns, &url, Arc::new(TestHandler {}))?;
+    let data_sender = data::new(
+        &mq_conns,
+        &url,
+        config::DEF_MQ_PERSISTENT,
+        Arc::new(TestHandler {}),
+    )?;
     let mut state = routes::State {
         auth_base: config::DEF_AUTH.to_string(),
         api_scopes: HashMap::new(),
@@ -322,6 +329,7 @@ fn fn_new_service(context: &mut SpecContext<TestState>) -> Result<(), String> {
         model: model.clone(),
         cache,
         amqp_prefetch: config::DEF_MQ_PREFETCH,
+        amqp_persistent: config::DEF_MQ_PERSISTENT,
         mqtt_shared_prefix: config::DEF_MQ_SHAREDPREFIX.to_string(),
         client: reqwest::Client::new(),
         mq_conns,
@@ -473,6 +481,7 @@ fn fn_api_scopes(context: &mut SpecContext<TestState>) -> Result<(), String> {
         model: model.clone(),
         cache,
         amqp_prefetch: config::DEF_MQ_PREFETCH,
+        amqp_persistent: config::DEF_MQ_PERSISTENT,
         mqtt_shared_prefix: config::DEF_MQ_SHAREDPREFIX.to_string(),
         client: reqwest::Client::new(),
         mq_conns,

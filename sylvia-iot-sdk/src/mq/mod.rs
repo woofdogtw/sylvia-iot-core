@@ -75,6 +75,9 @@ pub struct Options {
     /// AMQP prefetch option.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub prefetch: Option<u16>,
+    /// AMQP persistent option.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub persistent: Option<bool>,
     /// MQTT shared queue prefix option.
     #[serde(rename = "sharedPrefix", skip_serializing_if = "Option::is_none")]
     pub shared_prefix: Option<String>,
@@ -85,6 +88,8 @@ pub const SUPPORT_SCHEMES: &'static [&'static str] = &["amqp", "amqps", "mqtt", 
 
 /// The default prefetch value for AMQP.
 const DEF_PREFETCH: u16 = 100;
+/// The default persistent value for AMQP.
+const DEF_PERSISTENT: bool = false;
 
 impl Copy for MgrStatus {}
 
@@ -232,12 +237,17 @@ fn new_data_queues(
                     _ => prefetch,
                 },
             };
+            let persistent = match opts.persistent {
+                None => DEF_PERSISTENT,
+                Some(persistent) => persistent,
+            };
 
             let uldata_opts = QueueOptions::Amqp(
                 AmqpQueueOptions {
                     name: format!("{}.{}.{}.uldata", prefix, unit, opts.name.as_str()),
                     is_recv: !is_network,
                     reliable: true,
+                    persistent,
                     broadcast: false,
                     prefetch,
                     ..Default::default()
