@@ -388,6 +388,7 @@ grant authorization to the client.</li>
 <tr><td>broker.cache.memory.deviceRoute</td><td>broker.cache.memory.device-route</td><td>BROKER_CACHE_MEMORY_DEVICE_ROUTE</td><td>1,000,000</td><td>Memory cache size for device routes</td></tr>
 <tr><td>broker.cache.memory.networkRoute</td><td>broker.cache.memory.network-route</td><td>BROKER_CACHE_MEMORY_NETWORK_ROUTE</td><td>1,000,000</td><td>Memory cache size for network routes</td></tr>
 <tr><td>broker.mq.prefetch</td><td>broker.mq.prefetch</td><td>BROKER_MQ_PREFETCH</td><td>100</td><td>Maximum number of AMQP consumers</td></tr>
+<tr><td>broker.mq.persistent</td><td>broker.mq.persistent</td><td>BROKER_MQ_PERSISTENT</td><td>false</td><td>Persistent message delivery for AMQP producers</td></tr>
 <tr><td>broker.mq.sharedPrefix</td><td>broker.mq.sharedprefix</td><td>BROKER_MQ_SHAREDPREFIX</td><td>$share/sylvia-iot-broker/</td><td>MQTT shared subscription prefix</td></tr>
 <tr><td>broker.mqChannels.unit.url</td><td>broker.mq-channels.unit.url</td><td>BROKER_MQCHANNELS_UNIT_URL</td><td>amqp://localhost</td><td>Unit control message host</td></tr>
 <tr><td>broker.mqChannels.unit.prefetch</td><td>broker.mq-channels.unit.prefetch</td><td>BROKER_MQCHANNELS_UNIT_PREFETCH</td><td>100</td><td>Maximum number of AMQP consumers for unit control messages</td></tr>
@@ -402,6 +403,7 @@ grant authorization to the client.</li>
 <tr><td>broker.mqChannels.networkRoute.url</td><td>broker.mq-channels.network-route.url</td><td>BROKER_MQCHANNELS_NETWORK_ROUTE_URL</td><td>amqp://localhost</td><td>Network route control message host</td></tr>
 <tr><td>broker.mqChannels.networkRoute.prefetch</td><td>broker.mq-channels.network-route.prefetch</td><td>BROKER_MQCHANNELS_NETWORK_ROUTE_PREFETCH</td><td>100</td><td>Maximum number of AMQP consumers for network route control messages</td></tr>
 <tr><td>broker.mqChannels.data.url</td><td>broker.mq-channels.data.url</td><td>BROKER_MQCHANNELS_DATA_URL</td><td></td><td>Data message host</td></tr>
+<tr><td>broker.mqChannels.data.persistent</td><td>broker.mq-channels.data.persistent</td><td>BROKER_MQCHANNELS_DATA_PERSISTENT</td><td>false</td><td>Persistent delivery for data messages</td></tr>
 <tr><td>broker.db.apiScopes</td><td>broker.api-scopes</td><td>BROKER_API_SCOPES</td><td></td><td>API scope settings</td></tr>
 </tbody></table>
 </div>
@@ -453,6 +455,7 @@ API changes are made.
 <tr><td>coremgr.mq.rumqttd.mqttsPort</td><td>coremgr.mq.rumqttd.mqtts-port</td><td>COREMGR_MQ_RUMQTTD_MQTTS_PORT</td><td>8883</td><td>rumqttd MQTTS port</td></tr>
 <tr><td>coremgr.mq.rumqttd.consolePort</td><td>coremgr.mq.rumqttd.console-port</td><td>COREMGR_MQ_RUMQTTD_CONSOLE_PORT</td><td>18083</td><td>rumqttd management API port</td></tr>
 <tr><td>coremgr.mqChannels.data.url</td><td>coremgr.mq-channels.data.url</td><td>COREMGR_MQCHANNELS_DATA_URL</td><td></td><td>Data message host</td></tr>
+<tr><td>coremgr.mqChannels.data.persistent</td><td>coremgr.mq-channels.data.persistent</td><td>COREMGR_MQCHANNELS_DATA_PERSISTENT</td><td>false</td><td>Persistent delivery for data messages</td></tr>
 </tbody></table>
 </div>
 <h3 id="detailed-explanation-3"><a class="header" href="#detailed-explanation-3">Detailed Explanation</a></h3>
