@@ -41,7 +41,7 @@ pub fn read_args(_context: &mut SpecContext<TestState>) -> Result<(), String> {
     expect(data_conf.url.is_some()).to_equal(true)?;
     expect(data_conf.url.as_ref().unwrap().as_str()).to_equal(config::DEF_MQ_CHANNEL_URL)?;
     expect(data_conf.prefetch.is_some()).to_equal(true)?;
-    expect(*data_conf.prefetch.as_ref().unwrap()).to_equal(config::DEF_MQ_PREFETCH)?;
+    expect(data_conf.prefetch.unwrap()).to_equal(config::DEF_MQ_PREFETCH)?;
     expect(data_conf.shared_prefix.is_some()).to_equal(true)?;
     expect(data_conf.shared_prefix.as_ref().unwrap().as_str())
         .to_equal(config::DEF_MQ_SHAREDPREFIX)?;
@@ -50,7 +50,7 @@ pub fn read_args(_context: &mut SpecContext<TestState>) -> Result<(), String> {
     expect(data_conf.url.is_some()).to_equal(true)?;
     expect(data_conf.url.as_ref().unwrap().as_str()).to_equal(config::DEF_MQ_CHANNEL_URL)?;
     expect(data_conf.prefetch.is_some()).to_equal(true)?;
-    expect(*data_conf.prefetch.as_ref().unwrap()).to_equal(config::DEF_MQ_PREFETCH)?;
+    expect(data_conf.prefetch.unwrap()).to_equal(config::DEF_MQ_PREFETCH)?;
     expect(data_conf.shared_prefix.is_some()).to_equal(true)?;
     expect(data_conf.shared_prefix.as_ref().unwrap().as_str())
         .to_equal(config::DEF_MQ_SHAREDPREFIX)?;
@@ -109,7 +109,7 @@ pub fn read_args(_context: &mut SpecContext<TestState>) -> Result<(), String> {
     expect(data_conf.url.is_some()).to_equal(true)?;
     expect(data_conf.url.as_ref().unwrap().as_str()).to_equal("url12")?;
     expect(data_conf.prefetch.is_some()).to_equal(true)?;
-    expect(*data_conf.prefetch.as_ref().unwrap()).to_equal(12)?;
+    expect(data_conf.prefetch.unwrap()).to_equal(12)?;
     expect(data_conf.shared_prefix.is_some()).to_equal(true)?;
     expect(data_conf.shared_prefix.as_ref().unwrap().as_str()).to_equal("prefix12")?;
     expect(mq_channels_conf.coremgr.is_some()).to_equal(true)?;
@@ -117,7 +117,7 @@ pub fn read_args(_context: &mut SpecContext<TestState>) -> Result<(), String> {
     expect(data_conf.url.is_some()).to_equal(true)?;
     expect(data_conf.url.as_ref().unwrap().as_str()).to_equal("url13")?;
     expect(data_conf.prefetch.is_some()).to_equal(true)?;
-    expect(*data_conf.prefetch.as_ref().unwrap()).to_equal(13)?;
+    expect(data_conf.prefetch.unwrap()).to_equal(13)?;
     expect(data_conf.shared_prefix.is_some()).to_equal(true)?;
     expect(data_conf.shared_prefix.as_ref().unwrap().as_str()).to_equal("prefix13")?;
 
@@ -166,7 +166,7 @@ pub fn read_args(_context: &mut SpecContext<TestState>) -> Result<(), String> {
     expect(data_conf.url.is_some()).to_equal(true)?;
     expect(data_conf.url.as_ref().unwrap().as_str()).to_equal("url22")?;
     expect(data_conf.prefetch.is_some()).to_equal(true)?;
-    expect(*data_conf.prefetch.as_ref().unwrap()).to_equal(22)?;
+    expect(data_conf.prefetch.unwrap()).to_equal(22)?;
     expect(data_conf.shared_prefix.is_some()).to_equal(true)?;
     expect(data_conf.shared_prefix.as_ref().unwrap().as_str()).to_equal("prefix22")?;
     expect(mq_channels_conf.coremgr.is_some()).to_equal(true)?;
@@ -174,7 +174,7 @@ pub fn read_args(_context: &mut SpecContext<TestState>) -> Result<(), String> {
     expect(data_conf.url.is_some()).to_equal(true)?;
     expect(data_conf.url.as_ref().unwrap().as_str()).to_equal("url23")?;
     expect(data_conf.prefetch.is_some()).to_equal(true)?;
-    expect(*data_conf.prefetch.as_ref().unwrap()).to_equal(23)?;
+    expect(data_conf.prefetch.unwrap()).to_equal(23)?;
     expect(data_conf.shared_prefix.is_some()).to_equal(true)?;
     expect(data_conf.shared_prefix.as_ref().unwrap().as_str()).to_equal("prefix23")?;
 
@@ -194,11 +194,11 @@ pub fn read_args(_context: &mut SpecContext<TestState>) -> Result<(), String> {
     expect(mq_channels_conf.broker.is_some()).to_equal(true)?;
     let data_conf = mq_channels_conf.broker.as_ref().unwrap();
     expect(data_conf.prefetch.is_some()).to_equal(true)?;
-    expect(*data_conf.prefetch.as_ref().unwrap()).to_equal(config::DEF_MQ_PREFETCH)?;
+    expect(data_conf.prefetch.unwrap()).to_equal(config::DEF_MQ_PREFETCH)?;
     expect(mq_channels_conf.coremgr.is_some()).to_equal(true)?;
     let data_conf = mq_channels_conf.coremgr.as_ref().unwrap();
     expect(data_conf.prefetch.is_some()).to_equal(true)?;
-    expect(*data_conf.prefetch.as_ref().unwrap()).to_equal(config::DEF_MQ_PREFETCH)?;
+    expect(data_conf.prefetch.unwrap()).to_equal(config::DEF_MQ_PREFETCH)?;
 
     // Test command-line arguments overwrite environment variables.
     let args = vec![
@@ -273,7 +273,7 @@ pub fn read_args(_context: &mut SpecContext<TestState>) -> Result<(), String> {
     expect(data_conf.url.is_some()).to_equal(true)?;
     expect(data_conf.url.as_ref().unwrap().as_str()).to_equal("url32")?;
     expect(data_conf.prefetch.is_some()).to_equal(true)?;
-    expect(*data_conf.prefetch.as_ref().unwrap()).to_equal(32)?;
+    expect(data_conf.prefetch.unwrap()).to_equal(32)?;
     expect(data_conf.shared_prefix.is_some()).to_equal(true)?;
     expect(data_conf.shared_prefix.as_ref().unwrap().as_str()).to_equal("prefix32")?;
     expect(mq_channels_conf.coremgr.is_some()).to_equal(true)?;
@@ -281,7 +281,7 @@ pub fn read_args(_context: &mut SpecContext<TestState>) -> Result<(), String> {
     expect(data_conf.url.is_some()).to_equal(true)?;
     expect(data_conf.url.as_ref().unwrap().as_str()).to_equal("url33")?;
     expect(data_conf.prefetch.is_some()).to_equal(true)?;
-    expect(*data_conf.prefetch.as_ref().unwrap()).to_equal(33)?;
+    expect(data_conf.prefetch.unwrap()).to_equal(33)?;
     expect(data_conf.shared_prefix.is_some()).to_equal(true)?;
     expect(data_conf.shared_prefix.as_ref().unwrap().as_str()).to_equal("prefix33")
 }
@@ -314,7 +314,7 @@ pub fn apply_default(_context: &mut SpecContext<TestState>) -> Result<(), String
     expect(data_conf.url.is_some()).to_equal(true)?;
     expect(data_conf.url.as_ref().unwrap().as_str()).to_equal(config::DEF_MQ_CHANNEL_URL)?;
     expect(data_conf.prefetch.is_some()).to_equal(true)?;
-    expect(*data_conf.prefetch.as_ref().unwrap()).to_equal(config::DEF_MQ_PREFETCH)?;
+    expect(data_conf.prefetch.unwrap()).to_equal(config::DEF_MQ_PREFETCH)?;
     expect(data_conf.shared_prefix.is_some()).to_equal(true)?;
     expect(data_conf.shared_prefix.as_ref().unwrap().as_str())
         .to_equal(config::DEF_MQ_SHAREDPREFIX)?;
@@ -323,7 +323,7 @@ pub fn apply_default(_context: &mut SpecContext<TestState>) -> Result<(), String
     expect(data_conf.url.is_some()).to_equal(true)?;
     expect(data_conf.url.as_ref().unwrap().as_str()).to_equal(config::DEF_MQ_CHANNEL_URL)?;
     expect(data_conf.prefetch.is_some()).to_equal(true)?;
-    expect(*data_conf.prefetch.as_ref().unwrap()).to_equal(config::DEF_MQ_PREFETCH)?;
+    expect(data_conf.prefetch.unwrap()).to_equal(config::DEF_MQ_PREFETCH)?;
     expect(data_conf.shared_prefix.is_some()).to_equal(true)?;
     expect(data_conf.shared_prefix.as_ref().unwrap().as_str())
         .to_equal(config::DEF_MQ_SHAREDPREFIX)?;
@@ -360,7 +360,7 @@ pub fn apply_default(_context: &mut SpecContext<TestState>) -> Result<(), String
     expect(data_conf.url.is_some()).to_equal(true)?;
     expect(data_conf.url.as_ref().unwrap().as_str()).to_equal(config::DEF_MQ_CHANNEL_URL)?;
     expect(data_conf.prefetch.is_some()).to_equal(true)?;
-    expect(*data_conf.prefetch.as_ref().unwrap()).to_equal(config::DEF_MQ_PREFETCH)?;
+    expect(data_conf.prefetch.unwrap()).to_equal(config::DEF_MQ_PREFETCH)?;
     expect(data_conf.shared_prefix.is_some()).to_equal(true)?;
     expect(data_conf.shared_prefix.as_ref().unwrap().as_str())
         .to_equal(config::DEF_MQ_SHAREDPREFIX)?;
@@ -369,7 +369,7 @@ pub fn apply_default(_context: &mut SpecContext<TestState>) -> Result<(), String
     expect(data_conf.url.is_some()).to_equal(true)?;
     expect(data_conf.url.as_ref().unwrap().as_str()).to_equal(config::DEF_MQ_CHANNEL_URL)?;
     expect(data_conf.prefetch.is_some()).to_equal(true)?;
-    expect(*data_conf.prefetch.as_ref().unwrap()).to_equal(config::DEF_MQ_PREFETCH)?;
+    expect(data_conf.prefetch.unwrap()).to_equal(config::DEF_MQ_PREFETCH)?;
     expect(data_conf.shared_prefix.is_some()).to_equal(true)?;
     expect(data_conf.shared_prefix.as_ref().unwrap().as_str())
         .to_equal(config::DEF_MQ_SHAREDPREFIX)?;
@@ -405,7 +405,7 @@ pub fn apply_default(_context: &mut SpecContext<TestState>) -> Result<(), String
     expect(data_conf.url.is_some()).to_equal(true)?;
     expect(data_conf.url.as_ref().unwrap().as_str()).to_equal(config::DEF_MQ_CHANNEL_URL)?;
     expect(data_conf.prefetch.is_some()).to_equal(true)?;
-    expect(*data_conf.prefetch.as_ref().unwrap()).to_equal(config::DEF_MQ_PREFETCH)?;
+    expect(data_conf.prefetch.unwrap()).to_equal(config::DEF_MQ_PREFETCH)?;
     expect(data_conf.shared_prefix.is_some()).to_equal(true)?;
     expect(data_conf.shared_prefix.as_ref().unwrap().as_str())
         .to_equal(config::DEF_MQ_SHAREDPREFIX)?;
@@ -414,7 +414,7 @@ pub fn apply_default(_context: &mut SpecContext<TestState>) -> Result<(), String
     expect(data_conf.url.is_some()).to_equal(true)?;
     expect(data_conf.url.as_ref().unwrap().as_str()).to_equal(config::DEF_MQ_CHANNEL_URL)?;
     expect(data_conf.prefetch.is_some()).to_equal(true)?;
-    expect(*data_conf.prefetch.as_ref().unwrap()).to_equal(config::DEF_MQ_PREFETCH)?;
+    expect(data_conf.prefetch.unwrap()).to_equal(config::DEF_MQ_PREFETCH)?;
     expect(data_conf.shared_prefix.is_some()).to_equal(true)?;
     expect(data_conf.shared_prefix.as_ref().unwrap().as_str())
         .to_equal(config::DEF_MQ_SHAREDPREFIX)?;
@@ -469,7 +469,7 @@ pub fn apply_default(_context: &mut SpecContext<TestState>) -> Result<(), String
     expect(data_conf.url.is_some()).to_equal(true)?;
     expect(data_conf.url.as_ref().unwrap().as_str()).to_equal("url3")?;
     expect(data_conf.prefetch.is_some()).to_equal(true)?;
-    expect(*data_conf.prefetch.as_ref().unwrap()).to_equal(13)?;
+    expect(data_conf.prefetch.unwrap()).to_equal(13)?;
     expect(data_conf.shared_prefix.is_some()).to_equal(true)?;
     expect(data_conf.shared_prefix.as_ref().unwrap().as_str()).to_equal("$shared/group3")?;
     expect(mq_channels_conf.coremgr.is_some()).to_equal(true)?;
@@ -477,7 +477,7 @@ pub fn apply_default(_context: &mut SpecContext<TestState>) -> Result<(), String
     expect(data_conf.url.is_some()).to_equal(true)?;
     expect(data_conf.url.as_ref().unwrap().as_str()).to_equal("url4")?;
     expect(data_conf.prefetch.is_some()).to_equal(true)?;
-    expect(*data_conf.prefetch.as_ref().unwrap()).to_equal(14)?;
+    expect(data_conf.prefetch.unwrap()).to_equal(14)?;
     expect(data_conf.shared_prefix.is_some()).to_equal(true)?;
     expect(data_conf.shared_prefix.as_ref().unwrap().as_str()).to_equal("$shared/group4")
 }

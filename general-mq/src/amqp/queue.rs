@@ -65,6 +65,8 @@ pub struct AmqpQueueOptions {
     ///
     /// **Note**: this value **MUST** be a positive value.
     pub prefetch: u16,
+    /// Use persistent delivery mode.
+    pub persistent: bool,
 }
 
 /// The AMQP [`Message`] implementation.
@@ -214,7 +216,7 @@ impl GmqQueue for AmqpQueue {
         };
 
         let mut prop = BasicProperties::default();
-        if self.opts.reliable {
+        if self.opts.persistent {
             prop.with_persistence(true);
         }
         let mut args = match self.opts.reliable {
@@ -244,6 +246,7 @@ impl Default for AmqpQueueOptions {
             broadcast: false,
             reconnect_millis: DEF_RECONN_TIMEOUT_MS,
             prefetch: 1,
+            persistent: false,
         }
     }
 }

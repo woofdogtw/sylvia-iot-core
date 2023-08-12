@@ -18,6 +18,7 @@ const QUEUE_NAME: &'static str = "coremgr.data";
 pub fn new(
     conn_pool: &Arc<Mutex<HashMap<String, Connection>>>,
     host_uri: &Url,
+    persistent: bool,
     handler: Arc<dyn EventHandler>,
 ) -> Result<Queue, String> {
     let conn = get_connection(&conn_pool, host_uri)?;
@@ -28,6 +29,7 @@ pub fn new(
                     name: QUEUE_NAME.to_string(),
                     is_recv: false,
                     reliable: true,
+                    persistent,
                     broadcast: false,
                     ..Default::default()
                 },

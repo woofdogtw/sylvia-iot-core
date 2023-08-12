@@ -756,6 +756,7 @@ pub fn new_state(
             Some(host) => Some(config::MqChannels {
                 data: Some(config::BrokerData {
                     url: Some(host.to_string()),
+                    ..Default::default()
                 }),
                 ..Default::default()
             }),

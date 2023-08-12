@@ -43,7 +43,9 @@ pub fn read_args(_context: &mut SpecContext<TestState>) -> Result<(), String> {
     expect(conf.mq.is_some()).to_equal(true)?;
     let mq_conf = conf.mq.as_ref().unwrap();
     expect(mq_conf.prefetch.is_some()).to_equal(true)?;
-    expect(*mq_conf.prefetch.as_ref().unwrap()).to_equal(config::DEF_MQ_PREFETCH)?;
+    expect(mq_conf.prefetch.unwrap()).to_equal(config::DEF_MQ_PREFETCH)?;
+    expect(mq_conf.persistent.is_some()).to_equal(true)?;
+    expect(mq_conf.persistent.unwrap()).to_equal(config::DEF_MQ_PERSISTENT)?;
     expect(mq_conf.shared_prefix.is_some()).to_equal(true)?;
     expect(mq_conf.shared_prefix.as_ref().unwrap().as_str())
         .to_equal(config::DEF_MQ_SHAREDPREFIX)?;
@@ -54,38 +56,42 @@ pub fn read_args(_context: &mut SpecContext<TestState>) -> Result<(), String> {
     expect(ctrl_conf.url.is_some()).to_equal(true)?;
     expect(ctrl_conf.url.as_ref().unwrap().as_str()).to_equal(config::DEF_MQ_CHANNEL_URL)?;
     expect(ctrl_conf.prefetch.is_some()).to_equal(true)?;
-    expect(*ctrl_conf.prefetch.as_ref().unwrap()).to_equal(config::DEF_MQ_PREFETCH)?;
+    expect(ctrl_conf.prefetch.unwrap()).to_equal(config::DEF_MQ_PREFETCH)?;
     expect(mq_channels_conf.application.is_some()).to_equal(true)?;
     let ctrl_conf = mq_channels_conf.application.as_ref().unwrap();
     expect(ctrl_conf.url.is_some()).to_equal(true)?;
     expect(ctrl_conf.url.as_ref().unwrap().as_str()).to_equal(config::DEF_MQ_CHANNEL_URL)?;
     expect(ctrl_conf.prefetch.is_some()).to_equal(true)?;
-    expect(*ctrl_conf.prefetch.as_ref().unwrap()).to_equal(config::DEF_MQ_PREFETCH)?;
+    expect(ctrl_conf.prefetch.unwrap()).to_equal(config::DEF_MQ_PREFETCH)?;
     expect(mq_channels_conf.network.is_some()).to_equal(true)?;
     let ctrl_conf = mq_channels_conf.network.as_ref().unwrap();
     expect(ctrl_conf.url.is_some()).to_equal(true)?;
     expect(ctrl_conf.url.as_ref().unwrap().as_str()).to_equal(config::DEF_MQ_CHANNEL_URL)?;
     expect(ctrl_conf.prefetch.is_some()).to_equal(true)?;
-    expect(*ctrl_conf.prefetch.as_ref().unwrap()).to_equal(config::DEF_MQ_PREFETCH)?;
+    expect(ctrl_conf.prefetch.unwrap()).to_equal(config::DEF_MQ_PREFETCH)?;
     expect(mq_channels_conf.device.is_some()).to_equal(true)?;
     let ctrl_conf = mq_channels_conf.device.as_ref().unwrap();
     expect(ctrl_conf.url.is_some()).to_equal(true)?;
     expect(ctrl_conf.url.as_ref().unwrap().as_str()).to_equal(config::DEF_MQ_CHANNEL_URL)?;
     expect(ctrl_conf.prefetch.is_some()).to_equal(true)?;
-    expect(*ctrl_conf.prefetch.as_ref().unwrap()).to_equal(config::DEF_MQ_PREFETCH)?;
+    expect(ctrl_conf.prefetch.unwrap()).to_equal(config::DEF_MQ_PREFETCH)?;
     expect(mq_channels_conf.device_route.is_some()).to_equal(true)?;
     let ctrl_conf = mq_channels_conf.device_route.as_ref().unwrap();
     expect(ctrl_conf.url.is_some()).to_equal(true)?;
     expect(ctrl_conf.url.as_ref().unwrap().as_str()).to_equal(config::DEF_MQ_CHANNEL_URL)?;
     expect(ctrl_conf.prefetch.is_some()).to_equal(true)?;
-    expect(*ctrl_conf.prefetch.as_ref().unwrap()).to_equal(config::DEF_MQ_PREFETCH)?;
+    expect(ctrl_conf.prefetch.unwrap()).to_equal(config::DEF_MQ_PREFETCH)?;
     expect(mq_channels_conf.network_route.is_some()).to_equal(true)?;
     let ctrl_conf = mq_channels_conf.network_route.as_ref().unwrap();
     expect(ctrl_conf.url.is_some()).to_equal(true)?;
     expect(ctrl_conf.url.as_ref().unwrap().as_str()).to_equal(config::DEF_MQ_CHANNEL_URL)?;
     expect(ctrl_conf.prefetch.is_some()).to_equal(true)?;
-    expect(*ctrl_conf.prefetch.as_ref().unwrap()).to_equal(config::DEF_MQ_PREFETCH)?;
-    expect(mq_channels_conf.data.is_none()).to_equal(true)?;
+    expect(ctrl_conf.prefetch.unwrap()).to_equal(config::DEF_MQ_PREFETCH)?;
+    expect(mq_channels_conf.data.is_some()).to_equal(true)?;
+    let data_conf = mq_channels_conf.data.as_ref().unwrap();
+    expect(data_conf.url.is_none()).to_equal(true)?;
+    expect(data_conf.persistent.is_some()).to_equal(true)?;
+    expect(data_conf.persistent.unwrap()).to_equal(config::DEF_MQ_PERSISTENT)?;
     expect(conf.api_scopes.as_ref()).to_equal(Some(&HashMap::new()))?;
 
     // Modified default by command-line arguments.
@@ -113,6 +119,8 @@ pub fn read_args(_context: &mut SpecContext<TestState>) -> Result<(), String> {
         "113",
         "--broker.mq.prefetch",
         "12",
+        "--broker.mq.persistent",
+        "true",
         "--broker.mq.sharedprefix",
         "prefix1",
         "--broker.mq-channels.unit.url",
@@ -141,6 +149,8 @@ pub fn read_args(_context: &mut SpecContext<TestState>) -> Result<(), String> {
         "18",
         "--broker.mq-channels.data.url",
         "url19",
+        "--broker.mq-channels.data.persistent",
+        "false",
         "--broker.api-scopes",
         "{\"key11\":[\"value11\"]}",
     ];
@@ -170,7 +180,9 @@ pub fn read_args(_context: &mut SpecContext<TestState>) -> Result<(), String> {
     expect(conf.mq.is_some()).to_equal(true)?;
     let mq_conf = conf.mq.as_ref().unwrap();
     expect(mq_conf.prefetch.is_some()).to_equal(true)?;
-    expect(*mq_conf.prefetch.as_ref().unwrap()).to_equal(12)?;
+    expect(mq_conf.prefetch.unwrap()).to_equal(12)?;
+    expect(mq_conf.persistent.is_some()).to_equal(true)?;
+    expect(mq_conf.persistent.unwrap()).to_equal(true)?;
     expect(mq_conf.shared_prefix.is_some()).to_equal(true)?;
     expect(mq_conf.shared_prefix.as_ref().unwrap().as_str()).to_equal("prefix1")?;
     expect(conf.mq_channels.is_some()).to_equal(true)?;
@@ -180,41 +192,43 @@ pub fn read_args(_context: &mut SpecContext<TestState>) -> Result<(), String> {
     expect(ctrl_conf.url.is_some()).to_equal(true)?;
     expect(ctrl_conf.url.as_ref().unwrap().as_str()).to_equal("url13")?;
     expect(ctrl_conf.prefetch.is_some()).to_equal(true)?;
-    expect(*ctrl_conf.prefetch.as_ref().unwrap()).to_equal(13)?;
+    expect(ctrl_conf.prefetch.unwrap()).to_equal(13)?;
     expect(mq_channels_conf.application.is_some()).to_equal(true)?;
     let ctrl_conf = mq_channels_conf.application.as_ref().unwrap();
     expect(ctrl_conf.url.is_some()).to_equal(true)?;
     expect(ctrl_conf.url.as_ref().unwrap().as_str()).to_equal("url14")?;
     expect(ctrl_conf.prefetch.is_some()).to_equal(true)?;
-    expect(*ctrl_conf.prefetch.as_ref().unwrap()).to_equal(14)?;
+    expect(ctrl_conf.prefetch.unwrap()).to_equal(14)?;
     expect(mq_channels_conf.network.is_some()).to_equal(true)?;
     let ctrl_conf = mq_channels_conf.network.as_ref().unwrap();
     expect(ctrl_conf.url.is_some()).to_equal(true)?;
     expect(ctrl_conf.url.as_ref().unwrap().as_str()).to_equal("url15")?;
     expect(ctrl_conf.prefetch.is_some()).to_equal(true)?;
-    expect(*ctrl_conf.prefetch.as_ref().unwrap()).to_equal(15)?;
+    expect(ctrl_conf.prefetch.unwrap()).to_equal(15)?;
     expect(mq_channels_conf.device.is_some()).to_equal(true)?;
     let ctrl_conf = mq_channels_conf.device.as_ref().unwrap();
     expect(ctrl_conf.url.is_some()).to_equal(true)?;
     expect(ctrl_conf.url.as_ref().unwrap().as_str()).to_equal("url16")?;
     expect(ctrl_conf.prefetch.is_some()).to_equal(true)?;
-    expect(*ctrl_conf.prefetch.as_ref().unwrap()).to_equal(16)?;
+    expect(ctrl_conf.prefetch.unwrap()).to_equal(16)?;
     expect(mq_channels_conf.device_route.is_some()).to_equal(true)?;
     let ctrl_conf = mq_channels_conf.device_route.as_ref().unwrap();
     expect(ctrl_conf.url.is_some()).to_equal(true)?;
     expect(ctrl_conf.url.as_ref().unwrap().as_str()).to_equal("url17")?;
     expect(ctrl_conf.prefetch.is_some()).to_equal(true)?;
-    expect(*ctrl_conf.prefetch.as_ref().unwrap()).to_equal(17)?;
+    expect(ctrl_conf.prefetch.unwrap()).to_equal(17)?;
     expect(mq_channels_conf.network_route.is_some()).to_equal(true)?;
     let ctrl_conf = mq_channels_conf.network_route.as_ref().unwrap();
     expect(ctrl_conf.url.is_some()).to_equal(true)?;
     expect(ctrl_conf.url.as_ref().unwrap().as_str()).to_equal("url18")?;
     expect(ctrl_conf.prefetch.is_some()).to_equal(true)?;
-    expect(*ctrl_conf.prefetch.as_ref().unwrap()).to_equal(18)?;
+    expect(ctrl_conf.prefetch.unwrap()).to_equal(18)?;
     expect(mq_channels_conf.data.is_some()).to_equal(true)?;
     let data_conf = mq_channels_conf.data.as_ref().unwrap();
     expect(data_conf.url.is_some()).to_equal(true)?;
     expect(data_conf.url.as_ref().unwrap().as_str()).to_equal("url19")?;
+    expect(data_conf.persistent.is_some()).to_equal(true)?;
+    expect(data_conf.persistent.unwrap()).to_equal(false)?;
     let mut map: HashMap<String, Vec<String>> = HashMap::new();
     map.insert("key11".to_string(), vec!["value11".to_string()]);
     expect(conf.api_scopes.as_ref()).to_equal(Some(&map))?;
@@ -227,6 +241,8 @@ pub fn read_args(_context: &mut SpecContext<TestState>) -> Result<(), String> {
         "none",
         "--broker.mq.sharedprefix",
         "",
+        "--broker.mq-channels.data.persistent",
+        "true",
         "--broker.api-scopes",
         "",
     ];
@@ -241,6 +257,12 @@ pub fn read_args(_context: &mut SpecContext<TestState>) -> Result<(), String> {
     expect(conf.mq.is_some()).to_equal(true)?;
     let mq_conf = conf.mq.as_ref().unwrap();
     expect(mq_conf.shared_prefix.as_ref().unwrap().as_str()).to_equal("")?;
+    let mq_channels_conf = conf.mq_channels.as_ref().unwrap();
+    expect(mq_channels_conf.data.is_some()).to_equal(true)?;
+    let data_conf = mq_channels_conf.data.as_ref().unwrap();
+    expect(data_conf.url.is_none()).to_equal(true)?;
+    expect(data_conf.persistent.is_some()).to_equal(true)?;
+    expect(data_conf.persistent.unwrap()).to_equal(true)?;
     expect(conf.api_scopes.as_ref()).to_equal(Some(&HashMap::new()))?;
 
     // Test wrong command-line arguments.
@@ -264,6 +286,7 @@ pub fn read_args(_context: &mut SpecContext<TestState>) -> Result<(), String> {
     env::set_var(&OsStr::new("BROKER_CACHE_MEMORY_DEVICE_ROUTE"), "122");
     env::set_var(&OsStr::new("BROKER_CACHE_MEMORY_NETWORK_ROUTE"), "123");
     env::set_var(&OsStr::new("BROKER_MQ_PREFETCH"), "22");
+    env::set_var(&OsStr::new("BROKER_MQ_PERSISTENT"), "true");
     env::set_var(&OsStr::new("BROKER_MQ_SHAREDPREFIX"), "prefix2");
     env::set_var(&OsStr::new("BROKER_MQCHANNELS_UNIT_URL"), "url23");
     env::set_var(&OsStr::new("BROKER_MQCHANNELS_UNIT_PREFETCH"), "23");
@@ -281,6 +304,7 @@ pub fn read_args(_context: &mut SpecContext<TestState>) -> Result<(), String> {
         "28",
     );
     env::set_var(&OsStr::new("BROKER_MQCHANNELS_DATA_URL"), "url29");
+    env::set_var(&OsStr::new("BROKER_MQCHANNELS_DATA_PERSISTENT"), "false");
     env::set_var(
         &OsStr::new("BROKER_API_SCOPES"),
         "{\"key21\":[\"value21\"]}",
@@ -310,7 +334,9 @@ pub fn read_args(_context: &mut SpecContext<TestState>) -> Result<(), String> {
     expect(conf.mq.is_some()).to_equal(true)?;
     let mq_conf = conf.mq.as_ref().unwrap();
     expect(mq_conf.prefetch.is_some()).to_equal(true)?;
-    expect(*mq_conf.prefetch.as_ref().unwrap()).to_equal(22)?;
+    expect(mq_conf.prefetch.unwrap()).to_equal(22)?;
+    expect(mq_conf.persistent.is_some()).to_equal(true)?;
+    expect(mq_conf.persistent.unwrap()).to_equal(true)?;
     expect(mq_conf.shared_prefix.is_some()).to_equal(true)?;
     expect(mq_conf.shared_prefix.as_ref().unwrap().as_str()).to_equal("prefix2")?;
     expect(conf.mq_channels.is_some()).to_equal(true)?;
@@ -320,41 +346,43 @@ pub fn read_args(_context: &mut SpecContext<TestState>) -> Result<(), String> {
     expect(ctrl_conf.url.is_some()).to_equal(true)?;
     expect(ctrl_conf.url.as_ref().unwrap().as_str()).to_equal("url23")?;
     expect(ctrl_conf.prefetch.is_some()).to_equal(true)?;
-    expect(*ctrl_conf.prefetch.as_ref().unwrap()).to_equal(23)?;
+    expect(ctrl_conf.prefetch.unwrap()).to_equal(23)?;
     expect(mq_channels_conf.application.is_some()).to_equal(true)?;
     let ctrl_conf = mq_channels_conf.application.as_ref().unwrap();
     expect(ctrl_conf.url.is_some()).to_equal(true)?;
     expect(ctrl_conf.url.as_ref().unwrap().as_str()).to_equal("url24")?;
     expect(ctrl_conf.prefetch.is_some()).to_equal(true)?;
-    expect(*ctrl_conf.prefetch.as_ref().unwrap()).to_equal(24)?;
+    expect(ctrl_conf.prefetch.unwrap()).to_equal(24)?;
     expect(mq_channels_conf.network.is_some()).to_equal(true)?;
     let ctrl_conf = mq_channels_conf.network.as_ref().unwrap();
     expect(ctrl_conf.url.is_some()).to_equal(true)?;
     expect(ctrl_conf.url.as_ref().unwrap().as_str()).to_equal("url25")?;
     expect(ctrl_conf.prefetch.is_some()).to_equal(true)?;
-    expect(*ctrl_conf.prefetch.as_ref().unwrap()).to_equal(25)?;
+    expect(ctrl_conf.prefetch.unwrap()).to_equal(25)?;
     expect(mq_channels_conf.device.is_some()).to_equal(true)?;
     let ctrl_conf = mq_channels_conf.device.as_ref().unwrap();
     expect(ctrl_conf.url.is_some()).to_equal(true)?;
     expect(ctrl_conf.url.as_ref().unwrap().as_str()).to_equal("url26")?;
     expect(ctrl_conf.prefetch.is_some()).to_equal(true)?;
-    expect(*ctrl_conf.prefetch.as_ref().unwrap()).to_equal(26)?;
+    expect(ctrl_conf.prefetch.unwrap()).to_equal(26)?;
     expect(mq_channels_conf.device_route.is_some()).to_equal(true)?;
     let ctrl_conf = mq_channels_conf.device_route.as_ref().unwrap();
     expect(ctrl_conf.url.is_some()).to_equal(true)?;
     expect(ctrl_conf.url.as_ref().unwrap().as_str()).to_equal("url27")?;
     expect(ctrl_conf.prefetch.is_some()).to_equal(true)?;
-    expect(*ctrl_conf.prefetch.as_ref().unwrap()).to_equal(27)?;
+    expect(ctrl_conf.prefetch.unwrap()).to_equal(27)?;
     expect(mq_channels_conf.network_route.is_some()).to_equal(true)?;
     let ctrl_conf = mq_channels_conf.network_route.as_ref().unwrap();
     expect(ctrl_conf.url.is_some()).to_equal(true)?;
     expect(ctrl_conf.url.as_ref().unwrap().as_str()).to_equal("url28")?;
     expect(ctrl_conf.prefetch.is_some()).to_equal(true)?;
-    expect(*ctrl_conf.prefetch.as_ref().unwrap()).to_equal(28)?;
+    expect(ctrl_conf.prefetch.unwrap()).to_equal(28)?;
     expect(mq_channels_conf.data.is_some()).to_equal(true)?;
     let data_conf = mq_channels_conf.data.as_ref().unwrap();
     expect(data_conf.url.is_some()).to_equal(true)?;
     expect(data_conf.url.as_ref().unwrap().as_str()).to_equal("url29")?;
+    expect(data_conf.persistent.is_some()).to_equal(true)?;
+    expect(data_conf.persistent.unwrap()).to_equal(false)?;
     let mut map: HashMap<String, Vec<String>> = HashMap::new();
     map.insert("key21".to_string(), vec!["value21".to_string()]);
     expect(conf.api_scopes.as_ref()).to_equal(Some(&map))?;
@@ -379,6 +407,7 @@ pub fn read_args(_context: &mut SpecContext<TestState>) -> Result<(), String> {
     env::set_var(&OsStr::new("BROKER_CACHE_MEMORY_DEVICE_ROUTE"), "12_000");
     env::set_var(&OsStr::new("BROKER_CACHE_MEMORY_NETWORK_ROUTE"), "12_000");
     env::set_var(&OsStr::new("BROKER_MQ_PREFETCH"), "12_000");
+    env::set_var(&OsStr::new("BROKER_MQ_PERSISTENT"), "1");
     env::set_var(&OsStr::new("BROKER_MQCHANNELS_UNIT_PREFETCH"), "12_000");
     env::set_var(
         &OsStr::new("BROKER_MQCHANNELS_APPLICATION_PREFETCH"),
@@ -394,6 +423,7 @@ pub fn read_args(_context: &mut SpecContext<TestState>) -> Result<(), String> {
         &OsStr::new("BROKER_MQCHANNELS_NETWORK_ROUTE_PREFETCH"),
         "12_000",
     );
+    env::set_var(&OsStr::new("BROKER_MQCHANNELS_DATA_PERSISTENT"), "0");
     env::set_var(&OsStr::new("BROKER_API_SCOPES"), "}");
     let args = config::reg_args(Command::new("test")).get_matches_from(vec!["test"]);
     let conf = config::read_args(&args);
@@ -409,6 +439,11 @@ pub fn read_args(_context: &mut SpecContext<TestState>) -> Result<(), String> {
     expect(cache_conf.device).to_equal(Some(config::DEF_MEMORY_DEVICE))?;
     expect(cache_conf.device_route).to_equal(Some(config::DEF_MEMORY_DEVICE_ROUTE))?;
     expect(cache_conf.network_route).to_equal(Some(config::DEF_MEMORY_NETWORK_ROUTE))?;
+    let mq_channels_conf = conf.mq_channels.as_ref().unwrap();
+    expect(mq_channels_conf.data.is_some()).to_equal(true)?;
+    let data_conf = mq_channels_conf.data.as_ref().unwrap();
+    expect(data_conf.persistent.is_some()).to_equal(true)?;
+    expect(data_conf.persistent.unwrap()).to_equal(config::DEF_MQ_PERSISTENT)?;
     expect(conf.api_scopes.as_ref()).to_equal(Some(&HashMap::new()))?;
 
     // Test command-line arguments overwrite environment variables.
@@ -436,6 +471,8 @@ pub fn read_args(_context: &mut SpecContext<TestState>) -> Result<(), String> {
         "133",
         "--broker.mq.prefetch",
         "32",
+        "--broker.mq.persistent",
+        "true",
         "--broker.mq.sharedprefix",
         "prefix3",
         "--broker.mq-channels.unit.url",
@@ -464,6 +501,8 @@ pub fn read_args(_context: &mut SpecContext<TestState>) -> Result<(), String> {
         "38",
         "--broker.mq-channels.data.url",
         "url39",
+        "--broker.mq-channels.data.persistent",
+        "false",
         "--broker.api-scopes",
         "{\"key31\":[\"value31\"]}",
     ];
@@ -478,6 +517,7 @@ pub fn read_args(_context: &mut SpecContext<TestState>) -> Result<(), String> {
     env::set_var(&OsStr::new("BROKER_CACHE_MEMORY_DEVICE_ROUTE"), "142");
     env::set_var(&OsStr::new("BROKER_CACHE_MEMORY_NETWORK_ROUTE"), "143");
     env::set_var(&OsStr::new("BROKER_MQ_PREFETCH"), "42");
+    env::set_var(&OsStr::new("BROKER_MQ_PERSISTENT"), "false");
     env::set_var(&OsStr::new("BROKER_MQ_SHAREDPREFIX"), "prefix4");
     env::set_var(&OsStr::new("BROKER_MQCHANNELS_UNIT_URL"), "url43");
     env::set_var(&OsStr::new("BROKER_MQCHANNELS_UNIT_PREFETCH"), "43");
@@ -495,6 +535,7 @@ pub fn read_args(_context: &mut SpecContext<TestState>) -> Result<(), String> {
         "48",
     );
     env::set_var(&OsStr::new("BROKER_MQCHANNELS_DATA_URL"), "url49");
+    env::set_var(&OsStr::new("BROKER_MQCHANNELS_DATA_PERSISTENT"), "true");
     env::set_var(
         &OsStr::new("BROKER_API_SCOPES"),
         "{\"key41\":[\"value41\"]}",
@@ -525,7 +566,9 @@ pub fn read_args(_context: &mut SpecContext<TestState>) -> Result<(), String> {
     expect(conf.mq.is_some()).to_equal(true)?;
     let mq_conf = conf.mq.as_ref().unwrap();
     expect(mq_conf.prefetch.is_some()).to_equal(true)?;
-    expect(*mq_conf.prefetch.as_ref().unwrap()).to_equal(32)?;
+    expect(mq_conf.prefetch.unwrap()).to_equal(32)?;
+    expect(mq_conf.persistent.is_some()).to_equal(true)?;
+    expect(mq_conf.persistent.unwrap()).to_equal(true)?;
     expect(mq_conf.shared_prefix.is_some()).to_equal(true)?;
     expect(mq_conf.shared_prefix.as_ref().unwrap().as_str()).to_equal("prefix3")?;
     expect(conf.mq_channels.is_some()).to_equal(true)?;
@@ -535,41 +578,43 @@ pub fn read_args(_context: &mut SpecContext<TestState>) -> Result<(), String> {
     expect(ctrl_conf.url.is_some()).to_equal(true)?;
     expect(ctrl_conf.url.as_ref().unwrap().as_str()).to_equal("url33")?;
     expect(ctrl_conf.prefetch.is_some()).to_equal(true)?;
-    expect(*ctrl_conf.prefetch.as_ref().unwrap()).to_equal(33)?;
+    expect(ctrl_conf.prefetch.unwrap()).to_equal(33)?;
     expect(mq_channels_conf.application.is_some()).to_equal(true)?;
     let ctrl_conf = mq_channels_conf.application.as_ref().unwrap();
     expect(ctrl_conf.url.is_some()).to_equal(true)?;
     expect(ctrl_conf.url.as_ref().unwrap().as_str()).to_equal("url34")?;
     expect(ctrl_conf.prefetch.is_some()).to_equal(true)?;
-    expect(*ctrl_conf.prefetch.as_ref().unwrap()).to_equal(34)?;
+    expect(ctrl_conf.prefetch.unwrap()).to_equal(34)?;
     expect(mq_channels_conf.network.is_some()).to_equal(true)?;
     let ctrl_conf = mq_channels_conf.network.as_ref().unwrap();
     expect(ctrl_conf.url.is_some()).to_equal(true)?;
     expect(ctrl_conf.url.as_ref().unwrap().as_str()).to_equal("url35")?;
     expect(ctrl_conf.prefetch.is_some()).to_equal(true)?;
-    expect(*ctrl_conf.prefetch.as_ref().unwrap()).to_equal(35)?;
+    expect(ctrl_conf.prefetch.unwrap()).to_equal(35)?;
     expect(mq_channels_conf.device.is_some()).to_equal(true)?;
     let ctrl_conf = mq_channels_conf.device.as_ref().unwrap();
     expect(ctrl_conf.url.is_some()).to_equal(true)?;
     expect(ctrl_conf.url.as_ref().unwrap().as_str()).to_equal("url36")?;
     expect(ctrl_conf.prefetch.is_some()).to_equal(true)?;
-    expect(*ctrl_conf.prefetch.as_ref().unwrap()).to_equal(36)?;
+    expect(ctrl_conf.prefetch.unwrap()).to_equal(36)?;
     expect(mq_channels_conf.device_route.is_some()).to_equal(true)?;
     let ctrl_conf = mq_channels_conf.device_route.as_ref().unwrap();
     expect(ctrl_conf.url.is_some()).to_equal(true)?;
     expect(ctrl_conf.url.as_ref().unwrap().as_str()).to_equal("url37")?;
     expect(ctrl_conf.prefetch.is_some()).to_equal(true)?;
-    expect(*ctrl_conf.prefetch.as_ref().unwrap()).to_equal(37)?;
+    expect(ctrl_conf.prefetch.unwrap()).to_equal(37)?;
     expect(mq_channels_conf.network_route.is_some()).to_equal(true)?;
     let ctrl_conf = mq_channels_conf.network_route.as_ref().unwrap();
     expect(ctrl_conf.url.is_some()).to_equal(true)?;
     expect(ctrl_conf.url.as_ref().unwrap().as_str()).to_equal("url38")?;
     expect(ctrl_conf.prefetch.is_some()).to_equal(true)?;
-    expect(*ctrl_conf.prefetch.as_ref().unwrap()).to_equal(38)?;
+    expect(ctrl_conf.prefetch.unwrap()).to_equal(38)?;
     expect(mq_channels_conf.data.is_some()).to_equal(true)?;
     let data_conf = mq_channels_conf.data.as_ref().unwrap();
     expect(data_conf.url.is_some()).to_equal(true)?;
     expect(data_conf.url.as_ref().unwrap().as_str()).to_equal("url39")?;
+    expect(data_conf.persistent.is_some()).to_equal(true)?;
+    expect(data_conf.persistent.unwrap()).to_equal(false)?;
     let mut map: HashMap<String, Vec<String>> = HashMap::new();
     map.insert("key31".to_string(), vec!["value31".to_string()]);
     expect(conf.api_scopes.as_ref()).to_equal(Some(&map))
@@ -604,7 +649,9 @@ pub fn apply_default(_context: &mut SpecContext<TestState>) -> Result<(), String
     expect(cache_conf.network_route).to_equal(Some(config::DEF_MEMORY_NETWORK_ROUTE))?;
     let mq_conf = conf.mq.as_ref().unwrap();
     expect(mq_conf.prefetch.is_some()).to_equal(true)?;
-    expect(*mq_conf.prefetch.as_ref().unwrap()).to_equal(config::DEF_MQ_PREFETCH)?;
+    expect(mq_conf.prefetch.unwrap()).to_equal(config::DEF_MQ_PREFETCH)?;
+    expect(mq_conf.persistent.is_some()).to_equal(true)?;
+    expect(mq_conf.persistent.unwrap()).to_equal(config::DEF_MQ_PERSISTENT)?;
     expect(mq_conf.shared_prefix.is_some()).to_equal(true)?;
     expect(mq_conf.shared_prefix.as_ref().unwrap().as_str())
         .to_equal(config::DEF_MQ_SHAREDPREFIX)?;
@@ -614,37 +661,37 @@ pub fn apply_default(_context: &mut SpecContext<TestState>) -> Result<(), String
     expect(ctrl_conf.url.is_some()).to_equal(true)?;
     expect(ctrl_conf.url.as_ref().unwrap().as_str()).to_equal(config::DEF_MQ_CHANNEL_URL)?;
     expect(ctrl_conf.prefetch.is_some()).to_equal(true)?;
-    expect(*ctrl_conf.prefetch.as_ref().unwrap()).to_equal(config::DEF_MQ_PREFETCH)?;
+    expect(ctrl_conf.prefetch.unwrap()).to_equal(config::DEF_MQ_PREFETCH)?;
     expect(mq_channels_conf.application.is_some()).to_equal(true)?;
     let ctrl_conf = mq_channels_conf.application.as_ref().unwrap();
     expect(ctrl_conf.url.is_some()).to_equal(true)?;
     expect(ctrl_conf.url.as_ref().unwrap().as_str()).to_equal(config::DEF_MQ_CHANNEL_URL)?;
     expect(ctrl_conf.prefetch.is_some()).to_equal(true)?;
-    expect(*ctrl_conf.prefetch.as_ref().unwrap()).to_equal(config::DEF_MQ_PREFETCH)?;
+    expect(ctrl_conf.prefetch.unwrap()).to_equal(config::DEF_MQ_PREFETCH)?;
     expect(mq_channels_conf.network.is_some()).to_equal(true)?;
     let ctrl_conf = mq_channels_conf.network.as_ref().unwrap();
     expect(ctrl_conf.url.is_some()).to_equal(true)?;
     expect(ctrl_conf.url.as_ref().unwrap().as_str()).to_equal(config::DEF_MQ_CHANNEL_URL)?;
     expect(ctrl_conf.prefetch.is_some()).to_equal(true)?;
-    expect(*ctrl_conf.prefetch.as_ref().unwrap()).to_equal(config::DEF_MQ_PREFETCH)?;
+    expect(ctrl_conf.prefetch.unwrap()).to_equal(config::DEF_MQ_PREFETCH)?;
     expect(mq_channels_conf.device.is_some()).to_equal(true)?;
     let ctrl_conf = mq_channels_conf.device.as_ref().unwrap();
     expect(ctrl_conf.url.is_some()).to_equal(true)?;
     expect(ctrl_conf.url.as_ref().unwrap().as_str()).to_equal(config::DEF_MQ_CHANNEL_URL)?;
     expect(ctrl_conf.prefetch.is_some()).to_equal(true)?;
-    expect(*ctrl_conf.prefetch.as_ref().unwrap()).to_equal(config::DEF_MQ_PREFETCH)?;
+    expect(ctrl_conf.prefetch.unwrap()).to_equal(config::DEF_MQ_PREFETCH)?;
     expect(mq_channels_conf.device_route.is_some()).to_equal(true)?;
     let ctrl_conf = mq_channels_conf.device_route.as_ref().unwrap();
     expect(ctrl_conf.url.is_some()).to_equal(true)?;
     expect(ctrl_conf.url.as_ref().unwrap().as_str()).to_equal(config::DEF_MQ_CHANNEL_URL)?;
     expect(ctrl_conf.prefetch.is_some()).to_equal(true)?;
-    expect(*ctrl_conf.prefetch.as_ref().unwrap()).to_equal(config::DEF_MQ_PREFETCH)?;
+    expect(ctrl_conf.prefetch.unwrap()).to_equal(config::DEF_MQ_PREFETCH)?;
     expect(mq_channels_conf.network_route.is_some()).to_equal(true)?;
     let ctrl_conf = mq_channels_conf.network_route.as_ref().unwrap();
     expect(ctrl_conf.url.is_some()).to_equal(true)?;
     expect(ctrl_conf.url.as_ref().unwrap().as_str()).to_equal(config::DEF_MQ_CHANNEL_URL)?;
     expect(ctrl_conf.prefetch.is_some()).to_equal(true)?;
-    expect(*ctrl_conf.prefetch.as_ref().unwrap()).to_equal(config::DEF_MQ_PREFETCH)?;
+    expect(ctrl_conf.prefetch.unwrap()).to_equal(config::DEF_MQ_PREFETCH)?;
     expect(mq_channels_conf.data.is_none()).to_equal(true)?;
 
     let conf = Config {
@@ -686,7 +733,9 @@ pub fn apply_default(_context: &mut SpecContext<TestState>) -> Result<(), String
     expect(cache_conf.network_route).to_equal(Some(config::DEF_MEMORY_NETWORK_ROUTE))?;
     let mq_conf = conf.mq.as_ref().unwrap();
     expect(mq_conf.prefetch.is_some()).to_equal(true)?;
-    expect(*mq_conf.prefetch.as_ref().unwrap()).to_equal(config::DEF_MQ_PREFETCH)?;
+    expect(mq_conf.prefetch.unwrap()).to_equal(config::DEF_MQ_PREFETCH)?;
+    expect(mq_conf.persistent.is_some()).to_equal(true)?;
+    expect(mq_conf.persistent.unwrap()).to_equal(config::DEF_MQ_PERSISTENT)?;
     expect(mq_conf.shared_prefix.is_some()).to_equal(true)?;
     expect(mq_conf.shared_prefix.as_ref().unwrap().as_str())
         .to_equal(config::DEF_MQ_SHAREDPREFIX)?;
@@ -696,37 +745,37 @@ pub fn apply_default(_context: &mut SpecContext<TestState>) -> Result<(), String
     expect(ctrl_conf.url.is_some()).to_equal(true)?;
     expect(ctrl_conf.url.as_ref().unwrap().as_str()).to_equal(config::DEF_MQ_CHANNEL_URL)?;
     expect(ctrl_conf.prefetch.is_some()).to_equal(true)?;
-    expect(*ctrl_conf.prefetch.as_ref().unwrap()).to_equal(config::DEF_MQ_PREFETCH)?;
+    expect(ctrl_conf.prefetch.unwrap()).to_equal(config::DEF_MQ_PREFETCH)?;
     expect(mq_channels_conf.application.is_some()).to_equal(true)?;
     let ctrl_conf = mq_channels_conf.application.as_ref().unwrap();
     expect(ctrl_conf.url.is_some()).to_equal(true)?;
     expect(ctrl_conf.url.as_ref().unwrap().as_str()).to_equal(config::DEF_MQ_CHANNEL_URL)?;
     expect(ctrl_conf.prefetch.is_some()).to_equal(true)?;
-    expect(*ctrl_conf.prefetch.as_ref().unwrap()).to_equal(config::DEF_MQ_PREFETCH)?;
+    expect(ctrl_conf.prefetch.unwrap()).to_equal(config::DEF_MQ_PREFETCH)?;
     expect(mq_channels_conf.network.is_some()).to_equal(true)?;
     let ctrl_conf = mq_channels_conf.network.as_ref().unwrap();
     expect(ctrl_conf.url.is_some()).to_equal(true)?;
     expect(ctrl_conf.url.as_ref().unwrap().as_str()).to_equal(config::DEF_MQ_CHANNEL_URL)?;
     expect(ctrl_conf.prefetch.is_some()).to_equal(true)?;
-    expect(*ctrl_conf.prefetch.as_ref().unwrap()).to_equal(config::DEF_MQ_PREFETCH)?;
+    expect(ctrl_conf.prefetch.unwrap()).to_equal(config::DEF_MQ_PREFETCH)?;
     expect(mq_channels_conf.device.is_some()).to_equal(true)?;
     let ctrl_conf = mq_channels_conf.device.as_ref().unwrap();
     expect(ctrl_conf.url.is_some()).to_equal(true)?;
     expect(ctrl_conf.url.as_ref().unwrap().as_str()).to_equal(config::DEF_MQ_CHANNEL_URL)?;
     expect(ctrl_conf.prefetch.is_some()).to_equal(true)?;
-    expect(*ctrl_conf.prefetch.as_ref().unwrap()).to_equal(config::DEF_MQ_PREFETCH)?;
+    expect(ctrl_conf.prefetch.unwrap()).to_equal(config::DEF_MQ_PREFETCH)?;
     expect(mq_channels_conf.device_route.is_some()).to_equal(true)?;
     let ctrl_conf = mq_channels_conf.device_route.as_ref().unwrap();
     expect(ctrl_conf.url.is_some()).to_equal(true)?;
     expect(ctrl_conf.url.as_ref().unwrap().as_str()).to_equal(config::DEF_MQ_CHANNEL_URL)?;
     expect(ctrl_conf.prefetch.is_some()).to_equal(true)?;
-    expect(*ctrl_conf.prefetch.as_ref().unwrap()).to_equal(config::DEF_MQ_PREFETCH)?;
+    expect(ctrl_conf.prefetch.unwrap()).to_equal(config::DEF_MQ_PREFETCH)?;
     expect(mq_channels_conf.network_route.is_some()).to_equal(true)?;
     let ctrl_conf = mq_channels_conf.network_route.as_ref().unwrap();
     expect(ctrl_conf.url.is_some()).to_equal(true)?;
     expect(ctrl_conf.url.as_ref().unwrap().as_str()).to_equal(config::DEF_MQ_CHANNEL_URL)?;
     expect(ctrl_conf.prefetch.is_some()).to_equal(true)?;
-    expect(*ctrl_conf.prefetch.as_ref().unwrap()).to_equal(config::DEF_MQ_PREFETCH)?;
+    expect(ctrl_conf.prefetch.unwrap()).to_equal(config::DEF_MQ_PREFETCH)?;
     expect(mq_channels_conf.data.is_none()).to_equal(true)?;
 
     let conf = Config {
@@ -779,7 +828,9 @@ pub fn apply_default(_context: &mut SpecContext<TestState>) -> Result<(), String
     expect(cache_conf.engine.as_ref().unwrap().as_str()).to_equal(config::DEF_CACHE_ENGINE)?;
     let mq_conf = conf.mq.as_ref().unwrap();
     expect(mq_conf.prefetch.is_some()).to_equal(true)?;
-    expect(*mq_conf.prefetch.as_ref().unwrap()).to_equal(config::DEF_MQ_PREFETCH)?;
+    expect(mq_conf.prefetch.unwrap()).to_equal(config::DEF_MQ_PREFETCH)?;
+    expect(mq_conf.persistent.is_some()).to_equal(true)?;
+    expect(mq_conf.persistent.unwrap()).to_equal(config::DEF_MQ_PERSISTENT)?;
     expect(mq_conf.shared_prefix.is_some()).to_equal(true)?;
     expect(mq_conf.shared_prefix.as_ref().unwrap().as_str())
         .to_equal(config::DEF_MQ_SHAREDPREFIX)?;
@@ -789,37 +840,41 @@ pub fn apply_default(_context: &mut SpecContext<TestState>) -> Result<(), String
     expect(ctrl_conf.url.is_some()).to_equal(true)?;
     expect(ctrl_conf.url.as_ref().unwrap().as_str()).to_equal(config::DEF_MQ_CHANNEL_URL)?;
     expect(ctrl_conf.prefetch.is_some()).to_equal(true)?;
-    expect(*ctrl_conf.prefetch.as_ref().unwrap()).to_equal(config::DEF_MQ_PREFETCH)?;
+    expect(ctrl_conf.prefetch.unwrap()).to_equal(config::DEF_MQ_PREFETCH)?;
     expect(mq_channels_conf.application.is_some()).to_equal(true)?;
     let ctrl_conf = mq_channels_conf.application.as_ref().unwrap();
     expect(ctrl_conf.url.is_some()).to_equal(true)?;
     expect(ctrl_conf.url.as_ref().unwrap().as_str()).to_equal(config::DEF_MQ_CHANNEL_URL)?;
     expect(ctrl_conf.prefetch.is_some()).to_equal(true)?;
-    expect(*ctrl_conf.prefetch.as_ref().unwrap()).to_equal(config::DEF_MQ_PREFETCH)?;
+    expect(ctrl_conf.prefetch.unwrap()).to_equal(config::DEF_MQ_PREFETCH)?;
     let ctrl_conf = mq_channels_conf.network.as_ref().unwrap();
     expect(ctrl_conf.url.is_some()).to_equal(true)?;
     expect(ctrl_conf.url.as_ref().unwrap().as_str()).to_equal(config::DEF_MQ_CHANNEL_URL)?;
     expect(ctrl_conf.prefetch.is_some()).to_equal(true)?;
-    expect(*ctrl_conf.prefetch.as_ref().unwrap()).to_equal(config::DEF_MQ_PREFETCH)?;
+    expect(ctrl_conf.prefetch.unwrap()).to_equal(config::DEF_MQ_PREFETCH)?;
     expect(mq_channels_conf.device.is_some()).to_equal(true)?;
     let ctrl_conf = mq_channels_conf.device.as_ref().unwrap();
     expect(ctrl_conf.url.is_some()).to_equal(true)?;
     expect(ctrl_conf.url.as_ref().unwrap().as_str()).to_equal(config::DEF_MQ_CHANNEL_URL)?;
     expect(ctrl_conf.prefetch.is_some()).to_equal(true)?;
-    expect(*ctrl_conf.prefetch.as_ref().unwrap()).to_equal(config::DEF_MQ_PREFETCH)?;
+    expect(ctrl_conf.prefetch.unwrap()).to_equal(config::DEF_MQ_PREFETCH)?;
     expect(mq_channels_conf.device_route.is_some()).to_equal(true)?;
     let ctrl_conf = mq_channels_conf.device_route.as_ref().unwrap();
     expect(ctrl_conf.url.is_some()).to_equal(true)?;
     expect(ctrl_conf.url.as_ref().unwrap().as_str()).to_equal(config::DEF_MQ_CHANNEL_URL)?;
     expect(ctrl_conf.prefetch.is_some()).to_equal(true)?;
-    expect(*ctrl_conf.prefetch.as_ref().unwrap()).to_equal(config::DEF_MQ_PREFETCH)?;
+    expect(ctrl_conf.prefetch.unwrap()).to_equal(config::DEF_MQ_PREFETCH)?;
     expect(mq_channels_conf.network_route.is_some()).to_equal(true)?;
     let ctrl_conf = mq_channels_conf.network_route.as_ref().unwrap();
     expect(ctrl_conf.url.is_some()).to_equal(true)?;
     expect(ctrl_conf.url.as_ref().unwrap().as_str()).to_equal(config::DEF_MQ_CHANNEL_URL)?;
     expect(ctrl_conf.prefetch.is_some()).to_equal(true)?;
-    expect(*ctrl_conf.prefetch.as_ref().unwrap()).to_equal(config::DEF_MQ_PREFETCH)?;
-    expect(mq_channels_conf.data.is_none()).to_equal(true)?;
+    expect(ctrl_conf.prefetch.unwrap()).to_equal(config::DEF_MQ_PREFETCH)?;
+    expect(mq_channels_conf.data.is_some()).to_equal(true)?;
+    let data_conf = mq_channels_conf.data.as_ref().unwrap();
+    expect(data_conf.url.is_none()).to_equal(true)?;
+    expect(data_conf.persistent.is_some()).to_equal(true)?;
+    expect(data_conf.persistent.unwrap()).to_equal(config::DEF_MQ_PERSISTENT)?;
     expect(conf.api_scopes.as_ref()).to_equal(Some(&HashMap::new()))?;
 
     let mut api_scopes: HashMap<String, Vec<String>> = HashMap::new();
@@ -847,6 +902,7 @@ pub fn apply_default(_context: &mut SpecContext<TestState>) -> Result<(), String
         }),
         mq: Some(config::Mq {
             prefetch: Some(10),
+            persistent: Some(true),
             shared_prefix: Some("$shared/group/".to_string()),
         }),
         mq_channels: Some(config::MqChannels {
@@ -876,6 +932,7 @@ pub fn apply_default(_context: &mut SpecContext<TestState>) -> Result<(), String
             }),
             data: Some(config::BrokerData {
                 url: Some("url9".to_string()),
+                persistent: Some(false),
             }),
         }),
         api_scopes: Some(api_scopes.clone()),
@@ -904,7 +961,9 @@ pub fn apply_default(_context: &mut SpecContext<TestState>) -> Result<(), String
     expect(cache_conf.network_route).to_equal(Some(102))?;
     let mq_conf = conf.mq.as_ref().unwrap();
     expect(mq_conf.prefetch.is_some()).to_equal(true)?;
-    expect(*mq_conf.prefetch.as_ref().unwrap()).to_equal(10)?;
+    expect(mq_conf.prefetch.unwrap()).to_equal(10)?;
+    expect(mq_conf.persistent.is_some()).to_equal(true)?;
+    expect(mq_conf.persistent.unwrap()).to_equal(true)?;
     expect(mq_conf.shared_prefix.is_some()).to_equal(true)?;
     expect(mq_conf.shared_prefix.as_ref().unwrap().as_str()).to_equal("$shared/group/")?;
     let mq_channels_conf = conf.mq_channels.as_ref().unwrap();
@@ -913,40 +972,42 @@ pub fn apply_default(_context: &mut SpecContext<TestState>) -> Result<(), String
     expect(ctrl_conf.url.is_some()).to_equal(true)?;
     expect(ctrl_conf.url.as_ref().unwrap().as_str()).to_equal("url3")?;
     expect(ctrl_conf.prefetch.is_some()).to_equal(true)?;
-    expect(*ctrl_conf.prefetch.as_ref().unwrap()).to_equal(13)?;
+    expect(ctrl_conf.prefetch.unwrap()).to_equal(13)?;
     expect(mq_channels_conf.application.is_some()).to_equal(true)?;
     let ctrl_conf = mq_channels_conf.application.as_ref().unwrap();
     expect(ctrl_conf.url.is_some()).to_equal(true)?;
     expect(ctrl_conf.url.as_ref().unwrap().as_str()).to_equal("url4")?;
     expect(ctrl_conf.prefetch.is_some()).to_equal(true)?;
-    expect(*ctrl_conf.prefetch.as_ref().unwrap()).to_equal(14)?;
+    expect(ctrl_conf.prefetch.unwrap()).to_equal(14)?;
     expect(mq_channels_conf.network.is_some()).to_equal(true)?;
     let ctrl_conf = mq_channels_conf.network.as_ref().unwrap();
     expect(ctrl_conf.url.is_some()).to_equal(true)?;
     expect(ctrl_conf.url.as_ref().unwrap().as_str()).to_equal("url5")?;
     expect(ctrl_conf.prefetch.is_some()).to_equal(true)?;
-    expect(*ctrl_conf.prefetch.as_ref().unwrap()).to_equal(15)?;
+    expect(ctrl_conf.prefetch.unwrap()).to_equal(15)?;
     expect(mq_channels_conf.device.is_some()).to_equal(true)?;
     let ctrl_conf = mq_channels_conf.device.as_ref().unwrap();
     expect(ctrl_conf.url.is_some()).to_equal(true)?;
     expect(ctrl_conf.url.as_ref().unwrap().as_str()).to_equal("url6")?;
     expect(ctrl_conf.prefetch.is_some()).to_equal(true)?;
-    expect(*ctrl_conf.prefetch.as_ref().unwrap()).to_equal(16)?;
+    expect(ctrl_conf.prefetch.unwrap()).to_equal(16)?;
     expect(mq_channels_conf.device_route.is_some()).to_equal(true)?;
     let ctrl_conf = mq_channels_conf.device_route.as_ref().unwrap();
     expect(ctrl_conf.url.is_some()).to_equal(true)?;
     expect(ctrl_conf.url.as_ref().unwrap().as_str()).to_equal("url7")?;
     expect(ctrl_conf.prefetch.is_some()).to_equal(true)?;
-    expect(*ctrl_conf.prefetch.as_ref().unwrap()).to_equal(17)?;
+    expect(ctrl_conf.prefetch.unwrap()).to_equal(17)?;
     expect(mq_channels_conf.network_route.is_some()).to_equal(true)?;
     let ctrl_conf = mq_channels_conf.network_route.as_ref().unwrap();
     expect(ctrl_conf.url.is_some()).to_equal(true)?;
     expect(ctrl_conf.url.as_ref().unwrap().as_str()).to_equal("url8")?;
     expect(ctrl_conf.prefetch.is_some()).to_equal(true)?;
-    expect(*ctrl_conf.prefetch.as_ref().unwrap()).to_equal(18)?;
+    expect(ctrl_conf.prefetch.unwrap()).to_equal(18)?;
     expect(mq_channels_conf.data.is_some()).to_equal(true)?;
     let data_conf = mq_channels_conf.data.as_ref().unwrap();
     expect(data_conf.url.is_some()).to_equal(true)?;
     expect(data_conf.url.as_ref().unwrap().as_str()).to_equal("url9")?;
+    expect(data_conf.persistent.is_some()).to_equal(true)?;
+    expect(data_conf.persistent.unwrap()).to_equal(false)?;
     expect(conf.api_scopes.as_ref()).to_equal(Some(&api_scopes))
 }

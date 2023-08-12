@@ -174,6 +174,7 @@ provided in the **Authentication Service** section for more details.
 | broker.cache.memory.deviceRoute           | broker.cache.memory.device-route          | BROKER_CACHE_MEMORY_DEVICE_ROUTE          | 1,000,000                     | Memory cache size for device routes |
 | broker.cache.memory.networkRoute          | broker.cache.memory.network-route         | BROKER_CACHE_MEMORY_NETWORK_ROUTE         | 1,000,000                     | Memory cache size for network routes |
 | broker.mq.prefetch                        | broker.mq.prefetch                        | BROKER_MQ_PREFETCH                        | 100                           | Maximum number of AMQP consumers |
+| broker.mq.persistent                      | broker.mq.persistent                      | BROKER_MQ_PERSISTENT                      | false                         | Persistent message delivery for AMQP producers |
 | broker.mq.sharedPrefix                    | broker.mq.sharedprefix                    | BROKER_MQ_SHAREDPREFIX                    | $share/sylvia-iot-broker/     | MQTT shared subscription prefix |
 | broker.mqChannels.unit.url                | broker.mq-channels.unit.url               | BROKER_MQCHANNELS_UNIT_URL                | amqp://localhost              | Unit control message host |
 | broker.mqChannels.unit.prefetch           | broker.mq-channels.unit.prefetch          | BROKER_MQCHANNELS_UNIT_PREFETCH           | 100                           | Maximum number of AMQP consumers for unit control messages |
@@ -188,6 +189,7 @@ provided in the **Authentication Service** section for more details.
 | broker.mqChannels.networkRoute.url        | broker.mq-channels.network-route.url      | BROKER_MQCHANNELS_NETWORK_ROUTE_URL       | amqp://localhost              | Network route control message host |
 | broker.mqChannels.networkRoute.prefetch   | broker.mq-channels.network-route.prefetch | BROKER_MQCHANNELS_NETWORK_ROUTE_PREFETCH  | 100                           | Maximum number of AMQP consumers for network route control messages |
 | broker.mqChannels.data.url                | broker.mq-channels.data.url               | BROKER_MQCHANNELS_DATA_URL                |                               | Data message host |
+| broker.mqChannels.data.persistent         | broker.mq-channels.data.persistent        | BROKER_MQCHANNELS_DATA_PERSISTENT         | false                         | Persistent delivery for data messages |
 | broker.db.apiScopes                       | broker.api-scopes                         | BROKER_API_SCOPES                         |                               | API scope settings |
 
 ### Detailed Explanation
@@ -210,24 +212,25 @@ provided in the **Authentication Service** section for more details.
 
 ## Core Manager Service (coremgr)
 
-| JSON5                             | CLI Parameters                    | Environment Variables             | Default                       | Description |
-| -                                 | -                                 | -                                 | -                             | - |
-| coremgr.auth                      | coremgr.auth                      | COREMGR_AUTH                      | http://localhost:1080/auth    | Authentication service URL |
-| coremgr.broker                    | coremgr.broker                    | COREMGR_BROKER                    | http://localhost:2080/broker  | Message broker service URL |
-| coremgr.mq.engine.amqp            | coremgr.mq.engine.amqp            | COREMGR_MQ_ENGINE_AMQP            | rabbitmq                      | AMQP type |
-| coremgr.mq.engine.mqtt            | coremgr.mq.engine.mqtt            | COREMGR_MQ_ENGINE_MQTT            | emqx                          | MQTT type |
-| coremgr.mq.rabbitmq.username      | coremgr.mq.rabbitmq.username      | COREMGR_MQ_RABBITMQ_USERNAME      | guest                         | RabbitMQ administrator account |
-| coremgr.mq.rabbitmq.password      | coremgr.mq.rabbitmq.password      | COREMGR_MQ_RABBITMQ_PASSWORD      | guest                         | RabbitMQ administrator password |
-| coremgr.mq.rabbitmq.ttl           | coremgr.mq.rabbitmq.ttl           | COREMGR_MQ_RABBITMQ_TTL           |                               | RabbitMQ default message TTL (seconds) |
-| coremgr.mq.rabbitmq.length        | coremgr.mq.rabbitmq.length        | COREMGR_MQ_RABBITMQ_LENGTH        |                               | RabbitMQ default maximum number of messages in queues |
-| coremgr.mq.rabbitmq.hosts         | coremgr.mq.rabbitmq.hosts         | COREMGR_MQ_RABBITMQ_HOSTS         |                               | (Reserved) |
-| coremgr.mq.emqx.apiKey            | coremgr.mq.emqx.apikey            | COREMGR_MQ_EMQX_APIKEY            |                               | EMQX management API key |
-| coremgr.mq.emqx.apiSecret         | coremgr.mq.emqx.apisecret         | COREMGR_MQ_EMQX_APISECRET         |                               | EMQX management API secret |
-| coremgr.mq.emqx.hosts             | coremgr.mq.emqx.hosts             | COREMGR_MQ_EMQX_HOSTS             |                               | (Reserved) |
-| coremgr.mq.rumqttd.mqttPort       | coremgr.mq.rumqttd.mqtt-port      | COREMGR_MQ_RUMQTTD_MQTT_PORT      | 1883                          | rumqttd MQTT port |
-| coremgr.mq.rumqttd.mqttsPort      | coremgr.mq.rumqttd.mqtts-port     | COREMGR_MQ_RUMQTTD_MQTTS_PORT     | 8883                          | rumqttd MQTTS port |
-| coremgr.mq.rumqttd.consolePort    | coremgr.mq.rumqttd.console-port   | COREMGR_MQ_RUMQTTD_CONSOLE_PORT   | 18083                         | rumqttd management API port |
-| coremgr.mqChannels.data.url       | coremgr.mq-channels.data.url      | COREMGR_MQCHANNELS_DATA_URL       |                               | Data message host |
+| JSON5                                 | CLI Parameters                        | Environment Variables                 | Default                       | Description |
+| -                                     | -                                     | -                                     | -                             | - |
+| coremgr.auth                          | coremgr.auth                          | COREMGR_AUTH                          | http://localhost:1080/auth    | Authentication service URL |
+| coremgr.broker                        | coremgr.broker                        | COREMGR_BROKER                        | http://localhost:2080/broker  | Message broker service URL |
+| coremgr.mq.engine.amqp                | coremgr.mq.engine.amqp                | COREMGR_MQ_ENGINE_AMQP                | rabbitmq                      | AMQP type |
+| coremgr.mq.engine.mqtt                | coremgr.mq.engine.mqtt                | COREMGR_MQ_ENGINE_MQTT                | emqx                          | MQTT type |
+| coremgr.mq.rabbitmq.username          | coremgr.mq.rabbitmq.username          | COREMGR_MQ_RABBITMQ_USERNAME          | guest                         | RabbitMQ administrator account |
+| coremgr.mq.rabbitmq.password          | coremgr.mq.rabbitmq.password          | COREMGR_MQ_RABBITMQ_PASSWORD          | guest                         | RabbitMQ administrator password |
+| coremgr.mq.rabbitmq.ttl               | coremgr.mq.rabbitmq.ttl               | COREMGR_MQ_RABBITMQ_TTL               |                               | RabbitMQ default message TTL (seconds) |
+| coremgr.mq.rabbitmq.length            | coremgr.mq.rabbitmq.length            | COREMGR_MQ_RABBITMQ_LENGTH            |                               | RabbitMQ default maximum number of messages in queues |
+| coremgr.mq.rabbitmq.hosts             | coremgr.mq.rabbitmq.hosts             | COREMGR_MQ_RABBITMQ_HOSTS             |                               | (Reserved) |
+| coremgr.mq.emqx.apiKey                | coremgr.mq.emqx.apikey                | COREMGR_MQ_EMQX_APIKEY                |                               | EMQX management API key |
+| coremgr.mq.emqx.apiSecret             | coremgr.mq.emqx.apisecret             | COREMGR_MQ_EMQX_APISECRET             |                               | EMQX management API secret |
+| coremgr.mq.emqx.hosts                 | coremgr.mq.emqx.hosts                 | COREMGR_MQ_EMQX_HOSTS                 |                               | (Reserved) |
+| coremgr.mq.rumqttd.mqttPort           | coremgr.mq.rumqttd.mqtt-port          | COREMGR_MQ_RUMQTTD_MQTT_PORT          | 1883                          | rumqttd MQTT port |
+| coremgr.mq.rumqttd.mqttsPort          | coremgr.mq.rumqttd.mqtts-port         | COREMGR_MQ_RUMQTTD_MQTTS_PORT         | 8883                          | rumqttd MQTTS port |
+| coremgr.mq.rumqttd.consolePort        | coremgr.mq.rumqttd.console-port       | COREMGR_MQ_RUMQTTD_CONSOLE_PORT       | 18083                         | rumqttd management API port |
+| coremgr.mqChannels.data.url           | coremgr.mq-channels.data.url          | COREMGR_MQCHANNELS_DATA_URL           |                               | Data message host |
+| coremgr.mqChannels.data.persistent    | coremgr.mq-channels.data.persistent   | COREMGR_MQCHANNELS_DATA_PERSISTENT    | false                         | Persistent delivery for data messages |
 
 ### Detailed Explanation
 

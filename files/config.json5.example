@@ -66,6 +66,7 @@
         },
         "mq": {
             "prefetch": 100,                            // AMQP prefetch
+            "persistent": false,                        // AMQP persistent
             "sharedPrefix": "$share/sylvia-iot-broker/",// MQTT shared subscription prefix
         },
         "mqChannels": {
@@ -95,6 +96,7 @@
             },
             "data": {
                 "url": "amqp://localhost",
+                "persistent": false,                // AMQP persistent
             },
         },
         "apiScopes": {
@@ -161,6 +163,7 @@
         "mqChannels": {
             "data": {
                 "url": "amqp://localhost",
+                "persistent": false,                // AMQP persistent
             },
         },
     },

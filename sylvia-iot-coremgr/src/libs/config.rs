@@ -2,7 +2,10 @@
 
 use std::env;
 
-use clap::{builder::RangedU64ValueParser, Arg, ArgMatches, Command};
+use clap::{
+    builder::{BoolValueParser, RangedU64ValueParser},
+    Arg, ArgMatches, Command,
+};
 use serde::Deserialize;
 
 use sylvia_iot_corelib::constants::MqEngine;
@@ -108,6 +111,8 @@ pub struct MqChannels {
 pub struct CoremgrData {
     /// Queue connection URL of the data channel.
     pub url: Option<String>,
+    /// AMQP persistent.
+    pub persistent: Option<bool>,
 }
 
 pub const DEF_AUTH: &'static str = "http://localhost:1080/auth";
@@ -122,6 +127,7 @@ pub const DEF_RUMQTTD_MQTT_PORT: u16 = 1883;
 pub const DEF_RUMQTTD_MQTTS_PORT: u16 = 8883;
 pub const DEF_RUMQTTD_CONSOLE_PORT: u16 = 18083;
 pub const DEF_MQ_CHANNEL_URL: &'static str = "amqp://localhost";
+pub const DEF_MQ_PERSISTENT: bool = false;
 
 /// To register Clap arguments.
 pub fn reg_args(cmd: Command) -> Command {
@@ -227,6 +233,13 @@ pub fn reg_args(cmd: Command) -> Command {
             .long("coremgr.mq-channels.data.url")
             .help("URL of `coremgr.data` channel")
             .num_args(1),
+    )
+    .arg(
+        Arg::new("coremgr.mq-channels.data.persistent")
+            .long("coremgr.mq-channels.data.persistent")
+            .help("AMQP persistent for `coremgr.data` channel")
+            .num_args(1)
+            .value_parser(BoolValueParser::new()),
     )
 }
 
@@ -391,15 +404,25 @@ pub fn read_args(args: &ArgMatches) -> Config {
             }),
         }),
         mq_channels: Some(MqChannels {
-            data: match args.get_one::<String>("coremgr.mq-channels.data.url") {
-                None => match env::var("COREMGR_MQCHANNELS_DATA_URL") {
-                    Err(_) => None,
-                    Ok(v) => Some(CoremgrData { url: Some(v) }),
+            data: Some(CoremgrData {
+                url: match args.get_one::<String>("coremgr.mq-channels.data.url") {
+                    None => match env::var("COREMGR_MQCHANNELS_DATA_URL") {
+                        Err(_) => None,
+                        Ok(v) => Some(v),
+                    },
+                    Some(v) => Some(v.clone()),
                 },
-                Some(v) => Some(CoremgrData {
-                    url: Some(v.clone()),
-                }),
-            },
+                persistent: match args.get_one::<bool>("coremgr.mq-channels.data.persistent") {
+                    None => match env::var("COREMGR_MQCHANNELS_DATA_PERSISTENT") {
+                        Err(_) => None,
+                        Ok(v) => match v.parse::<bool>() {
+                            Err(_) => None,
+                            Ok(v) => Some(v),
+                        },
+                    },
+                    Some(v) => Some(*v as bool),
+                },
+            }),
         }),
     })
 }
@@ -537,12 +560,16 @@ pub fn apply_default(config: &Config) -> Config {
             Some(mq_channels) => Some(MqChannels {
                 data: match mq_channels.data.as_ref() {
                     None => None,
-                    Some(channel) => match channel.url.as_ref() {
-                        None => None,
-                        Some(url) => Some(CoremgrData {
-                            url: Some(url.to_string()),
-                        }),
-                    },
+                    Some(channel) => Some(CoremgrData {
+                        url: match channel.url.as_ref() {
+                            None => None,
+                            Some(url) => Some(url.to_string()),
+                        },
+                        persistent: match channel.persistent {
+                            None => Some(DEF_MQ_PERSISTENT),
+                            Some(persistent) => Some(persistent),
+                        },
+                    }),
                 },
             }),
         },

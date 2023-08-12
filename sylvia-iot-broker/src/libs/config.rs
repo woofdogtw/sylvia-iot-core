@@ -2,7 +2,10 @@
 
 use std::{collections::HashMap, env};
 
-use clap::{builder::RangedU64ValueParser, Arg, ArgMatches, Command};
+use clap::{
+    builder::{BoolValueParser, RangedU64ValueParser},
+    Arg, ArgMatches, Command,
+};
 use serde::Deserialize;
 
 use sylvia_iot_corelib::constants::{CacheEngine, DbEngine};
@@ -77,6 +80,8 @@ pub struct MemoryCache {
 pub struct Mq {
     /// AMQP QoS prefetch from **1** to **65535**. None or zero use default value **100**.
     pub prefetch: Option<u16>,
+    /// AMQP persistent.
+    pub persistent: Option<bool>,
     /// MQTT shared subscription topic prefix.
     #[serde(rename = "sharedPrefix")]
     pub shared_prefix: Option<String>,
@@ -110,6 +115,8 @@ pub struct BrokerCtrl {
 pub struct BrokerData {
     /// Queue connection URL of the data channel.
     pub url: Option<String>,
+    /// AMQP persistent.
+    pub persistent: Option<bool>,
 }
 
 pub const DEF_AUTH: &'static str = "http://localhost:1080/auth";
@@ -122,6 +129,7 @@ pub const DEF_MEMORY_DEVICE: usize = 1_000_000;
 pub const DEF_MEMORY_DEVICE_ROUTE: usize = 1_000_000;
 pub const DEF_MEMORY_NETWORK_ROUTE: usize = 1_000_000;
 pub const DEF_MQ_PREFETCH: u16 = 100;
+pub const DEF_MQ_PERSISTENT: bool = false;
 pub const DEF_MQ_SHAREDPREFIX: &'static str = "$share/sylvia-iot-broker/";
 pub const DEF_MQ_CHANNEL_URL: &'static str = "amqp://localhost";
 
@@ -199,6 +207,13 @@ pub fn reg_args(cmd: Command) -> Command {
             .help("AMQP prefetch")
             .num_args(1)
             .value_parser(RangedU64ValueParser::<u64>::new().range(1..=u16::MAX as u64)),
+    )
+    .arg(
+        Arg::new("broker.mq.persistent")
+            .long("broker.mq.persistent")
+            .help("AMQP persistent")
+            .num_args(1)
+            .value_parser(BoolValueParser::new()),
     )
     .arg(
         Arg::new("broker.mq.sharedprefix")
@@ -289,6 +304,13 @@ pub fn reg_args(cmd: Command) -> Command {
             .long("broker.mq-channels.data.url")
             .help("URL of `broker.data` channel")
             .num_args(1),
+    )
+    .arg(
+        Arg::new("broker.mq-channels.data.persistent")
+            .long("broker.mq-channels.data.persistent")
+            .help("AMQP persistent for `broker.data` channel")
+            .num_args(1)
+            .value_parser(BoolValueParser::new()),
     )
     .arg(
         Arg::new("broker.api-scopes")
@@ -406,6 +428,16 @@ pub fn read_args(args: &ArgMatches) -> Config {
                     },
                 },
                 Some(v) => Some(*v as u16),
+            },
+            persistent: match args.get_one::<bool>("broker.mq.persistent") {
+                None => match env::var("BROKER_MQ_PERSISTENT") {
+                    Err(_) => None,
+                    Ok(v) => match v.parse::<bool>() {
+                        Err(_) => None,
+                        Ok(v) => Some(v),
+                    },
+                },
+                Some(v) => Some(*v as bool),
             },
             shared_prefix: match args.get_one::<String>("broker.mq.sharedprefix") {
                 None => match env::var("BROKER_MQ_SHAREDPREFIX") {
@@ -530,15 +562,25 @@ pub fn read_args(args: &ArgMatches) -> Config {
                     Some(v) => Some(*v as u16),
                 },
             }),
-            data: match args.get_one::<String>("broker.mq-channels.data.url") {
-                None => match env::var("BROKER_MQCHANNELS_DATA_URL") {
-                    Err(_) => None,
-                    Ok(v) => Some(BrokerData { url: Some(v) }),
+            data: Some(BrokerData {
+                url: match args.get_one::<String>("broker.mq-channels.data.url") {
+                    None => match env::var("BROKER_MQCHANNELS_DATA_URL") {
+                        Err(_) => None,
+                        Ok(v) => Some(v),
+                    },
+                    Some(v) => Some(v.clone()),
                 },
-                Some(v) => Some(BrokerData {
-                    url: Some(v.clone()),
-                }),
-            },
+                persistent: match args.get_one::<bool>("broker.mq-channels.data.persistent") {
+                    None => match env::var("BROKER_MQCHANNELS_DATA_PERSISTENT") {
+                        Err(_) => None,
+                        Ok(v) => match v.parse::<bool>() {
+                            Err(_) => None,
+                            Ok(v) => Some(v),
+                        },
+                    },
+                    Some(v) => Some(*v as bool),
+                },
+            }),
         }),
         api_scopes: match args.get_one::<String>("broker.api-scopes") {
             None => match env::var("BROKER_API_SCOPES") {
@@ -664,12 +706,17 @@ pub fn apply_default(config: &Config) -> Config {
         mq: match config.mq.as_ref() {
             None => Some(Mq {
                 prefetch: Some(DEF_MQ_PREFETCH),
+                persistent: Some(DEF_MQ_PERSISTENT),
                 shared_prefix: Some(DEF_MQ_SHAREDPREFIX.to_string()),
             }),
             Some(mq) => Some(Mq {
-                prefetch: match mq.prefetch.as_ref() {
+                prefetch: match mq.prefetch {
                     None | Some(0) => Some(DEF_MQ_PREFETCH),
-                    Some(prefetch) => Some(*prefetch),
+                    Some(prefetch) => Some(prefetch),
+                },
+                persistent: match mq.persistent {
+                    None => Some(DEF_MQ_PERSISTENT),
+                    Some(persistent) => Some(persistent),
                 },
                 shared_prefix: match mq.shared_prefix.as_ref() {
                     None => Some(DEF_MQ_SHAREDPREFIX.to_string()),
@@ -804,12 +851,16 @@ pub fn apply_default(config: &Config) -> Config {
                 },
                 data: match mq_channels.data.as_ref() {
                     None => None,
-                    Some(channel) => match channel.url.as_ref() {
-                        None => None,
-                        Some(url) => Some(BrokerData {
-                            url: Some(url.to_string()),
-                        }),
-                    },
+                    Some(channel) => Some(BrokerData {
+                        url: match channel.url.as_ref() {
+                            None => None,
+                            Some(url) => Some(url.to_string()),
+                        },
+                        persistent: match channel.persistent {
+                            None => Some(DEF_MQ_PERSISTENT),
+                            Some(persistent) => Some(persistent),
+                        },
+                    }),
                 },
             }),
         },

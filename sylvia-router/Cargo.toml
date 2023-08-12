@@ -1,6 +1,6 @@
 [package]
 name = "sylvia-router"
-version = "0.0.23"
+version = "0.0.24"
 authors = ["Chien-Hong Chan"]
 description = "A simple router application with full Sylvia-IoT core components."
 edition = "2021"

@@ -88,6 +88,7 @@ pub fn suite() -> Suite<TestState> {
             context.it("reliable", queue::data_reliable);
             context.it("best effort", queue::data_best_effort);
 
+            context.it("persistent", queue::data_persistent);
             context.it("nack", queue::data_nack);
 
             context.after_each(clear_state);

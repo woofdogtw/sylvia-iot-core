@@ -258,6 +258,7 @@ pub async fn init(state: &State, ctrl_conf: &CfgCtrl) -> Result<(), Box<dyn StdE
                 id: item.application_id.clone(),
                 name: item.code.clone(),
                 prefetch: Some(state.amqp_prefetch),
+                persistent: state.amqp_persistent,
                 shared_prefix: Some(state.mqtt_shared_prefix.clone()),
             };
             let handler = MgrHandler {
@@ -1061,6 +1062,7 @@ async fn add_manager(
         id: id.to_string(),
         name: name.to_string(),
         prefetch: Some(state.amqp_prefetch),
+        persistent: state.amqp_persistent,
         shared_prefix: Some(state.mqtt_shared_prefix.clone()),
     };
     let msg = SendCtrlMsg::AddManager {
