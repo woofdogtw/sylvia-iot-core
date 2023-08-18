@@ -190,9 +190,9 @@ Get user self information.
 
     - *object* `data`:
         - *string* `account`: User account.
-        - *string* `createdAt`: Creation time in ISO 8601 format.
-        - *string* `modifiedAt`: Creation time in ISO 8601 format.
-        - *string | null* `verifiedAt`: Verification time in ISO 8601 format.
+        - *string* `createdAt`: Creation time in RFC 3339 format.
+        - *string* `modifiedAt`: Creation time in RFC 3339 format.
+        - *string | null* `verifiedAt`: Verification time in RFC 3339 format.
         - *object* `roles`: (**present for special roles**) Roles.
         - *string* `name`: Display name.
         - *object* `info`: Other information.
@@ -284,7 +284,7 @@ Create a user.
     - *string* `password`: Password.
     - *string* `name`: (**optional**) Display name.
     - *object* `info`: (**optional**) Other information.
-- *string* `expiredAt`: (**optional**) Set the expiration time in ISO 8601 format. Without this value means this user is never expired and is verified immediately.
+- *string* `expiredAt`: (**optional**) Set the expiration time in RFC 3339 format. Without this value means this user is never expired and is verified immediately.
 
 - **Example**
 
@@ -384,11 +384,11 @@ Get user list.
     - *object[]* `data`:
         - *string* `userId`: User ID.
         - *string* `account`: User account.
-        - *string* `createdAt`: Creation time in ISO 8601 format.
-        - *string* `modifiedAt`: Modification time in ISO 8601 format.
-        - *string | null* `verifiedAt`: Verification time in ISO 8601 format.
-        - *string | null* `expiredAt`: (**optional**) Expiration time in ISO 8601 format.
-        - *string | null* `disabledAt`: (**optional**) Disabled time in ISO 8601 format.
+        - *string* `createdAt`: Creation time in RFC 3339 format.
+        - *string* `modifiedAt`: Modification time in RFC 3339 format.
+        - *string | null* `verifiedAt`: Verification time in RFC 3339 format.
+        - *string | null* `expiredAt`: (**optional**) Expiration time in RFC 3339 format.
+        - *string | null* `disabledAt`: (**optional**) Disabled time in RFC 3339 format.
         - *object* `roles`: Roles.
         - *string* `name`: Display name.
         - *object* `info`: Other information.
@@ -491,7 +491,7 @@ Update the specified user information.
 #### Parameters
 
 - *object* `data`: (**optional**)
-    - *string* `verifiedAt`: (**optional for admin**) The validation date time in ISO 8601 format. The **expiredAt** field will be set to **null**.
+    - *string* `verifiedAt`: (**optional for admin**) The validation date time in RFC 3339 format. The **expiredAt** field will be set to **null**.
     - *object* `roles`: (**optional**) Roles. The content must be booleans. Only administrators can set to roles **admin** and **service**.
     - *string* `password`: (**optional for admin**) User password.
     - *string* `name`: (**optional for admin**) The display name.
@@ -641,8 +641,8 @@ Get client list.
 
     - *object* `data`:
         - *string* `clientId`: Client ID.
-        - *string* `createdAt`: Creation time in ISO 8601 format.
-        - *string* `modifiedAt`: Modification time in ISO 8601 format.
+        - *string* `createdAt`: Creation time in RFC 3339 format.
+        - *string* `modifiedAt`: Modification time in RFC 3339 format.
         - *string | null* `clientSecret`: Client secret. **null** means that this is a public client.
         - *string[]* `redirectUris`: Allowed redirect URIs.
         - *string[]* `scopes`: Allowed scopes.

@@ -1,5 +1,6 @@
 use std::{
     collections::HashMap,
+    error::Error as StdError,
     sync::{Arc, Mutex},
     time::Duration,
 };
@@ -13,7 +14,8 @@ use tokio::time;
 
 use general_mq::{
     queue::{
-        Event as MqEvent, EventHandler as MqEventHandler, GmqQueue, Message, Status as MqStatus,
+        EventHandler as MqEventHandler, GmqQueue, Message, MessageHandler as MqMessageHandler,
+        Status as MqStatus,
     },
     AmqpQueueOptions, MqttQueueOptions, Queue, QueueOptions,
 };
@@ -100,6 +102,8 @@ struct TestHandler {
     is_dldata_result_recv: Arc<Mutex<bool>>,
 }
 
+struct TestDummyHandler;
+
 #[derive(Clone)]
 struct TestDlDataHandler {
     // Use Mutex to implement interior mutability.
@@ -174,6 +178,11 @@ impl EventHandler for TestHandler {
     }
 }
 
+#[async_trait]
+impl MqMessageHandler for TestDummyHandler {
+    async fn on_message(&self, _queue: Arc<dyn GmqQueue>, _msg: Box<dyn Message>) {}
+}
+
 impl TestDlDataHandler {
     fn new() -> Self {
         TestDlDataHandler {
@@ -185,14 +194,17 @@ impl TestDlDataHandler {
 
 #[async_trait]
 impl MqEventHandler for TestDlDataHandler {
-    async fn on_event(&self, _queue: Arc<dyn GmqQueue>, ev: MqEvent) {
-        if let MqEvent::Status(status) = ev {
-            if status == MqStatus::Connected {
-                *self.status_connected.lock().unwrap() = true;
-            }
+    async fn on_error(&self, _queue: Arc<dyn GmqQueue>, _err: Box<dyn StdError + Send + Sync>) {}
+
+    async fn on_status(&self, _queue: Arc<dyn GmqQueue>, status: MqStatus) {
+        if status == MqStatus::Connected {
+            *self.status_connected.lock().unwrap() = true;
         }
     }
+}
 
+#[async_trait]
+impl MqMessageHandler for TestDlDataHandler {
     async fn on_message(&self, _queue: Arc<dyn GmqQueue>, msg: Box<dyn Message>) {
         let data = match serde_json::from_slice::<AppDlData>(msg.payload()) {
             Err(_) => return,
@@ -742,6 +754,7 @@ pub fn dldata(context: &mut SpecContext<TestState>) -> Result<(), String> {
             );
             let mut queue_result = Queue::new(opts)?;
             queue_result.set_handler(Arc::new(handler.clone()));
+            queue_result.set_msg_handler(Arc::new(handler.clone()));
             if let Err(e) = queue_result.connect() {
                 return Err(format!("connect dldata queue error: {}", e));
             }
@@ -760,6 +773,7 @@ pub fn dldata(context: &mut SpecContext<TestState>) -> Result<(), String> {
             );
             let mut queue_result = Queue::new(opts)?;
             queue_result.set_handler(Arc::new(handler.clone()));
+            queue_result.set_msg_handler(Arc::new(handler.clone()));
             if let Err(e) = queue_result.connect() {
                 return Err(format!("connect dldata queue error: {}", e));
             }

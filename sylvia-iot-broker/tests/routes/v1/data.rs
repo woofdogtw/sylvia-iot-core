@@ -1,5 +1,6 @@
 use std::{
     collections::HashMap,
+    error::Error as StdError,
     sync::{Arc, Mutex},
     time::Duration,
 };
@@ -15,7 +16,7 @@ use url::Url;
 
 use general_mq::{
     connection::GmqConnection,
-    queue::{Event, EventHandler, GmqQueue, Message},
+    queue::{EventHandler, GmqQueue, Message, MessageHandler, Status},
     AmqpConnection, AmqpConnectionOptions, AmqpQueueOptions, MqttConnection, MqttConnectionOptions,
     MqttQueueOptions, Queue, QueueOptions,
 };
@@ -243,8 +244,13 @@ impl TestHandler {
 
 #[async_trait]
 impl EventHandler for TestHandler {
-    async fn on_event(&self, _queue: Arc<dyn GmqQueue>, _ev: Event) {}
+    async fn on_error(&self, _queue: Arc<dyn GmqQueue>, _err: Box<dyn StdError + Send + Sync>) {}
 
+    async fn on_status(&self, _queue: Arc<dyn GmqQueue>, _status: Status) {}
+}
+
+#[async_trait]
+impl MessageHandler for TestHandler {
     async fn on_message(&self, _queue: Arc<dyn GmqQueue>, msg: Box<dyn Message>) {
         let _ = msg.ack().await;
 
@@ -263,8 +269,13 @@ impl EventHandler for TestHandler {
 
 #[async_trait]
 impl EventHandler for AppNetConsumerHandler {
-    async fn on_event(&self, _queue: Arc<dyn GmqQueue>, _ev: Event) {}
+    async fn on_error(&self, _queue: Arc<dyn GmqQueue>, _err: Box<dyn StdError + Send + Sync>) {}
 
+    async fn on_status(&self, _queue: Arc<dyn GmqQueue>, _status: Status) {}
+}
+
+#[async_trait]
+impl MessageHandler for AppNetConsumerHandler {
     async fn on_message(&self, _queue: Arc<dyn GmqQueue>, msg: Box<dyn Message>) {
         let _ = msg.ack().await;
 
@@ -955,6 +966,7 @@ fn create_connections(state: &mut TestState) -> Result<TestResources, String> {
         let data_recv_handler = TestHandler::new();
         let mut q = Queue::new(opts)?;
         q.set_handler(Arc::new(data_recv_handler.clone()));
+        q.set_msg_handler(Arc::new(data_recv_handler.clone()));
         if let Err(e) = q.connect() {
             return Err(format!("data queue connection error: {}", e));
         }
@@ -1014,14 +1026,18 @@ fn create_connections(state: &mut TestState) -> Result<TestResources, String> {
         opts.is_recv = true;
         opts.name = format!("broker.application.{}.{}.uldata", UNIT_CODE, APP_CODE);
         let mut q = Queue::new(QueueOptions::Mqtt(opts.clone(), &conn))?;
-        q.set_handler(Arc::new(AppNetConsumerHandler { result_queue: None }));
+        let handler = Arc::new(AppNetConsumerHandler { result_queue: None });
+        q.set_handler(handler.clone());
+        q.set_msg_handler(handler);
         if let Err(e) = q.connect() {
             return Err(format!("app uldata queue connection error: {}", e));
         }
         routing_queues.push(Box::new(q));
         opts.name = format!("broker.application.{}.{}.dldata-resp", UNIT_CODE, APP_CODE);
         let mut q = Queue::new(QueueOptions::Mqtt(opts.clone(), &conn))?;
-        q.set_handler(Arc::new(AppNetConsumerHandler { result_queue: None }));
+        let handler = Arc::new(AppNetConsumerHandler { result_queue: None });
+        q.set_handler(handler.clone());
+        q.set_msg_handler(handler);
         if let Err(e) = q.connect() {
             return Err(format!("app dldata-resp queue connection error: {}", e));
         }
@@ -1031,25 +1047,31 @@ fn create_connections(state: &mut TestState) -> Result<TestResources, String> {
             UNIT_CODE, APP_CODE
         );
         let mut q = Queue::new(QueueOptions::Mqtt(opts.clone(), &conn))?;
-        q.set_handler(Arc::new(AppNetConsumerHandler { result_queue: None }));
+        let handler = Arc::new(AppNetConsumerHandler { result_queue: None });
+        q.set_handler(handler.clone());
+        q.set_msg_handler(handler);
         if let Err(e) = q.connect() {
             return Err(format!("app dldata-result queue connection error: {}", e));
         }
         routing_queues.push(Box::new(q));
         opts.name = format!("broker.network.{}.{}.dldata", UNIT_CODE, NET_CODE_PRV);
         let mut q = Queue::new(QueueOptions::Mqtt(opts.clone(), &conn))?;
-        q.set_handler(Arc::new(AppNetConsumerHandler {
+        let handler = Arc::new(AppNetConsumerHandler {
             result_queue: Some(net_dldata_result),
-        }));
+        });
+        q.set_handler(handler.clone());
+        q.set_msg_handler(handler);
         if let Err(e) = q.connect() {
             return Err(format!("net dldata queue connection error: {}", e));
         }
         routing_queues.push(Box::new(q));
         opts.name = format!("broker.network._.{}.dldata", NET_CODE_PUB);
         let mut q = Queue::new(QueueOptions::Mqtt(opts.clone(), &conn))?;
-        q.set_handler(Arc::new(AppNetConsumerHandler {
+        let handler = Arc::new(AppNetConsumerHandler {
             result_queue: Some(pubnet_dldata_result),
-        }));
+        });
+        q.set_handler(handler.clone());
+        q.set_msg_handler(handler);
         if let Err(e) = q.connect() {
             return Err(format!("net pub dldata queue connection error: {}", e));
         }
@@ -1092,6 +1114,7 @@ fn create_connections(state: &mut TestState) -> Result<TestResources, String> {
         let data_recv_handler = TestHandler::new();
         let mut q = Queue::new(opts)?;
         q.set_handler(Arc::new(data_recv_handler.clone()));
+        q.set_msg_handler(Arc::new(data_recv_handler.clone()));
         if let Err(e) = q.connect() {
             return Err(format!("data queue connection error: {}", e));
         }
@@ -1151,14 +1174,18 @@ fn create_connections(state: &mut TestState) -> Result<TestResources, String> {
         opts.is_recv = true;
         opts.name = format!("broker.application.{}.{}.uldata", UNIT_CODE, APP_CODE);
         let mut q = Queue::new(QueueOptions::Amqp(opts.clone(), &conn))?;
-        q.set_handler(Arc::new(AppNetConsumerHandler { result_queue: None }));
+        let handler = Arc::new(AppNetConsumerHandler { result_queue: None });
+        q.set_handler(handler.clone());
+        q.set_msg_handler(handler);
         if let Err(e) = q.connect() {
             return Err(format!("app uldata queue connection error: {}", e));
         }
         routing_queues.push(Box::new(q));
         opts.name = format!("broker.application.{}.{}.dldata-resp", UNIT_CODE, APP_CODE);
         let mut q = Queue::new(QueueOptions::Amqp(opts.clone(), &conn))?;
-        q.set_handler(Arc::new(AppNetConsumerHandler { result_queue: None }));
+        let handler = Arc::new(AppNetConsumerHandler { result_queue: None });
+        q.set_handler(handler.clone());
+        q.set_msg_handler(handler);
         if let Err(e) = q.connect() {
             return Err(format!("app dldata-resp queue connection error: {}", e));
         }
@@ -1168,25 +1195,31 @@ fn create_connections(state: &mut TestState) -> Result<TestResources, String> {
             UNIT_CODE, APP_CODE
         );
         let mut q = Queue::new(QueueOptions::Amqp(opts.clone(), &conn))?;
-        q.set_handler(Arc::new(AppNetConsumerHandler { result_queue: None }));
+        let handler = Arc::new(AppNetConsumerHandler { result_queue: None });
+        q.set_handler(handler.clone());
+        q.set_msg_handler(handler);
         if let Err(e) = q.connect() {
             return Err(format!("app dldata-result queue connection error: {}", e));
         }
         routing_queues.push(Box::new(q));
         opts.name = format!("broker.network.{}.{}.dldata", UNIT_CODE, NET_CODE_PRV);
         let mut q = Queue::new(QueueOptions::Amqp(opts.clone(), &conn))?;
-        q.set_handler(Arc::new(AppNetConsumerHandler {
+        let handler = Arc::new(AppNetConsumerHandler {
             result_queue: Some(net_dldata_result),
-        }));
+        });
+        q.set_handler(handler.clone());
+        q.set_msg_handler(handler);
         if let Err(e) = q.connect() {
             return Err(format!("net dldata queue connection error: {}", e));
         }
         routing_queues.push(Box::new(q));
         opts.name = format!("broker.network._.{}.dldata", NET_CODE_PUB);
         let mut q = Queue::new(QueueOptions::Amqp(opts.clone(), &conn))?;
-        q.set_handler(Arc::new(AppNetConsumerHandler {
+        let handler = Arc::new(AppNetConsumerHandler {
             result_queue: Some(pubnet_dldata_result),
-        }));
+        });
+        q.set_handler(handler.clone());
+        q.set_msg_handler(handler);
         if let Err(e) = q.connect() {
             return Err(format!("net pub dldata queue connection error: {}", e));
         }

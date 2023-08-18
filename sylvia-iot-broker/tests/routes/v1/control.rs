@@ -1,4 +1,4 @@
-use std::{collections::HashMap, sync::Arc, time::Duration};
+use std::{collections::HashMap, error::Error as StdError, sync::Arc, time::Duration};
 
 use async_trait::async_trait;
 use laboratory::SpecContext;
@@ -7,7 +7,7 @@ use serde_json;
 use tokio::time;
 use url::Url;
 
-use general_mq::queue::{Event, EventHandler, GmqQueue, Message, Status};
+use general_mq::queue::{EventHandler, GmqQueue, Message, MessageHandler, Status};
 use sylvia_iot_broker::libs::{
     config::DEF_MQ_CHANNEL_URL,
     mq::{control, Options as MgrOptions},
@@ -34,8 +34,13 @@ struct TestHandler;
 
 #[async_trait]
 impl EventHandler for TestHandler {
-    async fn on_event(&self, _queue: Arc<dyn GmqQueue>, _ev: Event) {}
+    async fn on_error(&self, _queue: Arc<dyn GmqQueue>, _err: Box<dyn StdError + Send + Sync>) {}
 
+    async fn on_status(&self, _queue: Arc<dyn GmqQueue>, _status: Status) {}
+}
+
+#[async_trait]
+impl MessageHandler for TestHandler {
     async fn on_message(&self, _queue: Arc<dyn GmqQueue>, _msg: Box<dyn Message>) {}
 }
 
@@ -66,6 +71,7 @@ pub fn test_wrong_data(context: &mut SpecContext<TestState>) -> Result<(), Strin
         "application",
         false,
         Arc::new(TestHandler {}),
+        Arc::new(TestHandler {}),
     )
     .unwrap();
     let net_ctrl_sender = control::new(
@@ -74,6 +80,7 @@ pub fn test_wrong_data(context: &mut SpecContext<TestState>) -> Result<(), Strin
         None,
         "network",
         false,
+        Arc::new(TestHandler {}),
         Arc::new(TestHandler {}),
     )
     .unwrap();

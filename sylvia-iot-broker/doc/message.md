@@ -8,8 +8,8 @@ These messages are used between devices and applications with **unicast** and **
 
     broker.application.[unit].[code].uldata: {
         dataId: string,                 // unique data ID
-        time: string,                   // device time for this data in ISO 8601 format
-        pub: string,                    // publish time to queue in ISO 8601 format
+        time: string,                   // device time for this data in RFC 3339 format
+        pub: string,                    // publish time to queue in RFC 3339 format
         deviceId: string,               // device ID
         networkId: string,              // device's network ID
         networkCode: string,            // device's network code
@@ -49,7 +49,7 @@ These messages are used between devices and applications with **unicast** and **
 These messages are used between devices and applications with **unicast** and **reliable** queues.
 
     broker.network.[unit].[code].uldata: {
-        time: string,                   // device time for this data in ISO 8601 format
+        time: string,                   // device time for this data in RFC 3339 format
         networkAddr: string,            // device network address
         data: string,                   // data in hexadecimal format
         extension: object               // (optional) extensions for application
@@ -57,7 +57,7 @@ These messages are used between devices and applications with **unicast** and **
 
     broker.network.[unit].[code].dldata: {
         dataId: string,                 // unique data ID
-        pub: string,                    // publish time to queue in ISO 8601 format
+        pub: string,                    // publish time to queue in RFC 3339 format
         expiresIn: number,              // data expires in seconds
         networkAddr: string,            // device network address
         data: string,                   // data in hexadecimal format
@@ -76,7 +76,7 @@ These messages are used for notifying network servers that relative devices are 
 
     broker.network.[unit].[code].ctrl: {
         operation: string,              // operation
-        time: string,                   // timestamp in ISO 8601 format.
+        time: string,                   // timestamp in RFC 3339 format.
         new: object | object[],         // new configuration(s)
         old: object | object[]          // (optional) old configuration(s)
     }
@@ -216,14 +216,14 @@ These messages are used from `broker` to `data` module(s) with **unicast** and *
 - `application-uldata`: uplink data route to the application.
     - *object* `data`:
         - *string* `dataId`: unique data ID.
-        - *string* `proc`: received time in ISO 8601 format when the broker receive this data.
-        - *string* `pub`: publish time in ISO 8601 format to the queue.
+        - *string* `proc`: received time in RFC 3339 format when the broker receive this data.
+        - *string* `pub`: publish time in RFC 3339 format to the queue.
         - *string | null* `unitCode`: network's unit code.
         - *string* `networkCode`: network code.
         - *string* `networkAddr`: device network address.
         - *string* `unitId`: routed data's unit ID.
         - *string* `deviceId`: device ID.
-        - *string* `time`: data time in ISO 8601 format from the device.
+        - *string* `time`: data time in RFC 3339 format from the device.
         - *string* `profile`: device profile.
         - *string* `data`: data in hexadecimal format.
         - *object* `extension`: (**optional**) extensions.
@@ -233,7 +233,7 @@ These messages are used from `broker` to `data` module(s) with **unicast** and *
 - `application-dldata`: uplink data route to the application.
     - *object* `data`:
         - *string* `dataId`: unique data ID.
-        - *string* `proc`: received time in ISO 8601 format when the broker receive this data.
+        - *string* `proc`: received time in RFC 3339 format when the broker receive this data.
         - *number* `status`: **0** for success, negative for processing, positive for error.
         - *string* `unitId`: device's unit ID.
         - *string* `deviceId`: (**optional**) device ID.
@@ -248,7 +248,7 @@ These messages are used from `broker` to `data` module(s) with **unicast** and *
 - `application-dldata-result`: uplink data route to the application.
     - *object* `data`:
         - *string* `dataId`: unique data ID.
-        - *string* `resp`: received time in ISO 8601 format when the broker receive this result.
+        - *string* `resp`: received time in RFC 3339 format when the broker receive this result.
         - *number* `status`: **0** for success, negative for processing, positive for error.
 
 ### `network-uldata` Kind
@@ -256,13 +256,13 @@ These messages are used from `broker` to `data` module(s) with **unicast** and *
 - `network-uldata`: uplink data from network.
     - *object* `data`:
         - *string* `dataId`: unique data ID.
-        - *string* `proc`: received time in ISO 8601 format when the broker receive this data.
+        - *string* `proc`: received time in RFC 3339 format when the broker receive this data.
         - *string | null* `unitCode`: network's unit code.
         - *string* `networkCode`: network code.
         - *string* `networkAddr`: device network address.
         - *string* `unitId`: (**present for private network**) network's unit ID.
         - *string* `deviceId`: (**present if the device exist**) device ID.
-        - *string* `time`: data time in ISO 8601 format from the device.
+        - *string* `time`: data time in RFC 3339 format from the device.
         - *string* `profile`: (**present if the device exist**) device profile.
         - *string* `data`: data in hexadecimal format.
         - *object* `extension`: (**optional**) extensions.
@@ -272,8 +272,8 @@ These messages are used from `broker` to `data` module(s) with **unicast** and *
 - `network-dldata`: downlink data from applications to the network.
     - *object* `data`:
         - *string* `dataId`: unique data ID.
-        - *string* `proc`: received time in ISO 8601 format when the broker receive this data.
-        - *string* `pub`: publish time in ISO 8601 format to the queue.
+        - *string* `proc`: received time in RFC 3339 format when the broker receive this data.
+        - *string* `pub`: publish time in RFC 3339 format to the queue.
         - *number* `status`: **0** for success, negative for processing, positive for error.
         - *string* `unitId`: device's unit ID.
         - *string* `deviceId`: device ID.
@@ -288,5 +288,5 @@ These messages are used from `broker` to `data` module(s) with **unicast** and *
 - `network-dldata-result`: downlink data result from the network.
     - *object* `data`:
         - *string* `dataId`: unique data ID.
-        - *string* `resp`: received time in ISO 8601 format when the broker receive this result.
+        - *string* `resp`: received time in RFC 3339 format when the broker receive this result.
         - *number* `status`: **0** for success, negative for processing, positive for error.

@@ -20,7 +20,7 @@ use tokio::{
 };
 
 use crate::{
-    connection::{Event, EventHandler, GmqConnection, Status},
+    connection::{EventHandler, GmqConnection, Status},
     randomstring, ID_SIZE,
 };
 
@@ -67,7 +67,7 @@ struct InnerOptions {
 /// Default connect timeout in milliseconds.
 const DEF_CONN_TIMEOUT_MS: u64 = 3000;
 /// Default reconnect time in milliseconds.
-const DEF_RECONN_TIMEOUT_MS: u64 = 1000;
+const DEF_RECONN_TIME_MS: u64 = 1000;
 
 impl AmqpConnection {
     /// Create a connection instance.
@@ -100,7 +100,7 @@ impl AmqpConnection {
             opts: InnerOptions {
                 args,
                 reconnect_millis: match opts.reconnect_millis {
-                    0 => DEF_RECONN_TIMEOUT_MS,
+                    0 => DEF_RECONN_TIME_MS,
                     _ => opts.reconnect_millis,
                 },
             },
@@ -170,9 +170,7 @@ impl GmqConnection for AmqpConnection {
         for (id, handler) in handlers {
             let conn = Arc::new(self.clone());
             task::spawn(async move {
-                handler
-                    .on_event(id.clone(), conn, Event::Status(Status::Closed))
-                    .await;
+                handler.on_status(id.clone(), conn, Status::Closed).await;
             });
         }
 
@@ -186,7 +184,7 @@ impl Default for AmqpConnectionOptions {
         AmqpConnectionOptions {
             uri: "amqp://localhost".to_string(),
             connect_timeout_millis: DEF_CONN_TIMEOUT_MS,
-            reconnect_millis: DEF_RECONN_TIMEOUT_MS,
+            reconnect_millis: DEF_RECONN_TIME_MS,
         }
     }
 }
@@ -221,9 +219,7 @@ fn create_event_loop(conn: &AmqpConnection) -> JoinHandle<()> {
                     for (id, handler) in handlers {
                         let conn = this.clone();
                         task::spawn(async move {
-                            handler
-                                .on_event(id.clone(), conn, Event::Status(Status::Connected))
-                                .await;
+                            handler.on_status(id.clone(), conn, Status::Connected).await;
                         });
                     }
                 }
@@ -258,7 +254,7 @@ fn create_event_loop(conn: &AmqpConnection) -> JoinHandle<()> {
                         let conn = this.clone();
                         task::spawn(async move {
                             handler
-                                .on_event(id.clone(), conn, Event::Status(Status::Disconnected))
+                                .on_status(id.clone(), conn, Status::Disconnected)
                                 .await;
                         });
                     }
@@ -275,7 +271,7 @@ fn create_event_loop(conn: &AmqpConnection) -> JoinHandle<()> {
                         let conn = this.clone();
                         task::spawn(async move {
                             handler
-                                .on_event(id.clone(), conn, Event::Status(Status::Connecting))
+                                .on_status(id.clone(), conn, Status::Connecting)
                                 .await;
                         });
                     }

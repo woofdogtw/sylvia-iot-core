@@ -17,7 +17,7 @@ use serde_json::{Map, Value};
 
 use general_mq::{
     connection::GmqConnection,
-    queue::{Event, EventHandler, GmqQueue, Message},
+    queue::{GmqQueue, Message, MessageHandler},
     AmqpConnection, AmqpConnectionOptions, AmqpQueueOptions, MqttConnection, MqttConnectionOptions,
     MqttQueueOptions, Queue, QueueOptions,
 };
@@ -167,9 +167,7 @@ impl TestHandler {
 }
 
 #[async_trait]
-impl EventHandler for TestHandler {
-    async fn on_event(&self, _queue: Arc<dyn GmqQueue>, _ev: Event) {}
-
+impl MessageHandler for TestHandler {
     async fn on_message(&self, _queue: Arc<dyn GmqQueue>, msg: Box<dyn Message>) {
         let _ = msg.ack().await;
 
@@ -205,7 +203,7 @@ fn test_get(context: &mut SpecContext<TestState>) -> Result<(), String> {
 
     let data_recv_queue = state.data_queue.as_mut().unwrap();
     let handler = TestHandler::new();
-    data_recv_queue.set_handler(Arc::new(handler.clone()));
+    data_recv_queue.set_msg_handler(Arc::new(handler.clone()));
 
     let req = TestRequest::get()
         .uri("/")
@@ -250,7 +248,7 @@ fn test_post(context: &mut SpecContext<TestState>) -> Result<(), String> {
 
     let data_recv_queue = state.data_queue.as_mut().unwrap();
     let handler = TestHandler::new();
-    data_recv_queue.set_handler(Arc::new(handler.clone()));
+    data_recv_queue.set_msg_handler(Arc::new(handler.clone()));
 
     let mut req_body = Map::<String, Value>::new();
     let mut req_data = Map::<String, Value>::new();
@@ -309,7 +307,7 @@ fn test_patch_password(context: &mut SpecContext<TestState>) -> Result<(), Strin
 
     let data_recv_queue = state.data_queue.as_mut().unwrap();
     let handler = TestHandler::new();
-    data_recv_queue.set_handler(Arc::new(handler.clone()));
+    data_recv_queue.set_msg_handler(Arc::new(handler.clone()));
 
     let mut req_body = Map::<String, Value>::new();
     let mut req_data = Map::<String, Value>::new();
@@ -371,7 +369,7 @@ fn test_delete_cover(context: &mut SpecContext<TestState>) -> Result<(), String>
 
     let data_recv_queue = state.data_queue.as_mut().unwrap();
     let handler = TestHandler::new();
-    data_recv_queue.set_handler(Arc::new(handler.clone()));
+    data_recv_queue.set_msg_handler(Arc::new(handler.clone()));
 
     let req = TestRequest::delete().uri("/").to_request();
     let resp = runtime.block_on(async { test::call_service(&mut app, req).await });
@@ -447,7 +445,7 @@ fn create_data_recv_queue(state: &mut TestState, data_host: &'static str) -> Res
             ..Default::default()
         };
         let mut q = Queue::new(QueueOptions::Mqtt(opts, &conn))?;
-        q.set_handler(Arc::new(TestHandler::new()));
+        q.set_msg_handler(Arc::new(TestHandler::new()));
         if let Err(e) = q.connect() {
             return Err(format!("create MQTT data recv queue error: {}", e));
         }
@@ -470,7 +468,7 @@ fn create_data_recv_queue(state: &mut TestState, data_host: &'static str) -> Res
             ..Default::default()
         };
         let mut q = Queue::new(QueueOptions::Amqp(opts, &conn))?;
-        q.set_handler(Arc::new(TestHandler::new()));
+        q.set_msg_handler(Arc::new(TestHandler::new()));
         if let Err(e) = q.connect() {
             return Err(format!("create AMQP data recv queue error: {}", e));
         }

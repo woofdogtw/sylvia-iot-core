@@ -1,5 +1,6 @@
 use std::{
     collections::HashMap,
+    error::Error as StdError,
     sync::{Arc, Mutex},
     time::Duration,
 };
@@ -8,7 +9,7 @@ use async_trait::async_trait;
 use laboratory::{expect, SpecContext};
 use tokio::time;
 
-use general_mq::queue::{Event, EventHandler, GmqQueue, Message, Status};
+use general_mq::queue::{EventHandler, GmqQueue, Message, MessageHandler, Status};
 use sylvia_iot_broker::libs::mq::{control, Connection};
 
 use super::STATE;
@@ -29,14 +30,17 @@ impl TestHandler {
 
 #[async_trait]
 impl EventHandler for TestHandler {
-    async fn on_event(&self, _queue: Arc<dyn GmqQueue>, ev: Event) {
-        if let Event::Status(status) = ev {
-            if status == Status::Connected {
-                *self.status_changed.lock().unwrap() = true;
-            }
+    async fn on_error(&self, _queue: Arc<dyn GmqQueue>, _err: Box<dyn StdError + Send + Sync>) {}
+
+    async fn on_status(&self, _queue: Arc<dyn GmqQueue>, status: Status) {
+        if status == Status::Connected {
+            *self.status_changed.lock().unwrap() = true;
         }
     }
+}
 
+#[async_trait]
+impl MessageHandler for TestHandler {
     async fn on_message(&self, _queue: Arc<dyn GmqQueue>, _msg: Box<dyn Message>) {}
 }
 
@@ -60,6 +64,7 @@ pub fn new(context: &mut SpecContext<TestState>) -> Result<(), String> {
         "func1",
         false,
         handler1.clone(),
+        handler1.clone(),
     )?;
     let queue2 = control::new(
         conn_pool.clone(),
@@ -68,6 +73,7 @@ pub fn new(context: &mut SpecContext<TestState>) -> Result<(), String> {
         "func2",
         false,
         handler2.clone(),
+        handler2.clone(),
     )?;
     let queue3 = control::new(
         conn_pool,
@@ -75,6 +81,7 @@ pub fn new(context: &mut SpecContext<TestState>) -> Result<(), String> {
         Some(0),
         "func3",
         false,
+        handler3.clone(),
         handler3.clone(),
     )?;
     state.ctrl_queues = Some(vec![queue1.clone(), queue2.clone(), queue3.clone()]);
@@ -112,6 +119,14 @@ pub fn new_wrong_opts(context: &mut SpecContext<TestState>) -> Result<(), String
     let host_uri = conn_host_uri(mq_engine)?;
     let handler = Arc::new(TestHandler::new());
 
-    let queue = control::new(conn_pool, &host_uri, None, "", false, handler);
+    let queue = control::new(
+        conn_pool,
+        &host_uri,
+        None,
+        "",
+        false,
+        handler.clone(),
+        handler,
+    );
     expect(queue.is_err()).equals(true)
 }

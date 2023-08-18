@@ -1,4 +1,5 @@
 use std::{
+    error::Error as StdError,
     sync::{Arc, Mutex},
     time::Duration,
 };
@@ -8,7 +9,7 @@ use laboratory::{expect, SpecContext};
 use tokio::time;
 
 use general_mq::{
-    connection::{Event, EventHandler, GmqConnection, Status},
+    connection::{EventHandler, GmqConnection, Status},
     MqttConnection, MqttConnectionOptions,
 };
 
@@ -30,34 +31,52 @@ const RETRY_10MS: usize = 100;
 
 #[async_trait]
 impl EventHandler for TestConnectHandler {
-    async fn on_event(&self, _handler_id: String, _conn: Arc<dyn GmqConnection>, ev: Event) {
-        if let Event::Status(status) = ev {
-            if status == Status::Connected {
-                *self.recv_connected.lock().unwrap() = true;
-            }
+    async fn on_error(
+        &self,
+        _handler_id: String,
+        _conn: Arc<dyn GmqConnection>,
+        _err: Box<dyn StdError + Send + Sync>,
+    ) {
+    }
+
+    async fn on_status(&self, _handler_id: String, _conn: Arc<dyn GmqConnection>, status: Status) {
+        if status == Status::Connected {
+            *self.recv_connected.lock().unwrap() = true;
         }
     }
 }
 
 #[async_trait]
 impl EventHandler for TestRemoveHandler {
-    async fn on_event(&self, _handler_id: String, _conn: Arc<dyn GmqConnection>, ev: Event) {
-        if let Event::Status(status) = ev {
-            if status == Status::Connected {
-                let mut mutex = self.connected_count.lock().unwrap();
-                *mutex += 1;
-            }
+    async fn on_error(
+        &self,
+        _handler_id: String,
+        _conn: Arc<dyn GmqConnection>,
+        _err: Box<dyn StdError + Send + Sync>,
+    ) {
+    }
+
+    async fn on_status(&self, _handler_id: String, _conn: Arc<dyn GmqConnection>, status: Status) {
+        if status == Status::Connected {
+            let mut mutex = self.connected_count.lock().unwrap();
+            *mutex += 1;
         }
     }
 }
 
 #[async_trait]
 impl EventHandler for TestCloseHandler {
-    async fn on_event(&self, _handler_id: String, _conn: Arc<dyn GmqConnection>, ev: Event) {
-        if let Event::Status(status) = ev {
-            if status == Status::Closed {
-                *self.recv_closed.lock().unwrap() = true;
-            }
+    async fn on_error(
+        &self,
+        _handler_id: String,
+        _conn: Arc<dyn GmqConnection>,
+        _err: Box<dyn StdError + Send + Sync>,
+    ) {
+    }
+
+    async fn on_status(&self, _handler_id: String, _conn: Arc<dyn GmqConnection>, status: Status) {
+        if status == Status::Closed {
+            *self.recv_closed.lock().unwrap() = true;
         }
     }
 }

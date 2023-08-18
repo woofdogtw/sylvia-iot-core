@@ -1,4 +1,4 @@
-use std::{collections::HashMap, time::Duration};
+use std::{collections::HashMap, sync::Arc, time::Duration};
 
 use actix_web::{
     http::{header, StatusCode},
@@ -6,6 +6,7 @@ use actix_web::{
     test::{self, TestRequest},
     App,
 };
+use async_trait::async_trait;
 use base64::{engine::general_purpose, Engine};
 use chrono::{DateTime, SubsecRound, Utc};
 use hex;
@@ -16,7 +17,7 @@ use tokio::{runtime::Runtime, time};
 
 use general_mq::{
     connection::{GmqConnection, Status as ConnStatus},
-    queue::{GmqQueue, Status as QueueStatus},
+    queue::{GmqQueue, Message, MessageHandler, Status as QueueStatus},
     AmqpConnection, AmqpConnectionOptions, AmqpQueue, AmqpQueueOptions, MqttConnection,
     MqttConnectionOptions, MqttQueue, MqttQueueOptions,
 };
@@ -39,6 +40,13 @@ use super::{
     },
     remove_unit, Stats, STATE,
 };
+
+struct TestDummyHandler;
+
+#[async_trait]
+impl MessageHandler for TestDummyHandler {
+    async fn on_message(&self, _queue: Arc<dyn GmqQueue>, _msg: Box<dyn Message>) {}
+}
 
 #[derive(Serialize)]
 struct PostApplication {
@@ -1610,6 +1618,7 @@ async fn check_queue(host_uri: &str, password: &str, unit: &str, code: &str) -> 
             ..Default::default()
         };
         let mut queue = AmqpQueue::new(opts, &conn)?;
+        queue.set_msg_handler(Arc::new(TestDummyHandler {}));
         let opts = MqttConnectionOptions {
             uri: uri.replace("amqp", "mqtt"),
             ..Default::default()
@@ -1665,6 +1674,7 @@ async fn check_queue(host_uri: &str, password: &str, unit: &str, code: &str) -> 
             ..Default::default()
         };
         let mut queue = MqttQueue::new(opts, &conn)?;
+        queue.set_msg_handler(Arc::new(TestDummyHandler {}));
         if let Err(e) = opposite_conn.connect() {
             return Err(format!("connect opposite broker error: {}", e));
         }

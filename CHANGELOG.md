@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.0.25 - 2023-08-18
+
+### Changed
+
+- Update Rust to 1.71.1 with GitHub Actions runner image 20230814.1.0.
+- Modify time format descriptions from ISO 8601 to RFC 3339.
+- Update dependencies.
+- **general-mq/broker/coremgr/data/sdk**: **INCOMPATIBLE** API modifications.
+    - Separates errors, status, messages into three two handlers and three callback functions.
+
 ## 0.0.24 - 2023-08-12
 
 ### Changed

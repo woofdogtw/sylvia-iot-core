@@ -13,7 +13,7 @@ use tokio::time;
 
 use general_mq::{
     connection::GmqConnection,
-    queue::{Event, EventHandler, GmqQueue, Message, Status as QueueStatus},
+    queue::{GmqQueue, Message, MessageHandler, Status as QueueStatus},
     AmqpConnection, AmqpConnectionOptions, AmqpQueueOptions, MqttConnection, MqttConnectionOptions,
     MqttQueueOptions, Queue, QueueOptions,
 };
@@ -58,9 +58,7 @@ struct UlDataHandler {
 }
 
 #[async_trait]
-impl EventHandler for UlDataHandler {
-    async fn on_event(&self, _queue: Arc<dyn GmqQueue>, _ev: Event) {}
-
+impl MessageHandler for UlDataHandler {
     async fn on_message(&self, _queue: Arc<dyn GmqQueue>, msg: Box<dyn Message>) {
         let now = Utc::now();
         let _ = msg.ack().await;
@@ -307,6 +305,15 @@ async fn create_app_queue(config: &Config) -> Result<(Queue, Arc<UlDataHandler>)
         return Err(IoError::new(ErrorKind::InvalidInput, "invalid scheme"));
     };
 
+    let handler = Arc::new(UlDataHandler {
+        start_us: Utc::now().timestamp_micros(),
+        count: config.count,
+        received: Arc::new(Mutex::new(0)),
+        total_latency_ms: Arc::new(Mutex::new(0)),
+        last_print_sec: Arc::new(Mutex::new(0)),
+        latency_stats: Arc::new(Mutex::new(Vec::with_capacity(config.count as usize))),
+    });
+    queue.set_msg_handler(handler.clone());
     if let Err(e) = queue.connect() {
         return Err(IoError::new(ErrorKind::ConnectionRefused, e.to_string()));
     }
@@ -320,15 +327,6 @@ async fn create_app_queue(config: &Config) -> Result<(Queue, Arc<UlDataHandler>)
     if queue.status() != QueueStatus::Connected {
         return Err(IoError::new(ErrorKind::ConnectionRefused, "not connected"));
     }
-    let handler = Arc::new(UlDataHandler {
-        start_us: Utc::now().timestamp_micros(),
-        count: config.count,
-        received: Arc::new(Mutex::new(0)),
-        total_latency_ms: Arc::new(Mutex::new(0)),
-        last_print_sec: Arc::new(Mutex::new(0)),
-        latency_stats: Arc::new(Mutex::new(Vec::with_capacity(config.count as usize))),
-    });
-    queue.set_handler(handler.clone());
     Ok((queue, handler))
 }
 

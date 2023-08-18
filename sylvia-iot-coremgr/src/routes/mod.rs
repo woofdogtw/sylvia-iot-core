@@ -13,7 +13,7 @@ use serde::{Deserialize, Serialize};
 use url::Url;
 
 use general_mq::{
-    queue::{Event, EventHandler as QueueEventHandler, GmqQueue, Message, Status},
+    queue::{EventHandler as QueueEventHandler, GmqQueue, Message, MessageHandler, Status},
     Queue,
 };
 use sylvia_iot_corelib::{constants::MqEngine, err::ErrResp};
@@ -106,19 +106,25 @@ impl ErrReq {
 
 #[async_trait]
 impl QueueEventHandler for DataSenderHandler {
-    async fn on_event(&self, queue: Arc<dyn GmqQueue>, ev: Event) {
-        const FN_NAME: &'static str = "DataSenderHandler::on_event";
+    async fn on_error(&self, queue: Arc<dyn GmqQueue>, err: Box<dyn StdError + Send + Sync>) {
+        const FN_NAME: &'static str = "DataSenderHandler::on_error";
         let queue_name = queue.name();
-
-        match ev {
-            Event::Error(e) => error!("[{}] {} error: {}", FN_NAME, queue_name, e),
-            Event::Status(status) => match status {
-                Status::Connected => info!("[{}] {} connected", queue_name, FN_NAME),
-                _ => warn!("[{}] {} status to {:?}", FN_NAME, queue_name, status),
-            },
-        }
+        error!("[{}] {} error: {}", FN_NAME, queue_name, err);
     }
 
+    async fn on_status(&self, queue: Arc<dyn GmqQueue>, status: Status) {
+        const FN_NAME: &'static str = "DataSenderHandler::on_status";
+        let queue_name = queue.name();
+
+        match status {
+            Status::Connected => info!("[{}] {} connected", queue_name, FN_NAME),
+            _ => warn!("[{}] {} status to {:?}", FN_NAME, queue_name, status),
+        }
+    }
+}
+
+#[async_trait]
+impl MessageHandler for DataSenderHandler {
     async fn on_message(&self, _queue: Arc<dyn GmqQueue>, _msg: Box<dyn Message>) {}
 }
 

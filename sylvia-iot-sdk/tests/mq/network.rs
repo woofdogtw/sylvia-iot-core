@@ -1,5 +1,6 @@
 use std::{
     collections::HashMap,
+    error::Error as StdError,
     sync::{Arc, Mutex},
     time::Duration,
 };
@@ -13,7 +14,8 @@ use tokio::time;
 
 use general_mq::{
     queue::{
-        Event as MqEvent, EventHandler as MqEventHandler, GmqQueue, Message, Status as MqStatus,
+        EventHandler as MqEventHandler, GmqQueue, Message, MessageHandler as MqMessageHandler,
+        Status as MqStatus,
     },
     AmqpQueueOptions, MqttQueueOptions, Queue, QueueOptions,
 };
@@ -222,14 +224,17 @@ impl TestDlDataResultHandler {
 
 #[async_trait]
 impl MqEventHandler for TestUlDataHandler {
-    async fn on_event(&self, _queue: Arc<dyn GmqQueue>, ev: MqEvent) {
-        if let MqEvent::Status(status) = ev {
-            if status == MqStatus::Connected {
-                *self.status_connected.lock().unwrap() = true;
-            }
+    async fn on_error(&self, _queue: Arc<dyn GmqQueue>, _err: Box<dyn StdError + Send + Sync>) {}
+
+    async fn on_status(&self, _queue: Arc<dyn GmqQueue>, status: MqStatus) {
+        if status == MqStatus::Connected {
+            *self.status_connected.lock().unwrap() = true;
         }
     }
+}
 
+#[async_trait]
+impl MqMessageHandler for TestUlDataHandler {
     async fn on_message(&self, _queue: Arc<dyn GmqQueue>, msg: Box<dyn Message>) {
         let data = match serde_json::from_slice::<NetUlData>(msg.payload()) {
             Err(_) => return,
@@ -244,14 +249,17 @@ impl MqEventHandler for TestUlDataHandler {
 
 #[async_trait]
 impl MqEventHandler for TestDlDataResultHandler {
-    async fn on_event(&self, _queue: Arc<dyn GmqQueue>, ev: MqEvent) {
-        if let MqEvent::Status(status) = ev {
-            if status == MqStatus::Connected {
-                *self.status_connected.lock().unwrap() = true;
-            }
+    async fn on_error(&self, _queue: Arc<dyn GmqQueue>, _err: Box<dyn StdError + Send + Sync>) {}
+
+    async fn on_status(&self, _queue: Arc<dyn GmqQueue>, status: MqStatus) {
+        if status == MqStatus::Connected {
+            *self.status_connected.lock().unwrap() = true;
         }
     }
+}
 
+#[async_trait]
+impl MqMessageHandler for TestDlDataResultHandler {
     async fn on_message(&self, _queue: Arc<dyn GmqQueue>, msg: Box<dyn Message>) {
         let data = match serde_json::from_slice::<NetDlDataResult>(msg.payload()) {
             Err(_) => return,
@@ -471,6 +479,7 @@ pub fn uldata(context: &mut SpecContext<TestState>) -> Result<(), String> {
             );
             let mut queue_result = Queue::new(opts)?;
             queue_result.set_handler(Arc::new(handler.clone()));
+            queue_result.set_msg_handler(Arc::new(handler.clone()));
             if let Err(e) = queue_result.connect() {
                 return Err(format!("connect uldata queue error: {}", e));
             }
@@ -489,6 +498,7 @@ pub fn uldata(context: &mut SpecContext<TestState>) -> Result<(), String> {
             );
             let mut queue_result = Queue::new(opts)?;
             queue_result.set_handler(Arc::new(handler.clone()));
+            queue_result.set_msg_handler(Arc::new(handler.clone()));
             if let Err(e) = queue_result.connect() {
                 return Err(format!("connect uldata queue error: {}", e));
             }
@@ -959,6 +969,7 @@ pub fn dldata_result(context: &mut SpecContext<TestState>) -> Result<(), String>
             );
             let mut queue_result = Queue::new(opts)?;
             queue_result.set_handler(Arc::new(handler.clone()));
+            queue_result.set_msg_handler(Arc::new(handler.clone()));
             if let Err(e) = queue_result.connect() {
                 return Err(format!("connect dldata-result queue error: {}", e));
             }
@@ -977,6 +988,7 @@ pub fn dldata_result(context: &mut SpecContext<TestState>) -> Result<(), String>
             );
             let mut queue_result = Queue::new(opts)?;
             queue_result.set_handler(Arc::new(handler.clone()));
+            queue_result.set_msg_handler(Arc::new(handler.clone()));
             if let Err(e) = queue_result.connect() {
                 return Err(format!("connect dldata-result queue error: {}", e));
             }

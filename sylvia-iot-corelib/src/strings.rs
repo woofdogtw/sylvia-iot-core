@@ -86,7 +86,7 @@ pub fn randomstring(len: usize) -> String {
         .collect()
 }
 
-/// To convert time to ISO8601 format with milliseconds precision (`YYYY-MM-DDThh:mm:ss.SSSZ`).
+/// To convert time to RFC 3339 format with milliseconds precision (`YYYY-MM-DDThh:mm:ss.SSSZ`).
 pub fn time_str(time: &DateTime<Utc>) -> String {
     time.to_rfc3339_opts(SecondsFormat::Millis, true)
 }

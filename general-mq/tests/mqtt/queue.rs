@@ -1,4 +1,5 @@
 use std::{
+    error::Error as StdError,
     str,
     sync::{Arc, Mutex},
     time::Duration,
@@ -10,7 +11,7 @@ use tokio::{task, time};
 
 use general_mq::{
     connection::GmqConnection,
-    queue::{Event, EventHandler, GmqQueue, Message, Status},
+    queue::{EventHandler, GmqQueue, Message, MessageHandler, Status},
     randomstring, MqttConnection, MqttConnectionOptions, MqttQueue, MqttQueueOptions, Queue,
     QueueOptions,
 };
@@ -23,6 +24,8 @@ struct Resources {
     pub queues: Vec<Box<MqttQueue>>,
     pub mq_queues: Vec<Box<Queue>>,
 }
+
+struct TestDummyMsgHandler;
 
 struct TestConnectHandler {
     pub recv_connected: Arc<Mutex<bool>>,
@@ -55,67 +58,62 @@ struct TestRecvMsgHandler {
 const RETRY_10MS: usize = 100;
 
 #[async_trait]
+impl MessageHandler for TestDummyMsgHandler {
+    async fn on_message(&self, _queue: Arc<dyn GmqQueue>, _msg: Box<dyn Message>) {}
+}
+
+#[async_trait]
 impl EventHandler for TestConnectHandler {
-    async fn on_event(&self, queue: Arc<dyn GmqQueue>, ev: Event) {
-        if let Event::Status(status) = ev {
-            if status == Status::Connected {
-                *self.recv_connected.lock().unwrap() = true;
-                *self.recv_queue_name.lock().unwrap() = queue.name().to_string();
-            }
+    async fn on_error(&self, _queue: Arc<dyn GmqQueue>, _err: Box<dyn StdError + Send + Sync>) {}
+
+    async fn on_status(&self, queue: Arc<dyn GmqQueue>, status: Status) {
+        if status == Status::Connected {
+            *self.recv_connected.lock().unwrap() = true;
+            *self.recv_queue_name.lock().unwrap() = queue.name().to_string();
         }
     }
-
-    async fn on_message(&self, _queue: Arc<dyn GmqQueue>, _msg: Box<dyn Message>) {}
 }
 
 #[async_trait]
 impl EventHandler for TestRemoveHandler {
-    async fn on_event(&self, _queue: Arc<dyn GmqQueue>, ev: Event) {
-        if let Event::Status(status) = ev {
-            if status == Status::Connected {
-                let mut mutex = self.connected_count.lock().unwrap();
-                *mutex += 1;
-            }
+    async fn on_error(&self, _queue: Arc<dyn GmqQueue>, _err: Box<dyn StdError + Send + Sync>) {}
+
+    async fn on_status(&self, _queue: Arc<dyn GmqQueue>, status: Status) {
+        if status == Status::Connected {
+            let mut mutex = self.connected_count.lock().unwrap();
+            *mutex += 1;
         }
     }
-
-    async fn on_message(&self, _queue: Arc<dyn GmqQueue>, _msg: Box<dyn Message>) {}
 }
 
 #[async_trait]
 impl EventHandler for TestCloseHandler {
-    async fn on_event(&self, queue: Arc<dyn GmqQueue>, ev: Event) {
-        if let Event::Status(status) = ev {
-            if status == Status::Closed {
-                *self.recv_closed.lock().unwrap() = true;
-                *self.recv_queue_name.lock().unwrap() = queue.name().to_string();
-            }
+    async fn on_error(&self, _queue: Arc<dyn GmqQueue>, _err: Box<dyn StdError + Send + Sync>) {}
+
+    async fn on_status(&self, queue: Arc<dyn GmqQueue>, status: Status) {
+        if status == Status::Closed {
+            *self.recv_closed.lock().unwrap() = true;
+            *self.recv_queue_name.lock().unwrap() = queue.name().to_string();
         }
     }
-
-    async fn on_message(&self, _queue: Arc<dyn GmqQueue>, _msg: Box<dyn Message>) {}
 }
 
 #[async_trait]
 impl EventHandler for TestReconnectHandler {
-    async fn on_event(&self, _queue: Arc<dyn GmqQueue>, ev: Event) {
-        if let Event::Status(status) = ev {
-            if status == Status::Connected {
-                let mut mutex = self.connected_count.lock().unwrap();
-                *mutex += 1;
-            } else if status == Status::Connecting {
-                *self.recv_connecting.lock().unwrap() = true;
-            }
+    async fn on_error(&self, _queue: Arc<dyn GmqQueue>, _err: Box<dyn StdError + Send + Sync>) {}
+
+    async fn on_status(&self, _queue: Arc<dyn GmqQueue>, status: Status) {
+        if status == Status::Connected {
+            let mut mutex = self.connected_count.lock().unwrap();
+            *mutex += 1;
+        } else if status == Status::Connecting {
+            *self.recv_connecting.lock().unwrap() = true;
         }
     }
-
-    async fn on_message(&self, _queue: Arc<dyn GmqQueue>, _msg: Box<dyn Message>) {}
 }
 
 #[async_trait]
-impl EventHandler for TestRecvMsgHandler {
-    async fn on_event(&self, _queue: Arc<dyn GmqQueue>, _ev: Event) {}
-
+impl MessageHandler for TestRecvMsgHandler {
     async fn on_message(&self, _queue: Arc<dyn GmqQueue>, msg: Box<dyn Message>) {
         let use_nack;
         {
@@ -246,6 +244,7 @@ pub fn connect_no_handler(context: &mut SpecContext<TestState>) -> Result<(), St
     if let Err(e) = conn.connect() {
         return Err(format!("GmqConnection::connect() error: {}", e));
     }
+    queue.set_msg_handler(Arc::new(TestDummyMsgHandler {}));
     if let Err(e) = queue.connect() {
         return Err(format!("GmqQueue::connect() error: {}", e));
     }
@@ -309,6 +308,7 @@ pub fn connect_after_connect(context: &mut SpecContext<TestState>) -> Result<(),
     state.queues = vec![Box::new(queue.clone())];
     let queue: &mut dyn GmqQueue = &mut queue;
 
+    queue.set_msg_handler(Arc::new(TestDummyMsgHandler {}));
     if let Err(e) = queue.connect() {
         return Err(format!("GmqQueue::connect() error: {}", e));
     }
@@ -455,12 +455,19 @@ pub fn send_error(context: &mut SpecContext<TestState>) -> Result<(), String> {
         is_recv: true,
         ..Default::default()
     };
-    let queue = match MqttQueue::new(opts, &conn) {
+    let mut queue = match MqttQueue::new(opts, &conn) {
         Err(e) => return Err(format!("MqttQueue::new() recv error: {}", e)),
         Ok(q) => q,
     };
 
-    match state.runtime.block_on(queue.send_msg(vec![])) {
+    if let Ok(()) = queue.connect() {
+        return Err("connect to recv queue without handler error".to_string());
+    }
+
+    match state
+        .runtime
+        .block_on(async { queue.send_msg(vec![]).await })
+    {
         Err(_) => (),
         Ok(()) => return Err("send to recv queue should error".to_string()),
     }
@@ -477,9 +484,12 @@ pub fn send_error(context: &mut SpecContext<TestState>) -> Result<(), String> {
     };
     let queue = match MqttQueue::new(opts, &conn) {
         Err(e) => return Err(format!("MqttQueue::new() send error: {}", e)),
-        Ok(conn) => conn,
+        Ok(q) => q,
     };
-    match state.runtime.block_on(queue.send_msg(vec![])) {
+    match state
+        .runtime
+        .block_on(async { queue.send_msg(vec![]).await })
+    {
         Err(_) => (),
         Ok(()) => return Err("send to not-connected queue should error".to_string()),
     }
@@ -612,6 +622,7 @@ pub fn mq_connect_no_handler(context: &mut SpecContext<TestState>) -> Result<(),
     if let Err(e) = conn.connect() {
         return Err(format!("GmqConnection::connect() error: {}", e));
     }
+    queue.set_msg_handler(Arc::new(TestDummyMsgHandler {}));
     if let Err(e) = queue.connect() {
         return Err(format!("GmqQueue::connect() error: {}", e));
     }
@@ -678,6 +689,7 @@ pub fn mq_connect_after_connect(context: &mut SpecContext<TestState>) -> Result<
     state.queues = vec![Box::new(queue.clone())];
     let queue: &mut dyn GmqQueue = &mut queue;
 
+    queue.set_msg_handler(Arc::new(TestDummyMsgHandler {}));
     if let Err(e) = queue.connect() {
         return Err(format!("GmqQueue::connect() error: {}", e));
     }
@@ -827,12 +839,19 @@ pub fn mq_send_error(context: &mut SpecContext<TestState>) -> Result<(), String>
         },
         &conn,
     );
-    let queue = match Queue::new(opts) {
+    let mut queue = match Queue::new(opts) {
         Err(e) => return Err(format!("Queue::new() recv error: {}", e)),
         Ok(q) => q,
     };
 
-    match state.runtime.block_on(queue.send_msg(vec![])) {
+    if let Ok(()) = queue.connect() {
+        return Err("connect to recv queue without handler error".to_string());
+    }
+
+    match state
+        .runtime
+        .block_on(async { queue.send_msg(vec![]).await })
+    {
         Err(_) => (),
         Ok(()) => return Err("send to recv queue should error".to_string()),
     }
@@ -854,7 +873,10 @@ pub fn mq_send_error(context: &mut SpecContext<TestState>) -> Result<(), String>
         Err(e) => return Err(format!("Queue::new() send error: {}", e)),
         Ok(q) => q,
     };
-    match state.runtime.block_on(queue.send_msg(vec![])) {
+    match state
+        .runtime
+        .block_on(async { queue.send_msg(vec![]).await })
+    {
         Err(_) => (),
         Ok(()) => return Err("send to not-connected queue should error".to_string()),
     }
@@ -1479,6 +1501,7 @@ fn create_conn_rsc(
     if let Some(handler) = handler {
         queue.set_handler(handler);
     }
+    queue.set_msg_handler(Arc::new(TestDummyMsgHandler {}));
 
     if !connect {
         return Ok(());
@@ -1524,6 +1547,7 @@ fn mq_create_conn_rsc(
     if let Some(handler) = handler {
         queue.set_handler(handler);
     }
+    queue.set_msg_handler(Arc::new(TestDummyMsgHandler {}));
 
     if !connect {
         return Ok(());
@@ -1597,7 +1621,7 @@ fn create_msg_rsc(
             nack_messages: Arc::new(Mutex::new(vec![])),
             nack_errors: Arc::new(Mutex::new(vec![])),
         };
-        queue.set_handler(Arc::new(handler.clone()));
+        queue.set_msg_handler(Arc::new(handler.clone()));
         ret_handlers.push(handler);
     }
 

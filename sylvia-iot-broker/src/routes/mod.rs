@@ -14,7 +14,7 @@ use async_trait::async_trait;
 use log::{error, info, warn};
 
 use general_mq::{
-    queue::{Event, EventHandler as QueueEventHandler, GmqQueue, Message, Status},
+    queue::{EventHandler as QueueEventHandler, GmqQueue, Status},
     Queue,
 };
 use sylvia_iot_corelib::{
@@ -128,20 +128,20 @@ impl ErrReq {
 
 #[async_trait]
 impl QueueEventHandler for DataSenderHandler {
-    async fn on_event(&self, queue: Arc<dyn GmqQueue>, ev: Event) {
-        const FN_NAME: &'static str = "DataSenderHandler::on_event";
+    async fn on_error(&self, queue: Arc<dyn GmqQueue>, err: Box<dyn StdError + Send + Sync>) {
+        const FN_NAME: &'static str = "DataSenderHandler::on_error";
         let queue_name = queue.name();
-
-        match ev {
-            Event::Error(e) => error!("[{}] {} error: {}", FN_NAME, queue_name, e),
-            Event::Status(status) => match status {
-                Status::Connected => info!("[{}] {} connected", queue_name, FN_NAME),
-                _ => warn!("[{}] {} status to {:?}", FN_NAME, queue_name, status),
-            },
-        }
+        error!("[{}] {} error: {}", FN_NAME, queue_name, err);
     }
 
-    async fn on_message(&self, _queue: Arc<dyn GmqQueue>, _msg: Box<dyn Message>) {}
+    async fn on_status(&self, queue: Arc<dyn GmqQueue>, status: Status) {
+        const FN_NAME: &'static str = "DataSenderHandler::on_status";
+        let queue_name = queue.name();
+        match status {
+            Status::Connected => info!("[{}] {} connected", queue_name, FN_NAME),
+            _ => warn!("[{}] {} status to {:?}", FN_NAME, queue_name, status),
+        }
+    }
 }
 
 /// To create resources for the service.
@@ -282,7 +282,7 @@ pub fn new_ctrl_senders(
         network: v1::network::new_ctrl_sender(mq_conns, net_ctrl_cfg, cache.clone())?,
         device: v1::device::new_ctrl_sender(mq_conns, dev_ctrl_cfg, cache.clone())?,
         device_route: v1::device_route::new_ctrl_sender(mq_conns, devr_ctrl_cfg, cache.clone())?,
-        network_route: v1::network_route::new_ctrl_sender(mq_conns, netr_ctrl_cfg)?,
+        network_route: v1::network_route::new_ctrl_sender(mq_conns, netr_ctrl_cfg, cache.clone())?,
     })
 }
 

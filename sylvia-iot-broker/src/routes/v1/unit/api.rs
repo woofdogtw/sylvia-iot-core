@@ -20,7 +20,7 @@ use tokio::time;
 use url::Url;
 
 use general_mq::{
-    queue::{Event, EventHandler as QueueEventHandler, GmqQueue, Message, Status},
+    queue::{EventHandler as QueueEventHandler, GmqQueue, Message, MessageHandler, Status},
     Queue,
 };
 use sylvia_iot_corelib::{
@@ -169,6 +169,7 @@ pub fn new_ctrl_sender(
         CTRL_QUEUE_NAME,
         false,
         Arc::new(CtrlSenderHandler {}),
+        Arc::new(CtrlSenderHandler {}),
     ) {
         Err(e) => Err(Box::new(IoError::new(ErrorKind::InvalidInput, e))),
         Ok(q) => Ok(Arc::new(Mutex::new(q))),
@@ -198,6 +199,7 @@ pub fn new_ctrl_receiver(state: &State, config: &CfgCtrl) -> Result<Queue, Box<d
         config.prefetch,
         CTRL_QUEUE_NAME,
         true,
+        handler.clone(),
         handler,
     ) {
         Err(e) => Err(Box::new(IoError::new(ErrorKind::InvalidInput, e))),
@@ -1071,37 +1073,47 @@ async fn send_del_ctrl_message(
 
 #[async_trait]
 impl QueueEventHandler for CtrlSenderHandler {
-    async fn on_event(&self, queue: Arc<dyn GmqQueue>, ev: Event) {
-        const FN_NAME: &'static str = "CtrlSenderHandler::on_event";
+    async fn on_error(&self, queue: Arc<dyn GmqQueue>, err: Box<dyn StdError + Send + Sync>) {
+        const FN_NAME: &'static str = "CtrlSenderHandler::on_error";
         let queue_name = queue.name();
-
-        match ev {
-            Event::Error(e) => error!("[{}] {} error: {}", FN_NAME, queue_name, e),
-            Event::Status(status) => match status {
-                Status::Connected => info!("[{}] {} connected", queue_name, FN_NAME),
-                _ => warn!("[{}] {} status to {:?}", FN_NAME, queue_name, status),
-            },
-        }
+        error!("[{}] {} error: {}", FN_NAME, queue_name, err);
     }
 
+    async fn on_status(&self, queue: Arc<dyn GmqQueue>, status: Status) {
+        const FN_NAME: &'static str = "CtrlSenderHandler::on_status";
+        let queue_name = queue.name();
+        match status {
+            Status::Connected => info!("[{}] {} connected", queue_name, FN_NAME),
+            _ => warn!("[{}] {} status to {:?}", FN_NAME, queue_name, status),
+        }
+    }
+}
+
+#[async_trait]
+impl MessageHandler for CtrlSenderHandler {
     async fn on_message(&self, _queue: Arc<dyn GmqQueue>, _msg: Box<dyn Message>) {}
 }
 
 #[async_trait]
 impl QueueEventHandler for CtrlReceiverHandler {
-    async fn on_event(&self, queue: Arc<dyn GmqQueue>, ev: Event) {
-        const FN_NAME: &'static str = "CtrlReceiverHandler::on_event";
+    async fn on_error(&self, queue: Arc<dyn GmqQueue>, err: Box<dyn StdError + Send + Sync>) {
+        const FN_NAME: &'static str = "CtrlReceiverHandler::on_error";
         let queue_name = queue.name();
-
-        match ev {
-            Event::Error(e) => error!("[{}] {} error: {}", FN_NAME, queue_name, e),
-            Event::Status(status) => match status {
-                Status::Connected => info!("[{}] {} connected", queue_name, FN_NAME),
-                _ => warn!("[{}] {} status to {:?}", FN_NAME, queue_name, status),
-            },
-        }
+        error!("[{}] {} error: {}", FN_NAME, queue_name, err);
     }
 
+    async fn on_status(&self, queue: Arc<dyn GmqQueue>, status: Status) {
+        const FN_NAME: &'static str = "CtrlReceiverHandler::on_status";
+        let queue_name = queue.name();
+        match status {
+            Status::Connected => info!("[{}] {} connected", queue_name, FN_NAME),
+            _ => warn!("[{}] {} status to {:?}", FN_NAME, queue_name, status),
+        }
+    }
+}
+
+#[async_trait]
+impl MessageHandler for CtrlReceiverHandler {
     async fn on_message(&self, queue: Arc<dyn GmqQueue>, msg: Box<dyn Message>) {
         const FN_NAME: &'static str = "CtrlReceiverHandler::on_message";
         let queue_name = queue.name();

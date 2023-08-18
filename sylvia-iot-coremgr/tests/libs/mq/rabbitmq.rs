@@ -1,5 +1,6 @@
-use std::{collections::HashMap, time::Duration};
+use std::{collections::HashMap, sync::Arc, time::Duration};
 
+use async_trait::async_trait;
 use base64::{engine::general_purpose, Engine};
 use chrono::Utc;
 use laboratory::SpecContext;
@@ -10,7 +11,7 @@ use tokio::time;
 
 use general_mq::{
     connection::{GmqConnection, Status as ConnStatus},
-    queue::{GmqQueue, Status as QueueStatus},
+    queue::{GmqQueue, Message, MessageHandler, Status as QueueStatus},
     AmqpConnection, AmqpConnectionOptions, AmqpQueue, AmqpQueueOptions,
 };
 use sylvia_iot_corelib::err::ErrResp;
@@ -18,6 +19,13 @@ use sylvia_iot_coremgr::libs::mq::{rabbitmq, QueueType};
 
 use super::STATE;
 use crate::TestState;
+
+struct TestDummyHandler;
+
+#[async_trait]
+impl MessageHandler for TestDummyHandler {
+    async fn on_message(&self, _queue: Arc<dyn GmqQueue>, _msg: Box<dyn Message>) {}
+}
 
 #[derive(Deserialize)]
 struct GetUsersResp {
@@ -776,6 +784,7 @@ pub fn scenario(context: &mut SpecContext<TestState>) -> Result<(), String> {
             ..Default::default()
         };
         let mut queue = AmqpQueue::new(q_opts, &conn)?;
+        queue.set_msg_handler(Arc::new(TestDummyHandler {}));
         let q_opts = AmqpQueueOptions {
             name: format!("broker.{}.dldata", user),
             is_recv: true,
@@ -784,6 +793,7 @@ pub fn scenario(context: &mut SpecContext<TestState>) -> Result<(), String> {
             ..Default::default()
         };
         let mut wrong_queue = AmqpQueue::new(q_opts, &conn)?;
+        wrong_queue.set_msg_handler(Arc::new(TestDummyHandler {}));
         if let Err(e) = queue.connect() {
             return Err(format!("connect queue error: {}", e));
         }

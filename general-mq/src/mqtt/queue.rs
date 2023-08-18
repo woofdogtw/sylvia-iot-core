@@ -14,7 +14,9 @@ use tokio::{
 use super::connection::{MqttConnection, PacketHandler};
 use crate::{
     connection::{GmqConnection, Status as ConnStatus},
-    queue::{name_validate, Event, EventHandler, GmqQueue, Message, Status, QUEUE_NAME_PATTERN},
+    queue::{
+        name_validate, EventHandler, GmqQueue, Message, MessageHandler, Status, QUEUE_NAME_PATTERN,
+    },
     Error,
 };
 
@@ -29,6 +31,8 @@ pub struct MqttQueue {
     status: Arc<Mutex<Status>>,
     /// The event handler.
     handler: Arc<Mutex<Option<Arc<dyn EventHandler>>>>,
+    /// The message handler.
+    msg_handler: Arc<Mutex<Option<Arc<dyn MessageHandler>>>>,
     /// The event loop to manage and monitor the connection.
     ev_loop: Arc<Mutex<Option<JoinHandle<()>>>>,
 }
@@ -63,7 +67,7 @@ pub struct MqttMessage {
 }
 
 /// Default reconnect time in milliseconds.
-const DEF_RECONN_TIMEOUT_MS: u64 = 1000;
+const DEF_RECONN_TIME_MS: u64 = 1000;
 
 impl MqttQueue {
     /// Create a queue instance.
@@ -79,7 +83,7 @@ impl MqttQueue {
         }
         let mut opts = opts;
         if opts.reconnect_millis == 0 {
-            opts.reconnect_millis = DEF_RECONN_TIMEOUT_MS;
+            opts.reconnect_millis = DEF_RECONN_TIME_MS;
         }
 
         Ok(MqttQueue {
@@ -87,6 +91,7 @@ impl MqttQueue {
             conn: Arc::new(Mutex::new(conn.clone())),
             status: Arc::new(Mutex::new(Status::Closed)),
             handler: Arc::new(Mutex::new(None)),
+            msg_handler: Arc::new(Mutex::new(None)),
             ev_loop: Arc::new(Mutex::new(None)),
         })
     }
@@ -101,13 +106,18 @@ impl MqttQueue {
         self.handler.lock().unwrap().clone()
     }
 
+    /// To get the message handler.
+    fn msg_handler(&self) -> Option<Arc<dyn MessageHandler>> {
+        self.msg_handler.lock().unwrap().clone()
+    }
+
     /// The error handling.
     fn on_error(&self, err: Box<dyn StdError + Send + Sync>) {
         let handler = { (*self.handler.lock().unwrap()).clone() };
         if let Some(handler) = handler {
             let q = Arc::new(self.clone());
             task::spawn(async move {
-                handler.on_event(q, Event::Error(err)).await;
+                handler.on_error(q, err).await;
             });
         }
     }
@@ -153,7 +163,15 @@ impl GmqQueue for MqttQueue {
         let _ = (*self.handler.lock().unwrap()).take();
     }
 
+    fn set_msg_handler(&mut self, handler: Arc<dyn MessageHandler>) {
+        *self.msg_handler.lock().unwrap() = Some(handler);
+    }
+
     fn connect(&mut self) -> Result<(), Box<dyn StdError>> {
+        if self.opts.is_recv && self.msg_handler().is_none() {
+            return Err(Box::new(Error::NoMsgHandler));
+        }
+
         {
             let mut task_handle_mutex = self.ev_loop.lock().unwrap();
             if (*task_handle_mutex).is_some() {
@@ -192,7 +210,7 @@ impl GmqQueue for MqttQueue {
         if let Some(handler) = { (*self.handler.lock().unwrap()).clone() } {
             let queue = Arc::new(self.clone());
             task::spawn(async move {
-                handler.on_event(queue, Event::Status(Status::Closed)).await;
+                handler.on_status(queue, Status::Closed).await;
             });
         }
 
@@ -223,7 +241,7 @@ impl GmqQueue for MqttQueue {
 
 impl PacketHandler for MqttQueue {
     fn on_publish(&self, packet: Publish) {
-        if let Some(handler) = self.handler() {
+        if let Some(handler) = self.msg_handler() {
             let this = Arc::new(self.clone());
             task::spawn(async move {
                 handler
@@ -241,7 +259,7 @@ impl Default for MqttQueueOptions {
             is_recv: false,
             reliable: false,
             broadcast: false,
-            reconnect_millis: DEF_RECONN_TIMEOUT_MS,
+            reconnect_millis: DEF_RECONN_TIME_MS,
             shared_prefix: None,
         }
     }
@@ -305,26 +323,20 @@ fn create_event_loop(queue: &MqttQueue) -> JoinHandle<()> {
                     {
                         *this.status.lock().unwrap() = Status::Connected;
                     }
-                    let handler = { (*this.handler.lock().unwrap()).clone() };
-                    if let Some(handler) = handler {
+                    if let Some(handler) = this.handler() {
                         let queue = this.clone();
                         task::spawn(async move {
-                            handler
-                                .on_event(queue, Event::Status(Status::Connected))
-                                .await;
+                            handler.on_status(queue, Status::Connected).await;
                         });
                     }
                 }
                 Status::Connected => {
                     time::sleep(Duration::from_millis(this.opts.reconnect_millis)).await;
                     if this.conn_status() != ConnStatus::Connected {
-                        let handler = { (*this.handler.lock().unwrap()).clone() };
-                        if let Some(handler) = handler {
+                        if let Some(handler) = this.handler() {
                             let queue = this.clone();
                             task::spawn(async move {
-                                handler
-                                    .on_event(queue, Event::Status(Status::Connecting))
-                                    .await;
+                                handler.on_status(queue, Status::Connecting).await;
                             });
                         }
                         *this.status.lock().unwrap() = Status::Connecting;

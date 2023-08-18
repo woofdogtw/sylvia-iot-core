@@ -6,7 +6,7 @@ use std::{
 use url::Url;
 
 use general_mq::{
-    queue::{EventHandler, GmqQueue},
+    queue::{EventHandler, GmqQueue, MessageHandler},
     AmqpQueueOptions, MqttQueueOptions, Queue, QueueOptions,
 };
 
@@ -25,6 +25,7 @@ pub fn new(
     func_name: &str,
     is_recv: bool,
     handler: Arc<dyn EventHandler>,
+    msg_handler: Arc<dyn MessageHandler>,
 ) -> Result<Queue, String> {
     if func_name.len() == 0 {
         return Err("`func_name` cannot be empty for control queue".to_string());
@@ -74,6 +75,9 @@ pub fn new(
         }
     };
     queue.set_handler(handler);
+    if is_recv {
+        queue.set_msg_handler(msg_handler);
+    }
     if let Err(e) = queue.connect() {
         return Err(e.to_string());
     }
