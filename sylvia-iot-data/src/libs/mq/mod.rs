@@ -7,7 +7,7 @@ use url::Url;
 
 use general_mq::{
     connection::GmqConnection,
-    queue::{EventHandler, GmqQueue},
+    queue::{EventHandler, GmqQueue, MessageHandler},
     AmqpConnection, AmqpConnectionOptions, AmqpQueueOptions, MqttConnection, MqttConnectionOptions,
     MqttQueueOptions, Queue, QueueOptions,
 };
@@ -33,6 +33,7 @@ fn new_data_queue(
     config: &DataMqConfig,
     queue_name: &str,
     handler: Arc<dyn EventHandler>,
+    msg_handler: Arc<dyn MessageHandler>,
 ) -> Result<Queue, String> {
     let host_uri = match config.url.as_ref() {
         None => return Err("host_uri empty".to_string()),
@@ -82,6 +83,7 @@ fn new_data_queue(
         }
     };
     queue.set_handler(handler);
+    queue.set_msg_handler(msg_handler);
     if let Err(e) = queue.connect() {
         return Err(e.to_string());
     }

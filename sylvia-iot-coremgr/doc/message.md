@@ -13,8 +13,8 @@ These messages are used from `coremgr` to `data` module(s) with **unicast** and 
 
 - `operation`: HTTP API operation.
     - *string* `dataId`: unique data ID.
-    - *string* `reqTime`: request time in ISO 8601 format (from `resTime` and `latencyMs`).
-    - *string* `resTime`: response time in ISO 8601 format.
+    - *string* `reqTime`: request time in RFC 3339 format (from `resTime` and `latencyMs`).
+    - *string* `resTime`: response time in RFC 3339 format.
     - *number* `latencyMs`: latency in milliseconds.
     - *number* `status`: response status code.
     - *string* `sourceIp`: client source IP address.

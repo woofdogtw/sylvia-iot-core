@@ -1,13 +1,11 @@
-use std::{env, sync::Arc, time::Duration};
+use std::{env, error::Error as StdError, sync::Arc, time::Duration};
 
 use async_trait::async_trait;
 
 use general_mq::{
-    connection::{
-        Event as ConnEvent, EventHandler as ConnHandler, GmqConnection, Status as ConnStatus,
-    },
+    connection::{EventHandler as ConnHandler, GmqConnection, Status as ConnStatus},
     queue::{
-        Event as QueueEvent, EventHandler as QueueHandler, GmqQueue, Message, Status as QueueStatus,
+        EventHandler as QueueHandler, GmqQueue, Message, MessageHandler, Status as QueueStatus,
     },
     AmqpConnection, AmqpConnectionOptions, AmqpQueue, AmqpQueueOptions, MqttConnection,
     MqttConnectionOptions, MqttQueue, MqttQueueOptions,
@@ -24,46 +22,62 @@ const TEST_RELIABLE: bool = true;
 
 #[async_trait]
 impl ConnHandler for TestConnHandler {
-    async fn on_event(&self, handler_id: String, _conn: Arc<dyn GmqConnection>, ev: ConnEvent) {
-        let event = match ev {
-            ConnEvent::Status(status) => match status {
-                ConnStatus::Closing => "status: closing".to_string(),
-                ConnStatus::Closed => "status: closed".to_string(),
-                ConnStatus::Connecting => "status: connecting".to_string(),
-                ConnStatus::Connected => "status: connected".to_string(),
-                ConnStatus::Disconnected => "status: disconnected".to_string(),
-            },
-            ConnEvent::Error(e) => format!("error: {:?}", e),
+    async fn on_error(
+        &self,
+        handler_id: String,
+        _conn: Arc<dyn GmqConnection>,
+        err: Box<dyn StdError + Send + Sync>,
+    ) {
+        println!("handler_id: {}, ev: {}", handler_id.as_str(), err);
+    }
+
+    async fn on_status(
+        &self,
+        handler_id: String,
+        _conn: Arc<dyn GmqConnection>,
+        status: ConnStatus,
+    ) {
+        let status = match status {
+            ConnStatus::Closing => "status: closing",
+            ConnStatus::Closed => "status: closed",
+            ConnStatus::Connecting => "status: connecting",
+            ConnStatus::Connected => "status: connected",
+            ConnStatus::Disconnected => "status: disconnected",
         };
-        println!(
-            "handler_id: {}, ev: {}",
-            handler_id.as_str(),
-            event.as_str()
-        );
+        println!("handler_id: {}, status: {}", handler_id.as_str(), status);
     }
 }
 
 #[async_trait]
 impl QueueHandler for TestQueueHandler {
-    async fn on_event(&self, queue: Arc<dyn GmqQueue>, ev: QueueEvent) {
-        let event = match ev {
-            QueueEvent::Status(status) => match status {
-                QueueStatus::Closing => "status: closing".to_string(),
-                QueueStatus::Closed => "status: closed".to_string(),
-                QueueStatus::Connecting => "status: connecting".to_string(),
-                QueueStatus::Connected => "status: connected".to_string(),
-                QueueStatus::Disconnected => "status: disconnected".to_string(),
-            },
-            QueueEvent::Error(e) => format!("error: {:?}", e),
-        };
+    async fn on_error(&self, queue: Arc<dyn GmqQueue>, err: Box<dyn StdError + Send + Sync>) {
         println!(
-            "name: {}, queue: {}, ev: {}",
+            "name: {}, queue: {}, error: {}",
             self.name.as_str(),
             queue.name(),
-            event.as_str()
+            err
         );
     }
 
+    async fn on_status(&self, queue: Arc<dyn GmqQueue>, status: QueueStatus) {
+        let status = match status {
+            QueueStatus::Closing => "status: closing",
+            QueueStatus::Closed => "status: closed",
+            QueueStatus::Connecting => "status: connecting",
+            QueueStatus::Connected => "status: connected",
+            QueueStatus::Disconnected => "status: disconnected",
+        };
+        println!(
+            "name: {}, queue: {}, status: {}",
+            self.name.as_str(),
+            queue.name(),
+            status
+        );
+    }
+}
+
+#[async_trait]
+impl MessageHandler for TestQueueHandler {
     async fn on_message(&self, _queue: Arc<dyn GmqQueue>, msg: Box<dyn Message>) {
         match String::from_utf8(msg.payload().to_vec()) {
             Err(e) => {
@@ -165,9 +179,11 @@ async fn test_amqp() {
         }
         Ok(queue) => queue,
     };
-    recv_queue1.set_handler(Arc::new(TestQueueHandler {
+    let handler = Arc::new(TestQueueHandler {
         name: "recv1".to_string(),
-    }));
+    });
+    recv_queue1.set_handler(handler.clone());
+    recv_queue1.set_msg_handler(handler);
     if let Err(e) = recv_queue1.connect() {
         println!("connect recv1 queue error: {}", e);
         return;
@@ -179,9 +195,11 @@ async fn test_amqp() {
         }
         Ok(queue) => queue,
     };
-    recv_queue2.set_handler(Arc::new(TestQueueHandler {
+    let handler = Arc::new(TestQueueHandler {
         name: "recv2".to_string(),
-    }));
+    });
+    recv_queue2.set_handler(handler.clone());
+    recv_queue2.set_msg_handler(handler);
     if let Err(e) = recv_queue2.connect() {
         println!("connect recv2 queue error: {}", e);
         return;
@@ -271,9 +289,11 @@ async fn test_mqtt() {
         }
         Ok(queue) => queue,
     };
-    recv_queue1.set_handler(Arc::new(TestQueueHandler {
+    let handler = Arc::new(TestQueueHandler {
         name: "recv1".to_string(),
-    }));
+    });
+    recv_queue1.set_handler(handler.clone());
+    recv_queue1.set_msg_handler(handler);
     if let Err(e) = recv_queue1.connect() {
         println!("connect recv1 queue error: {}", e);
         return;
@@ -285,9 +305,11 @@ async fn test_mqtt() {
         }
         Ok(queue) => queue,
     };
-    recv_queue2.set_handler(Arc::new(TestQueueHandler {
+    let handler = Arc::new(TestQueueHandler {
         name: "recv2".to_string(),
-    }));
+    });
+    recv_queue2.set_handler(handler.clone());
+    recv_queue2.set_msg_handler(handler);
     if let Err(e) = recv_queue2.connect() {
         println!("connect recv2 queue error: {}", e);
         return;

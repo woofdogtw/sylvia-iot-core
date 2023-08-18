@@ -216,14 +216,14 @@ Get application uplink data list.
 
     - *object[]* `data`:
         - *string* `dataId`: Data ID.
-        - *string* `proc`: Received time in ISO 8601 format when the broker receive this data.
-        - *string* `pub`: Publish time in ISO 8601 format to queue.
+        - *string* `proc`: Received time in RFC 3339 format when the broker receive this data.
+        - *string* `pub`: Publish time in RFC 3339 format to queue.
         - *string | null* `unitCode`: Network's unit code.
         - *string* `networkCode`: Network code.
         - *string* `networkAddr`: Device network address.
         - *string* `unitId`: Device's unit ID.
         - *string* `deviceId`: Device ID.
-        - *string* `time`: Device time in ISO 8601 format.
+        - *string* `time`: Device time in RFC 3339 format.
         - *string* `profile`: Device/data profile.
         - *string* `data`: Data in hexadecimal format.
         - *object* `extension`: (**optional**) Extensions from the network to application(s).
@@ -341,8 +341,8 @@ Get application downlink data list.
 
     - *object[]* `data`:
         - *string* `dataId`: Data ID.
-        - *string* `proc`: Received time in ISO 8601 format when the broker receive this data.
-        - *string* `resp`: (**optional**) The last response time in ISO 8601 format.
+        - *string* `proc`: Received time in RFC 3339 format when the broker receive this data.
+        - *string* `resp`: (**optional**) The last response time in RFC 3339 format.
         - *number* `status`: 0 for success, negative for processing, positive for error.
         - *string* `unitId`: Device's unit ID.
         - *string* `deviceId`: (**optional**) Device ID from the source data of the application.
@@ -465,13 +465,13 @@ Get network uplink data list.
 
     - *object[]* `data`:
         - *string* `dataId`: Data ID.
-        - *string* `proc`: Received time in ISO 8601 format when the broker receive this data.
+        - *string* `proc`: Received time in RFC 3339 format when the broker receive this data.
         - *string | null* `unitCode`: Network's unit code.
         - *string* `networkCode`: Network code.
         - *string* `networkAddr`: Device network address.
         - *string* `unitId`: (**optional**) Network's unit ID.
         - *string* `deviceId`: (**optional**) Device ID.
-        - *string* `time`: Device time in ISO 8601 format.
+        - *string* `time`: Device time in RFC 3339 format.
         - *string* `profile`: Device/data profile.
         - *string* `data`: Data in hexadecimal format.
         - *object* `extension`: (**optional**) Extensions from the network to network(s).
@@ -588,9 +588,9 @@ Get network downlink data list.
 
     - *object[]* `data`:
         - *string* `dataId`: Data ID.
-        - *string* `proc`: Received time in ISO 8601 format when the broker receive this data.
-        - *string* `pub`: Publish time in ISO 8601 format to queue.
-        - *string* `resp`: (**optional**) The last response time in ISO 8601 format.
+        - *string* `proc`: Received time in RFC 3339 format when the broker receive this data.
+        - *string* `pub`: Publish time in RFC 3339 format to queue.
+        - *string* `resp`: (**optional**) The last response time in RFC 3339 format.
         - *number* `status`: 0 for success, negative for processing, positive for error.
         - *string* `unitId`: Device's unit ID.
         - *string* `deviceId`: Device ID.
@@ -698,8 +698,8 @@ Get coremgr operation data list.
 
     - *object[]* `data`:
         - *string* `dataId`: Data ID.
-        - *string* `reqTime`: Request time in ISO 8601 format.
-        - *string* `resTime`: Response time in ISO 8601 format.
+        - *string* `reqTime`: Request time in RFC 3339 format.
+        - *string* `resTime`: Response time in RFC 3339 format.
         - *number* `latencyMs`: Latency in milliseconds.
         - *number* `status`: Response status code.
         - *string* `sourceIp`: Client source IP address

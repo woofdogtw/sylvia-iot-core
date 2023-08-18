@@ -5,14 +5,6 @@ use std::{error::Error as StdError, sync::Arc};
 use async_trait::async_trait;
 use regex::Regex;
 
-/// Events of queues.
-pub enum Event {
-    /// Queue status changed.
-    Status(Status),
-    /// Queue error.
-    Error(Box<dyn StdError + Send + Sync>),
-}
-
 /// Queue status.
 #[derive(Debug, PartialEq)]
 pub enum Status {
@@ -49,8 +41,13 @@ pub trait GmqQueue: Send + Sync {
     /// To remove the queue event handler.
     fn clear_handler(&mut self);
 
+    /// To set the queue message handler.
+    fn set_msg_handler(&mut self, handler: Arc<dyn MessageHandler>);
+
     /// To connect to the message queue. The [`GmqQueue`] will connect to the queue using another
-    /// runtime task and report status with [`Event`]s.
+    /// runtime task and report status with [`Status`]s.
+    ///
+    /// **Note** You MUST call `set_msg_handler()` before `connect()`.
     fn connect(&mut self) -> Result<(), Box<dyn StdError>>;
 
     /// To close the queue.
@@ -75,12 +72,19 @@ pub trait Message: Send + Sync {
     async fn nack(&self) -> Result<(), Box<dyn StdError>>;
 }
 
-/// The event handler for connections.
+/// The event handler for queues.
 #[async_trait]
 pub trait EventHandler: Send + Sync {
-    /// Triggered by [`Event`]s.
-    async fn on_event(&self, queue: Arc<dyn GmqQueue>, ev: Event);
+    /// Triggered when there are errors.
+    async fn on_error(&self, queue: Arc<dyn GmqQueue>, err: Box<dyn StdError + Send + Sync>);
 
+    /// Triggered by [`Status`].
+    async fn on_status(&self, queue: Arc<dyn GmqQueue>, status: Status);
+}
+
+/// The message handler for queues.
+#[async_trait]
+pub trait MessageHandler: Send + Sync {
     /// Triggered for new incoming [`Message`]s.
     async fn on_message(&self, queue: Arc<dyn GmqQueue>, msg: Box<dyn Message>);
 }

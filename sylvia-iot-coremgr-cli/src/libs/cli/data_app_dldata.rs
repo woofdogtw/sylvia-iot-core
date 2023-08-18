@@ -130,14 +130,14 @@ pub fn reg_args(cmd: Command) -> Command {
                 .arg(
                     Arg::new("tstart")
                         .long("tstart")
-                        .help("Start time (RFC3339/ISO8601)")
+                        .help("Start time (RFC3339)")
                         .num_args(1)
                         .value_parser(validate_timestr),
                 )
                 .arg(
                     Arg::new("tend")
                         .long("tend")
-                        .help("End time (RFC3339/ISO8601)")
+                        .help("End time (RFC3339)")
                         .num_args(1)
                         .value_parser(validate_timestr),
                 ),
@@ -219,14 +219,14 @@ pub fn reg_args(cmd: Command) -> Command {
                 .arg(
                     Arg::new("tstart")
                         .long("tstart")
-                        .help("Start time (RFC3339/ISO8601)")
+                        .help("Start time (RFC3339)")
                         .num_args(1)
                         .value_parser(validate_timestr),
                 )
                 .arg(
                     Arg::new("tend")
                         .long("tend")
-                        .help("End time (RFC3339/ISO8601)")
+                        .help("End time (RFC3339)")
                         .num_args(1)
                         .value_parser(validate_timestr),
                 ),

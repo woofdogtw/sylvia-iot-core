@@ -1,5 +1,6 @@
 use std::{
     collections::HashMap,
+    error::Error as StdError,
     sync::{Arc, Mutex},
     time::Duration,
 };
@@ -13,7 +14,7 @@ use tokio::time;
 
 use general_mq::{
     connection::GmqConnection,
-    queue::{Event, EventHandler, GmqQueue, Message, Status},
+    queue::{EventHandler, GmqQueue, Message, MessageHandler, Status},
     AmqpConnection, AmqpConnectionOptions, AmqpQueueOptions, MqttConnection, MqttConnectionOptions,
     MqttQueueOptions, Queue, QueueOptions,
 };
@@ -186,8 +187,13 @@ impl TestAppHandler {
 
 #[async_trait]
 impl EventHandler for TestAppHandler {
-    async fn on_event(&self, _queue: Arc<dyn GmqQueue>, _ev: Event) {}
+    async fn on_error(&self, _queue: Arc<dyn GmqQueue>, _err: Box<dyn StdError + Send + Sync>) {}
 
+    async fn on_status(&self, _queue: Arc<dyn GmqQueue>, _status: Status) {}
+}
+
+#[async_trait]
+impl MessageHandler for TestAppHandler {
     async fn on_message(&self, queue: Arc<dyn GmqQueue>, msg: Box<dyn Message>) {
         let name = queue.name();
         if name.ends_with(".uldata") {
@@ -223,8 +229,13 @@ impl TestNetHandler {
 
 #[async_trait]
 impl EventHandler for TestNetHandler {
-    async fn on_event(&self, _queue: Arc<dyn GmqQueue>, _ev: Event) {}
+    async fn on_error(&self, _queue: Arc<dyn GmqQueue>, _err: Box<dyn StdError + Send + Sync>) {}
 
+    async fn on_status(&self, _queue: Arc<dyn GmqQueue>, _status: Status) {}
+}
+
+#[async_trait]
+impl MessageHandler for TestNetHandler {
     async fn on_message(&self, _queue: Arc<dyn GmqQueue>, msg: Box<dyn Message>) {
         let data = match serde_json::from_slice::<NetDlData>(msg.payload()) {
             Err(_) => return,
@@ -1570,8 +1581,11 @@ fn create_connections(state: &mut TestState) -> Result<TestResources, String> {
     let mut manager_application_dldata_resp = manager_application_dldata_resp.unwrap();
     let manager_app_handler = TestAppHandler::new();
     manager_application_uldata.set_handler(Arc::new(manager_app_handler.clone()));
+    manager_application_uldata.set_msg_handler(Arc::new(manager_app_handler.clone()));
     manager_application_dldata_resp.set_handler(Arc::new(manager_app_handler.clone()));
+    manager_application_dldata_resp.set_msg_handler(Arc::new(manager_app_handler.clone()));
     manager_application_dldata_result.set_handler(Arc::new(manager_app_handler.clone()));
+    manager_application_dldata_result.set_msg_handler(Arc::new(manager_app_handler.clone()));
     let _ = manager_application_uldata.connect();
     let _ = manager_application_dldata.connect();
     let _ = manager_application_dldata_resp.connect();
@@ -1585,6 +1599,7 @@ fn create_connections(state: &mut TestState) -> Result<TestResources, String> {
     ) = new_data_queues(state, &amqp_conn, &opts, "broker.network", true)?;
     let manager_net_handler = TestNetHandler::new();
     manager_network_dldata.set_handler(Arc::new(manager_net_handler.clone()));
+    manager_network_dldata.set_msg_handler(Arc::new(manager_net_handler.clone()));
     let _ = manager_network_uldata.connect();
     let _ = manager_network_dldata.connect();
     let _ = manager_network_dldata_result.connect();
@@ -1601,6 +1616,7 @@ fn create_connections(state: &mut TestState) -> Result<TestResources, String> {
         new_data_queues(state, &amqp_conn, &opts, "broker.network", true)?;
     let public_net_handler = TestNetHandler::new();
     public_network_dldata.set_handler(Arc::new(public_net_handler.clone()));
+    public_network_dldata.set_msg_handler(Arc::new(public_net_handler.clone()));
     let _ = public_network_uldata.connect();
     let _ = public_network_dldata.connect();
     let _ = public_network_dldata_result.connect();
@@ -1622,8 +1638,11 @@ fn create_connections(state: &mut TestState) -> Result<TestResources, String> {
     let mut owner_application_dldata_resp = owner_application_dldata_resp.unwrap();
     let owner_app_handler = TestAppHandler::new();
     owner_application_uldata.set_handler(Arc::new(owner_app_handler.clone()));
+    owner_application_uldata.set_msg_handler(Arc::new(owner_app_handler.clone()));
     owner_application_dldata_resp.set_handler(Arc::new(owner_app_handler.clone()));
+    owner_application_dldata_resp.set_msg_handler(Arc::new(owner_app_handler.clone()));
     owner_application_dldata_result.set_handler(Arc::new(owner_app_handler.clone()));
+    owner_application_dldata_result.set_msg_handler(Arc::new(owner_app_handler.clone()));
     let _ = owner_application_uldata.connect();
     let _ = owner_application_dldata.connect();
     let _ = owner_application_dldata_resp.connect();
@@ -1633,6 +1652,7 @@ fn create_connections(state: &mut TestState) -> Result<TestResources, String> {
         new_data_queues(state, &mqtt_conn, &opts, "broker.network", true)?;
     let owner_net_handler = TestNetHandler::new();
     owner_network_dldata.set_handler(Arc::new(owner_net_handler.clone()));
+    owner_network_dldata.set_msg_handler(Arc::new(owner_net_handler.clone()));
     let _ = owner_network_uldata.connect();
     let _ = owner_network_dldata.connect();
     let _ = owner_network_dldata_result.connect();

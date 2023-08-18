@@ -173,7 +173,7 @@ Get system time information.
 - **200 OK**: System time information. Parameters are:
 
     - *object* `data`:
-        - *string* `time`: Current time in ISO 8601 format.
+        - *string* `time`: Current time in RFC 3339 format.
 
     - **Example**
 
@@ -402,8 +402,8 @@ Get DHCP leases.
 
     - *object[]* `data`:
         - *string* `ip`: The IP address.
-        - *string* `starts`: (**optional**) The start time of the lease in ISO 8601 format.
-        - *string* `ends`: (**optional**) The end time of the lease in ISO 8601 format.
+        - *string* `starts`: (**optional**) The start time of the lease in RFC 3339 format.
+        - *string* `ends`: (**optional**) The end time of the lease in RFC 3339 format.
         - *string* `macAddr`: (**optional**) The Ethernet MAC address of the lease.
         - *string* `client`: (**optional**) The client hostname.
 

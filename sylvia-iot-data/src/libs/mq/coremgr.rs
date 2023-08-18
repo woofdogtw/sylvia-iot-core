@@ -14,7 +14,7 @@ use serde_json::{Map, Value};
 use tokio::time;
 
 use general_mq::{
-    queue::{Event, EventHandler, GmqQueue, Message, Status},
+    queue::{EventHandler, GmqQueue, Message, MessageHandler, Status},
     Queue,
 };
 
@@ -68,7 +68,7 @@ pub fn new(
     config: &DataMqConfig,
 ) -> Result<Queue, Box<dyn StdError>> {
     let handler = Arc::new(DataHandler { model });
-    match new_data_queue(mq_conns, config, QUEUE_NAME, handler) {
+    match new_data_queue(mq_conns, config, QUEUE_NAME, handler.clone(), handler) {
         Err(e) => Err(Box::new(IoError::new(ErrorKind::Other, e))),
         Ok(q) => Ok(q),
     }
@@ -76,19 +76,25 @@ pub fn new(
 
 #[async_trait]
 impl EventHandler for DataHandler {
-    async fn on_event(&self, queue: Arc<dyn GmqQueue>, ev: Event) {
-        const FN_NAME: &'static str = "DataHandler::on_event";
+    async fn on_error(&self, queue: Arc<dyn GmqQueue>, err: Box<dyn StdError + Send + Sync>) {
+        const FN_NAME: &'static str = "DataHandler::on_error";
         let queue_name = queue.name();
-
-        match ev {
-            Event::Error(e) => error!("[{}] {} error: {}", FN_NAME, queue_name, e),
-            Event::Status(status) => match status {
-                Status::Connected => info!("[{}] {} connected", queue_name, FN_NAME),
-                _ => warn!("[{}] {} status to {:?}", FN_NAME, queue_name, status),
-            },
-        }
+        error!("[{}] {} error: {}", FN_NAME, queue_name, err);
     }
 
+    async fn on_status(&self, queue: Arc<dyn GmqQueue>, status: Status) {
+        const FN_NAME: &'static str = "DataHandler::on_status";
+        let queue_name = queue.name();
+
+        match status {
+            Status::Connected => info!("[{}] {} connected", queue_name, FN_NAME),
+            _ => warn!("[{}] {} status to {:?}", FN_NAME, queue_name, status),
+        }
+    }
+}
+
+#[async_trait]
+impl MessageHandler for DataHandler {
     async fn on_message(&self, queue: Arc<dyn GmqQueue>, msg: Box<dyn Message>) {
         const FN_NAME: &'static str = "DataHandler::on_message";
         let queue_name = queue.name();

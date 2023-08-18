@@ -294,8 +294,8 @@ Get unit list.
     - *object[]* `data`:
         - *string* `unitId`: Unit ID.
         - *string* `code`: Unit code.
-        - *string* `createdAt`: Creation time in ISO 8601 format.
-        - *string* `modifiedAt`: Modification time in ISO 8601 format.
+        - *string* `createdAt`: Creation time in RFC 3339 format.
+        - *string* `modifiedAt`: Modification time in RFC 3339 format.
         - *string* `ownerId`: User ID that is the owner of the unit.
         - *string[]* `memberIds`: User IDs who can view the unit's resources (application, network, ...).
         - *string* `name`: Display name.
@@ -559,8 +559,8 @@ Get application list.
         - *string* `code`: Application code for queues.
         - *string* `unitId`: The associated unit ID.
         - *string* `unitCode`: The associated unit code.
-        - *string* `createdAt`: Creation time in ISO 8601 format.
-        - *string* `modifiedAt`: Modification time in ISO 8601 format.
+        - *string* `createdAt`: Creation time in RFC 3339 format.
+        - *string* `modifiedAt`: Modification time in RFC 3339 format.
         - *string* `hostUri`: The application queue URI.
         - *string* `name`: Display name.
         - *object* `info`: Other information.
@@ -830,8 +830,8 @@ Get network list.
         - *string* `code`: Network code for queues.
         - *string | null* `unitId`: The associated unit ID for private network or **null** means public network.
         - *string | null* `unitCode`: The associated unit code.
-        - *string* `createdAt`: Creation time in ISO 8601 format.
-        - *string* `modifiedAt`: Modification time in ISO 8601 format.
+        - *string* `createdAt`: Creation time in RFC 3339 format.
+        - *string* `modifiedAt`: Modification time in RFC 3339 format.
         - *string* `hostUri`: The network queue URI.
         - *string* `name`: Display name.
         - *object* `info`: Other information.
@@ -1301,8 +1301,8 @@ Get device list.
         - *string* `networkId`: The associated network ID.
         - *string* `networkCode`: The associated network code.
         - *string* `networkAddr`: The associated network address.
-        - *string* `createdAt`: Creation time in ISO 8601 format.
-        - *string* `modifiedAt`: Modification time in ISO 8601 format.
+        - *string* `createdAt`: Creation time in RFC 3339 format.
+        - *string* `modifiedAt`: Modification time in RFC 3339 format.
         - *string* `profile`: The device profile that is used for application servers to identify data content.
         - *string* `name`: Display name.
         - *object* `info`: Other information.
@@ -1777,8 +1777,8 @@ Get device route list.
         - *string* `networkCode`: The network code of the device.
         - *string* `networkAddr`: The network address of the device.
         - *string* `profile`: The device profile.
-        - *string* `createdAt`: Creation time in ISO 8601 format.
-        - *string* `modifiedAt`: Modification time in ISO 8601 format.
+        - *string* `createdAt`: Creation time in RFC 3339 format.
+        - *string* `modifiedAt`: Modification time in RFC 3339 format.
 
     - **Example**
 
@@ -1958,7 +1958,7 @@ Get network route list.
         - *string* `applicationCode`: The target application code.
         - *string* `networkId`: The network ID.
         - *string* `networkCode`: The code of the network.
-        - *string* `createdAt`: Creation time in ISO 8601 format.
+        - *string* `createdAt`: Creation time in RFC 3339 format.
 
     - **Example**
 
@@ -2085,8 +2085,8 @@ Get downlink data buffer list.
         - *string* `deviceId`: The destination device ID.
         - *string* `networkId`: The network ID of the device.
         - *string* `networkAddr`: The network address of the device.
-        - *string* `createdAt`: Creation time in ISO 8601 format.
-        - *string* `expiredAt`: Expiration time in ISO 8601 format.
+        - *string* `createdAt`: Creation time in RFC 3339 format.
+        - *string* `expiredAt`: Expiration time in RFC 3339 format.
 
     - **Example**
 

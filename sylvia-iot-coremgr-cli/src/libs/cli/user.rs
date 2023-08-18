@@ -171,7 +171,7 @@ pub fn reg_args(cmd: Command) -> Command {
                     Arg::new("expired")
                         .short('x')
                         .long("expired")
-                        .help("Expired time (RFC3339/ISO8601)")
+                        .help("Expired time (RFC3339)")
                         .num_args(1)
                         .value_parser(validate_timestr),
                 ),

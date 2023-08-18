@@ -71,11 +71,13 @@ mod mqtt;
 
 pub use amqp::{AmqpConnection, AmqpConnectionOptions, AmqpQueue, AmqpQueueOptions};
 pub use mqtt::{MqttConnection, MqttConnectionOptions, MqttQueue, MqttQueueOptions};
-use queue::{EventHandler, GmqQueue, Status};
+use queue::{EventHandler, GmqQueue, MessageHandler, Status};
 
 /// general-mq error.
 #[derive(Clone, Debug)]
 pub enum Error {
+    /// The queue does not have [`MessageHandler`].
+    NoMsgHandler,
     /// The connection is not connected or the queue (topic) is not
     /// connected (declared/subscribed).
     NotConnected,
@@ -101,6 +103,7 @@ pub(crate) const ID_SIZE: usize = 24;
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
+            Error::NoMsgHandler => write!(f, "no message handler"),
             Error::NotConnected => write!(f, "not connected"),
             Error::QueueIsReceiver => write!(f, "this queue is a receiver"),
         }
@@ -152,6 +155,13 @@ impl GmqQueue for Queue {
         match self {
             Queue::Amqp(q) => q.clear_handler(),
             Queue::Mqtt(q) => q.clear_handler(),
+        }
+    }
+
+    fn set_msg_handler(&mut self, handler: Arc<dyn MessageHandler>) {
+        match self {
+            Queue::Amqp(q) => q.set_msg_handler(handler),
+            Queue::Mqtt(q) => q.set_msg_handler(handler),
         }
     }
 

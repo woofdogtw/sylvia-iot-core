@@ -16,8 +16,7 @@ use url::Url;
 
 use general_mq::{
     queue::{
-        Event as QueueEvent, EventHandler as QueueEventHandler, GmqQueue, Message,
-        Status as QueueStatus,
+        EventHandler as QueueEventHandler, GmqQueue, Message, MessageHandler, Status as QueueStatus,
     },
     Queue,
 };
@@ -124,6 +123,7 @@ impl NetworkMgr {
         let mq_handler = Arc::new(MgrMqEventHandler { mgr: mgr.clone() });
         let mut q = { mgr.uldata.lock().unwrap().clone() };
         q.set_handler(mq_handler.clone());
+        q.set_msg_handler(mq_handler.clone());
         if let Err(e) = q.connect() {
             return Err(e.to_string());
         }
@@ -134,6 +134,7 @@ impl NetworkMgr {
         }
         let mut q = { mgr.dldata_result.lock().unwrap().clone() };
         q.set_handler(mq_handler.clone());
+        q.set_msg_handler(mq_handler.clone());
         if let Err(e) = q.connect() {
             return Err(e.to_string());
         }
@@ -222,7 +223,9 @@ impl NetworkMgr {
 
 #[async_trait]
 impl QueueEventHandler for MgrMqEventHandler {
-    async fn on_event(&self, _queue: Arc<dyn GmqQueue>, _ev: QueueEvent) {
+    async fn on_error(&self, _queue: Arc<dyn GmqQueue>, _err: Box<dyn StdError + Send + Sync>) {}
+
+    async fn on_status(&self, _queue: Arc<dyn GmqQueue>, _status: QueueStatus) {
         let uldata_status = { self.mgr.uldata.lock().unwrap().status() };
         let dldata_status = { self.mgr.dldata.lock().unwrap().status() };
         let dldata_result_status = { self.mgr.dldata_result.lock().unwrap().status() };
@@ -250,7 +253,10 @@ impl QueueEventHandler for MgrMqEventHandler {
             handler.on_status_change(&self.mgr, status).await;
         }
     }
+}
 
+#[async_trait]
+impl MessageHandler for MgrMqEventHandler {
     // Validate and decode data.
     async fn on_message(&self, queue: Arc<dyn GmqQueue>, msg: Box<dyn Message>) {
         const FN_NAME: &'static str = "NetworkMgr.on_message";

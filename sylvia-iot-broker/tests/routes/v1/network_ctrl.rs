@@ -1,5 +1,6 @@
 use std::{
     collections::HashMap,
+    error::Error as StdError,
     sync::{Arc, Mutex},
     time::Duration,
 };
@@ -11,7 +12,7 @@ use serde::Deserialize;
 
 use general_mq::{
     connection::GmqConnection,
-    queue::{Event, EventHandler, GmqQueue, Message, Status},
+    queue::{EventHandler, GmqQueue, Message, MessageHandler, Status},
     AmqpConnection, AmqpConnectionOptions, AmqpQueueOptions, MqttConnection, MqttConnectionOptions,
     MqttQueueOptions, Queue, QueueOptions,
 };
@@ -115,8 +116,13 @@ impl NetCtrlHandler {
 
 #[async_trait]
 impl EventHandler for NetCtrlHandler {
-    async fn on_event(&self, _queue: Arc<dyn GmqQueue>, _ev: Event) {}
+    async fn on_error(&self, _queue: Arc<dyn GmqQueue>, _err: Box<dyn StdError + Send + Sync>) {}
 
+    async fn on_status(&self, _queue: Arc<dyn GmqQueue>, _status: Status) {}
+}
+
+#[async_trait]
+impl MessageHandler for NetCtrlHandler {
     async fn on_message(&self, _queue: Arc<dyn GmqQueue>, msg: Box<dyn Message>) {
         let _ = msg.ack().await;
 
@@ -205,6 +211,7 @@ pub fn before_all_fn(state: &mut HashMap<&'static str, TestState>) -> () {
     }
     test_conns.push(Box::new(mqtt_conn.clone()));
     state.test_conns = Some(test_conns);
+    let dummy_handler = Arc::new(NetCtrlHandler::new()); // only used for receive unexpected messages.
     let opts = QueueOptions::Amqp(
         AmqpQueueOptions {
             name: format!("broker.network.{}.{}.ctrl", UNIT_CODE, NET_CODE_PRV),
@@ -219,6 +226,7 @@ pub fn before_all_fn(state: &mut HashMap<&'static str, TestState>) -> () {
         Err(e) => panic!("new AMQP queue error: {}", e),
         Ok(q) => q,
     };
+    q.set_msg_handler(dummy_handler.clone());
     if let Err(e) = q.connect() {
         panic!("AMQP queue connection error: {}", e);
     }
@@ -237,6 +245,7 @@ pub fn before_all_fn(state: &mut HashMap<&'static str, TestState>) -> () {
         Err(e) => panic!("new MQTT queue error: {}", e),
         Ok(q) => q,
     };
+    q.set_msg_handler(dummy_handler);
     if let Err(e) = q.connect() {
         panic!("MQTT queue connection error: {}", e);
     }
@@ -377,17 +386,13 @@ pub fn post_device(context: &mut SpecContext<TestState>) -> Result<(), String> {
     let test_values = state.test_values.as_mut().unwrap();
 
     let recv_handler_amqp = NetCtrlHandler::new();
-    state
-        .netctrl_queue_amqp
-        .as_mut()
-        .unwrap()
-        .set_handler(Arc::new(recv_handler_amqp.clone()));
+    let q = state.netctrl_queue_amqp.as_mut().unwrap();
+    q.set_handler(Arc::new(recv_handler_amqp.clone()));
+    q.set_msg_handler(Arc::new(recv_handler_amqp.clone()));
     let recv_handler_mqtt = NetCtrlHandler::new();
-    state
-        .netctrl_queue_mqtt
-        .as_mut()
-        .unwrap()
-        .set_handler(Arc::new(recv_handler_mqtt.clone()));
+    let q = state.netctrl_queue_mqtt.as_mut().unwrap();
+    q.set_handler(Arc::new(recv_handler_mqtt.clone()));
+    q.set_msg_handler(Arc::new(recv_handler_mqtt.clone()));
 
     let time_before = Utc::now().trunc_subsecs(3);
     let param = device::request::PostDevice {
@@ -439,17 +444,13 @@ pub fn post_device_bulk(context: &mut SpecContext<TestState>) -> Result<(), Stri
     let test_values = state.test_values.as_mut().unwrap();
 
     let recv_handler_amqp = NetCtrlHandler::new();
-    state
-        .netctrl_queue_amqp
-        .as_mut()
-        .unwrap()
-        .set_handler(Arc::new(recv_handler_amqp.clone()));
+    let q = state.netctrl_queue_amqp.as_mut().unwrap();
+    q.set_handler(Arc::new(recv_handler_amqp.clone()));
+    q.set_msg_handler(Arc::new(recv_handler_amqp.clone()));
     let recv_handler_mqtt = NetCtrlHandler::new();
-    state
-        .netctrl_queue_mqtt
-        .as_mut()
-        .unwrap()
-        .set_handler(Arc::new(recv_handler_mqtt.clone()));
+    let q = state.netctrl_queue_mqtt.as_mut().unwrap();
+    q.set_handler(Arc::new(recv_handler_mqtt.clone()));
+    q.set_msg_handler(Arc::new(recv_handler_mqtt.clone()));
 
     let time_before = Utc::now().trunc_subsecs(3);
     let param = device::request::PostDeviceBulk {
@@ -501,17 +502,13 @@ pub fn post_device_bulk_delete(context: &mut SpecContext<TestState>) -> Result<(
     let test_values = state.test_values.as_mut().unwrap();
 
     let recv_handler_amqp = NetCtrlHandler::new();
-    state
-        .netctrl_queue_amqp
-        .as_mut()
-        .unwrap()
-        .set_handler(Arc::new(recv_handler_amqp.clone()));
+    let q = state.netctrl_queue_amqp.as_mut().unwrap();
+    q.set_handler(Arc::new(recv_handler_amqp.clone()));
+    q.set_msg_handler(Arc::new(recv_handler_amqp.clone()));
     let recv_handler_mqtt = NetCtrlHandler::new();
-    state
-        .netctrl_queue_mqtt
-        .as_mut()
-        .unwrap()
-        .set_handler(Arc::new(recv_handler_mqtt.clone()));
+    let q = state.netctrl_queue_mqtt.as_mut().unwrap();
+    q.set_handler(Arc::new(recv_handler_mqtt.clone()));
+    q.set_msg_handler(Arc::new(recv_handler_mqtt.clone()));
 
     let param = device::request::PostDeviceBulk {
         data: device::request::PostDeviceBulkData {
@@ -564,17 +561,13 @@ pub fn post_device_range(context: &mut SpecContext<TestState>) -> Result<(), Str
     let test_values = state.test_values.as_mut().unwrap();
 
     let recv_handler_amqp = NetCtrlHandler::new();
-    state
-        .netctrl_queue_amqp
-        .as_mut()
-        .unwrap()
-        .set_handler(Arc::new(recv_handler_amqp.clone()));
+    let q = state.netctrl_queue_amqp.as_mut().unwrap();
+    q.set_handler(Arc::new(recv_handler_amqp.clone()));
+    q.set_msg_handler(Arc::new(recv_handler_amqp.clone()));
     let recv_handler_mqtt = NetCtrlHandler::new();
-    state
-        .netctrl_queue_mqtt
-        .as_mut()
-        .unwrap()
-        .set_handler(Arc::new(recv_handler_mqtt.clone()));
+    let q = state.netctrl_queue_mqtt.as_mut().unwrap();
+    q.set_handler(Arc::new(recv_handler_mqtt.clone()));
+    q.set_msg_handler(Arc::new(recv_handler_mqtt.clone()));
 
     let time_before = Utc::now().trunc_subsecs(3);
     let param = device::request::PostDeviceRange {
@@ -627,17 +620,13 @@ pub fn post_device_range_delete(context: &mut SpecContext<TestState>) -> Result<
     let test_values = state.test_values.as_mut().unwrap();
 
     let recv_handler_amqp = NetCtrlHandler::new();
-    state
-        .netctrl_queue_amqp
-        .as_mut()
-        .unwrap()
-        .set_handler(Arc::new(recv_handler_amqp.clone()));
+    let q = state.netctrl_queue_amqp.as_mut().unwrap();
+    q.set_handler(Arc::new(recv_handler_amqp.clone()));
+    q.set_msg_handler(Arc::new(recv_handler_amqp.clone()));
     let recv_handler_mqtt = NetCtrlHandler::new();
-    state
-        .netctrl_queue_mqtt
-        .as_mut()
-        .unwrap()
-        .set_handler(Arc::new(recv_handler_mqtt.clone()));
+    let q = state.netctrl_queue_mqtt.as_mut().unwrap();
+    q.set_handler(Arc::new(recv_handler_mqtt.clone()));
+    q.set_msg_handler(Arc::new(recv_handler_mqtt.clone()));
 
     let param = device::request::PostDeviceRange {
         data: device::request::PostDeviceRangeData {
@@ -692,17 +681,13 @@ pub fn patch_device_addr(context: &mut SpecContext<TestState>) -> Result<(), Str
     let test_values = state.test_values.as_mut().unwrap();
 
     let recv_handler_amqp = NetCtrlHandler::new();
-    state
-        .netctrl_queue_amqp
-        .as_mut()
-        .unwrap()
-        .set_handler(Arc::new(recv_handler_amqp.clone()));
+    let q = state.netctrl_queue_amqp.as_mut().unwrap();
+    q.set_handler(Arc::new(recv_handler_amqp.clone()));
+    q.set_msg_handler(Arc::new(recv_handler_amqp.clone()));
     let recv_handler_mqtt = NetCtrlHandler::new();
-    state
-        .netctrl_queue_mqtt
-        .as_mut()
-        .unwrap()
-        .set_handler(Arc::new(recv_handler_mqtt.clone()));
+    let q = state.netctrl_queue_mqtt.as_mut().unwrap();
+    q.set_handler(Arc::new(recv_handler_mqtt.clone()));
+    q.set_msg_handler(Arc::new(recv_handler_mqtt.clone()));
 
     let param = device::request::PostDevice {
         data: device::request::PostDeviceData {
@@ -780,17 +765,13 @@ pub fn patch_device_network(context: &mut SpecContext<TestState>) -> Result<(), 
     let test_values = state.test_values.as_mut().unwrap();
 
     let recv_handler_amqp = NetCtrlHandler::new();
-    state
-        .netctrl_queue_amqp
-        .as_mut()
-        .unwrap()
-        .set_handler(Arc::new(recv_handler_amqp.clone()));
+    let q = state.netctrl_queue_amqp.as_mut().unwrap();
+    q.set_handler(Arc::new(recv_handler_amqp.clone()));
+    q.set_msg_handler(Arc::new(recv_handler_amqp.clone()));
     let recv_handler_mqtt = NetCtrlHandler::new();
-    state
-        .netctrl_queue_mqtt
-        .as_mut()
-        .unwrap()
-        .set_handler(Arc::new(recv_handler_mqtt.clone()));
+    let q = state.netctrl_queue_mqtt.as_mut().unwrap();
+    q.set_handler(Arc::new(recv_handler_mqtt.clone()));
+    q.set_msg_handler(Arc::new(recv_handler_mqtt.clone()));
 
     let param = device::request::PostDevice {
         data: device::request::PostDeviceData {
@@ -868,17 +849,13 @@ pub fn patch_device_network_addr(context: &mut SpecContext<TestState>) -> Result
     let test_values = state.test_values.as_mut().unwrap();
 
     let recv_handler_amqp = NetCtrlHandler::new();
-    state
-        .netctrl_queue_amqp
-        .as_mut()
-        .unwrap()
-        .set_handler(Arc::new(recv_handler_amqp.clone()));
+    let q = state.netctrl_queue_amqp.as_mut().unwrap();
+    q.set_handler(Arc::new(recv_handler_amqp.clone()));
+    q.set_msg_handler(Arc::new(recv_handler_amqp.clone()));
     let recv_handler_mqtt = NetCtrlHandler::new();
-    state
-        .netctrl_queue_mqtt
-        .as_mut()
-        .unwrap()
-        .set_handler(Arc::new(recv_handler_mqtt.clone()));
+    let q = state.netctrl_queue_mqtt.as_mut().unwrap();
+    q.set_handler(Arc::new(recv_handler_mqtt.clone()));
+    q.set_msg_handler(Arc::new(recv_handler_mqtt.clone()));
 
     let param = device::request::PostDevice {
         data: device::request::PostDeviceData {
@@ -957,17 +934,13 @@ pub fn patch_device_none(context: &mut SpecContext<TestState>) -> Result<(), Str
     let test_values = state.test_values.as_mut().unwrap();
 
     let recv_handler_amqp = NetCtrlHandler::new();
-    state
-        .netctrl_queue_amqp
-        .as_mut()
-        .unwrap()
-        .set_handler(Arc::new(recv_handler_amqp.clone()));
+    let q = state.netctrl_queue_amqp.as_mut().unwrap();
+    q.set_handler(Arc::new(recv_handler_amqp.clone()));
+    q.set_msg_handler(Arc::new(recv_handler_amqp.clone()));
     let recv_handler_mqtt = NetCtrlHandler::new();
-    state
-        .netctrl_queue_mqtt
-        .as_mut()
-        .unwrap()
-        .set_handler(Arc::new(recv_handler_mqtt.clone()));
+    let q = state.netctrl_queue_mqtt.as_mut().unwrap();
+    q.set_handler(Arc::new(recv_handler_mqtt.clone()));
+    q.set_msg_handler(Arc::new(recv_handler_mqtt.clone()));
 
     let param = device::request::PostDevice {
         data: device::request::PostDeviceData {
@@ -1016,17 +989,13 @@ pub fn delete_device(context: &mut SpecContext<TestState>) -> Result<(), String>
     let test_values = state.test_values.as_mut().unwrap();
 
     let recv_handler_amqp = NetCtrlHandler::new();
-    state
-        .netctrl_queue_amqp
-        .as_mut()
-        .unwrap()
-        .set_handler(Arc::new(recv_handler_amqp.clone()));
+    let q = state.netctrl_queue_amqp.as_mut().unwrap();
+    q.set_handler(Arc::new(recv_handler_amqp.clone()));
+    q.set_msg_handler(Arc::new(recv_handler_amqp.clone()));
     let recv_handler_mqtt = NetCtrlHandler::new();
-    state
-        .netctrl_queue_mqtt
-        .as_mut()
-        .unwrap()
-        .set_handler(Arc::new(recv_handler_mqtt.clone()));
+    let q = state.netctrl_queue_mqtt.as_mut().unwrap();
+    q.set_handler(Arc::new(recv_handler_mqtt.clone()));
+    q.set_msg_handler(Arc::new(recv_handler_mqtt.clone()));
 
     let param = device::request::PostDevice {
         data: device::request::PostDeviceData {

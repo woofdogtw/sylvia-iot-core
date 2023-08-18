@@ -289,8 +289,8 @@ Get application list.
         - *string* `code`: Application code for queues.
         - *string* `unitId`: The associated unit ID.
         - *string* `unitCode`: The associated unit code.
-        - *string* `createdAt`: Creation time in ISO 8601 format.
-        - *string* `modifiedAt`: Modification time in ISO 8601 format.
+        - *string* `createdAt`: Creation time in RFC 3339 format.
+        - *string* `modifiedAt`: Modification time in RFC 3339 format.
         - *string* `hostUri`: The application queue URI.
         - *string* `name`: Display name.
         - *object* `info`: Other information.
@@ -647,8 +647,8 @@ Get network list.
         - *string* `code`: Network code for queues.
         - *string | null* `unitId`: The associated unit ID for private network or **null** means public network.
         - *string | null* `unitCode`: The associated unit code.
-        - *string* `createdAt`: Creation time in ISO 8601 format.
-        - *string* `modifiedAt`: Modification time in ISO 8601 format.
+        - *string* `createdAt`: Creation time in RFC 3339 format.
+        - *string* `modifiedAt`: Modification time in RFC 3339 format.
         - *string* `hostUri`: The network queue URI.
         - *string* `name`: Display name.
         - *object* `info`: Other information.

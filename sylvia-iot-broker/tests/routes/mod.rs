@@ -16,7 +16,7 @@ use url::Url;
 
 use general_mq::{
     connection::GmqConnection,
-    queue::{Event, EventHandler, GmqQueue, Message},
+    queue::{EventHandler, GmqQueue, Message, MessageHandler, Status},
 };
 use sylvia_iot_auth::libs::config::{self as sylvia_iot_auth_config};
 use sylvia_iot_broker::{
@@ -42,8 +42,13 @@ struct TestHandler;
 
 #[async_trait]
 impl EventHandler for TestHandler {
-    async fn on_event(&self, _queue: Arc<dyn GmqQueue>, _ev: Event) {}
+    async fn on_error(&self, _queue: Arc<dyn GmqQueue>, _err: Box<dyn StdError + Send + Sync>) {}
 
+    async fn on_status(&self, _queue: Arc<dyn GmqQueue>, _status: Status) {}
+}
+
+#[async_trait]
+impl MessageHandler for TestHandler {
     async fn on_message(&self, _queue: Arc<dyn GmqQueue>, _msg: Box<dyn Message>) {}
 }
 
@@ -275,6 +280,7 @@ fn fn_new_service(context: &mut SpecContext<TestState>) -> Result<(), String> {
         "unit",
         false,
         Arc::new(TestHandler {}),
+        Arc::new(TestHandler {}),
     )?;
     let app_ctrl = control::new(
         mq_conns.clone(),
@@ -282,6 +288,7 @@ fn fn_new_service(context: &mut SpecContext<TestState>) -> Result<(), String> {
         None,
         "application",
         false,
+        Arc::new(TestHandler {}),
         Arc::new(TestHandler {}),
     )?;
     let net_ctrl = control::new(
@@ -291,6 +298,7 @@ fn fn_new_service(context: &mut SpecContext<TestState>) -> Result<(), String> {
         "network",
         false,
         Arc::new(TestHandler {}),
+        Arc::new(TestHandler {}),
     )?;
     let dev_ctrl = control::new(
         mq_conns.clone(),
@@ -298,6 +306,7 @@ fn fn_new_service(context: &mut SpecContext<TestState>) -> Result<(), String> {
         None,
         "device",
         false,
+        Arc::new(TestHandler {}),
         Arc::new(TestHandler {}),
     )?;
     let devr_ctrl = control::new(
@@ -307,6 +316,7 @@ fn fn_new_service(context: &mut SpecContext<TestState>) -> Result<(), String> {
         "device-route",
         false,
         Arc::new(TestHandler {}),
+        Arc::new(TestHandler {}),
     )?;
     let netr_ctrl = control::new(
         mq_conns.clone(),
@@ -314,6 +324,7 @@ fn fn_new_service(context: &mut SpecContext<TestState>) -> Result<(), String> {
         None,
         "network-route",
         false,
+        Arc::new(TestHandler {}),
         Arc::new(TestHandler {}),
     )?;
     let data_sender = data::new(
@@ -433,6 +444,7 @@ fn fn_api_scopes(context: &mut SpecContext<TestState>) -> Result<(), String> {
         "unit",
         false,
         Arc::new(TestHandler {}),
+        Arc::new(TestHandler {}),
     )?;
     let app_ctrl = control::new(
         mq_conns.clone(),
@@ -440,6 +452,7 @@ fn fn_api_scopes(context: &mut SpecContext<TestState>) -> Result<(), String> {
         None,
         "application",
         false,
+        Arc::new(TestHandler {}),
         Arc::new(TestHandler {}),
     )?;
     let net_ctrl = control::new(
@@ -449,6 +462,7 @@ fn fn_api_scopes(context: &mut SpecContext<TestState>) -> Result<(), String> {
         "network",
         false,
         Arc::new(TestHandler {}),
+        Arc::new(TestHandler {}),
     )?;
     let dev_ctrl = control::new(
         mq_conns.clone(),
@@ -456,6 +470,7 @@ fn fn_api_scopes(context: &mut SpecContext<TestState>) -> Result<(), String> {
         None,
         "device",
         false,
+        Arc::new(TestHandler {}),
         Arc::new(TestHandler {}),
     )?;
     let devr_ctrl = control::new(
@@ -465,6 +480,7 @@ fn fn_api_scopes(context: &mut SpecContext<TestState>) -> Result<(), String> {
         "device-route",
         false,
         Arc::new(TestHandler {}),
+        Arc::new(TestHandler {}),
     )?;
     let netr_ctrl = control::new(
         mq_conns.clone(),
@@ -472,6 +488,7 @@ fn fn_api_scopes(context: &mut SpecContext<TestState>) -> Result<(), String> {
         None,
         "network-route",
         false,
+        Arc::new(TestHandler {}),
         Arc::new(TestHandler {}),
     )?;
     let mut state = routes::State {

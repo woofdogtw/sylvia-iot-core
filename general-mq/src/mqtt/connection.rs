@@ -19,7 +19,7 @@ use tokio::{
 
 use super::uri::{MQTTScheme, MQTTUri};
 use crate::{
-    connection::{Event, EventHandler, GmqConnection, Status},
+    connection::{EventHandler, GmqConnection, Status},
     randomstring, ID_SIZE,
 };
 
@@ -89,7 +89,7 @@ struct InnerOptions {
 /// Default connect timeout in milliseconds.
 const DEF_CONN_TIMEOUT_MS: u64 = 3000;
 /// Default reconnect time in milliseconds.
-const DEF_RECONN_TIMEOUT_MS: u64 = 1000;
+const DEF_RECONN_TIME_MS: u64 = 1000;
 /// The accepted pattern of the client identifier.
 const CLIENT_ID_PATTERN: &'static str = "^[0-9A-Za-z-]{1,23}$";
 
@@ -106,7 +106,7 @@ impl MqttConnection {
                     _ => opts.connect_timeout_millis,
                 },
                 reconnect_millis: match opts.reconnect_millis {
-                    0 => DEF_RECONN_TIMEOUT_MS,
+                    0 => DEF_RECONN_TIME_MS,
                     _ => opts.reconnect_millis,
                 },
                 client_id: match opts.client_id {
@@ -201,9 +201,7 @@ impl GmqConnection for MqttConnection {
         for (id, handler) in handlers {
             let conn = Arc::new(self.clone());
             task::spawn(async move {
-                handler
-                    .on_event(id.clone(), conn, Event::Status(Status::Closed))
-                    .await;
+                handler.on_status(id.clone(), conn, Status::Closed).await;
             });
         }
 
@@ -217,7 +215,7 @@ impl Default for MqttConnectionOptions {
         MqttConnectionOptions {
             uri: "mqtt://localhost".to_string(),
             connect_timeout_millis: DEF_CONN_TIMEOUT_MS,
-            reconnect_millis: DEF_RECONN_TIMEOUT_MS,
+            reconnect_millis: DEF_RECONN_TIME_MS,
             client_id: None,
             clean_session: true,
         }
@@ -299,9 +297,12 @@ fn create_event_loop(conn: &MqttConnection) -> JoinHandle<()> {
                                             for (id, handler) in handlers {
                                                 let conn = this.clone();
                                                 task::spawn(async move {
-                                                    let status = Event::Status(Status::Connected);
                                                     handler
-                                                        .on_event(id.clone(), conn, status)
+                                                        .on_status(
+                                                            id.clone(),
+                                                            conn,
+                                                            Status::Connected,
+                                                        )
                                                         .await;
                                                 });
                                             }
@@ -328,7 +329,7 @@ fn create_event_loop(conn: &MqttConnection) -> JoinHandle<()> {
                             let conn = this.clone();
                             task::spawn(async move {
                                 handler
-                                    .on_event(id.clone(), conn, Event::Status(Status::Disconnected))
+                                    .on_status(id.clone(), conn, Status::Disconnected)
                                     .await;
                             });
                         }
@@ -347,7 +348,7 @@ fn create_event_loop(conn: &MqttConnection) -> JoinHandle<()> {
                             let conn = this.clone();
                             task::spawn(async move {
                                 handler
-                                    .on_event(id.clone(), conn, Event::Status(Status::Connecting))
+                                    .on_status(id.clone(), conn, Status::Connecting)
                                     .await;
                             });
                         }

@@ -4,14 +4,6 @@ use std::{error::Error as StdError, sync::Arc};
 
 use async_trait::async_trait;
 
-/// Events of connections.
-pub enum Event {
-    /// Connection status changed.
-    Status(Status),
-    /// Connection error.
-    Error(Box<dyn StdError + Send + Sync>),
-}
-
 /// Connection status.
 #[derive(Debug, PartialEq)]
 pub enum Status {
@@ -51,8 +43,16 @@ pub trait GmqConnection: Send + Sync {
 /// The event handler for connections.
 #[async_trait]
 pub trait EventHandler: Send + Sync {
-    /// Triggered by [`Event`]s.
-    async fn on_event(&self, handler_id: String, conn: Arc<dyn GmqConnection>, ev: Event);
+    /// Triggered when there are errors.
+    async fn on_error(
+        &self,
+        handler_id: String,
+        conn: Arc<dyn GmqConnection>,
+        err: Box<dyn StdError + Send + Sync>,
+    );
+
+    /// Triggered by [`Status`].
+    async fn on_status(&self, handler_id: String, conn: Arc<dyn GmqConnection>, status: Status);
 }
 
 impl Copy for Status {}
