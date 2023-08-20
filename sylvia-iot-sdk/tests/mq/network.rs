@@ -532,7 +532,7 @@ pub fn uldata(context: &mut SpecContext<TestState>) -> Result<(), String> {
         let data1 = UlData {
             time: now,
             network_addr: "addr1".to_string(),
-            data: "01".to_string(),
+            data: vec![1],
             extension: Some(ext),
         };
         if let Err(e) = mgr.send_uldata(&data1) {
@@ -541,7 +541,7 @@ pub fn uldata(context: &mut SpecContext<TestState>) -> Result<(), String> {
         let data2 = UlData {
             time: Utc.timestamp_nanos(now.timestamp_nanos() + 1000000),
             network_addr: "addr2".to_string(),
-            data: "02".to_string(),
+            data: vec![2],
             extension: None,
         };
         if let Err(e) = mgr.send_uldata(&data2) {
@@ -569,11 +569,11 @@ pub fn uldata(context: &mut SpecContext<TestState>) -> Result<(), String> {
             let network_addr = data.network_addr.as_str();
             if network_addr == "addr1" {
                 expect(data.time).equals(strings::time_str(&data1.time))?;
-                expect(data.data.as_str()).equals(data1.data.as_str())?;
+                expect(data.data.as_str()).equals(hex::encode(&data1.data).as_str())?;
                 expect(data.extension.as_ref()).equals(data1.extension.as_ref())?;
             } else if network_addr == "addr2" {
                 expect(data.time).equals(strings::time_str(&data2.time))?;
-                expect(data.data.as_str()).equals(data2.data.as_str())?;
+                expect(data.data.as_str()).equals(hex::encode(&data2.data).as_str())?;
                 expect(data.extension.as_ref()).equals(data2.extension.as_ref())?;
             } else {
                 return Err(format!("receive wrong data {}", network_addr));
@@ -619,15 +619,12 @@ pub fn uldata_wrong(context: &mut SpecContext<TestState>) -> Result<(), String> 
             return Err("manager not ready".to_string());
         }
 
-        let mut data = UlData {
+        let data = UlData {
             time: Utc::now(),
             network_addr: "".to_string(),
-            data: "00".to_string(),
+            data: vec![0],
             extension: None,
         };
-        expect(mgr.send_uldata(&data).is_err()).equals(true)?;
-        data.network_addr = "addr".to_string();
-        data.data = "gg".to_string();
         expect(mgr.send_uldata(&data).is_err()).equals(true)?;
 
         Ok(())
@@ -794,19 +791,19 @@ pub fn dldata(context: &mut SpecContext<TestState>) -> Result<(), String> {
                 expect(data.publish.timestamp_millis()).equals(now.timestamp_millis())?;
                 expect(data.expires_in).equals(data1.expires_in)?;
                 expect(data.network_addr.as_str()).equals(data1.network_addr.as_str())?;
-                expect(data.data.as_str()).equals(data1.data.as_str())?;
+                expect(hex::encode(data.data).as_str()).equals(data1.data.as_str())?;
                 expect(data.extension.as_ref()).equals(data1.extension.as_ref())?;
             } else if data_id == "2" {
                 expect(data.publish.timestamp_millis()).equals(now.timestamp_millis() + 1)?;
                 expect(data.expires_in).equals(data2.expires_in)?;
                 expect(data.network_addr.as_str()).equals(data2.network_addr.as_str())?;
-                expect(data.data.as_str()).equals(data2.data.as_str())?;
+                expect(hex::encode(data.data).as_str()).equals(data2.data.as_str())?;
                 expect(data.extension.as_ref()).equals(data2.extension.as_ref())?;
             } else if data_id == "3" {
                 expect(data.publish.timestamp_millis()).equals(now.timestamp_millis() + 2)?;
                 expect(data.expires_in).equals(data3.expires_in)?;
                 expect(data.network_addr.as_str()).equals(data3.network_addr.as_str())?;
-                expect(data.data.as_str()).equals(data3.data.as_str())?;
+                expect(hex::encode(data.data).as_str()).equals(data3.data.as_str())?;
                 expect(data.extension.as_ref()).equals(data3.extension.as_ref())?;
             } else {
                 return Err(format!("receive wrong data {}", data_id));

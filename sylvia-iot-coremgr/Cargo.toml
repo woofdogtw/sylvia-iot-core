@@ -1,6 +1,6 @@
 [package]
 name = "sylvia-iot-coremgr"
-version = "0.0.25"
+version = "0.0.26"
 authors = ["Chien-Hong Chan"]
 description = "The manager of Sylvia-IoT core modules."
 edition = "2021"
@@ -19,7 +19,7 @@ async-stream = "0.3.5"
 async-trait = "0.1.73"
 base64 = "0.21.2"
 chrono = { version = "0.4.26", default-features = false, features = ["serde"] }
-clap = { version = "4.3.22", default-features = false, features = ["std", "help", "usage", "error-context"] }
+clap = { version = "4.3.23", default-features = false, features = ["std", "help", "usage", "error-context"] }
 csv = "1.2.2"
 futures = "0.3.28"
 futures-util = "0.3.28"

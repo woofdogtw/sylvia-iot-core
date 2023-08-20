@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.0.26 - 2023-08-20
+
+### Changed
+
+- Update dependencies.
+- **sdk**: **INCOMPATIBLE** API modifications.
+    - Modify the `data` field from `String` to `Vec<u8>` for convenience.
+
 ## 0.0.25 - 2023-08-18
 
 ### Changed
