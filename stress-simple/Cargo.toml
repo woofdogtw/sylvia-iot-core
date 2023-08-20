@@ -1,6 +1,6 @@
 [package]
 name = "stress-simple"
-version = "0.0.26"
+version = "0.0.27"
 authors = ["Chien-Hong Chan"]
 edition = "2021"
 description = "A very simple traffic generation program for testing Sylvia-IoT broker."
