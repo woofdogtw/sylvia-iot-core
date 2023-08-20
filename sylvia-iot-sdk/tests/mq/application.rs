@@ -7,6 +7,7 @@ use std::{
 
 use async_trait::async_trait;
 use chrono::{TimeZone, Utc};
+use hex;
 use laboratory::{expect, SpecContext};
 use serde::{self, Deserialize, Serialize};
 use serde_json::{self, Map, Value};
@@ -548,7 +549,7 @@ pub fn uldata(context: &mut SpecContext<TestState>) -> Result<(), String> {
                 expect(data.network_code.as_str()).equals(data1.network_code.as_str())?;
                 expect(data.network_addr.as_str()).equals(data1.network_addr.as_str())?;
                 expect(data.is_public).equals(data1.is_public)?;
-                expect(data.data.as_str()).equals(data1.data.as_str())?;
+                expect(hex::encode(data.data).as_str()).equals(data1.data.as_str())?;
                 expect(data.extension.as_ref()).equals(data1.extension.as_ref())?;
             } else if data_id == "2" {
                 expect(data.time.timestamp_millis()).equals(now.timestamp_millis() + 1)?;
@@ -558,7 +559,7 @@ pub fn uldata(context: &mut SpecContext<TestState>) -> Result<(), String> {
                 expect(data.network_code.as_str()).equals(data2.network_code.as_str())?;
                 expect(data.network_addr.as_str()).equals(data2.network_addr.as_str())?;
                 expect(data.is_public).equals(data2.is_public)?;
-                expect(data.data.as_str()).equals(data2.data.as_str())?;
+                expect(hex::encode(data.data).as_str()).equals(data2.data.as_str())?;
                 expect(data.extension.as_ref()).equals(data2.extension.as_ref())?;
             } else if data_id == "3" {
                 expect(data.time.timestamp_millis()).equals(now.timestamp_millis() + 2)?;
@@ -568,7 +569,7 @@ pub fn uldata(context: &mut SpecContext<TestState>) -> Result<(), String> {
                 expect(data.network_code.as_str()).equals(data3.network_code.as_str())?;
                 expect(data.network_addr.as_str()).equals(data3.network_addr.as_str())?;
                 expect(data.is_public).equals(data3.is_public)?;
-                expect(data.data.as_str()).equals(data3.data.as_str())?;
+                expect(hex::encode(data.data).as_str()).equals(data3.data.as_str())?;
                 expect(data.extension.as_ref()).equals(data3.extension.as_ref())?;
             } else {
                 return Err(format!("receive wrong data {}", data_id));
@@ -808,7 +809,7 @@ pub fn dldata(context: &mut SpecContext<TestState>) -> Result<(), String> {
             device_id: Some("device1".to_string()),
             network_code: None,
             network_addr: None,
-            data: "01".to_string(),
+            data: vec![1],
             extension: Some(ext),
         };
         if let Err(e) = mgr.send_dldata(&data1) {
@@ -819,7 +820,7 @@ pub fn dldata(context: &mut SpecContext<TestState>) -> Result<(), String> {
             device_id: None,
             network_code: Some("code".to_string()),
             network_addr: Some("addr2".to_string()),
-            data: "02".to_string(),
+            data: vec![2],
             extension: None,
         };
         if let Err(e) = mgr.send_dldata(&data2) {
@@ -849,13 +850,13 @@ pub fn dldata(context: &mut SpecContext<TestState>) -> Result<(), String> {
                 expect(data.device_id.as_ref()).equals(data1.device_id.as_ref())?;
                 expect(data.network_code.as_ref()).equals(data1.network_code.as_ref())?;
                 expect(data.network_addr.as_ref()).equals(data1.network_addr.as_ref())?;
-                expect(data.data.as_str()).equals(data1.data.as_str())?;
+                expect(data.data.as_str()).equals(hex::encode(&data1.data).as_str())?;
                 expect(data.extension.as_ref()).equals(data1.extension.as_ref())?;
             } else if correlation_id == "2" {
                 expect(data.device_id.as_ref()).equals(data2.device_id.as_ref())?;
                 expect(data.network_code.as_ref()).equals(data2.network_code.as_ref())?;
                 expect(data.network_addr.as_ref()).equals(data2.network_addr.as_ref())?;
-                expect(data.data.as_str()).equals(data2.data.as_str())?;
+                expect(data.data.as_str()).equals(hex::encode(&data2.data).as_str())?;
                 expect(data.extension.as_ref()).equals(data2.extension.as_ref())?;
             } else {
                 return Err(format!("receive wrong data {}", correlation_id));
@@ -906,7 +907,7 @@ pub fn dldata_wrong(context: &mut SpecContext<TestState>) -> Result<(), String> 
             device_id: Some("device".to_string()),
             network_code: None,
             network_addr: None,
-            data: "00".to_string(),
+            data: vec![0],
             extension: None,
         };
         expect(mgr.send_dldata(&data).is_err()).equals(true)?;
@@ -919,9 +920,6 @@ pub fn dldata_wrong(context: &mut SpecContext<TestState>) -> Result<(), String> 
         data.device_id = Some("".to_string());
         data.network_code = None;
         data.network_addr = None;
-        expect(mgr.send_dldata(&data).is_err()).equals(true)?;
-        data.device_id = Some("device_id".to_string());
-        data.data = "gg".to_string();
         expect(mgr.send_dldata(&data).is_err()).equals(true)?;
 
         Ok(())

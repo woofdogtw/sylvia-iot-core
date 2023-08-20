@@ -33,7 +33,7 @@ pub trait GmqConnection: Send + Sync {
     fn remove_handler(&mut self, id: &str);
 
     /// To connect to the message broker. The [`GmqConnection`] will connect to the broker using
-    /// another runtime task and report status with [`Event`]s.
+    /// another runtime task and report status with [`Status`]s.
     fn connect(&mut self) -> Result<(), Box<dyn StdError>>;
 
     /// To close the connection.

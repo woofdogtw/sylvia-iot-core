@@ -32,23 +32,17 @@ use super::{
 pub struct UlData {
     pub time: DateTime<Utc>,
     pub network_addr: String,
-    pub data: String,
+    pub data: Vec<u8>,
     pub extension: Option<Map<String, Value>>,
 }
 
 /// Downlink data from broker to network.
-#[derive(Clone, Deserialize, Serialize)]
 pub struct DlData {
-    #[serde(rename = "dataId")]
     pub data_id: String,
-    #[serde(rename = "pub")]
     pub publish: DateTime<Utc>,
-    #[serde(rename = "expiresIn")]
     pub expires_in: i64,
-    #[serde(rename = "networkAddr")]
     pub network_addr: String,
-    pub data: String,
-    #[serde(skip_serializing_if = "Option::is_none")]
+    pub data: Vec<u8>,
     pub extension: Option<Map<String, Value>>,
 }
 
@@ -175,13 +169,13 @@ struct MgrMqEventHandler {
 }
 
 #[derive(Serialize)]
-struct UlDataInner {
+struct UlDataInner<'a> {
     time: String,
     #[serde(rename = "networkAddr")]
-    network_addr: String,
+    network_addr: &'a String,
     data: String,
     #[serde(skip_serializing_if = "Option::is_none")]
-    extension: Option<Map<String, Value>>,
+    extension: &'a Option<Map<String, Value>>,
 }
 
 /// Downlink data from broker to network.
@@ -196,13 +190,13 @@ struct DlDataInner {
     #[serde(rename = "networkAddr")]
     network_addr: String,
     data: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
     extension: Option<Map<String, Value>>,
 }
 
 const QUEUE_PREFIX: &'static str = "broker.network";
 const ERR_PARAM_DEV: &'static str = "the `network_addr` must be a non-empty string";
 const ERR_PARAM_DATA_ID: &'static str = "the `data_id` must be a non-empty string";
-const ERR_PARAM_DATA: &'static str = "the `data` must be a hex string";
 
 impl NetworkMgr {
     /// To create a manager instance.
@@ -319,18 +313,12 @@ impl NetworkMgr {
             let err = IoError::new(ErrorKind::InvalidInput, ERR_PARAM_DEV.to_string());
             return Err(Box::new(err));
         }
-        if data.data.len() > 0 {
-            if let Err(_) = hex::decode(data.data.as_str()) {
-                let err = IoError::new(ErrorKind::InvalidInput, ERR_PARAM_DATA.to_string());
-                return Err(Box::new(err));
-            }
-        }
 
         let msg_data = UlDataInner {
             time: strings::time_str(&data.time),
-            network_addr: data.network_addr.clone(),
-            data: data.data.clone(),
-            extension: data.extension.clone(),
+            network_addr: &data.network_addr,
+            data: hex::encode(&data.data),
+            extension: &data.extension,
         };
         let payload = serde_json::to_vec(&msg_data)?;
         let queue = { (*self.uldata.lock().unwrap()).clone() };
@@ -404,6 +392,16 @@ impl MessageHandler for MgrMqEventHandler {
                     return;
                 }
                 Ok(data) => {
+                    let data_bytes = match data.data.len() {
+                        0 => vec![],
+                        _ => match hex::decode(data.data.as_str()) {
+                            Err(_) => {
+                                let _ = msg.ack().await;
+                                return;
+                            }
+                            Ok(data) => data,
+                        },
+                    };
                     let publish = match DateTime::parse_from_rfc3339(data.publish.as_str()) {
                         Err(_) => {
                             let _ = msg.ack().await;
@@ -416,7 +414,7 @@ impl MessageHandler for MgrMqEventHandler {
                         publish,
                         expires_in: data.expires_in,
                         network_addr: data.network_addr,
-                        data: data.data,
+                        data: data_bytes,
                         extension: data.extension,
                     }
                 }

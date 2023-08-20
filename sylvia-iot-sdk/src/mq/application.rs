@@ -36,23 +36,17 @@ pub struct UlData {
     pub network_code: String,
     pub network_addr: String,
     pub is_public: bool,
-    pub data: String,
+    pub data: Vec<u8>,
     pub extension: Option<Map<String, Value>>,
 }
 
 /// Downlink data from application to broker.
-#[derive(Clone, Serialize)]
 pub struct DlData {
-    #[serde(rename = "correlationId")]
     pub correlation_id: String,
-    #[serde(rename = "deviceId", skip_serializing_if = "Option::is_none")]
     pub device_id: Option<String>,
-    #[serde(rename = "networkCode", skip_serializing_if = "Option::is_none")]
     pub network_code: Option<String>,
-    #[serde(rename = "networkAddr", skip_serializing_if = "Option::is_none")]
     pub network_addr: Option<String>,
-    pub data: String,
-    #[serde(skip_serializing_if = "Option::is_none")]
+    pub data: Vec<u8>,
     pub extension: Option<Map<String, Value>>,
 }
 
@@ -149,11 +143,25 @@ struct UlDataInner {
     extension: Option<Map<String, Value>>,
 }
 
+#[derive(Clone, Serialize)]
+struct DlDataInner<'a> {
+    #[serde(rename = "correlationId")]
+    correlation_id: &'a String,
+    #[serde(rename = "deviceId", skip_serializing_if = "Option::is_none")]
+    device_id: Option<&'a String>,
+    #[serde(rename = "networkCode", skip_serializing_if = "Option::is_none")]
+    network_code: Option<&'a String>,
+    #[serde(rename = "networkAddr", skip_serializing_if = "Option::is_none")]
+    network_addr: Option<&'a String>,
+    data: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    extension: &'a Option<Map<String, Value>>,
+}
+
 const QUEUE_PREFIX: &'static str = "broker.application";
 const ERR_PARAM_CORR_ID: &'static str = "the `correlation_id` must be a non-empty string";
 const ERR_PARAM_DEV: &'static str =
     "one of `device_id` or [`network_code`, `network_addr`] pair must be provided with non-empty string";
-const ERR_PARAM_DATA: &'static str = "the `data` must be a hex string";
 
 impl ApplicationMgr {
     /// To create a manager instance.
@@ -289,14 +297,15 @@ impl ApplicationMgr {
             let err = IoError::new(ErrorKind::InvalidInput, ERR_PARAM_DEV.to_string());
             return Err(Box::new(err));
         }
-        if data.data.len() > 0 {
-            if let Err(_) = hex::decode(data.data.as_str()) {
-                let err = IoError::new(ErrorKind::InvalidInput, ERR_PARAM_DATA.to_string());
-                return Err(Box::new(err));
-            }
-        }
 
-        let payload = serde_json::to_vec(data)?;
+        let payload = serde_json::to_vec(&DlDataInner {
+            correlation_id: &data.correlation_id,
+            device_id: data.device_id.as_ref(),
+            network_code: data.network_code.as_ref(),
+            network_addr: data.network_addr.as_ref(),
+            data: hex::encode(&data.data),
+            extension: &data.extension,
+        })?;
         let queue = { (*self.dldata.lock().unwrap()).clone() };
         task::spawn(async move {
             let _ = queue.send_msg(payload).await;
@@ -348,12 +357,16 @@ impl MessageHandler for MgrMqEventHandler {
                     return;
                 }
                 Ok(data) => {
-                    if data.data.len() > 0 {
-                        if let Err(_) = hex::decode(data.data.as_str()) {
-                            let _ = msg.ack().await;
-                            return;
-                        }
-                    }
+                    let data_bytes = match data.data.len() {
+                        0 => vec![],
+                        _ => match hex::decode(data.data.as_str()) {
+                            Err(_) => {
+                                let _ = msg.ack().await;
+                                return;
+                            }
+                            Ok(data) => data,
+                        },
+                    };
                     let time = match DateTime::parse_from_rfc3339(data.time.as_str()) {
                         Err(_) => {
                             let _ = msg.ack().await;
@@ -377,7 +390,7 @@ impl MessageHandler for MgrMqEventHandler {
                         network_code: data.network_code,
                         network_addr: data.network_addr,
                         is_public: data.is_public,
-                        data: data.data,
+                        data: data_bytes,
                         extension: data.extension,
                     }
                 }
