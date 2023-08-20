@@ -61,27 +61,33 @@ pub struct DlDataResult {
 #[serde(tag = "operation")]
 pub enum NetworkCtrlMsg {
     #[serde(rename = "add-device")]
-    AddDevice { time: String, new: CtrlAddDevice },
+    AddDevice {
+        time: DateTime<Utc>,
+        new: CtrlAddDevice,
+    },
     #[serde(rename = "add-device-bulk")]
     AddDeviceBulk {
-        time: String,
+        time: DateTime<Utc>,
         new: CtrlAddDeviceBulk,
     },
     #[serde(rename = "add-device-range")]
     AddDeviceRange {
-        time: String,
+        time: DateTime<Utc>,
         new: CtrlAddDeviceRange,
     },
     #[serde(rename = "del-device")]
-    DelDevice { time: String, new: CtrlDelDevice },
+    DelDevice {
+        time: DateTime<Utc>,
+        new: CtrlDelDevice,
+    },
     #[serde(rename = "del-device-bulk")]
     DelDeviceBulk {
-        time: String,
+        time: DateTime<Utc>,
         new: CtrlDelDeviceBulk,
     },
     #[serde(rename = "del-device-range")]
     DelDeviceRange {
-        time: String,
+        time: DateTime<Utc>,
         new: CtrlDelDeviceRange,
     },
 }

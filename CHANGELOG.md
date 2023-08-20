@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.0.27 - 2023-08-20
+
+### Changed
+
+- **sdk**: **INCOMPATIBLE** API modifications.
+    - Modify the `time` field of network control data from `String` to `DateTime<Utc>` for convenience.
+
 ## 0.0.26 - 2023-08-20
 
 ### Changed

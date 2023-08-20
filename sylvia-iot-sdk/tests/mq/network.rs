@@ -1313,35 +1313,35 @@ pub fn ctrl(context: &mut SpecContext<TestState>) -> Result<(), String> {
             };
             match data.as_ref() {
                 NetworkCtrlMsg::AddDevice { time, new } => {
-                    expect(time.as_str()).to_equal(now_str.as_str())?;
+                    expect(strings::time_str(&time).as_str()).to_equal(now_str.as_str())?;
                     expect(new.network_addr.as_str()).to_equal("addr1")?;
                     recv_dev_add = true;
                 }
                 NetworkCtrlMsg::AddDeviceBulk { time, new } => {
-                    expect(time.as_str()).to_equal(now_str.as_str())?;
+                    expect(strings::time_str(&time).as_str()).to_equal(now_str.as_str())?;
                     expect(new.network_addrs.len()).to_equal(1)?;
                     expect(new.network_addrs[0].as_str()).to_equal("addr2")?;
                     recv_dev_add_bulk = true;
                 }
                 NetworkCtrlMsg::AddDeviceRange { time, new } => {
-                    expect(time.as_str()).to_equal(now_str.as_str())?;
+                    expect(strings::time_str(&time).as_str()).to_equal(now_str.as_str())?;
                     expect(new.start_addr.as_str()).to_equal("0001")?;
                     expect(new.end_addr.as_str()).to_equal("0002")?;
                     recv_dev_add_range = true;
                 }
                 NetworkCtrlMsg::DelDevice { time, new } => {
-                    expect(time.as_str()).to_equal(now_str.as_str())?;
+                    expect(strings::time_str(&time).as_str()).to_equal(now_str.as_str())?;
                     expect(new.network_addr.as_str()).to_equal("addr4")?;
                     recv_dev_del = true;
                 }
                 NetworkCtrlMsg::DelDeviceBulk { time, new } => {
-                    expect(time.as_str()).to_equal(now_str.as_str())?;
+                    expect(strings::time_str(&time).as_str()).to_equal(now_str.as_str())?;
                     expect(new.network_addrs.len()).to_equal(1)?;
                     expect(new.network_addrs[0].as_str()).to_equal("addr5")?;
                     recv_dev_del_bulk = true;
                 }
                 NetworkCtrlMsg::DelDeviceRange { time, new } => {
-                    expect(time.as_str()).to_equal(now_str.as_str())?;
+                    expect(strings::time_str(&time).as_str()).to_equal(now_str.as_str())?;
                     expect(new.start_addr.as_str()).to_equal("0003")?;
                     expect(new.end_addr.as_str()).to_equal("0004")?;
                     recv_dev_del_range = true;

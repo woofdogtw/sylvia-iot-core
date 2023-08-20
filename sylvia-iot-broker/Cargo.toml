@@ -1,6 +1,6 @@
 [package]
 name = "sylvia-iot-broker"
-version = "0.0.26"
+version = "0.0.27"
 authors = ["Chien-Hong Chan"]
 description = "The message broker module of the Sylvia-IoT platform."
 edition = "2021"
