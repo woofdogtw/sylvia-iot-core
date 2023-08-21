@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.0.28 - 2023-08-21
+
+### Changed
+
+- Update dependencies.
+- **sdk**: **INCOMPATIBLE** API modifications.
+    - Modify time-relative fields of user HTTP functions from `String` to `DateTime<Utc>` for convenience.
+
 ## 0.0.27 - 2023-08-20
 
 ### Changed

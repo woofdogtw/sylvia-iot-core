@@ -1,4 +1,5 @@
 use actix_web::web::Bytes;
+use chrono::{DateTime, Utc};
 use reqwest::{Method, StatusCode};
 use serde::{Deserialize, Serialize};
 use serde_json::{Map, Value};
@@ -6,17 +7,17 @@ use serde_json::{Map, Value};
 use super::http::{ApiError, Client, Error};
 use crate::util::err;
 
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize)]
 pub struct GetResData {
-    #[serde(rename = "userId", skip_serializing_if = "Option::is_none")]
+    #[serde(rename = "userId")]
     pub user_id: Option<String>,
     pub account: String,
     #[serde(rename = "createdAt")]
-    pub created_at: String,
+    pub created_at: DateTime<Utc>,
     #[serde(rename = "modifiedAt")]
-    pub modified_at: String,
+    pub modified_at: DateTime<Utc>,
     #[serde(rename = "verifiedAt")]
-    pub verified_at: Option<String>,
+    pub verified_at: Option<DateTime<Utc>>,
     pub roles: Map<String, Value>,
     pub name: String,
     pub info: Map<String, Value>,
