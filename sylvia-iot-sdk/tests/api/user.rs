@@ -1,5 +1,6 @@
 use laboratory::{describe, expect, SpecContext, Suite};
 
+use sylvia_iot_auth::models::{user::QueryCond, Model};
 use sylvia_iot_sdk::api::{
     http::{Client as SdkClient, ClientOptions},
     user as userapi,
@@ -23,6 +24,7 @@ fn test_get(context: &mut SpecContext<TestState>) -> Result<(), String> {
     let state = context.state.borrow();
     let state = state.get(STATE).unwrap();
     let runtime = state.runtime.as_ref().unwrap();
+    let auth_db = state.auth_db.as_ref().unwrap();
 
     runtime.block_on(async move {
         let opts = ClientOptions {
@@ -34,7 +36,24 @@ fn test_get(context: &mut SpecContext<TestState>) -> Result<(), String> {
         let mut client = SdkClient::new(opts);
 
         let result = userapi::get(&mut client).await;
-        expect(result.is_ok()).to_equal(true)
+        expect(result.is_ok()).to_equal(true)?;
+        let user_info = result.unwrap();
+        let db_info = auth_db
+            .user()
+            .get(&QueryCond {
+                account: Some(user_info.account.as_str()),
+                ..Default::default()
+            })
+            .await;
+        expect(db_info.is_ok()).to_equal(true)?;
+        let db_info = db_info.unwrap();
+        expect(db_info.is_some()).to_equal(true)?;
+        let db_info = db_info.unwrap();
+        expect(user_info.account.as_str()).to_equal(db_info.account.as_str())?;
+        expect(user_info.created_at).to_equal(db_info.created_at)?;
+        expect(user_info.modified_at).to_equal(db_info.modified_at)?;
+        expect(user_info.verified_at).to_equal(db_info.verified_at)?;
+        expect(user_info.name.as_str()).to_equal(db_info.name.as_str())
     })?;
     Ok(())
 }
