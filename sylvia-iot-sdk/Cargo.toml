@@ -1,12 +1,15 @@
 [package]
 name = "sylvia-iot-sdk"
-version = "0.0.28"
+version = "0.0.29"
 authors = ["Chien-Hong Chan"]
+categories = ["web-programming::http-server"]
 description = "SDK for developing networks (adapters) and applications on Sylvia-IoT."
 edition = "2021"
+keywords = ["iot"]
 license = "MIT"
 readme = "README.md"
 repository = "https://github.com/woofdogtw/sylvia-iot-core.git"
+rust-version = "1.70"
 
 [dependencies]
 actix-service = "2.0.2"
@@ -16,8 +19,8 @@ chrono = { version = "0.4.26", default-features = false, features = ["serde"] }
 futures = "0.3.28"
 general-mq = { path = "../general-mq" }
 hex = "0.4.3"
-reqwest = { version = "0.11.18", default-features = false, features = ["json"] }
-serde = { version = "1.0.185", features = ["derive"] }
+reqwest = { version = "0.11.20", default-features = false, features = ["json"] }
+serde = { version = "1.0.186", features = ["derive"] }
 serde_json = "1.0.105"
 sylvia-iot-corelib = { path = "../sylvia-iot-corelib" }
 tokio = { version = "1.32.0", features = ["io-util", "macros", "rt-multi-thread", "time"] }
