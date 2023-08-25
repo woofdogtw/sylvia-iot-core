@@ -1,6 +1,6 @@
 use std::{collections::HashMap, error::Error as StdError, sync::mpsc, thread, time::Duration};
 
-use actix_http::KeepAlive;
+use actix_http::{header::HeaderValue, KeepAlive};
 use actix_web::{
     http::{header, StatusCode},
     middleware::NormalizePath,
@@ -50,7 +50,9 @@ fn test_200(context: &mut SpecContext<TestState>) -> Result<(), String> {
 
     let result: Result<(), Box<dyn StdError>> = runtime.block_on(async move {
         let now = Utc::now();
-        let user = create_user("user", now, HashMap::<String, bool>::new());
+        let mut roles = HashMap::<String, bool>::new();
+        roles.insert("user".to_string(), true);
+        let user = create_user("user", now, roles);
         auth_db.user().add(&user).await?;
         let client = create_client("client", "user", None);
         auth_db.client().add(&client).await?;
@@ -65,14 +67,14 @@ fn test_200(context: &mut SpecContext<TestState>) -> Result<(), String> {
             App::new()
                 .wrap(NormalizePath::trim())
                 .wrap(AuthService::new(auth_uri.clone()))
-                .route("/", web::get().to(dummy_handler)),
+                .route("/", web::get().to(test_200_handler)),
         )
         .await
     });
 
     let req = TestRequest::get()
         .uri("/")
-        .insert_header((header::AUTHORIZATION, format!("Bearer token")))
+        .insert_header((header::AUTHORIZATION, format!("  bearer token  ")))
         .to_request();
     let resp = runtime.block_on(async { test::call_service(&mut app, req).await });
     let status = resp.status();
@@ -100,6 +102,24 @@ fn test_400(context: &mut SpecContext<TestState>) -> Result<(), String> {
     });
 
     let req = TestRequest::get().uri("/").to_request();
+    let resp = runtime.block_on(async { test::call_service(&mut app, req).await });
+    expect(resp.status()).to_equal(StatusCode::BAD_REQUEST)?;
+
+    let mut req = TestRequest::get().uri("/").to_request();
+    req.headers_mut()
+        .insert(header::AUTHORIZATION, HeaderValue::from_static(" "));
+    let resp = runtime.block_on(async { test::call_service(&mut app, req).await });
+    expect(resp.status()).to_equal(StatusCode::BAD_REQUEST)?;
+
+    let mut req = TestRequest::get().uri("/").to_request();
+    req.headers_mut()
+        .insert(header::AUTHORIZATION, HeaderValue::from_static("Basic 123"));
+    let resp = runtime.block_on(async { test::call_service(&mut app, req).await });
+    expect(resp.status()).to_equal(StatusCode::BAD_REQUEST)?;
+
+    let mut req = TestRequest::get().uri("/").to_request();
+    req.headers_mut()
+        .insert(header::AUTHORIZATION, HeaderValue::from_static("Bearer "));
     let resp = runtime.block_on(async { test::call_service(&mut app, req).await });
     expect(resp.status()).to_equal(StatusCode::BAD_REQUEST)
 }
@@ -150,6 +170,36 @@ fn test_503(context: &mut SpecContext<TestState>) -> Result<(), String> {
         .to_request();
     let resp = runtime.block_on(async { test::call_service(&mut app, req).await });
     expect(resp.status()).to_equal(StatusCode::SERVICE_UNAVAILABLE)
+}
+
+async fn test_200_handler(req: HttpRequest) -> impl Responder {
+    let info = match req.extensions_mut().get::<FullTokenInfo>() {
+        None => return HttpResponse::BadRequest().finish(),
+        Some(info) => info.clone(),
+    };
+    if info.token.ne("token") {
+        return HttpResponse::BadRequest().finish();
+    } else if info.info.user_id.ne("user") {
+        return HttpResponse::BadRequest().finish();
+    } else if info.info.account.ne("user") {
+        return HttpResponse::BadRequest().finish();
+    } else if info.info.name.ne("user") {
+        return HttpResponse::BadRequest().finish();
+    } else if info.info.client_id.ne("client") {
+        return HttpResponse::BadRequest().finish();
+    } else if info.info.scopes.len() > 0 {
+        return HttpResponse::BadRequest().finish();
+    } else if info.info.roles.keys().len() != 1 {
+        return HttpResponse::BadRequest().finish();
+    }
+    match info.info.roles.get("user") {
+        None => return HttpResponse::BadRequest().finish(),
+        Some(enabled) => match *enabled {
+            false => return HttpResponse::BadRequest().finish(),
+            true => (),
+        },
+    }
+    HttpResponse::NoContent().finish()
 }
 
 async fn dummy_handler(req: HttpRequest) -> impl Responder {

@@ -1,12 +1,15 @@
 [package]
 name = "sylvia-iot-broker"
-version = "0.0.28"
+version = "0.0.29"
 authors = ["Chien-Hong Chan"]
+categories = ["web-programming::http-server"]
 description = "The message broker module of the Sylvia-IoT platform."
 edition = "2021"
+keywords = ["iot"]
 license = "MIT"
 readme = "README.md"
 repository = "https://github.com/woofdogtw/sylvia-iot-core.git"
+rust-version = "1.70"
 
 [dependencies]
 actix-cors = "0.6.4"
@@ -17,7 +20,7 @@ actix-web-prom = "0.7.0"
 async-stream = "0.3.5"
 async-trait = "0.1.73"
 chrono = { version = "0.4.26", default-features = false, features = ["serde"] }
-clap = { version = "4.3.23", default-features = false, features = ["std", "help", "usage", "error-context"] }
+clap = { version = "4.4.0", default-features = false, features = ["std", "help", "usage", "error-context"] }
 futures = "0.3.28"
 general-mq = { path="../general-mq" }
 hex = "0.4.3"
@@ -25,10 +28,10 @@ json5 = "0.4.1"
 log = "0.4.20"
 lru = "0.11.0"
 mongodb = { version = "2.6.1", features = ["bson-chrono-0_4"] }
-reqwest = { version = "0.11.18", default-features = false, features = ["json", "rustls-tls"] }
+reqwest = { version = "0.11.20", default-features = false, features = ["json", "rustls-tls"] }
 rustls = "0.20.8"
 rustls-pemfile = "1.0.3"
-serde = { version = "1.0.185", features = ["derive"] }
+serde = { version = "1.0.186", features = ["derive"] }
 serde_json = "1.0.105"
 sql-builder = "3.1.1"
 sqlx = { version = "0.7.1", default-features = false, features = ["macros", "runtime-tokio", "sqlite"] }

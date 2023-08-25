@@ -134,13 +134,20 @@ where
                         let e = ErrResp::ErrParam(Some("missing token".to_string()));
                         return Ok(ServiceResponse::from_err(e, http_req.clone()));
                     }
-                    Some(token) => token,
+                    Some(token) => {
+                        let token = token.trim();
+                        if token.len() < 8 || token[..7].to_lowercase().ne("bearer ") {
+                            let e = ErrResp::ErrParam(Some("not bearer token".to_string()));
+                            return Ok(ServiceResponse::from_err(e, http_req.clone()));
+                        }
+                        token[7..].to_string()
+                    }
                 },
             };
 
             let token_req = match client
                 .request(reqwest::Method::GET, auth_uri.as_str())
-                .header(reqwest::header::AUTHORIZATION, token.as_str())
+                .header(reqwest::header::AUTHORIZATION, format!("Bearer {}", token))
                 .build()
             {
                 Err(e) => {

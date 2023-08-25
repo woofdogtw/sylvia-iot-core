@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.0.29 - 2023-08-25
+
+### Changed
+
+- Update dependencies.
+- Add more information in Cargo.toml for publishing crates.
+
+### Fixed
+
+- **sdk**: Fix middleware that the `token` field must be token, not Authorization header content.
+
 ## 0.0.28 - 2023-08-21
 
 ### Changed
