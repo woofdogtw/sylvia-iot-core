@@ -1,6 +1,6 @@
 [package]
 name = "sylvia-iot-auth"
-version = "0.0.29"
+version = "0.0.30"
 authors = ["Chien-Hong Chan"]
 categories = ["web-programming::http-server"]
 description = "The authentication/authorization module of the Sylvia-IoT platform."
@@ -32,7 +32,7 @@ oxide-auth-async = "0.1.0"
 redis = { version = "0.23.2", features = ["tokio-comp"] }
 rustls = "0.20.8"
 rustls-pemfile = "1.0.3"
-serde = { version = "1.0.186", features = ["derive"] }
+serde = { version = "1.0.187", features = ["derive"] }
 serde_json = "1.0.105"
 serde_urlencoded = "0.7.1"
 serde_with = { version = "3.3.0", features = ["json"] }
