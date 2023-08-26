@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use actix_web::web::Bytes;
 use chrono::{DateTime, Utc};
 use reqwest::{Method, StatusCode};
@@ -18,7 +20,7 @@ pub struct GetResData {
     pub modified_at: DateTime<Utc>,
     #[serde(rename = "verifiedAt")]
     pub verified_at: Option<DateTime<Utc>>,
-    pub roles: Map<String, Value>,
+    pub roles: HashMap<String, bool>,
     pub name: String,
     pub info: Map<String, Value>,
 }

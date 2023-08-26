@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.0.30 - 2023-08-26
+
+### Changed
+
+- Update dependencies.
+- **sdk**: **INCOMPATIBLE** API modifications.
+    - Modify the `roles` field type of user HTTP API.
+
 ## 0.0.29 - 2023-08-25
 
 ### Changed
