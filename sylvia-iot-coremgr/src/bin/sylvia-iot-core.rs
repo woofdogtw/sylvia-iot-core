@@ -2,7 +2,7 @@ use std::{
     error::Error as StdError,
     fs::{self, File},
     io::{BufReader, Error as IoError, ErrorKind},
-    net::{Ipv4Addr, Ipv6Addr, SocketAddr, SocketAddrV4, SocketAddrV6},
+    net::{Ipv6Addr, SocketAddr, SocketAddrV6},
     time::Duration,
 };
 
@@ -125,17 +125,12 @@ async fn main() -> std::io::Result<()> {
             .service(actix_files::Files::new("/", static_path).index_file("index.html"))
     })
     .keep_alive(KeepAlive::Timeout(Duration::from_secs(60)));
-    let ipv4_addr = Ipv4Addr::from([0u8; 4]);
     let ipv6_addr = Ipv6Addr::from([0u8; 16]);
     let addrs = match conf.server.http_port {
-        None => [
-            SocketAddr::V4(SocketAddrV4::new(ipv4_addr, HTTP_PORT)),
-            SocketAddr::V6(SocketAddrV6::new(ipv6_addr, HTTP_PORT, 0, 0)),
-        ],
-        Some(port) => [
-            SocketAddr::V4(SocketAddrV4::new(ipv4_addr, port)),
-            SocketAddr::V6(SocketAddrV6::new(ipv6_addr, port, 0, 0)),
-        ],
+        None => [SocketAddr::V6(SocketAddrV6::new(
+            ipv6_addr, HTTP_PORT, 0, 0,
+        ))],
+        Some(port) => [SocketAddr::V6(SocketAddrV6::new(ipv6_addr, port, 0, 0))],
     };
     serv = serv.bind(addrs.as_slice())?;
     if let Some(cert_file) = conf.server.cert_file.as_ref() {
@@ -170,14 +165,10 @@ async fn main() -> std::io::Result<()> {
                 Ok(conf) => conf,
             };
             let addrs = match conf.server.https_port {
-                None => [
-                    SocketAddr::V4(SocketAddrV4::new(ipv4_addr, HTTPS_PORT)),
-                    SocketAddr::V6(SocketAddrV6::new(ipv6_addr, HTTPS_PORT, 0, 0)),
-                ],
-                Some(port) => [
-                    SocketAddr::V4(SocketAddrV4::new(ipv4_addr, port)),
-                    SocketAddr::V6(SocketAddrV6::new(ipv6_addr, port, 0, 0)),
-                ],
+                None => [SocketAddr::V6(SocketAddrV6::new(
+                    ipv6_addr, HTTPS_PORT, 0, 0,
+                ))],
+                Some(port) => [SocketAddr::V6(SocketAddrV6::new(ipv6_addr, port, 0, 0))],
             };
             serv = serv.bind_rustls(addrs.as_slice(), secure_config)?;
         }
