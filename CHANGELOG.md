@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.0.31 - 2023-08-26
+
+### Changed
+
+- Update dependencies.
+
+### Fixed
+
+- Support listening both v4 and v6 addresses by binding `::` only instead of both `0.0.0.0` and `::`.
+
 ## 0.0.30 - 2023-08-26
 
 ### Changed
