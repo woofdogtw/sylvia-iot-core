@@ -19,6 +19,11 @@ This module provides:
     - Private network routes to applications
 - Public network management
 
+# Documentation
+
+- [HTTP APIs](doc/api.md)
+- [Messages](doc/message.md)
+
 # Mount sylvia-iot-broker in your Actix-Web App
 
 You can simply mount sylvia-iot-broker into your Actix-Web App:

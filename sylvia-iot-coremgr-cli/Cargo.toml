@@ -1,6 +1,6 @@
 [package]
 name = "sylvia-iot-coremgr-cli"
-version = "0.0.31"
+version = "0.0.32"
 authors = ["Chien-Hong Chan"]
 categories = ["web-programming::http-client"]
 description = "The command-line tool for Sylvia-IoT core manager."
@@ -12,8 +12,8 @@ repository = "https://github.com/woofdogtw/sylvia-iot-core.git"
 rust-version = "1.70"
 
 [dependencies]
-chrono = { version = "0.4.26", default-features = false, features = ["serde"] }
-clap = { version = "4.4.0", default-features = false, features = ["std", "help", "usage", "error-context"] }
+chrono = { version = "0.4.28", default-features = false, features = ["serde"] }
+clap = { version = "4.4.2", default-features = false, features = ["std", "help", "usage", "error-context"] }
 dirs = "5.0.1"
 hex = "0.4.3"
 json5 = "0.4.1"
@@ -24,7 +24,7 @@ serde_urlencoded = "0.7.1"
 serde_with = { version = "3.3.0", features = ["json"] }
 sylvia-iot-corelib = { path="../sylvia-iot-corelib" }
 tokio = { version = "1.32.0", features = ["io-util", "macros", "rt-multi-thread", "time"] }
-url = "2.4.0"
+url = "2.4.1"
 validators = "0.24.3"
 
 [dev-dependencies]

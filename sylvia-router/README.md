@@ -1,3 +1,4 @@
+![CI](https://github.com/woofdogtw/sylvia-iot-core/actions/workflows/build-test.yaml/badge.svg)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
 # sylvia-router
@@ -23,6 +24,10 @@ Because `sylvia-router-cli` includes `sylvia-iot-coremgr-cli` by simply using `s
 please provides `coremgrCli` key/values in the JSON5 configuration file.
 
 This project only support a JSON5 configuration file without parsing other command line arguments and environment variables.
+
+# Documentation
+
+- [HTTP APIs](doc/api.md)
 
 # Mount sylvia-router in your Actix-Web App
 

@@ -20,5 +20,8 @@
 - [sylvia-iot-go](https://github.com/woofdogtw/sylvia-iot-go)
     - Go 實作的元件。
     - 含有 **general-mq**、**sdk** 等。
+- [sylvia-iot-node](https://github.com/woofdogtw/sylvia-iot-node)
+    - Node.js 實作的元件。
+    - 含有 **general-mq**、**sdk** 等。
 - [sylvia-iot-deployment](https://github.com/woofdogtw/sylvia-iot-deployment)
     - 提供部署的方案，如 K8S 等。

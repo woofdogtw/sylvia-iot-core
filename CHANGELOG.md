@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.0.32 - 2023-09-01
+
+### Changed
+
+- Update dependencies and fix most of vulnerabilities.
+- Add Node.js SDK GitHub repository in documentation.
+
 ## 0.0.31 - 2023-08-26
 
 ### Changed

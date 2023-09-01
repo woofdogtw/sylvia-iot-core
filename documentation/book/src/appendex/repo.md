@@ -22,5 +22,8 @@
 - [sylvia-iot-go](https://github.com/woofdogtw/sylvia-iot-go)
     - Components implemented in Go.
     - Includes **general-mq**, **sdk**, etc.
+- [sylvia-iot-node](https://github.com/woofdogtw/sylvia-iot-node)
+    - Components implemented in Node.js.
+    - Includes **general-mq**, **sdk**, etc.
 - [sylvia-iot-deployment](https://github.com/woofdogtw/sylvia-iot-deployment)
     - Provides deployment solutions, such as K8S, and more.
