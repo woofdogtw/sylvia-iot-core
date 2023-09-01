@@ -1,6 +1,6 @@
 [package]
 name = "sylvia-iot-coremgr"
-version = "0.0.31"
+version = "0.0.32"
 authors = ["Chien-Hong Chan"]
 categories = ["web-programming::http-server"]
 description = "The manager of Sylvia-IoT core modules."
@@ -14,15 +14,15 @@ rust-version = "1.70"
 [dependencies]
 actix-cors = "0.6.4"
 actix-files = "0.6.2"
-actix-http = "3.3.1"
+actix-http = "3.4.0"
 actix-service = "2.0.2"
-actix-web = { version = "4.3.1", default-features = false, features = ["rustls"] }
+actix-web = { version = "4.4.0", default-features = false, features = ["rustls-0_21"] }
 actix-web-prom = "0.7.0"
 async-stream = "0.3.5"
 async-trait = "0.1.73"
-base64 = "0.21.2"
-chrono = { version = "0.4.26", default-features = false, features = ["serde"] }
-clap = { version = "4.4.0", default-features = false, features = ["std", "help", "usage", "error-context"] }
+base64 = "0.21.3"
+chrono = { version = "0.4.28", default-features = false, features = ["serde"] }
+clap = { version = "4.4.2", default-features = false, features = ["std", "help", "usage", "error-context"] }
 csv = "1.2.2"
 futures = "0.3.28"
 futures-util = "0.3.28"
@@ -32,7 +32,7 @@ json5 = "0.4.1"
 log = "0.4.20"
 reqwest = { version = "0.11.20", default-features = false, features = ["json", "rustls-tls", "stream"] }
 rumqttd = "0.17.0"
-rustls = "0.20.8"
+rustls = "0.21.7"
 rustls-pemfile = "1.0.3"
 serde = { version = "1.0.188", features = ["derive"] }
 serde_json = "1.0.105"
@@ -41,7 +41,7 @@ sylvia-iot-auth = { path="../sylvia-iot-auth" }
 sylvia-iot-broker = { path="../sylvia-iot-broker" }
 sylvia-iot-corelib = { path="../sylvia-iot-corelib" }
 tokio = { version = "1.32.0", features = ["io-util", "macros", "rt-multi-thread", "time"] }
-url = "2.4.0"
+url = "2.4.1"
 
 [dev-dependencies]
 laboratory = "2.0.0"

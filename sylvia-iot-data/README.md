@@ -9,6 +9,10 @@
 
 The data storage of Sylvia-IoT core modules.
 
+# Documentation
+
+- [HTTP APIs](doc/api.md)
+
 # Mount sylvia-iot-data in your Actix-Web App
 
 You can simply mount sylvia-iot-data into your Actix-Web App:

@@ -180,7 +180,7 @@ async fn main() -> std::io::Result<()> {
                 ))],
                 Some(port) => [SocketAddr::V6(SocketAddrV6::new(ipv6_addr, port, 0, 0))],
             };
-            serv = serv.bind_rustls(addrs.as_slice(), secure_config)?;
+            serv = serv.bind_rustls_021(addrs.as_slice(), secure_config)?;
         }
     }
     serv.run().await

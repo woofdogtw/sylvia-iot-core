@@ -17,6 +17,11 @@ This module:
     - MQTT: EMQX
 - Records all POST, PUT, PATCH, DELETE APIs.
 
+# Documentation
+
+- [HTTP APIs](doc/api.md)
+- [Messages](doc/message.md)
+
 # Mount sylvia-iot-coremgr in your Actix-Web App
 
 You can simply mount sylvia-iot-coremgr into your Actix-Web App:

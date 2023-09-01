@@ -17,6 +17,10 @@ This module provides:
 - User management.
 - Client management.
 
+# Documentation
+
+- [HTTP APIs](doc/api.md)
+
 # Mount sylvia-iot-auth in your Actix-Web App
 
 You can simply mount sylvia-iot-auth into your Actix-Web App:
