@@ -1,6 +1,6 @@
 [package]
 name = "sylvia-iot-auth"
-version = "0.0.32"
+version = "0.0.33"
 authors = ["Chien-Hong Chan"]
 categories = ["web-programming::http-server"]
 description = "The authentication/authorization module of the Sylvia-IoT platform."
@@ -21,7 +21,7 @@ actix-web-prom = "0.7.0"
 async-stream = "0.3.5"
 async-trait = "0.1.73"
 base64 = "0.21.3"
-chrono = { version = "0.4.28", default-features = false, features = ["serde"] }
+chrono = { version = "0.4.30", default-features = false, features = ["serde"] }
 clap = { version = "4.4.2", default-features = false, features = ["std", "help", "usage", "error-context"] }
 futures = "0.3.28"
 json5 = "0.4.1"
@@ -29,7 +29,7 @@ log = "0.4.20"
 mongodb = { version = "2.6.1", features = ["bson-chrono-0_4"] }
 oxide-auth = "0.5.3"
 oxide-auth-async = "0.1.0"
-redis = { version = "0.23.2", features = ["tokio-comp"] }
+redis = { version = "0.23.3", features = ["tokio-comp"] }
 rustls = "0.21.7"
 rustls-pemfile = "1.0.3"
 serde = { version = "1.0.188", features = ["derive"] }
@@ -39,7 +39,7 @@ serde_with = { version = "3.3.0", features = ["json"] }
 sql-builder = "3.1.1"
 sqlx = { version = "0.7.1", default-features = false, features = ["macros", "runtime-tokio", "sqlite"] }
 sylvia-iot-corelib = { path="../sylvia-iot-corelib" }
-tera = "1.19.0"
+tera = "1.19.1"
 tokio = { version = "1.32.0", features = ["io-util", "macros", "rt-multi-thread", "time"] }
 url = "2.4.1"
 

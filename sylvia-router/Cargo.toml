@@ -1,6 +1,6 @@
 [package]
 name = "sylvia-router"
-version = "0.0.32"
+version = "0.0.33"
 authors = ["Chien-Hong Chan"]
 categories = ["web-programming::http-server"]
 description = "A simple router application with full Sylvia-IoT core components."
@@ -17,7 +17,7 @@ actix-files = "0.6.2"
 actix-http = "3.4.0"
 actix-web = { version = "4.4.0", default-features = false, features = ["rustls-0_21"] }
 actix-web-prom = "0.7.0"
-chrono = { version = "0.4.28", default-features = false, features = ["serde"] }
+chrono = { version = "0.4.30", default-features = false, features = ["serde"] }
 clap = { version = "4.4.2", default-features = false, features = ["std", "help", "usage", "error-context"] }
 ipnet = "2.8.0"
 json5 = "0.4.1"
@@ -36,7 +36,7 @@ sylvia-iot-coremgr = { path="../sylvia-iot-coremgr" }
 sylvia-iot-coremgr-cli = { path="../sylvia-iot-coremgr-cli" }
 sylvia-iot-data = { path="../sylvia-iot-data" }
 sylvia-iot-sdk = { path="../sylvia-iot-sdk" }
-sysinfo = "0.29.9"
+sysinfo = "0.29.10"
 tokio = { version = "1.32.0", features = ["io-util", "macros", "rt-multi-thread", "time"] }
 
 [profile.release]
