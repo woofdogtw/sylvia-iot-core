@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.0.33 - 2023-09-08
+
+### Changed
+
+- Update Rust to 1.72.0 with GitHub Actions runner image 20230903.1.0.
+- Update dependencies and fix vulnerabilities.
+
 ## 0.0.32 - 2023-09-01
 
 ### Changed

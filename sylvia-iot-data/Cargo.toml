@@ -1,6 +1,6 @@
 [package]
 name = "sylvia-iot-data"
-version = "0.0.32"
+version = "0.0.33"
 authors = ["Chien-Hong Chan"]
 categories = ["web-programming::http-server"]
 description = "The data storage of Sylvia-IoT core modules."
@@ -20,7 +20,7 @@ actix-web = { version = "4.4.0", default-features = false, features = ["rustls-0
 actix-web-prom = "0.7.0"
 async-stream = "0.3.5"
 async-trait = "0.1.73"
-chrono = { version = "0.4.28", default-features = false, features = ["serde"] }
+chrono = { version = "0.4.30", default-features = false, features = ["serde"] }
 clap = { version = "4.4.2", default-features = false, features = ["std", "help", "usage", "error-context"] }
 csv = "1.2.2"
 futures = "0.3.28"

@@ -11,7 +11,7 @@ use std::{
     process::Command,
 };
 
-use chrono::{TimeZone, Utc};
+use chrono::DateTime;
 use ipnet::Ipv4Net;
 use serde::{Deserialize, Serialize};
 use shell_escape;
@@ -436,8 +436,8 @@ pub fn get_dhcp_leases() -> Result<Vec<DhcpLease>, IoError> {
                 None => continue,
                 Some(v) => dt_str.push_str(v),
             }
-            if let Ok(dt) = Utc.datetime_from_str(dt_str.as_str(), "%Y/%m/%d %H:%M:%S") {
-                new_lease.starts = Some(strings::time_str(&dt));
+            if let Ok(dt) = DateTime::parse_from_rfc3339(dt_str.as_str()) {
+                new_lease.starts = Some(strings::time_str(&dt.into()));
             }
         } else if line.starts_with("  ends ") && line.ends_with(";") {
             let content = line.strip_prefix("  ends ").unwrap();
@@ -456,8 +456,8 @@ pub fn get_dhcp_leases() -> Result<Vec<DhcpLease>, IoError> {
                 None => continue,
                 Some(v) => dt_str.push_str(v),
             }
-            if let Ok(dt) = Utc.datetime_from_str(dt_str.as_str(), "%Y/%m/%d %H:%M:%S") {
-                new_lease.ends = Some(strings::time_str(&dt));
+            if let Ok(dt) = DateTime::parse_from_rfc3339(dt_str.as_str()) {
+                new_lease.ends = Some(strings::time_str(&dt.into()));
             }
         } else if line.starts_with("  hardware ethernet ") && line.ends_with(";") {
             let content = line.strip_prefix("  hardware ethernet ").unwrap();
