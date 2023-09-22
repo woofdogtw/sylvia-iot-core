@@ -1047,7 +1047,10 @@ fn test_get_list(
         }
         let info_created_at = match DateTime::parse_from_rfc3339(info.created_at.as_str()) {
             Err(e) => return Err(format!("created_at not RFC3339: {}", e)),
-            Ok(dt) => Utc.timestamp_nanos(dt.timestamp_nanos()),
+            Ok(dt) => Utc.timestamp_nanos(match dt.timestamp_nanos_opt() {
+                None => i64::MAX,
+                Some(ts) => ts,
+            }),
         };
         if let Err(_) = expect(info_created_at.le(&created_at)).to_equal(true) {
             return Err(format!(

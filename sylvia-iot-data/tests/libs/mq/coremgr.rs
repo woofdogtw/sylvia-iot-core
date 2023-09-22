@@ -346,14 +346,16 @@ pub fn operation(context: &mut SpecContext<TestState>) -> Result<(), String> {
 
     runtime.block_on(async {
         let now = Utc::now();
+        let ts_nanos = match now.timestamp_nanos_opt() {
+            None => i64::MAX,
+            Some(ts) => ts,
+        };
         let data = SendDataMsg::CmOpData {
             kind: "operation".to_string(),
             data: CmOpData {
                 data_id: "data_id1".to_string(),
                 req_time: strings::time_str(&now),
-                res_time: strings::time_str(
-                    &(Utc.timestamp_nanos(now.timestamp_nanos() + 1000000)),
-                ),
+                res_time: strings::time_str(&(Utc.timestamp_nanos(ts_nanos + 1000000))),
                 latency_ms: 1,
                 status: 200,
                 source_ip: "::1".to_string(),
@@ -379,9 +381,7 @@ pub fn operation(context: &mut SpecContext<TestState>) -> Result<(), String> {
             data: CmOpData {
                 data_id: "data_id2".to_string(),
                 req_time: strings::time_str(&now),
-                res_time: strings::time_str(
-                    &(Utc.timestamp_nanos(now.timestamp_nanos() + 2000000)),
-                ),
+                res_time: strings::time_str(&(Utc.timestamp_nanos(ts_nanos + 2000000))),
                 latency_ms: 2,
                 status: 400,
                 source_ip: "::1".to_string(),

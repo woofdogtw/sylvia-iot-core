@@ -430,18 +430,22 @@ pub fn application_uldata(context: &mut SpecContext<TestState>) -> Result<(), St
 
     runtime.block_on(async {
         let now = Utc::now();
+        let ts_nanos = match now.timestamp_nanos_opt() {
+            None => i64::MAX,
+            Some(ts) => ts,
+        };
         let data = SendDataMsg::AppUlData {
             kind: "application-uldata".to_string(),
             data: AppUlData {
                 data_id: "data_id1".to_string(),
                 proc: strings::time_str(&now),
-                publish: strings::time_str(&(Utc.timestamp_nanos(now.timestamp_nanos() + 1000000))),
+                publish: strings::time_str(&(Utc.timestamp_nanos(ts_nanos + 1000000))),
                 unit_code: None,
                 network_code: "network_code1".to_string(),
                 network_addr: "network_addr1".to_string(),
                 unit_id: "unit_id1".to_string(),
                 device_id: "device_id1".to_string(),
-                time: strings::time_str(&(Utc.timestamp_nanos(now.timestamp_nanos() + 2000000))),
+                time: strings::time_str(&(Utc.timestamp_nanos(ts_nanos + 2000000))),
                 profile: "profile1".to_string(),
                 data: "01".to_string(),
                 extension: None,
@@ -460,13 +464,13 @@ pub fn application_uldata(context: &mut SpecContext<TestState>) -> Result<(), St
             data: AppUlData {
                 data_id: "data_id2".to_string(),
                 proc: strings::time_str(&now),
-                publish: strings::time_str(&(Utc.timestamp_nanos(now.timestamp_nanos() + 1000000))),
+                publish: strings::time_str(&(Utc.timestamp_nanos(ts_nanos + 1000000))),
                 unit_code: Some("unit_code2".to_string()),
                 network_code: "network_code2".to_string(),
                 network_addr: "network_addr2".to_string(),
                 unit_id: "unit_id2".to_string(),
                 device_id: "device_id2".to_string(),
-                time: strings::time_str(&(Utc.timestamp_nanos(now.timestamp_nanos() + 2000000))),
+                time: strings::time_str(&(Utc.timestamp_nanos(ts_nanos + 2000000))),
                 profile: "profile2".to_string(),
                 data: "02".to_string(),
                 extension: Some(Map::new()),
@@ -591,6 +595,10 @@ pub fn application_dldata(context: &mut SpecContext<TestState>) -> Result<(), St
 
     runtime.block_on(async {
         let now = Utc::now();
+        let ts_nanos = match now.timestamp_nanos_opt() {
+            None => i64::MAX,
+            Some(ts) => ts,
+        };
         let data = SendDataMsg::AppDlData {
             kind: "application-dldata".to_string(),
             data: AppDlData {
@@ -617,7 +625,7 @@ pub fn application_dldata(context: &mut SpecContext<TestState>) -> Result<(), St
             kind: "application-dldata-result".to_string(),
             data: AppDlDataResult {
                 data_id: "data_id1".to_string(),
-                resp: strings::time_str(&(Utc.timestamp_nanos(now.timestamp_nanos() + 1000000))),
+                resp: strings::time_str(&(Utc.timestamp_nanos(ts_nanos + 1000000))),
                 status: 0,
             },
         };
@@ -655,7 +663,7 @@ pub fn application_dldata(context: &mut SpecContext<TestState>) -> Result<(), St
             kind: "application-dldata-result".to_string(),
             data: AppDlDataResult {
                 data_id: "data_id2".to_string(),
-                resp: strings::time_str(&(Utc.timestamp_nanos(now.timestamp_nanos() + 1000000))),
+                resp: strings::time_str(&(Utc.timestamp_nanos(ts_nanos + 1000000))),
                 status: -1,
             },
         };
@@ -762,6 +770,10 @@ pub fn network_uldata(context: &mut SpecContext<TestState>) -> Result<(), String
 
     runtime.block_on(async {
         let now = Utc::now();
+        let ts_nanos = match now.timestamp_nanos_opt() {
+            None => i64::MAX,
+            Some(ts) => ts,
+        };
         let data = SendDataMsg::NetUlData {
             kind: "network-uldata".to_string(),
             data: NetUlData {
@@ -772,7 +784,7 @@ pub fn network_uldata(context: &mut SpecContext<TestState>) -> Result<(), String
                 network_addr: "network_addr1".to_string(),
                 unit_id: None,
                 device_id: None,
-                time: strings::time_str(&(Utc.timestamp_nanos(now.timestamp_nanos() + 2000000))),
+                time: strings::time_str(&(Utc.timestamp_nanos(ts_nanos + 2000000))),
                 profile: "profile1".to_string(),
                 data: "01".to_string(),
                 extension: None,
@@ -796,7 +808,7 @@ pub fn network_uldata(context: &mut SpecContext<TestState>) -> Result<(), String
                 network_addr: "network_addr2".to_string(),
                 unit_id: Some("unit_id2".to_string()),
                 device_id: Some("device_id2".to_string()),
-                time: strings::time_str(&(Utc.timestamp_nanos(now.timestamp_nanos() + 2000000))),
+                time: strings::time_str(&(Utc.timestamp_nanos(ts_nanos + 2000000))),
                 profile: "profile2".to_string(),
                 data: "02".to_string(),
                 extension: Some(Map::new()),
@@ -906,12 +918,16 @@ pub fn network_dldata(context: &mut SpecContext<TestState>) -> Result<(), String
 
     runtime.block_on(async {
         let now = Utc::now();
+        let ts_nanos = match now.timestamp_nanos_opt() {
+            None => i64::MAX,
+            Some(ts) => ts,
+        };
         let data = SendDataMsg::NetDlData {
             kind: "network-dldata".to_string(),
             data: NetDlData {
                 data_id: "data_id1".to_string(),
                 proc: strings::time_str(&now),
-                publish: strings::time_str(&(Utc.timestamp_nanos(now.timestamp_nanos() + 1000000))),
+                publish: strings::time_str(&(Utc.timestamp_nanos(ts_nanos + 1000000))),
                 status: -1,
                 unit_id: "unit_id1".to_string(),
                 device_id: "device_id1".to_string(),
@@ -933,7 +949,7 @@ pub fn network_dldata(context: &mut SpecContext<TestState>) -> Result<(), String
             kind: "network-dldata-result".to_string(),
             data: NetDlDataResult {
                 data_id: "data_id1".to_string(),
-                resp: strings::time_str(&(Utc.timestamp_nanos(now.timestamp_nanos() + 1000000))),
+                resp: strings::time_str(&(Utc.timestamp_nanos(ts_nanos + 1000000))),
                 status: 0,
             },
         };
@@ -950,7 +966,7 @@ pub fn network_dldata(context: &mut SpecContext<TestState>) -> Result<(), String
             data: NetDlData {
                 data_id: "data_id2".to_string(),
                 proc: strings::time_str(&now),
-                publish: strings::time_str(&(Utc.timestamp_nanos(now.timestamp_nanos() + 1000000))),
+                publish: strings::time_str(&(Utc.timestamp_nanos(ts_nanos + 1000000))),
                 status: -2,
                 unit_id: "unit_id2".to_string(),
                 device_id: "device_id2".to_string(),
@@ -972,7 +988,7 @@ pub fn network_dldata(context: &mut SpecContext<TestState>) -> Result<(), String
             kind: "network-dldata-result".to_string(),
             data: NetDlDataResult {
                 data_id: "data_id2".to_string(),
-                resp: strings::time_str(&(Utc.timestamp_nanos(now.timestamp_nanos() + 1000000))),
+                resp: strings::time_str(&(Utc.timestamp_nanos(ts_nanos + 1000000))),
                 status: 0,
             },
         };

@@ -21,8 +21,8 @@ actix-web-prom = "0.7.0"
 async-stream = "0.3.5"
 async-trait = "0.1.73"
 base64 = "0.21.4"
-chrono = { version = "0.4.30", default-features = false, features = ["serde"] }
-clap = { version = "4.4.3", default-features = false, features = ["std", "help", "usage", "error-context"] }
+chrono = { version = "0.4.31", default-features = false, features = ["serde"] }
+clap = { version = "4.4.4", default-features = false, features = ["std", "help", "usage", "error-context"] }
 csv = "1.2.2"
 futures = "0.3.28"
 futures-util = "0.3.28"
