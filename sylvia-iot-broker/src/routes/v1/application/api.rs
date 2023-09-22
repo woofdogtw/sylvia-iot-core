@@ -1448,8 +1448,19 @@ impl EventHandler for MgrHandler {
             }
         };
 
-        let expired_at =
-            Utc.timestamp_nanos(now.timestamp_nanos() + DATA_EXPIRES_IN * 1_000_000_000);
+        let ts_nanos = match now.timestamp_nanos_opt() {
+            None => {
+                error!("[{}] cannot generate valid nanoseconds", FN_NAME);
+                return Ok(Box::new(DlDataResp {
+                    correlation_id: data.correlation_id.clone(),
+                    error: Some(err::E_RSC.to_string()),
+                    message: Some(format!("cannot generate valid nanoseconds")),
+                    ..Default::default()
+                }));
+            }
+            Some(ts) => ts,
+        };
+        let expired_at = Utc.timestamp_nanos(ts_nanos + DATA_EXPIRES_IN * 1_000_000_000);
         let dldata = dldata_buffer::DlDataBuffer {
             data_id: data_id.clone(),
             unit_id: mgr.unit_id().to_string(),

@@ -14,8 +14,8 @@ rust-version = "1.70"
 [dependencies]
 actix-web = { version = "4.4.0", default-features = false, features = ["rustls"] }
 anyhow = "1.0.75"
-chrono = { version = "0.4.30", default-features = false, features = ["serde"] }
-clap = { version = "4.4.3", default-features = false, features = ["std", "help", "usage", "error-context"] }
+chrono = { version = "0.4.31", default-features = false, features = ["serde"] }
+clap = { version = "4.4.4", default-features = false, features = ["std", "help", "usage", "error-context"] }
 hex = "0.4.3"
 hmac = "0.12.1"
 log = "0.4.20"

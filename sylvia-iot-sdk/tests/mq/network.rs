@@ -527,6 +527,10 @@ pub fn uldata(context: &mut SpecContext<TestState>) -> Result<(), String> {
         }
 
         let now = Utc::now();
+        let ts_nanos = match now.timestamp_nanos_opt() {
+            None => i64::MAX,
+            Some(ts) => ts,
+        };
         let mut ext = Map::<String, Value>::new();
         ext.insert("key".to_string(), Value::String("value".to_string()));
         let data1 = UlData {
@@ -539,7 +543,7 @@ pub fn uldata(context: &mut SpecContext<TestState>) -> Result<(), String> {
             return Err(format!("send data1 error: {}", e));
         }
         let data2 = UlData {
-            time: Utc.timestamp_nanos(now.timestamp_nanos() + 1000000),
+            time: Utc.timestamp_nanos(ts_nanos + 1000000),
             network_addr: "addr2".to_string(),
             data: vec![2],
             extension: None,
@@ -716,6 +720,10 @@ pub fn dldata(context: &mut SpecContext<TestState>) -> Result<(), String> {
         }
 
         let now = Utc::now();
+        let ts_nanos = match now.timestamp_nanos_opt() {
+            None => i64::MAX,
+            Some(ts) => ts,
+        };
         let data1 = NetDlData {
             data_id: "1".to_string(),
             publish: strings::time_str(&now),
@@ -735,7 +743,7 @@ pub fn dldata(context: &mut SpecContext<TestState>) -> Result<(), String> {
         ext.insert("key".to_string(), Value::String("value".to_string()));
         let data2 = NetDlData {
             data_id: "2".to_string(),
-            publish: strings::time_str(&Utc.timestamp_nanos(now.timestamp_nanos() + 1000000)),
+            publish: strings::time_str(&Utc.timestamp_nanos(ts_nanos + 1000000)),
             expires_in: 2000,
             network_addr: "addr2".to_string(),
             data: "02".to_string(),
@@ -750,7 +758,7 @@ pub fn dldata(context: &mut SpecContext<TestState>) -> Result<(), String> {
         }
         let data3 = NetDlData {
             data_id: "3".to_string(),
-            publish: strings::time_str(&Utc.timestamp_nanos(now.timestamp_nanos() + 2000000)),
+            publish: strings::time_str(&Utc.timestamp_nanos(ts_nanos + 2000000)),
             expires_in: 3000,
             network_addr: "addr3".to_string(),
             data: "03".to_string(),

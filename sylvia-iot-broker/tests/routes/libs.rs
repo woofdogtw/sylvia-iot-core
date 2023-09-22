@@ -225,6 +225,10 @@ pub fn create_dldata_buffer(
     addr: &str,
 ) -> DlDataBuffer {
     let now = Utc::now();
+    let ts_nanos = match now.timestamp_nanos_opt() {
+        None => i64::MAX,
+        Some(ts) => ts,
+    };
     DlDataBuffer {
         data_id: id.to_string(),
         unit_id: unit.to_string(),
@@ -235,7 +239,7 @@ pub fn create_dldata_buffer(
         network_addr: addr.to_string(),
         device_id: addr.to_string(),
         created_at: now,
-        expired_at: Utc.timestamp_nanos(now.timestamp_nanos() + DATA_EXPIRES),
+        expired_at: Utc.timestamp_nanos(ts_nanos + DATA_EXPIRES),
     }
 }
 
