@@ -15,7 +15,7 @@ rust-version = "1.70"
 actix-web = { version = "4.4.0", default-features = false, features = ["rustls"] }
 anyhow = "1.0.75"
 chrono = { version = "0.4.31", default-features = false, features = ["serde"] }
-clap = { version = "4.4.4", default-features = false, features = ["std", "help", "usage", "error-context"] }
+clap = { version = "4.4.6", default-features = false, features = ["std", "help", "usage", "error-context"] }
 hex = "0.4.3"
 hmac = "0.12.1"
 log = "0.4.20"
@@ -25,7 +25,7 @@ rand = "0.8.5"
 regex = "1.9.5"
 serde = { version = "1.0.188", features = ["derive"] }
 serde_json = "1.0.107"
-sha2 = "0.10.7"
+sha2 = "0.10.8"
 url = "2.4.1"
 
 [dev-dependencies]
