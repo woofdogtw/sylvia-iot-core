@@ -24,7 +24,7 @@ jobs:
           - 5672:5672
           - 15672:15672
       emqx:
-        image: emqx/emqx:5.2.1
+        image: emqx/emqx:5.3.0
         ports:
           - 1883:1883
           - 8883:8883
@@ -81,7 +81,7 @@ jobs:
     runs-on: ubuntu-20.04
     services:
       mongo:
-        image: mongo:7.0.1
+        image: mongo:7.0.2
         ports:
           - 27017:27017
       redis:
@@ -140,7 +140,7 @@ jobs:
     runs-on: ubuntu-20.04
     services:
       mongo:
-        image: mongo:7.0.1
+        image: mongo:7.0.2
         ports:
           - 27017:27017
       rabbitmq:
@@ -150,7 +150,7 @@ jobs:
           - 5672:5672
           - 15672:15672
       emqx:
-        image: emqx/emqx:5.2.1
+        image: emqx/emqx:5.3.0
         ports:
           - 1883:1883
           - 8883:8883
@@ -257,7 +257,7 @@ jobs:
     runs-on: ubuntu-20.04
     services:
       mongo:
-        image: mongo:7.0.1
+        image: mongo:7.0.2
         ports:
           - 27017:27017
       rabbitmq:
@@ -288,7 +288,7 @@ jobs:
           -e EMQX_LOADED_MODULES="emqx_mod_acl_internal,emqx_mod_presence,emqx_mod_topic_metrics"
           -p 1883:1883 -p 8883:8883 -p 18083:18083
           -v "$(pwd)/.github/workflows/files/emqx.conf":"/opt/emqx/etc/emqx.conf"
-          emqx/emqx:5.2.1
+          emqx/emqx:5.3.0
       - name: Build bin/lib
         run: cargo build -p $PROJ
       - name: Print system info
@@ -339,7 +339,7 @@ jobs:
     runs-on: ubuntu-20.04
     services:
       mongo:
-        image: mongo:7.0.1
+        image: mongo:7.0.2
         ports:
           - 27017:27017
       rabbitmq:
@@ -349,7 +349,7 @@ jobs:
           - 5672:5672
           - 15672:15672
       emqx:
-        image: emqx/emqx:5.2.1
+        image: emqx/emqx:5.3.0
         ports:
           - 1883:1883
           - 8883:8883
@@ -412,7 +412,7 @@ jobs:
           - 5672:5672
           - 15672:15672
       emqx:
-        image: emqx/emqx:5.2.1
+        image: emqx/emqx:5.3.0
         ports:
           - 1883:1883
           - 8883:8883

@@ -23,14 +23,14 @@ async-trait = "0.1.73"
 base64 = "0.21.4"
 chrono = { version = "0.4.31", default-features = false, features = ["serde"] }
 clap = { version = "4.4.6", default-features = false, features = ["std", "help", "usage", "error-context"] }
-csv = "1.2.2"
+csv = "1.3.0"
 futures = "0.3.28"
 futures-util = "0.3.28"
 general-mq = { path="../general-mq" }
 hex = "0.4.3"
 json5 = "0.4.1"
 log = "0.4.20"
-reqwest = { version = "0.11.20", default-features = false, features = ["json", "rustls-tls", "stream"] }
+reqwest = { version = "0.11.22", default-features = false, features = ["json", "rustls-tls", "stream"] }
 rumqttd = "0.18.0"
 rustls = "0.21.7"
 rustls-pemfile = "1.0.3"

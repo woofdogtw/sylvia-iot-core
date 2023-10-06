@@ -22,7 +22,7 @@ clap = { version = "4.4.6", default-features = false, features = ["std", "help",
 ipnet = "2.8.0"
 json5 = "0.4.1"
 log = "0.4.20"
-reqwest = { version = "0.11.20", default-features = false, features = ["json", "rustls-tls"] }
+reqwest = { version = "0.11.22", default-features = false, features = ["json", "rustls-tls"] }
 rustls = "0.21.7"
 rustls-pemfile = "1.0.3"
 serde = { version = "1.0.188", features = ["derive"] }

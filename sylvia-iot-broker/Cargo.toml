@@ -26,9 +26,9 @@ general-mq = { path="../general-mq" }
 hex = "0.4.3"
 json5 = "0.4.1"
 log = "0.4.20"
-lru = "0.11.1"
+lru = "0.12.0"
 mongodb = { version = "2.7.0", features = ["bson-chrono-0_4"] }
-reqwest = { version = "0.11.20", default-features = false, features = ["json", "rustls-tls"] }
+reqwest = { version = "0.11.22", default-features = false, features = ["json", "rustls-tls"] }
 rustls = "0.21.7"
 rustls-pemfile = "1.0.3"
 serde = { version = "1.0.188", features = ["derive"] }

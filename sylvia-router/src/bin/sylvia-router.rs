@@ -141,7 +141,7 @@ async fn main() -> std::io::Result<()> {
             .service(coremgr_routes::new_service(&coremgr_state))
             .service(data_routes::new_service(&data_state))
             .service(routes::new_service(&router_state))
-            .route("/version", web::get().to(coremgr_routes::get_version))
+            .route("/version", web::get().to(routes::get_version))
             .service(actix_files::Files::new("/", static_path).index_file("index.html"))
     })
     .keep_alive(KeepAlive::Timeout(Duration::from_secs(60)));
