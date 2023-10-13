@@ -22,8 +22,8 @@ log = "0.4.20"
 log4rs = "1.2.0"
 pbkdf2 = "0.12.2"
 rand = "0.8.5"
-regex = "1.9.6"
-serde = { version = "1.0.188", features = ["derive"] }
+regex = "1.10.0"
+serde = { version = "1.0.189", features = ["derive"] }
 serde_json = "1.0.107"
 sha2 = "0.10.8"
 url = "2.4.1"
