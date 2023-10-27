@@ -1,6 +1,6 @@
 [package]
 name = "sylvia-iot-sdk"
-version = "0.0.34"
+version = "0.0.35"
 authors = ["Chien-Hong Chan"]
 categories = ["web-programming::http-server"]
 description = "SDK for developing networks (adapters) and applications on Sylvia-IoT."
@@ -16,11 +16,11 @@ actix-service = "2.0.2"
 actix-web = { version = "4.4.0", default-features = false, features = ["rustls"] }
 async-trait = "0.1.74"
 chrono = { version = "0.4.31", default-features = false, features = ["serde"] }
-futures = "0.3.28"
+futures = "0.3.29"
 general-mq = { path = "../general-mq" }
 hex = "0.4.3"
 reqwest = { version = "0.11.22", default-features = false, features = ["json"] }
-serde = { version = "1.0.189", features = ["derive"] }
+serde = { version = "1.0.190", features = ["derive"] }
 serde_json = "1.0.107"
 sylvia-iot-corelib = { path = "../sylvia-iot-corelib" }
 tokio = { version = "1.33.0", features = ["io-util", "macros", "rt-multi-thread", "time"] }
