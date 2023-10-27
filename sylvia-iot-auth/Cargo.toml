@@ -1,6 +1,6 @@
 [package]
 name = "sylvia-iot-auth"
-version = "0.0.34"
+version = "0.0.35"
 authors = ["Chien-Hong Chan"]
 categories = ["web-programming::http-server"]
 description = "The authentication/authorization module of the Sylvia-IoT platform."
@@ -20,10 +20,10 @@ actix-web = { version = "4.4.0", default-features = false, features = ["rustls-0
 actix-web-prom = "0.7.0"
 async-stream = "0.3.5"
 async-trait = "0.1.74"
-base64 = "0.21.4"
+base64 = "0.21.5"
 chrono = { version = "0.4.31", default-features = false, features = ["serde"] }
-clap = { version = "4.4.6", default-features = false, features = ["std", "help", "usage", "error-context"] }
-futures = "0.3.28"
+clap = { version = "4.4.7", default-features = false, features = ["std", "help", "usage", "error-context"] }
+futures = "0.3.29"
 json5 = "0.4.1"
 log = "0.4.20"
 mongodb = { version = "2.7.0", features = ["bson-chrono-0_4"] }
@@ -32,7 +32,7 @@ oxide-auth-async = "0.1.1"
 redis = { version = "0.23.3", features = ["tokio-comp"] }
 rustls = "0.21.7"
 rustls-pemfile = "1.0.3"
-serde = { version = "1.0.189", features = ["derive"] }
+serde = { version = "1.0.190", features = ["derive"] }
 serde_json = "1.0.107"
 serde_urlencoded = "0.7.1"
 serde_with = { version = "3.4.0", features = ["json"] }

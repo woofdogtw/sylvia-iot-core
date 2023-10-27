@@ -1,6 +1,6 @@
 [package]
 name = "sylvia-iot-corelib"
-version = "0.0.34"
+version = "0.0.35"
 authors = ["Chien-Hong Chan"]
 categories = ["web-programming::http-server"]
 description = "Common libraries of Sylvia-IoT core modules."
@@ -15,7 +15,7 @@ rust-version = "1.70"
 actix-web = { version = "4.4.0", default-features = false, features = ["rustls"] }
 anyhow = "1.0.75"
 chrono = { version = "0.4.31", default-features = false, features = ["serde"] }
-clap = { version = "4.4.6", default-features = false, features = ["std", "help", "usage", "error-context"] }
+clap = { version = "4.4.7", default-features = false, features = ["std", "help", "usage", "error-context"] }
 hex = "0.4.3"
 hmac = "0.12.1"
 log = "0.4.20"
@@ -23,7 +23,7 @@ log4rs = "1.2.0"
 pbkdf2 = "0.12.2"
 rand = "0.8.5"
 regex = "1.10.2"
-serde = { version = "1.0.189", features = ["derive"] }
+serde = { version = "1.0.190", features = ["derive"] }
 serde_json = "1.0.107"
 sha2 = "0.10.8"
 url = "2.4.1"
