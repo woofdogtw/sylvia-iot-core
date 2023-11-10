@@ -18,7 +18,7 @@ jobs:
     runs-on: ubuntu-20.04
     services:
       rabbitmq:
-        image: rabbitmq:3.12.7-management-alpine
+        image: rabbitmq:3.12.8-management-alpine
         ports:
           - 5671:5671
           - 5672:5672
@@ -85,7 +85,7 @@ jobs:
         ports:
           - 27017:27017
       redis:
-        image: redis:7.2.2
+        image: redis:7.2.3
         ports:
           - 6379:6379
     env:
@@ -144,7 +144,7 @@ jobs:
         ports:
           - 27017:27017
       rabbitmq:
-        image: rabbitmq:3.12.7-management-alpine
+        image: rabbitmq:3.12.8-management-alpine
         ports:
           - 5671:5671
           - 5672:5672
@@ -261,7 +261,7 @@ jobs:
         ports:
           - 27017:27017
       rabbitmq:
-        image: rabbitmq:3.12.7-management-alpine
+        image: rabbitmq:3.12.8-management-alpine
         ports:
           - 5671:5671
           - 5672:5672
@@ -343,7 +343,7 @@ jobs:
         ports:
           - 27017:27017
       rabbitmq:
-        image: rabbitmq:3.12.7-management-alpine
+        image: rabbitmq:3.12.8-management-alpine
         ports:
           - 5671:5671
           - 5672:5672
@@ -406,7 +406,7 @@ jobs:
     runs-on: ubuntu-20.04
     services:
       rabbitmq:
-        image: rabbitmq:3.12.7-management-alpine
+        image: rabbitmq:3.12.8-management-alpine
         ports:
           - 5671:5671
           - 5672:5672
