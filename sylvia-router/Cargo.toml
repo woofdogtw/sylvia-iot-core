@@ -18,13 +18,13 @@ actix-http = "3.4.0"
 actix-web = { version = "4.4.0", default-features = false, features = ["rustls-0_21"] }
 actix-web-prom = "0.7.0"
 chrono = { version = "0.4.31", default-features = false, features = ["serde"] }
-clap = { version = "4.4.7", default-features = false, features = ["std", "help", "usage", "error-context"] }
+clap = { version = "4.4.8", default-features = false, features = ["std", "help", "usage", "error-context"] }
 ipnet = "2.9.0"
 json5 = "0.4.1"
 log = "0.4.20"
 reqwest = { version = "0.11.22", default-features = false, features = ["json", "rustls-tls"] }
-rustls = "0.21.7"
-rustls-pemfile = "1.0.3"
+rustls = "0.21.9"
+rustls-pemfile = "1.0.4"
 serde = { version = "1.0.192", features = ["derive"] }
 serde_json = "1.0.108"
 serde_urlencoded = "0.7.1"
