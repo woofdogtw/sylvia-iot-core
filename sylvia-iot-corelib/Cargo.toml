@@ -23,10 +23,10 @@ log4rs = "1.2.0"
 pbkdf2 = "0.12.2"
 rand = "0.8.5"
 regex = "1.10.2"
-serde = { version = "1.0.192", features = ["derive"] }
+serde = { version = "1.0.193", features = ["derive"] }
 serde_json = "1.0.108"
 sha2 = "0.10.8"
-url = "2.4.1"
+url = "2.5.0"
 
 [dev-dependencies]
 laboratory = "2.0.0"
