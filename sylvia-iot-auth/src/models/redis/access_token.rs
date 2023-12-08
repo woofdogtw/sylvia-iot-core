@@ -93,7 +93,7 @@ pub async fn add(conn: &mut Connection, token: &AccessToken) -> Result<(), Box<d
         .set_ex(
             PREFIX.to_string() + token.access_token.as_str(),
             item_str,
-            (EXPIRES + 60) as usize,
+            (EXPIRES + 60) as u64,
         )
         .await?;
     Ok(())

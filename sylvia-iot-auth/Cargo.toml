@@ -12,7 +12,7 @@ repository = "https://github.com/woofdogtw/sylvia-iot-core.git"
 rust-version = "1.70"
 
 [dependencies]
-actix-cors = "0.6.4"
+actix-cors = "0.6.5"
 actix-files = "0.6.2"
 actix-http = "3.4.0"
 actix-service = "2.0.2"
@@ -22,14 +22,14 @@ async-stream = "0.3.5"
 async-trait = "0.1.74"
 base64 = "0.21.5"
 chrono = { version = "0.4.31", default-features = false, features = ["serde"] }
-clap = { version = "4.4.10", default-features = false, features = ["std", "help", "usage", "error-context"] }
+clap = { version = "4.4.11", default-features = false, features = ["std", "help", "usage", "error-context"] }
 futures = "0.3.29"
 json5 = "0.4.1"
 log = "0.4.20"
 mongodb = { version = "2.7.1", features = ["bson-chrono-0_4"] }
 oxide-auth = "0.5.4"
 oxide-auth-async = "0.1.1"
-redis = { version = "0.23.3", features = ["tokio-comp"] }
+redis = { version = "0.24.0", features = ["tokio-comp"] }
 rustls = "0.21.9"
 rustls-pemfile = "1.0.4"
 serde = { version = "1.0.193", features = ["derive"] }
