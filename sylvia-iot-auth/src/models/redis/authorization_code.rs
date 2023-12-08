@@ -83,7 +83,7 @@ pub async fn add(conn: &mut Connection, code: &AuthorizationCode) -> Result<(), 
         .set_ex(
             PREFIX.to_string() + code.code.as_str(),
             item_str,
-            (EXPIRES + 60) as usize,
+            (EXPIRES + 60) as u64,
         )
         .await?;
     Ok(())
