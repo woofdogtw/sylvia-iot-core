@@ -1,6 +1,16 @@
 # Changelog
 
+## 0.0.35 - 2023-12-15
+
+### Changed
+
+- Update Rust to 1.74.1 with GitHub Actions runner image 20231204.1.1.
+- Update Docker images with alpine-3.18.5.
+- Update dependencies.
+
 ## 0.0.34 - 2023-10-20
+
+### Changed
 
 - Update Rust to 1.73.0 with GitHub Actions runner image 20231016.1.1.
 - Update dependencies.

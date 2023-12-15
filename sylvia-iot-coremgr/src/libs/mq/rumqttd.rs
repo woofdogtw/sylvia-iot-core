@@ -32,62 +32,71 @@ pub fn start_rumqttd(
             max_segment_count: 10,
             ..Default::default()
         },
-        v4: HashMap::new(),
-        console: console_setting,
+        v4: Some(HashMap::new()),
+        console: Some(console_setting),
         ..Default::default()
     };
-    config.v4.insert(
-        "mqtt".to_string(),
-        ServerSettings {
-            name: "mqtt".to_string(),
-            listen: match rumqttd_conf.mqtt_port {
-                None => {
-                    SocketAddr::new(IpAddr::V4(Ipv4Addr::new(0, 0, 0, 0)), DEF_RUMQTTD_MQTT_PORT)
-                }
-                Some(port) => SocketAddr::new(IpAddr::V4(Ipv4Addr::new(0, 0, 0, 0)), port),
-            },
-            tls: None,
-            next_connection_delay_ms: 1,
-            connections: ConnectionSettings {
-                connection_timeout_ms: 5000,
-                max_payload_size: 1 * 1024 * 1024,
-                max_inflight_count: 200,
-                auth: None,
-                dynamic_filters: true,
-            },
-        },
-    );
+    {
+        if let Some(v4) = config.v4.as_mut() {
+            v4.insert(
+                "mqtt".to_string(),
+                ServerSettings {
+                    name: "mqtt".to_string(),
+                    listen: match rumqttd_conf.mqtt_port {
+                        None => SocketAddr::new(
+                            IpAddr::V4(Ipv4Addr::new(0, 0, 0, 0)),
+                            DEF_RUMQTTD_MQTT_PORT,
+                        ),
+                        Some(port) => SocketAddr::new(IpAddr::V4(Ipv4Addr::new(0, 0, 0, 0)), port),
+                    },
+                    tls: None,
+                    next_connection_delay_ms: 1,
+                    connections: ConnectionSettings {
+                        connection_timeout_ms: 5000,
+                        max_payload_size: 1 * 1024 * 1024,
+                        max_inflight_count: 200,
+                        auth: None,
+                        external_auth: None,
+                        dynamic_filters: true,
+                    },
+                },
+            );
+        }
+    }
     if let Some(cacert_file) = server_conf.cacert_file.as_ref() {
         if let Some(cert_file) = server_conf.cert_file.as_ref() {
             if let Some(key_file) = server_conf.key_file.as_ref() {
-                config.v4.insert(
-                    "mqtts".to_string(),
-                    ServerSettings {
-                        name: "mqtts".to_string(),
-                        listen: match rumqttd_conf.mqtt_port {
-                            None => SocketAddr::new(
-                                IpAddr::V4(Ipv4Addr::new(0, 0, 0, 0)),
-                                DEF_RUMQTTD_MQTTS_PORT,
-                            ),
-                            Some(port) => {
-                                SocketAddr::new(IpAddr::V4(Ipv4Addr::new(0, 0, 0, 0)), port)
-                            }
+                if let Some(v4) = config.v4.as_mut() {
+                    v4.insert(
+                        "mqtts".to_string(),
+                        ServerSettings {
+                            name: "mqtts".to_string(),
+                            listen: match rumqttd_conf.mqtt_port {
+                                None => SocketAddr::new(
+                                    IpAddr::V4(Ipv4Addr::new(0, 0, 0, 0)),
+                                    DEF_RUMQTTD_MQTTS_PORT,
+                                ),
+                                Some(port) => {
+                                    SocketAddr::new(IpAddr::V4(Ipv4Addr::new(0, 0, 0, 0)), port)
+                                }
+                            },
+                            tls: Some(TlsConfig::Rustls {
+                                capath: Some(cacert_file.clone()),
+                                certpath: cert_file.clone(),
+                                keypath: key_file.clone(),
+                            }),
+                            next_connection_delay_ms: 1,
+                            connections: ConnectionSettings {
+                                connection_timeout_ms: 5000,
+                                max_payload_size: 1 * 1024 * 1024,
+                                max_inflight_count: 200,
+                                auth: None,
+                                external_auth: None,
+                                dynamic_filters: true,
+                            },
                         },
-                        tls: Some(TlsConfig::Rustls {
-                            capath: cacert_file.clone(),
-                            certpath: cert_file.clone(),
-                            keypath: key_file.clone(),
-                        }),
-                        next_connection_delay_ms: 1,
-                        connections: ConnectionSettings {
-                            connection_timeout_ms: 5000,
-                            max_payload_size: 1 * 1024 * 1024,
-                            max_inflight_count: 200,
-                            auth: None,
-                            dynamic_filters: true,
-                        },
-                    },
-                );
+                    );
+                }
             }
         }
     }
