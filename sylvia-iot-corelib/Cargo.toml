@@ -1,6 +1,6 @@
 [package]
 name = "sylvia-iot-corelib"
-version = "0.0.35"
+version = "0.0.36"
 authors = ["Chien-Hong Chan"]
 categories = ["web-programming::http-server"]
 description = "Common libraries of Sylvia-IoT core modules."
@@ -13,7 +13,7 @@ rust-version = "1.70"
 
 [dependencies]
 actix-web = { version = "4.4.0", default-features = false, features = ["rustls"] }
-anyhow = "1.0.75"
+anyhow = "1.0.76"
 chrono = { version = "0.4.31", default-features = false, features = ["serde"] }
 clap = { version = "4.4.11", default-features = false, features = ["std", "help", "usage", "error-context"] }
 hex = "0.4.3"

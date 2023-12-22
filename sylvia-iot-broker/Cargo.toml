@@ -1,6 +1,6 @@
 [package]
 name = "sylvia-iot-broker"
-version = "0.0.35"
+version = "0.0.36"
 authors = ["Chien-Hong Chan"]
 categories = ["web-programming::http-server"]
 description = "The message broker module of the Sylvia-IoT platform."
@@ -18,7 +18,7 @@ actix-service = "2.0.2"
 actix-web = { version = "4.4.0", default-features = false, features = ["rustls-0_21"] }
 actix-web-prom = "0.7.0"
 async-stream = "0.3.5"
-async-trait = "0.1.74"
+async-trait = "0.1.75"
 chrono = { version = "0.4.31", default-features = false, features = ["serde"] }
 clap = { version = "4.4.11", default-features = false, features = ["std", "help", "usage", "error-context"] }
 futures = "0.3.29"
@@ -28,7 +28,7 @@ json5 = "0.4.1"
 log = "0.4.20"
 lru = "0.12.1"
 mongodb = { version = "2.8.0", features = ["bson-chrono-0_4"] }
-reqwest = { version = "0.11.22", default-features = false, features = ["json", "rustls-tls"] }
+reqwest = { version = "0.11.23", default-features = false, features = ["json", "rustls-tls"] }
 rustls = "0.21.10"
 rustls-pemfile = "1.0.4"
 serde = { version = "1.0.193", features = ["derive"] }
@@ -36,7 +36,7 @@ serde_json = "1.0.108"
 sql-builder = "3.1.1"
 sqlx = { version = "0.7.3", default-features = false, features = ["macros", "runtime-tokio", "sqlite"] }
 sylvia-iot-corelib = { path="../sylvia-iot-corelib" }
-tokio = { version = "1.35.0", features = ["io-util", "macros", "rt-multi-thread", "sync", "time"] }
+tokio = { version = "1.35.1", features = ["io-util", "macros", "rt-multi-thread", "sync", "time"] }
 url = "2.5.0"
 
 [dev-dependencies]

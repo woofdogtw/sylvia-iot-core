@@ -1,6 +1,6 @@
 [package]
 name = "sylvia-router"
-version = "0.0.35"
+version = "0.0.36"
 authors = ["Chien-Hong Chan"]
 categories = ["web-programming::http-server"]
 description = "A simple router application with full Sylvia-IoT core components."
@@ -22,7 +22,7 @@ clap = { version = "4.4.11", default-features = false, features = ["std", "help"
 ipnet = "2.9.0"
 json5 = "0.4.1"
 log = "0.4.20"
-reqwest = { version = "0.11.22", default-features = false, features = ["json", "rustls-tls"] }
+reqwest = { version = "0.11.23", default-features = false, features = ["json", "rustls-tls"] }
 rustls = "0.21.10"
 rustls-pemfile = "1.0.4"
 serde = { version = "1.0.193", features = ["derive"] }
@@ -36,8 +36,8 @@ sylvia-iot-coremgr = { path="../sylvia-iot-coremgr" }
 sylvia-iot-coremgr-cli = { path="../sylvia-iot-coremgr-cli" }
 sylvia-iot-data = { path="../sylvia-iot-data" }
 sylvia-iot-sdk = { path="../sylvia-iot-sdk" }
-sysinfo = "0.29.11"
-tokio = { version = "1.35.0", features = ["io-util", "macros", "rt-multi-thread", "time"] }
+sysinfo = "0.30.0"
+tokio = { version = "1.35.1", features = ["io-util", "macros", "rt-multi-thread", "time"] }
 
 [profile.release]
 codegen-units = 1
