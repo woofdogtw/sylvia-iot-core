@@ -3,7 +3,6 @@ use std::path::Path;
 use actix_web::{web, HttpResponse, Responder};
 use chrono::Utc;
 use sylvia_iot_sdk::util::{err::ErrResp, strings};
-use sysinfo::{CpuExt, DiskExt, SystemExt};
 use tokio::task;
 
 use super::{super::super::State, response};
@@ -11,12 +10,14 @@ use super::{super::super::State, response};
 /// `GET /{base}/api/v1/sys/usage`
 pub async fn get_usage(state: web::Data<State>) -> impl Responder {
     let sys_info = state.sys_info.clone();
+    let disk_info = state.disk_info.clone();
 
     let result = task::spawn_blocking(move || {
         let mut sys = sys_info.lock().unwrap();
+        let mut disk = disk_info.lock().unwrap();
         sys.refresh_cpu();
         sys.refresh_memory();
-        sys.refresh_disks();
+        disk.refresh_list();
 
         let mut cpu_usages = vec![];
         for cpu in sys.cpus() {
@@ -26,7 +27,7 @@ pub async fn get_usage(state: web::Data<State>) -> impl Responder {
         let mem_used = sys.used_memory();
         let mut disk_total = 0;
         let mut disk_used = 0;
-        for disk in sys.disks() {
+        for disk in disk.list() {
             if disk.mount_point().eq(Path::new("/")) {
                 disk_total = disk.total_space();
                 disk_used = disk_total - disk.available_space();

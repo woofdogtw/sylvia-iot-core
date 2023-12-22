@@ -7,7 +7,7 @@ use actix_web::{dev::HttpServiceFactory, error, web, HttpResponse, Responder};
 use reqwest;
 use serde::{Deserialize, Serialize};
 use sylvia_iot_sdk::util::err::ErrResp;
-use sysinfo::{CpuRefreshKind, RefreshKind, System, SystemExt};
+use sysinfo::{CpuRefreshKind, Disks, MemoryRefreshKind, RefreshKind, System};
 
 use crate::libs::config::Config;
 
@@ -27,6 +27,8 @@ pub struct State {
     pub client: reqwest::Client,
     /// System information.
     pub sys_info: Arc<Mutex<System>>,
+    /// Disk information.
+    pub disk_info: Arc<Mutex<Disks>>,
 }
 
 /// Query parameters for `GET /version`
@@ -57,16 +59,16 @@ pub async fn new_state(
     let mut sys_info = System::new_with_specifics(
         RefreshKind::new()
             .with_cpu(CpuRefreshKind::new().with_cpu_usage())
-            .with_memory()
-            .with_disks()
-            .with_disks_list(),
+            .with_memory(MemoryRefreshKind::new().with_ram().with_swap()),
     );
+    let disk_info = Disks::new_with_refreshed_list();
     sys_info.refresh_cpu();
     let state = State {
         scope_path,
         config: conf.clone(),
         client: reqwest::Client::new(),
         sys_info: Arc::new(Mutex::new(sys_info)),
+        disk_info: Arc::new(Mutex::new(disk_info)),
     };
     Ok(state)
 }
