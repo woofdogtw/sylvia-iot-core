@@ -14,16 +14,16 @@ rust-version = "1.70"
 [dependencies]
 actix-cors = "0.6.5"
 actix-files = "0.6.2"
-actix-http = "3.4.0"
+actix-http = "3.5.1"
 actix-service = "2.0.2"
-actix-web = { version = "4.4.0", default-features = false, features = ["rustls-0_21"] }
+actix-web = { version = "4.4.1", default-features = false, features = ["rustls-0_21"] }
 actix-web-prom = "0.7.0"
 async-stream = "0.3.5"
 async-trait = "0.1.75"
 base64 = "0.21.5"
 chrono = { version = "0.4.31", default-features = false, features = ["serde"] }
-clap = { version = "4.4.11", default-features = false, features = ["std", "help", "usage", "error-context"] }
-futures = "0.3.29"
+clap = { version = "4.4.12", default-features = false, features = ["std", "help", "usage", "error-context"] }
+futures = "0.3.30"
 json5 = "0.4.1"
 log = "0.4.20"
 mongodb = { version = "2.8.0", features = ["bson-chrono-0_4"] }

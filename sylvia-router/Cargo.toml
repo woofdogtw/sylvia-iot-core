@@ -14,11 +14,11 @@ rust-version = "1.70"
 [dependencies]
 actix-cors = "0.6.5"
 actix-files = "0.6.2"
-actix-http = "3.4.0"
-actix-web = { version = "4.4.0", default-features = false, features = ["rustls-0_21"] }
+actix-http = "3.5.1"
+actix-web = { version = "4.4.1", default-features = false, features = ["rustls-0_21"] }
 actix-web-prom = "0.7.0"
 chrono = { version = "0.4.31", default-features = false, features = ["serde"] }
-clap = { version = "4.4.11", default-features = false, features = ["std", "help", "usage", "error-context"] }
+clap = { version = "4.4.12", default-features = false, features = ["std", "help", "usage", "error-context"] }
 ipnet = "2.9.0"
 json5 = "0.4.1"
 log = "0.4.20"
@@ -36,7 +36,7 @@ sylvia-iot-coremgr = { path="../sylvia-iot-coremgr" }
 sylvia-iot-coremgr-cli = { path="../sylvia-iot-coremgr-cli" }
 sylvia-iot-data = { path="../sylvia-iot-data" }
 sylvia-iot-sdk = { path="../sylvia-iot-sdk" }
-sysinfo = "0.30.0"
+sysinfo = "0.30.2"
 tokio = { version = "1.35.1", features = ["io-util", "macros", "rt-multi-thread", "time"] }
 
 [profile.release]
