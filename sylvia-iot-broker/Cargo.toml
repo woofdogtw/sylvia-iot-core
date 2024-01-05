@@ -18,9 +18,9 @@ actix-service = "2.0.2"
 actix-web = { version = "4.4.1", default-features = false, features = ["rustls-0_21"] }
 actix-web-prom = "0.7.0"
 async-stream = "0.3.5"
-async-trait = "0.1.75"
+async-trait = "0.1.77"
 chrono = { version = "0.4.31", default-features = false, features = ["serde"] }
-clap = { version = "4.4.12", default-features = false, features = ["std", "help", "usage", "error-context"] }
+clap = { version = "4.4.13", default-features = false, features = ["std", "help", "usage", "error-context"] }
 futures = "0.3.30"
 general-mq = { path="../general-mq" }
 hex = "0.4.3"
@@ -31,8 +31,8 @@ mongodb = { version = "2.8.0", features = ["bson-chrono-0_4"] }
 reqwest = { version = "0.11.23", default-features = false, features = ["json", "rustls-tls"] }
 rustls = "0.21.10"
 rustls-pemfile = "1.0.4"
-serde = { version = "1.0.193", features = ["derive"] }
-serde_json = "1.0.108"
+serde = { version = "1.0.194", features = ["derive"] }
+serde_json = "1.0.111"
 sql-builder = "3.1.1"
 sqlx = { version = "0.7.3", default-features = false, features = ["macros", "runtime-tokio", "sqlite"] }
 sylvia-iot-corelib = { path="../sylvia-iot-corelib" }
