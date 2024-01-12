@@ -9,20 +9,20 @@ keywords = ["iot"]
 license = "MIT"
 readme = "README.md"
 repository = "https://github.com/woofdogtw/sylvia-iot-core.git"
-rust-version = "1.70"
+rust-version = "1.75"
 
 [dependencies]
-actix-cors = "0.6.5"
-actix-files = "0.6.2"
+actix-cors = "0.7.0"
+actix-files = "0.6.5"
 actix-http = "3.5.1"
 actix-service = "2.0.2"
 actix-web = { version = "4.4.1", default-features = false, features = ["rustls-0_21"] }
 actix-web-prom = "0.7.0"
 async-stream = "0.3.5"
 async-trait = "0.1.77"
-base64 = "0.21.5"
+base64 = "0.21.7"
 chrono = { version = "0.4.31", default-features = false, features = ["serde"] }
-clap = { version = "4.4.13", default-features = false, features = ["std", "help", "usage", "error-context"] }
+clap = { version = "4.4.16", default-features = false, features = ["std", "help", "usage", "error-context"] }
 futures = "0.3.30"
 json5 = "0.4.1"
 log = "0.4.20"
@@ -32,7 +32,7 @@ oxide-auth-async = "0.1.1"
 redis = { version = "0.24.0", features = ["tokio-comp"] }
 rustls = "0.21.10"
 rustls-pemfile = "1.0.4"
-serde = { version = "1.0.194", features = ["derive"] }
+serde = { version = "1.0.195", features = ["derive"] }
 serde_json = "1.0.111"
 serde_urlencoded = "0.7.1"
 serde_with = { version = "3.4.0", features = ["json"] }
