@@ -9,13 +9,13 @@ keywords = ["iot"]
 license = "MIT"
 readme = "README.md"
 repository = "https://github.com/woofdogtw/sylvia-iot-core.git"
-rust-version = "1.70"
+rust-version = "1.75"
 
 [dependencies]
 actix-web = { version = "4.4.1", default-features = false, features = ["rustls"] }
 anyhow = "1.0.79"
 chrono = { version = "0.4.31", default-features = false, features = ["serde"] }
-clap = { version = "4.4.13", default-features = false, features = ["std", "help", "usage", "error-context"] }
+clap = { version = "4.4.16", default-features = false, features = ["std", "help", "usage", "error-context"] }
 hex = "0.4.3"
 hmac = "0.12.1"
 log = "0.4.20"
@@ -23,7 +23,7 @@ log4rs = "1.2.0"
 pbkdf2 = "0.12.2"
 rand = "0.8.5"
 regex = "1.10.2"
-serde = { version = "1.0.194", features = ["derive"] }
+serde = { version = "1.0.195", features = ["derive"] }
 serde_json = "1.0.111"
 sha2 = "0.10.8"
 url = "2.5.0"
