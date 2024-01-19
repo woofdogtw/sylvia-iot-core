@@ -18,7 +18,7 @@ actix-http = "3.5.1"
 actix-web = { version = "4.4.1", default-features = false, features = ["rustls-0_21"] }
 actix-web-prom = "0.7.0"
 chrono = { version = "0.4.31", default-features = false, features = ["serde"] }
-clap = { version = "4.4.16", default-features = false, features = ["std", "help", "usage", "error-context"] }
+clap = { version = "4.4.18", default-features = false, features = ["std", "help", "usage", "error-context"] }
 ipnet = "2.9.0"
 json5 = "0.4.1"
 log = "0.4.20"
