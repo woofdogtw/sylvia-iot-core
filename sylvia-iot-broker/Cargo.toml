@@ -19,7 +19,7 @@ actix-web = { version = "4.4.1", default-features = false, features = ["rustls-0
 actix-web-prom = "0.7.0"
 async-stream = "0.3.5"
 async-trait = "0.1.77"
-chrono = { version = "0.4.31", default-features = false, features = ["serde"] }
+chrono = { version = "0.4.33", default-features = false, features = ["serde"] }
 clap = { version = "4.4.18", default-features = false, features = ["std", "help", "usage", "error-context"] }
 futures = "0.3.30"
 general-mq = { path="../general-mq" }
