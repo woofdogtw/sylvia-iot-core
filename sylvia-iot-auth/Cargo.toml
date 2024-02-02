@@ -32,10 +32,10 @@ oxide-auth-async = "0.1.1"
 redis = { version = "0.24.0", features = ["tokio-comp"] }
 rustls = "0.21.10"
 rustls-pemfile = "1.0.4"
-serde = { version = "1.0.195", features = ["derive"] }
-serde_json = "1.0.111"
+serde = { version = "1.0.196", features = ["derive"] }
+serde_json = "1.0.113"
 serde_urlencoded = "0.7.1"
-serde_with = { version = "3.5.1", features = ["json"] }
+serde_with = { version = "3.6.0", features = ["json"] }
 sql-builder = "3.1.1"
 sqlx = { version = "0.7.3", default-features = false, features = ["macros", "runtime-tokio", "sqlite"] }
 sylvia-iot-corelib = { path="../sylvia-iot-corelib" }
