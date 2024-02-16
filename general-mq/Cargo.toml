@@ -12,13 +12,13 @@ repository = "https://github.com/woofdogtw/sylvia-iot-core.git"
 rust-version = "1.75"
 
 [dependencies]
-amqprs = { version = "1.5.2", features = ["tls", "urispec"] }
+amqprs = { version = "1.5.3", features = ["tls", "urispec"] }
 async-trait = "0.1.77"
 lapin = { version = "2.3.1", features = ["rustls"] }
 rand = "0.8.5"
 regex = "1.10.3"
 rumqttc = "0.23.0"
-tokio = { version = "1.35.1", features = ["io-util", "macros", "rt-multi-thread", "time"] }
+tokio = { version = "1.36.0", features = ["io-util", "macros", "rt-multi-thread", "time"] }
 url = "2.5.0"
 urlencoding = "2.1.3"
 
