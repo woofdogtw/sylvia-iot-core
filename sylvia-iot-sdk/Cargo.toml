@@ -13,9 +13,9 @@ rust-version = "1.75"
 
 [dependencies]
 actix-service = "2.0.2"
-actix-web = { version = "4.4.1", default-features = false, features = ["rustls"] }
+actix-web = { version = "4.5.1", default-features = false, features = ["rustls"] }
 async-trait = "0.1.77"
-chrono = { version = "0.4.33", default-features = false, features = ["serde"] }
+chrono = { version = "0.4.34", default-features = false, features = ["serde"] }
 futures = "0.3.30"
 general-mq = { path = "../general-mq" }
 hex = "0.4.3"
@@ -23,11 +23,11 @@ reqwest = { version = "0.11.24", default-features = false, features = ["json"] }
 serde = { version = "1.0.196", features = ["derive"] }
 serde_json = "1.0.113"
 sylvia-iot-corelib = { path = "../sylvia-iot-corelib" }
-tokio = { version = "1.35.1", features = ["io-util", "macros", "rt-multi-thread", "time"] }
+tokio = { version = "1.36.0", features = ["io-util", "macros", "rt-multi-thread", "time"] }
 url = "2.5.0"
 
 [dev-dependencies]
-actix-http = "3.5.1"
+actix-http = "3.6.0"
 laboratory = "2.0.0"
 sylvia-iot-auth = { path="../sylvia-iot-auth" }
 sylvia-iot-broker = { path="../sylvia-iot-broker" }

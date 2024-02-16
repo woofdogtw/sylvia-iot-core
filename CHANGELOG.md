@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.0.36 - 2024-02-16
+
+### Changed
+
+- Update Rust to 1.76.0 with GitHub Actions runner image 20240212.2.1.
+- Update Docker images with alpine-3.19.1.
+- Update dependencies.
+
 ## 0.0.35 - 2023-12-15
 
 ### Changed

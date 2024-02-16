@@ -17,7 +17,7 @@ use actix_web_prom::PrometheusMetricsBuilder;
 use clap::{Arg as ClapArg, Command};
 use json5;
 use log::{self, error};
-use rustls::{Certificate, PrivateKey, ServerConfig};
+use rustls::ServerConfig;
 use rustls_pemfile;
 use serde::Deserialize;
 use tokio;
@@ -145,29 +145,21 @@ async fn main() -> std::io::Result<()> {
     serv = serv.bind(addrs.as_slice())?;
     if let Some(cert_file) = conf.server.cert_file.as_ref() {
         if let Some(key_file) = conf.server.key_file.as_ref() {
-            let cert = rustls_pemfile::certs(&mut BufReader::new(File::open(cert_file)?))?
-                .into_iter()
-                .map(Certificate)
+            let cert = rustls_pemfile::certs(&mut BufReader::new(File::open(cert_file)?))
+                .filter_map(|result| result.ok())
                 .collect();
-            let mut keys = match rustls_pemfile::pkcs8_private_keys(&mut BufReader::new(
-                File::open(key_file.as_str())?,
-            )) {
-                Err(_) => rustls_pemfile::rsa_private_keys(&mut BufReader::new(File::open(
-                    key_file.as_str(),
-                )?))?,
-                Ok(keys) => keys,
+            let key = match rustls_pemfile::private_key(&mut BufReader::new(File::open(
+                key_file.as_str(),
+            )?)) {
+                Err(_) => return Err(IoError::new(ErrorKind::InvalidData, "invalid private key")),
+                Ok(key) => match key {
+                    None => {
+                        return Err(IoError::new(ErrorKind::InvalidData, "invalid private key"))
+                    }
+                    Some(key) => key,
+                },
             };
-            if keys.len() != 1 {
-                keys = rustls_pemfile::rsa_private_keys(&mut BufReader::new(File::open(
-                    key_file.as_str(),
-                )?))?;
-                if keys.len() != 1 {
-                    return Err(IoError::new(ErrorKind::InvalidData, "invalid private key"));
-                }
-            }
-            let key = PrivateKey(keys[0].clone());
             let secure_config = match ServerConfig::builder()
-                .with_safe_defaults()
                 .with_no_client_auth()
                 .with_single_cert(cert, key)
             {
@@ -180,7 +172,7 @@ async fn main() -> std::io::Result<()> {
                 ))],
                 Some(port) => [SocketAddr::V6(SocketAddrV6::new(ipv6_addr, port, 0, 0))],
             };
-            serv = serv.bind_rustls_021(addrs.as_slice(), secure_config)?;
+            serv = serv.bind_rustls_0_22(addrs.as_slice(), secure_config)?;
         }
     }
     serv.run().await
