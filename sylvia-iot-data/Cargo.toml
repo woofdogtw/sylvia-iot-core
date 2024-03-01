@@ -26,7 +26,7 @@ csv = "1.3.0"
 futures = "0.3.30"
 general-mq = { path="../general-mq" }
 json5 = "0.4.1"
-log = "0.4.20"
+log = "0.4.21"
 mongodb = { version = "2.8.1", features = ["bson-chrono-0_4"] }
 reqwest = { version = "0.11.24", default-features = false, features = ["json", "rustls-tls"] }
 rustls = "0.22.2"

@@ -18,7 +18,7 @@ chrono = { version = "0.4.34", default-features = false, features = ["serde"] }
 clap = { version = "4.5.1", default-features = false, features = ["std", "help", "usage", "error-context"] }
 hex = "0.4.3"
 hmac = "0.12.1"
-log = "0.4.20"
+log = "0.4.21"
 log4rs = "1.3.0"
 pbkdf2 = "0.12.2"
 rand = "0.8.5"

@@ -21,7 +21,7 @@ chrono = { version = "0.4.34", default-features = false, features = ["serde"] }
 clap = { version = "4.5.1", default-features = false, features = ["std", "help", "usage", "error-context"] }
 ipnet = "2.9.0"
 json5 = "0.4.1"
-log = "0.4.20"
+log = "0.4.21"
 reqwest = { version = "0.11.24", default-features = false, features = ["json", "rustls-tls"] }
 rustls = "0.22.2"
 rustls-pemfile = "2.1.0"
