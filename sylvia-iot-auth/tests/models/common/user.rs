@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use chrono::{Duration, SubsecRound, Utc};
+use chrono::{SubsecRound, TimeDelta, Utc};
 use laboratory::expect;
 use serde_json::{Map, Value};
 use tokio::runtime::Runtime;
@@ -223,7 +223,7 @@ pub fn update(runtime: &Runtime, model: &dyn UserModel) -> Result<(), String> {
     };
 
     // Update only one field.
-    let now = now + Duration::milliseconds(1);
+    let now = now + TimeDelta::try_milliseconds(1).unwrap();
     let updates = Updates {
         modified_at: Some(now),
         ..Default::default()
@@ -251,7 +251,7 @@ pub fn update(runtime: &Runtime, model: &dyn UserModel) -> Result<(), String> {
     expect(get_user.info).to_equal(user.info.clone())?;
 
     // Update all fields.
-    let now = now + Duration::milliseconds(1);
+    let now = now + TimeDelta::try_milliseconds(1).unwrap();
     let mut roles = HashMap::<String, bool>::new();
     roles.insert("role".to_string(), true);
     let mut info = Map::<String, Value>::new();
@@ -290,7 +290,7 @@ pub fn update(runtime: &Runtime, model: &dyn UserModel) -> Result<(), String> {
     expect(get_user.info).to_equal(info)?;
 
     // Update all fields back to None.
-    let now = now + Duration::milliseconds(1);
+    let now = now + TimeDelta::try_milliseconds(1).unwrap();
     let roles = HashMap::<String, bool>::new();
     let info = Map::<String, Value>::new();
     let updates = Updates {
@@ -687,7 +687,7 @@ pub fn list_sort(runtime: &Runtime, model: &dyn UserModel) -> Result<(), String>
     };
     if let Err(e) = runtime.block_on(async {
         model.add(&user).await?;
-        now = now + Duration::seconds(1);
+        now = now + TimeDelta::try_seconds(1).unwrap();
         user.user_id = "user_id_list1_2".to_string();
         user.account = "account_list1_2".to_string();
         user.created_at = now;
@@ -697,7 +697,7 @@ pub fn list_sort(runtime: &Runtime, model: &dyn UserModel) -> Result<(), String>
         user.disabled_at = Some(now);
         user.name = "name_list1_2".to_string();
         model.add(&user).await?;
-        now = now + Duration::seconds(1);
+        now = now + TimeDelta::try_seconds(1).unwrap();
         user.user_id = "user_id_list2_1".to_string();
         user.account = "account_list2_1".to_string();
         user.created_at = now;
@@ -707,7 +707,7 @@ pub fn list_sort(runtime: &Runtime, model: &dyn UserModel) -> Result<(), String>
         user.disabled_at = None;
         user.name = "name_list2_1".to_string();
         model.add(&user).await?;
-        now = now + Duration::seconds(1);
+        now = now + TimeDelta::try_seconds(1).unwrap();
         user.user_id = "user_id_list3_1".to_string();
         user.account = "account_list3_1".to_string();
         user.created_at = now;

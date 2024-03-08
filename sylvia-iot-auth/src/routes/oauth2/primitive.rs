@@ -1,7 +1,7 @@
 use std::{borrow::Cow, sync::Arc};
 
 use async_trait::async_trait;
-use chrono::{Duration, Utc};
+use chrono::{TimeDelta, Utc};
 use log::error;
 use oxide_auth::primitives::{
     grant::{Extensions, Grant},
@@ -11,7 +11,7 @@ use oxide_auth::primitives::{
 };
 use oxide_auth_async::primitives::{Authorizer, Issuer, Registrar};
 
-use sylvia_iot_corelib::strings;
+use sylvia_iot_corelib::{err::E_UNKNOWN, strings};
 
 use crate::models::{
     access_token::{self, AccessToken, QueryCond as AccessTokenQuery},
@@ -42,7 +42,10 @@ impl Authorizer for Primitive {
         let scope = grant.scope.to_string();
         let code = AuthorizationCode {
             code: strings::random_id_sha(&grant.until, 4),
-            expires_at: Utc::now() + Duration::seconds(authorization_code::EXPIRES),
+            expires_at: match TimeDelta::try_seconds(authorization_code::EXPIRES) {
+                None => panic!("{}", E_UNKNOWN),
+                Some(t) => Utc::now() + t,
+            },
             redirect_uri: grant.redirect_uri.to_string(),
             scope: match scope.len() {
                 0 => None,
@@ -124,7 +127,10 @@ impl Issuer for Primitive {
         let access = AccessToken {
             access_token: strings::random_id_sha(&now, 8),
             refresh_token: Some(refresh_token.clone()),
-            expires_at: now + Duration::seconds(access_token::EXPIRES),
+            expires_at: match TimeDelta::try_seconds(access_token::EXPIRES) {
+                None => panic!("{}", E_UNKNOWN),
+                Some(t) => now + t,
+            },
             scope: Some(grant.scope.to_string()),
             client_id: grant.client_id.clone(),
             redirect_uri: grant.redirect_uri.to_string(),
@@ -132,7 +138,10 @@ impl Issuer for Primitive {
         };
         let refresh = RefreshToken {
             refresh_token,
-            expires_at: now + Duration::seconds(refresh_token::EXPIRES),
+            expires_at: match TimeDelta::try_seconds(refresh_token::EXPIRES) {
+                None => panic!("{}", E_UNKNOWN),
+                Some(t) => now + t,
+            },
             scope: Some(grant.scope.to_string()),
             client_id: grant.client_id,
             redirect_uri: grant.redirect_uri.to_string(),

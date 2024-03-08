@@ -1,13 +1,15 @@
 use std::{error::Error as StdError, sync::Arc};
 
 use async_trait::async_trait;
-use chrono::Duration;
+use chrono::TimeDelta;
 use futures::TryStreamExt;
 use mongodb::{
     bson::{doc, DateTime, Document},
     Database,
 };
 use serde::{Deserialize, Serialize};
+
+use sylvia_iot_corelib::err::E_UNKNOWN;
 
 use super::super::access_token::{AccessToken, AccessTokenModel, QueryCond, EXPIRES};
 
@@ -95,7 +97,10 @@ impl AccessTokenModel for Model {
             client_id: token.client_id.clone(),
             redirect_uri: token.redirect_uri.clone(),
             user_id: token.user_id.clone(),
-            created_at: (token.expires_at - Duration::seconds(EXPIRES)).into(),
+            created_at: match TimeDelta::try_seconds(EXPIRES) {
+                None => panic!("{}", E_UNKNOWN),
+                Some(t) => (token.expires_at - t).into(),
+            },
         };
         self.conn
             .collection::<Schema>(COL_NAME)

@@ -15,7 +15,7 @@ rust-version = "1.75"
 actix-service = "2.0.2"
 actix-web = { version = "4.5.1", default-features = false, features = ["rustls"] }
 async-trait = "0.1.77"
-chrono = { version = "0.4.34", default-features = false, features = ["serde"] }
+chrono = { version = "0.4.35", default-features = false, features = ["serde"] }
 futures = "0.3.30"
 general-mq = { path = "../general-mq" }
 hex = "0.4.3"

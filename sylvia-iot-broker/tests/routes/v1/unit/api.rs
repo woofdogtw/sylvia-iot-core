@@ -4,7 +4,7 @@ use actix_web::{
     test::{self, TestRequest},
     App,
 };
-use chrono::{DateTime, Duration, SubsecRound, Utc};
+use chrono::{DateTime, SubsecRound, TimeDelta, Utc};
 use laboratory::{expect, SpecContext};
 use serde_json::{Map, Value};
 use serde_urlencoded;
@@ -1718,8 +1718,8 @@ fn count_list_dataset(
     })?;
 
     let mut unit = create_unit("manager1", "manager");
-    unit.created_at = now + Duration::milliseconds(1);
-    unit.modified_at = now + Duration::milliseconds(4);
+    unit.created_at = now + TimeDelta::try_milliseconds(1).unwrap();
+    unit.modified_at = now + TimeDelta::try_milliseconds(4).unwrap();
     runtime.block_on(async {
         if let Err(e) = state.model.unit().add(&unit).await {
             return Err(format!("add unit {} error: {}", unit.unit_id, e));
@@ -1728,8 +1728,8 @@ fn count_list_dataset(
     })?;
 
     let mut unit = create_unit("manager2", "manager");
-    unit.created_at = now + Duration::milliseconds(2);
-    unit.modified_at = now + Duration::milliseconds(3);
+    unit.created_at = now + TimeDelta::try_milliseconds(2).unwrap();
+    unit.modified_at = now + TimeDelta::try_milliseconds(3).unwrap();
     runtime.block_on(async {
         if let Err(e) = state.model.unit().add(&unit).await {
             return Err(format!("add unit {} error: {}", unit.unit_id, e));
@@ -1738,8 +1738,8 @@ fn count_list_dataset(
     })?;
 
     let mut unit = create_unit("owner1", "owner");
-    unit.created_at = now + Duration::milliseconds(3);
-    unit.modified_at = now + Duration::milliseconds(2);
+    unit.created_at = now + TimeDelta::try_milliseconds(3).unwrap();
+    unit.modified_at = now + TimeDelta::try_milliseconds(2).unwrap();
     unit.name = "owner2".to_string();
     runtime.block_on(async {
         if let Err(e) = state.model.unit().add(&unit).await {
@@ -1749,8 +1749,8 @@ fn count_list_dataset(
     })?;
 
     let mut unit = create_unit("owner2", "owner");
-    unit.created_at = now + Duration::milliseconds(4);
-    unit.modified_at = now + Duration::milliseconds(1);
+    unit.created_at = now + TimeDelta::try_milliseconds(4).unwrap();
+    unit.modified_at = now + TimeDelta::try_milliseconds(1).unwrap();
     unit.member_ids.push("member".to_string());
     unit.name = "owner1".to_string();
     runtime.block_on(async {

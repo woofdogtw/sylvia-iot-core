@@ -1,4 +1,4 @@
-use chrono::{Duration, SubsecRound, Utc};
+use chrono::{SubsecRound, TimeDelta, Utc};
 use laboratory::expect;
 use serde_json::{Map, Value};
 use tokio::runtime::Runtime;
@@ -347,7 +347,7 @@ pub fn update(runtime: &Runtime, model: &dyn ApplicationModel) -> Result<(), Str
     };
 
     // Update only one field.
-    let now = now + Duration::milliseconds(1);
+    let now = now + TimeDelta::try_milliseconds(1).unwrap();
     let updates = Updates {
         modified_at: Some(now),
         ..Default::default()
@@ -374,7 +374,7 @@ pub fn update(runtime: &Runtime, model: &dyn ApplicationModel) -> Result<(), Str
     expect(get_application.info).to_equal(application.info.clone())?;
 
     // Update all fields.
-    let now = now + Duration::milliseconds(1);
+    let now = now + TimeDelta::try_milliseconds(1).unwrap();
     let mut info = Map::<String, Value>::new();
     info.insert("key".to_string(), Value::String("value".to_string()));
     let updates = Updates {
@@ -405,7 +405,7 @@ pub fn update(runtime: &Runtime, model: &dyn ApplicationModel) -> Result<(), Str
     expect(get_application.info).to_equal(info)?;
 
     // Update all fields back to None.
-    let now = now + Duration::milliseconds(1);
+    let now = now + TimeDelta::try_milliseconds(1).unwrap();
     let info = Map::<String, Value>::new();
     let updates = Updates {
         modified_at: Some(now),
@@ -810,21 +810,21 @@ pub fn list_sort(runtime: &Runtime, model: &dyn ApplicationModel) -> Result<(), 
     };
     if let Err(e) = runtime.block_on(async {
         model.add(&application).await?;
-        now = now + Duration::seconds(1);
+        now = now + TimeDelta::try_seconds(1).unwrap();
         application.application_id = "application_id_list1_2".to_string();
         application.code = "code_list1_2".to_string();
         application.created_at = now;
         application.modified_at = now;
         application.name = "name_list1_2".to_string();
         model.add(&application).await?;
-        now = now + Duration::seconds(1);
+        now = now + TimeDelta::try_seconds(1).unwrap();
         application.application_id = "application_id_list2_1".to_string();
         application.code = "code_list2_1".to_string();
         application.created_at = now;
         application.modified_at = now;
         application.name = "name_list2_1".to_string();
         model.add(&application).await?;
-        now = now + Duration::seconds(1);
+        now = now + TimeDelta::try_seconds(1).unwrap();
         application.application_id = "application_id_list3_1".to_string();
         application.code = "code_list3_1".to_string();
         application.created_at = now;

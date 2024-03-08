@@ -1,4 +1,4 @@
-use chrono::{Duration, SubsecRound, Utc};
+use chrono::{SubsecRound, TimeDelta, Utc};
 use laboratory::expect;
 use tokio::runtime::Runtime;
 
@@ -932,13 +932,13 @@ pub fn list_sort(runtime: &Runtime, model: &dyn NetworkRouteModel) -> Result<(),
     };
     if let Err(e) = runtime.block_on(async {
         model.add(&route).await?;
-        now = now + Duration::seconds(1);
+        now = now + TimeDelta::try_seconds(1).unwrap();
         route.route_id = "route_id_list1_2".to_string();
         route.network_id = "network_id_list1_2".to_string();
         route.network_code = "network_code_list1_2".to_string();
         route.created_at = now;
         model.add(&route).await?;
-        now = now + Duration::seconds(1);
+        now = now + TimeDelta::try_seconds(1).unwrap();
         route.route_id = "route_id_list2_1".to_string();
         route.application_id = "application_id_list2".to_string();
         route.application_code = "application_code_list2".to_string();
@@ -946,7 +946,7 @@ pub fn list_sort(runtime: &Runtime, model: &dyn NetworkRouteModel) -> Result<(),
         route.network_code = "network_code_list2".to_string();
         route.created_at = now;
         model.add(&route).await?;
-        now = now + Duration::seconds(1);
+        now = now + TimeDelta::try_seconds(1).unwrap();
         route.route_id = "route_id_list3_1".to_string();
         route.unit_id = "unit_id_list3".to_string();
         route.unit_code = "unit_code_list3".to_string();

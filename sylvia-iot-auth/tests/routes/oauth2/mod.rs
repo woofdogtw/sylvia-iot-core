@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use chrono::{Duration, Utc};
+use chrono::{TimeDelta, Utc};
 use laboratory::{describe, Suite};
 use tokio::runtime::Runtime;
 
@@ -60,21 +60,21 @@ fn before_all_dataset(runtime: &Runtime, model: &dyn Model) {
             println!("add user admin error: {}", e);
         }
 
-        let now = now + Duration::seconds(1);
+        let now = now + TimeDelta::try_seconds(1).unwrap();
         let mut roles = HashMap::<String, bool>::new();
         roles.insert("dev".to_string(), true);
         if let Err(e) = model.user().add(&create_user("dev", now, roles)).await {
             println!("add user dev error: {}", e);
         }
 
-        let now = now + Duration::seconds(1);
+        let now = now + TimeDelta::try_seconds(1).unwrap();
         let mut roles = HashMap::<String, bool>::new();
         roles.insert("manager".to_string(), true);
         if let Err(e) = model.user().add(&create_user("manager", now, roles)).await {
             println!("add user manager error: {}", e);
         }
 
-        let now = now + Duration::seconds(1);
+        let now = now + TimeDelta::try_seconds(1).unwrap();
         let roles = HashMap::<String, bool>::new();
         if let Err(e) = model.user().add(&create_user("user", now, roles)).await {
             println!("add user user error: {}", e);

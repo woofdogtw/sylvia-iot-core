@@ -6,7 +6,7 @@ use actix_web::{
     test::{self, TestRequest},
     App,
 };
-use chrono::{DateTime, Duration, TimeZone, Utc};
+use chrono::{DateTime, TimeDelta, TimeZone, Utc};
 use laboratory::{expect, SpecContext};
 use serde_json::{Map, Value};
 use serde_urlencoded;
@@ -584,7 +584,7 @@ pub fn get_list_offset_limit(context: &mut SpecContext<TestState>) -> Result<(),
             "manager",
             "manager",
         );
-        data.created_at = now - Duration::milliseconds(i);
+        data.created_at = now - TimeDelta::try_milliseconds(i).unwrap();
         runtime.block_on(async {
             if let Err(e) = routes_state.model.dldata_buffer().add(&data).await {
                 return Err(format!("add dldata buffer {} error: {}", data.data_id, e));
@@ -1255,7 +1255,7 @@ fn count_list_dataset(runtime: &Runtime, state: &routes::State) -> Result<(), St
         "manager-public",
     );
     data.created_at = now;
-    data.expired_at = now + Duration::seconds(105);
+    data.expired_at = now + TimeDelta::try_seconds(105).unwrap();
     runtime.block_on(async {
         if let Err(e) = state.model.dldata_buffer().add(&data).await {
             return Err(format!("add dldata buffer {} error: {}", data.data_id, e));
@@ -1270,8 +1270,8 @@ fn count_list_dataset(runtime: &Runtime, state: &routes::State) -> Result<(), St
         "manager",
         "manager",
     );
-    data.created_at = now + Duration::milliseconds(1);
-    data.expired_at = now + Duration::seconds(104);
+    data.created_at = now + TimeDelta::try_milliseconds(1).unwrap();
+    data.expired_at = now + TimeDelta::try_seconds(104).unwrap();
     runtime.block_on(async {
         if let Err(e) = state.model.dldata_buffer().add(&data).await {
             return Err(format!("add dldata buffer {} error: {}", data.data_id, e));
@@ -1280,8 +1280,8 @@ fn count_list_dataset(runtime: &Runtime, state: &routes::State) -> Result<(), St
     })?;
 
     let mut data = create_dldata_buffer("owner1-owner1-1", "owner1", "owner1", "owner1", "owner1");
-    data.created_at = now + Duration::milliseconds(2);
-    data.expired_at = now + Duration::seconds(103);
+    data.created_at = now + TimeDelta::try_milliseconds(2).unwrap();
+    data.expired_at = now + TimeDelta::try_seconds(103).unwrap();
     runtime.block_on(async {
         if let Err(e) = state.model.dldata_buffer().add(&data).await {
             return Err(format!("add dldata buffer {} error: {}", data.data_id, e));
@@ -1290,8 +1290,8 @@ fn count_list_dataset(runtime: &Runtime, state: &routes::State) -> Result<(), St
     })?;
 
     let mut data = create_dldata_buffer("owner1-owner1-2", "owner1", "owner1", "owner1", "owner1");
-    data.created_at = now + Duration::milliseconds(3);
-    data.expired_at = now + Duration::seconds(102);
+    data.created_at = now + TimeDelta::try_milliseconds(3).unwrap();
+    data.expired_at = now + TimeDelta::try_seconds(102).unwrap();
     runtime.block_on(async {
         if let Err(e) = state.model.dldata_buffer().add(&data).await {
             return Err(format!("add dldata buffer {} error: {}", data.data_id, e));
@@ -1306,8 +1306,8 @@ fn count_list_dataset(runtime: &Runtime, state: &routes::State) -> Result<(), St
         "public",
         "owner1-public",
     );
-    data.created_at = now + Duration::milliseconds(4);
-    data.expired_at = now + Duration::seconds(101);
+    data.created_at = now + TimeDelta::try_milliseconds(4).unwrap();
+    data.expired_at = now + TimeDelta::try_seconds(101).unwrap();
     runtime.block_on(async {
         if let Err(e) = state.model.dldata_buffer().add(&data).await {
             return Err(format!("add dldata buffer {} error: {}", data.data_id, e));
@@ -1316,8 +1316,8 @@ fn count_list_dataset(runtime: &Runtime, state: &routes::State) -> Result<(), St
     })?;
 
     let mut data = create_dldata_buffer("owner2-owner2", "owner2", "owner2", "owner2", "owner2");
-    data.created_at = now + Duration::milliseconds(5);
-    data.expired_at = now + Duration::seconds(100);
+    data.created_at = now + TimeDelta::try_milliseconds(5).unwrap();
+    data.expired_at = now + TimeDelta::try_seconds(100).unwrap();
     runtime.block_on(async {
         if let Err(e) = state.model.dldata_buffer().add(&data).await {
             return Err(format!("add dldata buffer {} error: {}", data.data_id, e));

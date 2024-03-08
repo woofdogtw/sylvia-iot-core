@@ -6,7 +6,7 @@ use actix_web::{
     test::{self, TestRequest},
     App,
 };
-use chrono::{DateTime, Duration, SecondsFormat, SubsecRound, Utc};
+use chrono::{DateTime, SecondsFormat, SubsecRound, TimeDelta, Utc};
 use laboratory::{expect, SpecContext};
 use mongodb::bson::Document;
 use serde_json::{Map, Value};
@@ -1896,7 +1896,7 @@ fn test_patch_admin_admin(
     let user_id = "user_patch_admin";
     let mut user = create_user(user_id, Utc::now(), HashMap::<String, bool>::new());
     user.verified_at = None;
-    user.expired_at = Some(Utc::now() + Duration::seconds(120));
+    user.expired_at = Some(Utc::now() + TimeDelta::try_seconds(120).unwrap());
     if let Err(e) = runtime.block_on(async { state.model.user().add(&user).await }) {
         return Err(format!("add user {} error: {}", user_id, e));
     }
@@ -2265,7 +2265,7 @@ fn count_list_dataset(
 
     let mut user = create_user("account1@example.com", now, HashMap::<String, bool>::new());
     user.created_at = now;
-    user.modified_at = now + Duration::milliseconds(4);
+    user.modified_at = now + TimeDelta::try_milliseconds(4).unwrap();
     user.verified_at = Some(now);
     user.expired_at = None;
     user.name = "name1@user.com".to_string();
@@ -2278,8 +2278,8 @@ fn count_list_dataset(
 
     user.user_id = "account2@example.com".to_string();
     user.account = user.user_id.clone();
-    user.created_at = now + Duration::milliseconds(1);
-    user.modified_at = now + Duration::milliseconds(3);
+    user.created_at = now + TimeDelta::try_milliseconds(1).unwrap();
+    user.modified_at = now + TimeDelta::try_milliseconds(3).unwrap();
     user.verified_at = None;
     user.expired_at = Some(now);
     user.name = "name4@user.com".to_string();
@@ -2292,9 +2292,9 @@ fn count_list_dataset(
 
     user.user_id = "account3@example.com".to_string();
     user.account = user.user_id.clone();
-    user.created_at = now + Duration::milliseconds(2);
-    user.modified_at = now + Duration::milliseconds(2);
-    user.verified_at = Some(now + Duration::milliseconds(2));
+    user.created_at = now + TimeDelta::try_milliseconds(2).unwrap();
+    user.modified_at = now + TimeDelta::try_milliseconds(2).unwrap();
+    user.verified_at = Some(now + TimeDelta::try_milliseconds(2).unwrap());
     user.expired_at = None;
     user.name = "name3@user.com".to_string();
     runtime.block_on(async {
@@ -2306,8 +2306,8 @@ fn count_list_dataset(
 
     user.user_id = "account4@example.com".to_string();
     user.account = user.user_id.clone();
-    user.created_at = now + Duration::milliseconds(3);
-    user.modified_at = now + Duration::milliseconds(1);
+    user.created_at = now + TimeDelta::try_milliseconds(3).unwrap();
+    user.modified_at = now + TimeDelta::try_milliseconds(1).unwrap();
     user.verified_at = None;
     user.expired_at = Some(now);
     user.disabled_at = Some(now);

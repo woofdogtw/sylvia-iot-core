@@ -1,4 +1,4 @@
-use chrono::{Duration, SubsecRound, Utc};
+use chrono::{SubsecRound, TimeDelta, Utc};
 use laboratory::expect;
 use tokio::runtime::Runtime;
 
@@ -306,7 +306,7 @@ pub fn update(runtime: &Runtime, model: &dyn ClientModel) -> Result<(), String> 
     };
 
     // Update only one field.
-    let now = now + Duration::milliseconds(1);
+    let now = now + TimeDelta::try_milliseconds(1).unwrap();
     let updates = Updates {
         modified_at: Some(now),
         ..Default::default()
@@ -332,7 +332,7 @@ pub fn update(runtime: &Runtime, model: &dyn ClientModel) -> Result<(), String> 
     expect(get_client.image_url.as_ref()).to_equal(client.image_url.as_ref())?;
 
     // Update all fields.
-    let now = now + Duration::milliseconds(1);
+    let now = now + TimeDelta::try_milliseconds(1).unwrap();
     let redirect_uris = vec!["url_update_all1".to_string(), "url_update_all2".to_string()];
     let scopes = vec!["scope_update1".to_string(), "scope_update2".to_string()];
     let updates = Updates {
@@ -364,7 +364,7 @@ pub fn update(runtime: &Runtime, model: &dyn ClientModel) -> Result<(), String> 
     expect(get_client.image_url).to_equal(Some("image_update_all".to_string()))?;
 
     // Update all fields back to None.
-    let now = now + Duration::milliseconds(1);
+    let now = now + TimeDelta::try_milliseconds(1).unwrap();
     let redirect_uris = vec![];
     let scopes = vec![];
     let updates = Updates {
@@ -667,19 +667,19 @@ pub fn list_sort(runtime: &Runtime, model: &dyn ClientModel) -> Result<(), Strin
     if let Err(e) = runtime.block_on(async {
         model.add(&client).await?;
         client.client_id = "client_id_list1_2".to_string();
-        client.created_at = now + Duration::seconds(2);
-        client.modified_at = now - Duration::seconds(2);
+        client.created_at = now + TimeDelta::try_seconds(2).unwrap();
+        client.modified_at = now - TimeDelta::try_seconds(2).unwrap();
         client.name = "name_list1_2".to_string();
         model.add(&client).await?;
         client.client_id = "client_id_list2_1".to_string();
-        client.created_at = now + Duration::seconds(1);
-        client.modified_at = now - Duration::seconds(1);
+        client.created_at = now + TimeDelta::try_seconds(1).unwrap();
+        client.modified_at = now - TimeDelta::try_seconds(1).unwrap();
         client.user_id = "user_id_list2".to_string();
         client.name = "name_list2_1".to_string();
         model.add(&client).await?;
         client.client_id = "client_id_list2_2".to_string();
-        client.created_at = now + Duration::seconds(3);
-        client.modified_at = now - Duration::seconds(3);
+        client.created_at = now + TimeDelta::try_seconds(3).unwrap();
+        client.modified_at = now - TimeDelta::try_seconds(3).unwrap();
         client.name = "name_list2_1".to_string(); // for sort testing
         model.add(&client).await
     }) {

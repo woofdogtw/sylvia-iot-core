@@ -6,7 +6,7 @@ use actix_web::{
     web::{self, Query},
     HttpResponse, Responder,
 };
-use chrono::{Duration, Utc};
+use chrono::{TimeDelta, Utc};
 use log::{error, warn};
 use oxide_auth::{
     code_grant::{
@@ -25,7 +25,7 @@ use serde_urlencoded;
 use tera::{Context, Tera};
 use url::Url;
 
-use sylvia_iot_corelib::strings;
+use sylvia_iot_corelib::{err::E_UNKNOWN, strings};
 
 use super::{
     super::State,
@@ -197,7 +197,10 @@ pub async fn post_login(req: PostLoginRequest, state: web::Data<State>) -> impl 
 
     let session = LoginSession {
         session_id: strings::random_id_sha(&Utc::now(), 4),
-        expires_at: Utc::now() + Duration::seconds(login_session::EXPIRES),
+        expires_at: match TimeDelta::try_seconds(login_session::EXPIRES) {
+            None => panic!("{}", E_UNKNOWN),
+            Some(t) => Utc::now() + t,
+        },
         user_id,
     };
     if let Err(e) = state.model.login_session().add(&session).await {
@@ -448,7 +451,10 @@ async fn client_credentials_token(
                 Ok(uri) => uri,
             },
         },
-        until: Utc::now() + Duration::minutes(10),
+        until: match TimeDelta::try_minutes(10) {
+            None => panic!("{}", E_UNKNOWN),
+            Some(t) => Utc::now() + t,
+        },
         extensions: Extensions::new(),
     };
     let token = match endpoint.issuer().issue(grant).await {

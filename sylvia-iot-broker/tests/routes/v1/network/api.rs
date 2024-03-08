@@ -4,7 +4,7 @@ use actix_web::{
     test::{self, TestRequest},
     App,
 };
-use chrono::{DateTime, Duration, SubsecRound, Utc};
+use chrono::{DateTime, SubsecRound, TimeDelta, Utc};
 use laboratory::{expect, SpecContext};
 use serde_json::{Map, Value};
 use serde_urlencoded;
@@ -1799,8 +1799,8 @@ fn count_list_dataset(
     let now = Utc::now();
 
     let mut network = create_network("public", "amqp://host", "");
-    network.created_at = now - Duration::milliseconds(1);
-    network.modified_at = now - Duration::milliseconds(1);
+    network.created_at = now - TimeDelta::try_milliseconds(1).unwrap();
+    network.modified_at = now - TimeDelta::try_milliseconds(1).unwrap();
     runtime.block_on(async {
         if let Err(e) = state.model.network().add(&network).await {
             return Err(format!("add network {} error: {}", network.network_id, e));
@@ -1819,8 +1819,8 @@ fn count_list_dataset(
     })?;
 
     let mut network = create_network("owner1-1", "amqp://host", "owner1");
-    network.created_at = now + Duration::milliseconds(1);
-    network.modified_at = now + Duration::milliseconds(5);
+    network.created_at = now + TimeDelta::try_milliseconds(1).unwrap();
+    network.modified_at = now + TimeDelta::try_milliseconds(5).unwrap();
     runtime.block_on(async {
         if let Err(e) = state.model.network().add(&network).await {
             return Err(format!("add network {} error: {}", network.network_id, e));
@@ -1829,8 +1829,8 @@ fn count_list_dataset(
     })?;
 
     let mut network = create_network("owner1-2", "amqp://host", "owner1");
-    network.created_at = now + Duration::milliseconds(2);
-    network.modified_at = now + Duration::milliseconds(4);
+    network.created_at = now + TimeDelta::try_milliseconds(2).unwrap();
+    network.modified_at = now + TimeDelta::try_milliseconds(4).unwrap();
     runtime.block_on(async {
         if let Err(e) = state.model.network().add(&network).await {
             return Err(format!("add network {} error: {}", network.network_id, e));
@@ -1839,8 +1839,8 @@ fn count_list_dataset(
     })?;
 
     let mut network = create_network("owner1-3", "amqp://host", "owner1");
-    network.created_at = now + Duration::milliseconds(3);
-    network.modified_at = now + Duration::milliseconds(3);
+    network.created_at = now + TimeDelta::try_milliseconds(3).unwrap();
+    network.modified_at = now + TimeDelta::try_milliseconds(3).unwrap();
     runtime.block_on(async {
         if let Err(e) = state.model.network().add(&network).await {
             return Err(format!("add network {} error: {}", network.network_id, e));
@@ -1849,8 +1849,8 @@ fn count_list_dataset(
     })?;
 
     let mut network = create_network("owner2-1", "amqp://host", "owner2");
-    network.created_at = now + Duration::milliseconds(4);
-    network.modified_at = now + Duration::milliseconds(2);
+    network.created_at = now + TimeDelta::try_milliseconds(4).unwrap();
+    network.modified_at = now + TimeDelta::try_milliseconds(2).unwrap();
     network.name = "owner2-2".to_string();
     runtime.block_on(async {
         if let Err(e) = state.model.network().add(&network).await {
@@ -1860,8 +1860,8 @@ fn count_list_dataset(
     })?;
 
     let mut network = create_network("owner2-2", "amqp://host", "owner2");
-    network.created_at = now + Duration::milliseconds(5);
-    network.modified_at = now + Duration::milliseconds(1);
+    network.created_at = now + TimeDelta::try_milliseconds(5).unwrap();
+    network.modified_at = now + TimeDelta::try_milliseconds(1).unwrap();
     network.name = "owner2-1".to_string();
     runtime.block_on(async {
         if let Err(e) = state.model.network().add(&network).await {

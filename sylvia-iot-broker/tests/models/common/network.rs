@@ -1,4 +1,4 @@
-use chrono::{Duration, SubsecRound, Utc};
+use chrono::{SubsecRound, TimeDelta, Utc};
 use laboratory::expect;
 use serde_json::{Map, Value};
 use tokio::runtime::Runtime;
@@ -381,7 +381,7 @@ pub fn update(runtime: &Runtime, model: &dyn NetworkModel) -> Result<(), String>
     };
 
     // Update only one field.
-    let now = now + Duration::milliseconds(1);
+    let now = now + TimeDelta::try_milliseconds(1).unwrap();
     let updates = Updates {
         modified_at: Some(now),
         ..Default::default()
@@ -407,7 +407,7 @@ pub fn update(runtime: &Runtime, model: &dyn NetworkModel) -> Result<(), String>
     expect(get_network.info).to_equal(network.info.clone())?;
 
     // Update all fields.
-    let now = now + Duration::milliseconds(1);
+    let now = now + TimeDelta::try_milliseconds(1).unwrap();
     let mut info = Map::<String, Value>::new();
     info.insert("key".to_string(), Value::String("value".to_string()));
     let updates = Updates {
@@ -437,7 +437,7 @@ pub fn update(runtime: &Runtime, model: &dyn NetworkModel) -> Result<(), String>
     expect(get_network.info).to_equal(info)?;
 
     // Update all fields back to None.
-    let now = now + Duration::milliseconds(1);
+    let now = now + TimeDelta::try_milliseconds(1).unwrap();
     let info = Map::<String, Value>::new();
     let updates = Updates {
         modified_at: Some(now),
@@ -841,21 +841,21 @@ pub fn list_sort(runtime: &Runtime, model: &dyn NetworkModel) -> Result<(), Stri
     };
     if let Err(e) = runtime.block_on(async {
         model.add(&network).await?;
-        now = now + Duration::seconds(1);
+        now = now + TimeDelta::try_seconds(1).unwrap();
         network.network_id = "network_id_list1_2".to_string();
         network.code = "code_list1_2".to_string();
         network.created_at = now;
         network.modified_at = now;
         network.name = "name_list1_2".to_string();
         model.add(&network).await?;
-        now = now + Duration::seconds(1);
+        now = now + TimeDelta::try_seconds(1).unwrap();
         network.network_id = "network_id_list2_1".to_string();
         network.code = "code_list2_1".to_string();
         network.created_at = now;
         network.modified_at = now;
         network.name = "name_list2_1".to_string();
         model.add(&network).await?;
-        now = now + Duration::seconds(1);
+        now = now + TimeDelta::try_seconds(1).unwrap();
         network.network_id = "network_id_list3_1".to_string();
         network.code = "code_list3_1".to_string();
         network.created_at = now;

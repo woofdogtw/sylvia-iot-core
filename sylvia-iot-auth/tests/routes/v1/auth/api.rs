@@ -6,7 +6,7 @@ use actix_web::{
     test::{self, TestRequest},
     App,
 };
-use chrono::{Duration, TimeZone, Utc};
+use chrono::{TimeDelta, TimeZone, Utc};
 use laboratory::{expect, SpecContext};
 use mongodb::bson::Document;
 use sql_builder::SqlBuilder;
@@ -46,21 +46,21 @@ pub fn before_all_fn(state: &mut HashMap<&'static str, TestState>) {
             println!("add user admin error: {}", e);
         }
 
-        let now = now + Duration::seconds(1);
+        let now = now + TimeDelta::try_seconds(1).unwrap();
         let mut roles = HashMap::<String, bool>::new();
         roles.insert("dev".to_string(), true);
         if let Err(e) = model.user().add(&create_user("dev", now, roles)).await {
             println!("add user dev error: {}", e);
         }
 
-        let now = now + Duration::seconds(1);
+        let now = now + TimeDelta::try_seconds(1).unwrap();
         let mut roles = HashMap::<String, bool>::new();
         roles.insert("manager".to_string(), true);
         if let Err(e) = model.user().add(&create_user("manager", now, roles)).await {
             println!("add user manager error: {}", e);
         }
 
-        let now = now + Duration::seconds(1);
+        let now = now + TimeDelta::try_seconds(1).unwrap();
         let roles = HashMap::<String, bool>::new();
         if let Err(e) = model.user().add(&create_user("user", now, roles)).await {
             println!("add user user error: {}", e);
