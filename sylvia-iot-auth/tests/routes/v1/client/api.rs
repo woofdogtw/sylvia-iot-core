@@ -6,7 +6,7 @@ use actix_web::{
     test::{self, TestRequest},
     App,
 };
-use chrono::{DateTime, Duration, SubsecRound, Utc};
+use chrono::{DateTime, SubsecRound, TimeDelta, Utc};
 use laboratory::{expect, SpecContext};
 use mongodb::bson::Document;
 use serde_json::{Map, Value};
@@ -2002,7 +2002,7 @@ fn count_list_dataset(runtime: &Runtime, state: &routes::State) -> Result<(usize
 
     let mut client = create_client("client_admin1", "admin", None);
     client.created_at = now;
-    client.modified_at = now + Duration::milliseconds(3);
+    client.modified_at = now + TimeDelta::try_milliseconds(3).unwrap();
     runtime.block_on(async {
         if let Err(e) = state.model.client().add(&client).await {
             return Err(format!("add client {} error: {}", client.client_id, e));
@@ -2011,8 +2011,8 @@ fn count_list_dataset(runtime: &Runtime, state: &routes::State) -> Result<(usize
     })?;
 
     client.client_id = "client_admin2".to_string();
-    client.created_at = now + Duration::milliseconds(1);
-    client.modified_at = now + Duration::milliseconds(2);
+    client.created_at = now + TimeDelta::try_milliseconds(1).unwrap();
+    client.modified_at = now + TimeDelta::try_milliseconds(2).unwrap();
     client.name = "client_admin2".to_string();
     runtime.block_on(async {
         if let Err(e) = state.model.client().add(&client).await {
@@ -2022,8 +2022,8 @@ fn count_list_dataset(runtime: &Runtime, state: &routes::State) -> Result<(usize
     })?;
 
     client.client_id = "client_user1".to_string();
-    client.created_at = now + Duration::milliseconds(2);
-    client.modified_at = now + Duration::milliseconds(1);
+    client.created_at = now + TimeDelta::try_milliseconds(2).unwrap();
+    client.modified_at = now + TimeDelta::try_milliseconds(1).unwrap();
     client.user_id = "user".to_string();
     client.name = "client_user2".to_string();
     runtime.block_on(async {
@@ -2034,7 +2034,7 @@ fn count_list_dataset(runtime: &Runtime, state: &routes::State) -> Result<(usize
     })?;
 
     client.client_id = "client_user2".to_string();
-    client.created_at = now + Duration::milliseconds(3);
+    client.created_at = now + TimeDelta::try_milliseconds(3).unwrap();
     client.modified_at = now;
     client.client_secret = Some("secret".to_string());
     client.name = "client_user1".to_string();

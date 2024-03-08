@@ -17,14 +17,14 @@ actix-files = "0.6.5"
 actix-http = "3.6.0"
 actix-web = { version = "4.5.1", default-features = false, features = ["rustls-0_22"] }
 actix-web-prom = "0.8.0"
-chrono = { version = "0.4.34", default-features = false, features = ["serde"] }
-clap = { version = "4.5.1", default-features = false, features = ["std", "help", "usage", "error-context"] }
+chrono = { version = "0.4.35", default-features = false, features = ["serde"] }
+clap = { version = "4.5.2", default-features = false, features = ["std", "help", "usage", "error-context"] }
 ipnet = "2.9.0"
 json5 = "0.4.1"
 log = "0.4.21"
 reqwest = { version = "0.11.24", default-features = false, features = ["json", "rustls-tls"] }
 rustls = "0.22.2"
-rustls-pemfile = "2.1.0"
+rustls-pemfile = "2.1.1"
 serde = { version = "1.0.197", features = ["derive"] }
 serde_json = "1.0.114"
 serde_urlencoded = "0.7.1"
@@ -36,7 +36,7 @@ sylvia-iot-coremgr = { path="../sylvia-iot-coremgr" }
 sylvia-iot-coremgr-cli = { path="../sylvia-iot-coremgr-cli" }
 sylvia-iot-data = { path="../sylvia-iot-data" }
 sylvia-iot-sdk = { path="../sylvia-iot-sdk" }
-sysinfo = "0.30.5"
+sysinfo = "0.30.7"
 tokio = { version = "1.36.0", features = ["io-util", "macros", "rt-multi-thread", "time"] }
 
 [profile.release]

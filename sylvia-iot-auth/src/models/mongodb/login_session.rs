@@ -1,13 +1,15 @@
 use std::{error::Error as StdError, sync::Arc};
 
 use async_trait::async_trait;
-use chrono::Duration;
+use chrono::TimeDelta;
 use futures::TryStreamExt;
 use mongodb::{
     bson::{doc, DateTime, Document},
     Database,
 };
 use serde::{Deserialize, Serialize};
+
+use sylvia_iot_corelib::err::E_UNKNOWN;
 
 use super::super::login_session::{LoginSession, LoginSessionModel, QueryCond, EXPIRES};
 
@@ -78,7 +80,10 @@ impl LoginSessionModel for Model {
             session_id: session.session_id.clone(),
             expires_at: session.expires_at.into(),
             user_id: session.user_id.clone(),
-            created_at: (session.expires_at - Duration::seconds(EXPIRES)).into(),
+            created_at: match TimeDelta::try_seconds(EXPIRES) {
+                None => panic!("{}", E_UNKNOWN),
+                Some(t) => (session.expires_at - t).into(),
+            },
         };
         self.conn
             .collection::<Schema>(COL_NAME)

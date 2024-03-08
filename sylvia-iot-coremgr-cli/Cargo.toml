@@ -12,8 +12,8 @@ repository = "https://github.com/woofdogtw/sylvia-iot-core.git"
 rust-version = "1.75"
 
 [dependencies]
-chrono = { version = "0.4.34", default-features = false, features = ["serde"] }
-clap = { version = "4.5.1", default-features = false, features = ["std", "help", "usage", "error-context"] }
+chrono = { version = "0.4.35", default-features = false, features = ["serde"] }
+clap = { version = "4.5.2", default-features = false, features = ["std", "help", "usage", "error-context"] }
 dirs = "5.0.1"
 hex = "0.4.3"
 json5 = "0.4.1"

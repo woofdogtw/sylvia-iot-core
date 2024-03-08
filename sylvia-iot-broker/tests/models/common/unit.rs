@@ -1,4 +1,4 @@
-use chrono::{Duration, SubsecRound, Utc};
+use chrono::{SubsecRound, TimeDelta, Utc};
 use laboratory::expect;
 use serde_json::{Map, Value};
 use tokio::runtime::Runtime;
@@ -312,7 +312,7 @@ pub fn update(runtime: &Runtime, model: &dyn UnitModel) -> Result<(), String> {
     };
 
     // Update only one field.
-    let now = now + Duration::milliseconds(1);
+    let now = now + TimeDelta::try_milliseconds(1).unwrap();
     let updates = Updates {
         modified_at: Some(now),
         ..Default::default()
@@ -337,7 +337,7 @@ pub fn update(runtime: &Runtime, model: &dyn UnitModel) -> Result<(), String> {
     expect(get_unit.info).to_equal(unit.info.clone())?;
 
     // Update all fields.
-    let now = now + Duration::milliseconds(1);
+    let now = now + TimeDelta::try_milliseconds(1).unwrap();
     let member_ids = vec!["member_id_all1".to_string(), "member_id_all2".to_string()];
     let mut info = Map::<String, Value>::new();
     info.insert("key".to_string(), Value::String("value".to_string()));
@@ -369,7 +369,7 @@ pub fn update(runtime: &Runtime, model: &dyn UnitModel) -> Result<(), String> {
     expect(get_unit.info).to_equal(info)?;
 
     // Update all fields back to None.
-    let now = now + Duration::milliseconds(1);
+    let now = now + TimeDelta::try_milliseconds(1).unwrap();
     let member_ids = vec![];
     let info = Map::<String, Value>::new();
     get_cond.owner_id = Some(owner_id_update);
@@ -838,21 +838,21 @@ pub fn list_sort(runtime: &Runtime, model: &dyn UnitModel) -> Result<(), String>
     };
     if let Err(e) = runtime.block_on(async {
         model.add(&unit).await?;
-        now = now + Duration::seconds(1);
+        now = now + TimeDelta::try_seconds(1).unwrap();
         unit.unit_id = "unit_id_list1_2".to_string();
         unit.code = "code_list1_2".to_string();
         unit.created_at = now;
         unit.modified_at = now;
         unit.name = "name_list1_2".to_string();
         model.add(&unit).await?;
-        now = now + Duration::seconds(1);
+        now = now + TimeDelta::try_seconds(1).unwrap();
         unit.unit_id = "unit_id_list2_1".to_string();
         unit.code = "code_list2_1".to_string();
         unit.created_at = now;
         unit.modified_at = now;
         unit.name = "name_list2_1".to_string();
         model.add(&unit).await?;
-        now = now + Duration::seconds(1);
+        now = now + TimeDelta::try_seconds(1).unwrap();
         unit.unit_id = "unit_id_list3_1".to_string();
         unit.code = "code_list3_1".to_string();
         unit.created_at = now;

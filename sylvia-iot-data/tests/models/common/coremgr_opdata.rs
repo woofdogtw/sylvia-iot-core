@@ -1,7 +1,7 @@
 use std::error::Error as StdError;
 
 use async_trait::async_trait;
-use chrono::{Duration, SubsecRound, Utc};
+use chrono::{SubsecRound, TimeDelta, Utc};
 use laboratory::expect;
 use serde_json::{Map, Value};
 use tokio::runtime::Runtime;
@@ -26,7 +26,7 @@ pub fn add(runtime: &Runtime, model: &dyn CoremgrOpDataModel, db: &dyn Db) -> Re
     let data = CoremgrOpData {
         data_id: strings::random_id(&now, 8),
         req_time: now,
-        res_time: now + Duration::milliseconds(2),
+        res_time: now + TimeDelta::try_milliseconds(2).unwrap(),
         latency_ms: 2,
         status: 200,
         source_ip: "::1".to_string(),
@@ -54,7 +54,7 @@ pub fn add(runtime: &Runtime, model: &dyn CoremgrOpDataModel, db: &dyn Db) -> Re
     let data = CoremgrOpData {
         data_id: strings::random_id(&now, 8),
         req_time: now,
-        res_time: now + Duration::milliseconds(2),
+        res_time: now + TimeDelta::try_milliseconds(2).unwrap(),
         latency_ms: 2,
         status: 400,
         source_ip: "::1".to_string(),
@@ -85,7 +85,7 @@ pub fn add_dup(runtime: &Runtime, model: &dyn CoremgrOpDataModel) -> Result<(), 
     let data = CoremgrOpData {
         data_id: strings::random_id(&now, 8),
         req_time: now,
-        res_time: now + Duration::milliseconds(2),
+        res_time: now + TimeDelta::try_milliseconds(2).unwrap(),
         latency_ms: 2,
         status: 200,
         source_ip: "::1".to_string(),
@@ -116,7 +116,7 @@ pub fn del_by_user(
     let mut data = CoremgrOpData {
         data_id: "data_id1".to_string(),
         req_time: now,
-        res_time: now + Duration::milliseconds(2),
+        res_time: now + TimeDelta::try_milliseconds(2).unwrap(),
         latency_ms: 2,
         status: 200,
         source_ip: "::1".to_string(),
@@ -172,7 +172,7 @@ pub fn del_twice(runtime: &Runtime, model: &dyn CoremgrOpDataModel) -> Result<()
     let data = CoremgrOpData {
         data_id: "data_id1".to_string(),
         req_time: now,
-        res_time: now + Duration::milliseconds(2),
+        res_time: now + TimeDelta::try_milliseconds(2).unwrap(),
         latency_ms: 2,
         status: 200,
         source_ip: "::1".to_string(),
@@ -208,7 +208,7 @@ pub fn del_by_client(
     let mut data = CoremgrOpData {
         data_id: "data_id1".to_string(),
         req_time: now,
-        res_time: now + Duration::milliseconds(2),
+        res_time: now + TimeDelta::try_milliseconds(2).unwrap(),
         latency_ms: 2,
         status: 200,
         source_ip: "::1".to_string(),
@@ -268,7 +268,7 @@ pub fn del_by_req(
     let mut data = CoremgrOpData {
         data_id: "data_id1".to_string(),
         req_time: now,
-        res_time: now + Duration::milliseconds(2),
+        res_time: now + TimeDelta::try_milliseconds(2).unwrap(),
         latency_ms: 2,
         status: 200,
         source_ip: "::1".to_string(),
@@ -281,20 +281,20 @@ pub fn del_by_req(
         err_message: None,
     };
     let cond = QueryCond {
-        req_gte: Some(now + Duration::milliseconds(1)),
-        req_lte: Some(now + Duration::milliseconds(2)),
+        req_gte: Some(now + TimeDelta::try_milliseconds(1).unwrap()),
+        req_lte: Some(now + TimeDelta::try_milliseconds(2).unwrap()),
         ..Default::default()
     };
     if let Err(e) = runtime.block_on(async {
         model.add(&data).await?;
         data.data_id = "data_id2".to_string();
-        data.req_time = now + Duration::milliseconds(1);
+        data.req_time = now + TimeDelta::try_milliseconds(1).unwrap();
         model.add(&data).await?;
         data.data_id = "data_id3".to_string();
-        data.req_time = now + Duration::milliseconds(2);
+        data.req_time = now + TimeDelta::try_milliseconds(2).unwrap();
         model.add(&data).await?;
         data.data_id = "data_id4".to_string();
-        data.req_time = now + Duration::milliseconds(3);
+        data.req_time = now + TimeDelta::try_milliseconds(3).unwrap();
         model.add(&data).await?;
         model.del(&cond).await
     }) {
@@ -336,7 +336,7 @@ pub fn count(runtime: &Runtime, model: &dyn CoremgrOpDataModel) -> Result<(), St
     let mut data = CoremgrOpData {
         data_id: "data_id1".to_string(),
         req_time: now,
-        res_time: now + Duration::milliseconds(10),
+        res_time: now + TimeDelta::try_milliseconds(10).unwrap(),
         latency_ms: 10,
         status: 200,
         source_ip: "::1".to_string(),
@@ -351,26 +351,26 @@ pub fn count(runtime: &Runtime, model: &dyn CoremgrOpDataModel) -> Result<(), St
     if let Err(e) = runtime.block_on(async {
         model.add(&data).await?;
         data.data_id = "data_id2".to_string();
-        data.req_time = now + Duration::milliseconds(1);
-        data.res_time = now + Duration::milliseconds(9);
+        data.req_time = now + TimeDelta::try_milliseconds(1).unwrap();
+        data.res_time = now + TimeDelta::try_milliseconds(9).unwrap();
         data.latency_ms = data.res_time.timestamp_millis() - data.req_time.timestamp_millis();
         model.add(&data).await?;
         data.data_id = "data_id3".to_string();
-        data.req_time = now + Duration::milliseconds(2);
-        data.res_time = now + Duration::milliseconds(8);
+        data.req_time = now + TimeDelta::try_milliseconds(2).unwrap();
+        data.res_time = now + TimeDelta::try_milliseconds(8).unwrap();
         data.latency_ms = data.res_time.timestamp_millis() - data.req_time.timestamp_millis();
         data.client_id = "client_id2".to_string();
         model.add(&data).await?;
         data.data_id = "data_id4".to_string();
-        data.req_time = now + Duration::milliseconds(3);
-        data.res_time = now + Duration::milliseconds(7);
+        data.req_time = now + TimeDelta::try_milliseconds(3).unwrap();
+        data.res_time = now + TimeDelta::try_milliseconds(7).unwrap();
         data.latency_ms = data.res_time.timestamp_millis() - data.req_time.timestamp_millis();
         data.user_id = "user_id2".to_string();
         data.body = Some(Map::new());
         model.add(&data).await?;
         data.data_id = "data_id5".to_string();
-        data.req_time = now + Duration::milliseconds(4);
-        data.res_time = now + Duration::milliseconds(6);
+        data.req_time = now + TimeDelta::try_milliseconds(4).unwrap();
+        data.res_time = now + TimeDelta::try_milliseconds(6).unwrap();
         data.latency_ms = data.res_time.timestamp_millis() - data.req_time.timestamp_millis();
         data.user_id = "user_id3".to_string();
         data.client_id = "client_id3".to_string();
@@ -413,8 +413,8 @@ pub fn count(runtime: &Runtime, model: &dyn CoremgrOpDataModel) -> Result<(), St
     expect(count).to_equal(1)?;
 
     let cond = ListQueryCond {
-        req_gte: Some(now + Duration::milliseconds(1)),
-        req_lte: Some(now + Duration::milliseconds(3)),
+        req_gte: Some(now + TimeDelta::try_milliseconds(1).unwrap()),
+        req_lte: Some(now + TimeDelta::try_milliseconds(3).unwrap()),
         ..Default::default()
     };
     let count = match runtime.block_on(async { model.count(&cond).await }) {
@@ -424,8 +424,8 @@ pub fn count(runtime: &Runtime, model: &dyn CoremgrOpDataModel) -> Result<(), St
     expect(count).to_equal(3)?;
 
     let cond = ListQueryCond {
-        res_gte: Some(now + Duration::milliseconds(9)),
-        res_lte: Some(now + Duration::milliseconds(11)),
+        res_gte: Some(now + TimeDelta::try_milliseconds(9).unwrap()),
+        res_lte: Some(now + TimeDelta::try_milliseconds(11).unwrap()),
         ..Default::default()
     };
     let count = match runtime.block_on(async { model.count(&cond).await }) {
@@ -452,7 +452,7 @@ pub fn list(runtime: &Runtime, model: &dyn CoremgrOpDataModel) -> Result<(), Str
     let mut data = CoremgrOpData {
         data_id: "data_id1".to_string(),
         req_time: now,
-        res_time: now + Duration::milliseconds(10),
+        res_time: now + TimeDelta::try_milliseconds(10).unwrap(),
         latency_ms: 10,
         status: 200,
         source_ip: "::1".to_string(),
@@ -467,26 +467,26 @@ pub fn list(runtime: &Runtime, model: &dyn CoremgrOpDataModel) -> Result<(), Str
     if let Err(e) = runtime.block_on(async {
         model.add(&data).await?;
         data.data_id = "data_id2".to_string();
-        data.req_time = now + Duration::milliseconds(1);
-        data.res_time = now + Duration::milliseconds(9);
+        data.req_time = now + TimeDelta::try_milliseconds(1).unwrap();
+        data.res_time = now + TimeDelta::try_milliseconds(9).unwrap();
         data.latency_ms = data.res_time.timestamp_millis() - data.req_time.timestamp_millis();
         model.add(&data).await?;
         data.data_id = "data_id3".to_string();
-        data.req_time = now + Duration::milliseconds(2);
-        data.res_time = now + Duration::milliseconds(8);
+        data.req_time = now + TimeDelta::try_milliseconds(2).unwrap();
+        data.res_time = now + TimeDelta::try_milliseconds(8).unwrap();
         data.latency_ms = data.res_time.timestamp_millis() - data.req_time.timestamp_millis();
         data.client_id = "client_id2".to_string();
         model.add(&data).await?;
         data.data_id = "data_id4".to_string();
-        data.req_time = now + Duration::milliseconds(3);
-        data.res_time = now + Duration::milliseconds(7);
+        data.req_time = now + TimeDelta::try_milliseconds(3).unwrap();
+        data.res_time = now + TimeDelta::try_milliseconds(7).unwrap();
         data.latency_ms = data.res_time.timestamp_millis() - data.req_time.timestamp_millis();
         data.user_id = "user_id2".to_string();
         data.body = Some(Map::new());
         model.add(&data).await?;
         data.data_id = "data_id5".to_string();
-        data.req_time = now + Duration::milliseconds(4);
-        data.res_time = now + Duration::milliseconds(6);
+        data.req_time = now + TimeDelta::try_milliseconds(4).unwrap();
+        data.res_time = now + TimeDelta::try_milliseconds(6).unwrap();
         data.latency_ms = data.res_time.timestamp_millis() - data.req_time.timestamp_millis();
         data.user_id = "user_id3".to_string();
         data.client_id = "client_id3".to_string();
@@ -538,8 +538,8 @@ pub fn list(runtime: &Runtime, model: &dyn CoremgrOpDataModel) -> Result<(), Str
     expect(list.len()).to_equal(1)?;
 
     let cond = ListQueryCond {
-        req_gte: Some(now + Duration::milliseconds(1)),
-        req_lte: Some(now + Duration::milliseconds(3)),
+        req_gte: Some(now + TimeDelta::try_milliseconds(1).unwrap()),
+        req_lte: Some(now + TimeDelta::try_milliseconds(3).unwrap()),
         ..Default::default()
     };
     opts.cond = &cond;
@@ -550,8 +550,8 @@ pub fn list(runtime: &Runtime, model: &dyn CoremgrOpDataModel) -> Result<(), Str
     expect(list.len()).to_equal(3)?;
 
     let cond = ListQueryCond {
-        res_gte: Some(now + Duration::milliseconds(9)),
-        res_lte: Some(now + Duration::milliseconds(11)),
+        res_gte: Some(now + TimeDelta::try_milliseconds(9).unwrap()),
+        res_lte: Some(now + TimeDelta::try_milliseconds(11).unwrap()),
         ..Default::default()
     };
     opts.cond = &cond;
@@ -580,7 +580,7 @@ pub fn list_sort(runtime: &Runtime, model: &dyn CoremgrOpDataModel) -> Result<()
     let mut data = CoremgrOpData {
         data_id: "data_id1".to_string(),
         req_time: now,
-        res_time: now + Duration::milliseconds(10),
+        res_time: now + TimeDelta::try_milliseconds(10).unwrap(),
         latency_ms: 10,
         status: 200,
         source_ip: "::1".to_string(),
@@ -595,26 +595,26 @@ pub fn list_sort(runtime: &Runtime, model: &dyn CoremgrOpDataModel) -> Result<()
     if let Err(e) = runtime.block_on(async {
         model.add(&data).await?;
         data.data_id = "data_id2".to_string();
-        data.req_time = now + Duration::milliseconds(1);
-        data.res_time = now + Duration::milliseconds(9);
+        data.req_time = now + TimeDelta::try_milliseconds(1).unwrap();
+        data.res_time = now + TimeDelta::try_milliseconds(9).unwrap();
         data.latency_ms = data.res_time.timestamp_millis() - data.req_time.timestamp_millis();
         model.add(&data).await?;
         data.data_id = "data_id3".to_string();
-        data.req_time = now + Duration::milliseconds(2);
-        data.res_time = now + Duration::milliseconds(8);
+        data.req_time = now + TimeDelta::try_milliseconds(2).unwrap();
+        data.res_time = now + TimeDelta::try_milliseconds(8).unwrap();
         data.latency_ms = data.res_time.timestamp_millis() - data.req_time.timestamp_millis();
         data.client_id = "client_id2".to_string();
         model.add(&data).await?;
         data.data_id = "data_id4".to_string();
-        data.req_time = now + Duration::milliseconds(3);
-        data.res_time = now + Duration::milliseconds(7);
+        data.req_time = now + TimeDelta::try_milliseconds(3).unwrap();
+        data.res_time = now + TimeDelta::try_milliseconds(7).unwrap();
         data.latency_ms = data.res_time.timestamp_millis() - data.req_time.timestamp_millis();
         data.user_id = "user_id2".to_string();
         data.body = Some(Map::new());
         model.add(&data).await?;
         data.data_id = "data_id5".to_string();
-        data.req_time = now + Duration::milliseconds(4);
-        data.res_time = now + Duration::milliseconds(6);
+        data.req_time = now + TimeDelta::try_milliseconds(4).unwrap();
+        data.res_time = now + TimeDelta::try_milliseconds(6).unwrap();
         data.latency_ms = data.res_time.timestamp_millis() - data.req_time.timestamp_millis();
         data.user_id = "user_id3".to_string();
         data.client_id = "client_id3".to_string();
@@ -741,7 +741,7 @@ pub fn list_offset_limit(runtime: &Runtime, model: &dyn CoremgrOpDataModel) -> R
     let mut data = CoremgrOpData {
         data_id: "data_id1".to_string(),
         req_time: now,
-        res_time: now + Duration::milliseconds(10),
+        res_time: now + TimeDelta::try_milliseconds(10).unwrap(),
         latency_ms: 10,
         status: 200,
         source_ip: "::1".to_string(),
@@ -756,26 +756,26 @@ pub fn list_offset_limit(runtime: &Runtime, model: &dyn CoremgrOpDataModel) -> R
     if let Err(e) = runtime.block_on(async {
         model.add(&data).await?;
         data.data_id = "data_id2".to_string();
-        data.req_time = now + Duration::milliseconds(1);
-        data.res_time = now + Duration::milliseconds(9);
+        data.req_time = now + TimeDelta::try_milliseconds(1).unwrap();
+        data.res_time = now + TimeDelta::try_milliseconds(9).unwrap();
         data.latency_ms = data.res_time.timestamp_millis() - data.req_time.timestamp_millis();
         model.add(&data).await?;
         data.data_id = "data_id3".to_string();
-        data.req_time = now + Duration::milliseconds(2);
-        data.res_time = now + Duration::milliseconds(8);
+        data.req_time = now + TimeDelta::try_milliseconds(2).unwrap();
+        data.res_time = now + TimeDelta::try_milliseconds(8).unwrap();
         data.latency_ms = data.res_time.timestamp_millis() - data.req_time.timestamp_millis();
         data.client_id = "client_id2".to_string();
         model.add(&data).await?;
         data.data_id = "data_id4".to_string();
-        data.req_time = now + Duration::milliseconds(3);
-        data.res_time = now + Duration::milliseconds(7);
+        data.req_time = now + TimeDelta::try_milliseconds(3).unwrap();
+        data.res_time = now + TimeDelta::try_milliseconds(7).unwrap();
         data.latency_ms = data.res_time.timestamp_millis() - data.req_time.timestamp_millis();
         data.user_id = "user_id2".to_string();
         data.body = Some(Map::new());
         model.add(&data).await?;
         data.data_id = "data_id5".to_string();
-        data.req_time = now + Duration::milliseconds(4);
-        data.res_time = now + Duration::milliseconds(6);
+        data.req_time = now + TimeDelta::try_milliseconds(4).unwrap();
+        data.res_time = now + TimeDelta::try_milliseconds(6).unwrap();
         data.latency_ms = data.res_time.timestamp_millis() - data.req_time.timestamp_millis();
         data.user_id = "user_id3".to_string();
         data.client_id = "client_id3".to_string();
@@ -864,7 +864,7 @@ pub fn list_cursor(runtime: &Runtime, model: &dyn CoremgrOpDataModel) -> Result<
     let mut data = CoremgrOpData {
         data_id: "data_id1".to_string(),
         req_time: now,
-        res_time: now + Duration::milliseconds(10),
+        res_time: now + TimeDelta::try_milliseconds(10).unwrap(),
         latency_ms: 10,
         status: 200,
         source_ip: "::1".to_string(),
@@ -879,26 +879,26 @@ pub fn list_cursor(runtime: &Runtime, model: &dyn CoremgrOpDataModel) -> Result<
     if let Err(e) = runtime.block_on(async {
         model.add(&data).await?;
         data.data_id = "data_id2".to_string();
-        data.req_time = now + Duration::milliseconds(1);
-        data.res_time = now + Duration::milliseconds(9);
+        data.req_time = now + TimeDelta::try_milliseconds(1).unwrap();
+        data.res_time = now + TimeDelta::try_milliseconds(9).unwrap();
         data.latency_ms = data.res_time.timestamp_millis() - data.req_time.timestamp_millis();
         model.add(&data).await?;
         data.data_id = "data_id3".to_string();
-        data.req_time = now + Duration::milliseconds(2);
-        data.res_time = now + Duration::milliseconds(8);
+        data.req_time = now + TimeDelta::try_milliseconds(2).unwrap();
+        data.res_time = now + TimeDelta::try_milliseconds(8).unwrap();
         data.latency_ms = data.res_time.timestamp_millis() - data.req_time.timestamp_millis();
         data.client_id = "client_id2".to_string();
         model.add(&data).await?;
         data.data_id = "data_id4".to_string();
-        data.req_time = now + Duration::milliseconds(3);
-        data.res_time = now + Duration::milliseconds(7);
+        data.req_time = now + TimeDelta::try_milliseconds(3).unwrap();
+        data.res_time = now + TimeDelta::try_milliseconds(7).unwrap();
         data.latency_ms = data.res_time.timestamp_millis() - data.req_time.timestamp_millis();
         data.user_id = "user_id2".to_string();
         data.body = Some(Map::new());
         model.add(&data).await?;
         data.data_id = "data_id5".to_string();
-        data.req_time = now + Duration::milliseconds(4);
-        data.res_time = now + Duration::milliseconds(6);
+        data.req_time = now + TimeDelta::try_milliseconds(4).unwrap();
+        data.res_time = now + TimeDelta::try_milliseconds(6).unwrap();
         data.latency_ms = data.res_time.timestamp_millis() - data.req_time.timestamp_millis();
         data.user_id = "user_id3".to_string();
         data.client_id = "client_id3".to_string();

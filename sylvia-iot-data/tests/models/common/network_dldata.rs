@@ -1,7 +1,7 @@
 use std::error::Error as StdError;
 
 use async_trait::async_trait;
-use chrono::{Duration, SubsecRound, Utc};
+use chrono::{SubsecRound, TimeDelta, Utc};
 use laboratory::expect;
 use serde_json::{Map, Value};
 use tokio::runtime::Runtime;
@@ -27,7 +27,7 @@ pub fn add(runtime: &Runtime, model: &dyn NetworkDlDataModel, db: &dyn Db) -> Re
     let data = NetworkDlData {
         data_id: strings::random_id(&now, 8),
         proc: now,
-        publish: now + Duration::milliseconds(2),
+        publish: now + TimeDelta::try_milliseconds(2).unwrap(),
         resp: None,
         status: 1,
         unit_id: "unit_id1".to_string(),
@@ -53,8 +53,8 @@ pub fn add(runtime: &Runtime, model: &dyn NetworkDlDataModel, db: &dyn Db) -> Re
     let now = Utc::now().trunc_subsecs(3);
     let data = NetworkDlData {
         data_id: strings::random_id(&now, 8),
-        proc: now + Duration::milliseconds(1),
-        publish: now + Duration::milliseconds(2),
+        proc: now + TimeDelta::try_milliseconds(1).unwrap(),
+        publish: now + TimeDelta::try_milliseconds(2).unwrap(),
         resp: Some(now),
         status: -1,
         unit_id: "unit_id2".to_string(),
@@ -84,7 +84,7 @@ pub fn add_dup(runtime: &Runtime, model: &dyn NetworkDlDataModel) -> Result<(), 
     let data = NetworkDlData {
         data_id: strings::random_id(&now, 8),
         proc: now,
-        publish: now + Duration::milliseconds(2),
+        publish: now + TimeDelta::try_milliseconds(2).unwrap(),
         resp: None,
         status: 1,
         unit_id: "unit_id".to_string(),
@@ -114,7 +114,7 @@ pub fn del_by_unit(
     let mut data = NetworkDlData {
         data_id: "data_id1_1".to_string(),
         proc: now,
-        publish: now + Duration::milliseconds(2),
+        publish: now + TimeDelta::try_milliseconds(2).unwrap(),
         resp: None,
         status: 1,
         unit_id: "unit_id1".to_string(),
@@ -174,7 +174,7 @@ pub fn del_twice(runtime: &Runtime, model: &dyn NetworkDlDataModel) -> Result<()
     let data = NetworkDlData {
         data_id: "data_id1_1".to_string(),
         proc: now,
-        publish: now + Duration::milliseconds(2),
+        publish: now + TimeDelta::try_milliseconds(2).unwrap(),
         resp: None,
         status: 1,
         unit_id: "unit_id1".to_string(),
@@ -209,7 +209,7 @@ pub fn del_by_device_id(
     let mut data = NetworkDlData {
         data_id: "data_id1_1".to_string(),
         proc: now,
-        publish: now + Duration::milliseconds(2),
+        publish: now + TimeDelta::try_milliseconds(2).unwrap(),
         resp: None,
         status: 1,
         unit_id: "unit_id".to_string(),
@@ -269,7 +269,7 @@ pub fn del_by_proc(
     let mut data = NetworkDlData {
         data_id: "data_id1".to_string(),
         proc: now,
-        publish: now + Duration::milliseconds(6),
+        publish: now + TimeDelta::try_milliseconds(6).unwrap(),
         resp: None,
         status: 1,
         unit_id: "unit_id".to_string(),
@@ -281,20 +281,20 @@ pub fn del_by_proc(
         extension: None,
     };
     let cond = QueryCond {
-        proc_gte: Some(now + Duration::milliseconds(1)),
-        proc_lte: Some(now + Duration::milliseconds(2)),
+        proc_gte: Some(now + TimeDelta::try_milliseconds(1).unwrap()),
+        proc_lte: Some(now + TimeDelta::try_milliseconds(2).unwrap()),
         ..Default::default()
     };
     if let Err(e) = runtime.block_on(async {
         model.add(&data).await?;
         data.data_id = "data_id2".to_string();
-        data.proc = now + Duration::milliseconds(1);
+        data.proc = now + TimeDelta::try_milliseconds(1).unwrap();
         model.add(&data).await?;
         data.data_id = "data_id3".to_string();
-        data.proc = now + Duration::milliseconds(2);
+        data.proc = now + TimeDelta::try_milliseconds(2).unwrap();
         model.add(&data).await?;
         data.data_id = "data_id4".to_string();
-        data.proc = now + Duration::milliseconds(3);
+        data.proc = now + TimeDelta::try_milliseconds(3).unwrap();
         model.add(&data).await?;
         model.del(&cond).await
     }) {
@@ -355,7 +355,7 @@ pub fn update_with_zero(
         data_id: "data_id1",
     };
     let updates = Updates {
-        resp: now + Duration::milliseconds(1),
+        resp: now + TimeDelta::try_milliseconds(1).unwrap(),
         status: 0,
     };
     if let Err(e) = runtime.block_on(async {
@@ -434,7 +434,7 @@ pub fn update_with_positive(
         data_id: "data_id1",
     };
     let updates = Updates {
-        resp: now + Duration::milliseconds(1),
+        resp: now + TimeDelta::try_milliseconds(1).unwrap(),
         status: 1,
     };
     if let Err(e) = runtime.block_on(async {
@@ -513,7 +513,7 @@ pub fn update_with_negative(
         data_id: "data_id1",
     };
     let updates = Updates {
-        resp: now + Duration::milliseconds(1),
+        resp: now + TimeDelta::try_milliseconds(1).unwrap(),
         status: -2,
     };
     if let Err(e) = runtime.block_on(async {
@@ -603,7 +603,7 @@ pub fn count(runtime: &Runtime, model: &dyn NetworkDlDataModel) -> Result<(), St
     let mut data = NetworkDlData {
         data_id: "data_id1".to_string(),
         proc: now,
-        publish: now + Duration::milliseconds(6),
+        publish: now + TimeDelta::try_milliseconds(6).unwrap(),
         resp: None,
         status: -3,
         unit_id: "unit_id1".to_string(),
@@ -617,21 +617,21 @@ pub fn count(runtime: &Runtime, model: &dyn NetworkDlDataModel) -> Result<(), St
     if let Err(e) = runtime.block_on(async {
         model.add(&data).await?;
         data.data_id = "data_id2".to_string();
-        data.proc = now + Duration::milliseconds(1);
-        data.publish = now + Duration::milliseconds(7);
-        data.resp = Some(now + Duration::milliseconds(4));
+        data.proc = now + TimeDelta::try_milliseconds(1).unwrap();
+        data.publish = now + TimeDelta::try_milliseconds(7).unwrap();
+        data.resp = Some(now + TimeDelta::try_milliseconds(4).unwrap());
         model.add(&data).await?;
         data.data_id = "data_id3".to_string();
-        data.proc = now + Duration::milliseconds(2);
-        data.publish = now + Duration::milliseconds(8);
-        data.resp = Some(now + Duration::milliseconds(3));
+        data.proc = now + TimeDelta::try_milliseconds(2).unwrap();
+        data.publish = now + TimeDelta::try_milliseconds(8).unwrap();
+        data.resp = Some(now + TimeDelta::try_milliseconds(3).unwrap());
         data.device_id = "device_id1_2".to_string();
         data.network_addr = "network_addr1_2".to_string();
         model.add(&data).await?;
         data.data_id = "data_id4".to_string();
-        data.proc = now + Duration::milliseconds(3);
-        data.publish = now + Duration::milliseconds(9);
-        data.resp = Some(now + Duration::milliseconds(2));
+        data.proc = now + TimeDelta::try_milliseconds(3).unwrap();
+        data.publish = now + TimeDelta::try_milliseconds(9).unwrap();
+        data.resp = Some(now + TimeDelta::try_milliseconds(2).unwrap());
         data.device_id = "device_id2".to_string();
         data.network_code = "network_code2".to_string();
         data.network_addr = "network_addr2".to_string();
@@ -639,9 +639,9 @@ pub fn count(runtime: &Runtime, model: &dyn NetworkDlDataModel) -> Result<(), St
         model.add(&data).await?;
         data.data_id = "data_id5".to_string();
         data.unit_id = "unit_id2".to_string();
-        data.proc = now + Duration::milliseconds(4);
-        data.publish = now + Duration::milliseconds(10);
-        data.resp = Some(now + Duration::milliseconds(1));
+        data.proc = now + TimeDelta::try_milliseconds(4).unwrap();
+        data.publish = now + TimeDelta::try_milliseconds(10).unwrap();
+        data.resp = Some(now + TimeDelta::try_milliseconds(1).unwrap());
         data.device_id = "device_id3".to_string();
         data.network_code = "network_code3".to_string();
         data.network_addr = "network_addr3".to_string();
@@ -703,8 +703,8 @@ pub fn count(runtime: &Runtime, model: &dyn NetworkDlDataModel) -> Result<(), St
     expect(count).to_equal(3)?;
 
     let cond = ListQueryCond {
-        proc_gte: Some(now + Duration::milliseconds(1)),
-        proc_lte: Some(now + Duration::milliseconds(3)),
+        proc_gte: Some(now + TimeDelta::try_milliseconds(1).unwrap()),
+        proc_lte: Some(now + TimeDelta::try_milliseconds(3).unwrap()),
         ..Default::default()
     };
     let count = match runtime.block_on(async { model.count(&cond).await }) {
@@ -714,8 +714,8 @@ pub fn count(runtime: &Runtime, model: &dyn NetworkDlDataModel) -> Result<(), St
     expect(count).to_equal(3)?;
 
     let cond = ListQueryCond {
-        pub_gte: Some(now + Duration::milliseconds(6)),
-        pub_lte: Some(now + Duration::milliseconds(9)),
+        pub_gte: Some(now + TimeDelta::try_milliseconds(6).unwrap()),
+        pub_lte: Some(now + TimeDelta::try_milliseconds(9).unwrap()),
         ..Default::default()
     };
     let count = match runtime.block_on(async { model.count(&cond).await }) {
@@ -725,8 +725,8 @@ pub fn count(runtime: &Runtime, model: &dyn NetworkDlDataModel) -> Result<(), St
     expect(count).to_equal(4)?;
 
     let cond = ListQueryCond {
-        resp_gte: Some(now + Duration::milliseconds(2)),
-        resp_lte: Some(now + Duration::milliseconds(3)),
+        resp_gte: Some(now + TimeDelta::try_milliseconds(2).unwrap()),
+        resp_lte: Some(now + TimeDelta::try_milliseconds(3).unwrap()),
         ..Default::default()
     };
     let count = match runtime.block_on(async { model.count(&cond).await }) {
@@ -753,7 +753,7 @@ pub fn list(runtime: &Runtime, model: &dyn NetworkDlDataModel) -> Result<(), Str
     let mut data = NetworkDlData {
         data_id: "data_id1".to_string(),
         proc: now,
-        publish: now + Duration::milliseconds(6),
+        publish: now + TimeDelta::try_milliseconds(6).unwrap(),
         resp: None,
         status: -3,
         unit_id: "unit_id1".to_string(),
@@ -767,21 +767,21 @@ pub fn list(runtime: &Runtime, model: &dyn NetworkDlDataModel) -> Result<(), Str
     if let Err(e) = runtime.block_on(async {
         model.add(&data).await?;
         data.data_id = "data_id2".to_string();
-        data.proc = now + Duration::milliseconds(1);
-        data.publish = now + Duration::milliseconds(7);
-        data.resp = Some(now + Duration::milliseconds(4));
+        data.proc = now + TimeDelta::try_milliseconds(1).unwrap();
+        data.publish = now + TimeDelta::try_milliseconds(7).unwrap();
+        data.resp = Some(now + TimeDelta::try_milliseconds(4).unwrap());
         model.add(&data).await?;
         data.data_id = "data_id3".to_string();
-        data.proc = now + Duration::milliseconds(2);
-        data.publish = now + Duration::milliseconds(8);
-        data.resp = Some(now + Duration::milliseconds(3));
+        data.proc = now + TimeDelta::try_milliseconds(2).unwrap();
+        data.publish = now + TimeDelta::try_milliseconds(8).unwrap();
+        data.resp = Some(now + TimeDelta::try_milliseconds(3).unwrap());
         data.device_id = "device_id1_2".to_string();
         data.network_addr = "network_addr1_2".to_string();
         model.add(&data).await?;
         data.data_id = "data_id4".to_string();
-        data.proc = now + Duration::milliseconds(3);
-        data.publish = now + Duration::milliseconds(9);
-        data.resp = Some(now + Duration::milliseconds(2));
+        data.proc = now + TimeDelta::try_milliseconds(3).unwrap();
+        data.publish = now + TimeDelta::try_milliseconds(9).unwrap();
+        data.resp = Some(now + TimeDelta::try_milliseconds(2).unwrap());
         data.device_id = "device_id2".to_string();
         data.network_code = "network_code2".to_string();
         data.network_addr = "network_addr2".to_string();
@@ -789,9 +789,9 @@ pub fn list(runtime: &Runtime, model: &dyn NetworkDlDataModel) -> Result<(), Str
         model.add(&data).await?;
         data.data_id = "data_id5".to_string();
         data.unit_id = "unit_id2".to_string();
-        data.proc = now + Duration::milliseconds(4);
-        data.publish = now + Duration::milliseconds(10);
-        data.resp = Some(now + Duration::milliseconds(1));
+        data.proc = now + TimeDelta::try_milliseconds(4).unwrap();
+        data.publish = now + TimeDelta::try_milliseconds(10).unwrap();
+        data.resp = Some(now + TimeDelta::try_milliseconds(1).unwrap());
         data.device_id = "device_id3".to_string();
         data.network_code = "network_code3".to_string();
         data.network_addr = "network_addr3".to_string();
@@ -864,8 +864,8 @@ pub fn list(runtime: &Runtime, model: &dyn NetworkDlDataModel) -> Result<(), Str
     expect(list.len()).to_equal(3)?;
 
     let cond = ListQueryCond {
-        proc_gte: Some(now + Duration::milliseconds(1)),
-        proc_lte: Some(now + Duration::milliseconds(3)),
+        proc_gte: Some(now + TimeDelta::try_milliseconds(1).unwrap()),
+        proc_lte: Some(now + TimeDelta::try_milliseconds(3).unwrap()),
         ..Default::default()
     };
     opts.cond = &cond;
@@ -876,8 +876,8 @@ pub fn list(runtime: &Runtime, model: &dyn NetworkDlDataModel) -> Result<(), Str
     expect(list.len()).to_equal(3)?;
 
     let cond = ListQueryCond {
-        pub_gte: Some(now + Duration::milliseconds(6)),
-        pub_lte: Some(now + Duration::milliseconds(9)),
+        pub_gte: Some(now + TimeDelta::try_milliseconds(6).unwrap()),
+        pub_lte: Some(now + TimeDelta::try_milliseconds(9).unwrap()),
         ..Default::default()
     };
     opts.cond = &cond;
@@ -888,8 +888,8 @@ pub fn list(runtime: &Runtime, model: &dyn NetworkDlDataModel) -> Result<(), Str
     expect(list.len()).to_equal(4)?;
 
     let cond = ListQueryCond {
-        resp_gte: Some(now + Duration::milliseconds(2)),
-        resp_lte: Some(now + Duration::milliseconds(3)),
+        resp_gte: Some(now + TimeDelta::try_milliseconds(2).unwrap()),
+        resp_lte: Some(now + TimeDelta::try_milliseconds(3).unwrap()),
         ..Default::default()
     };
     opts.cond = &cond;
@@ -918,7 +918,7 @@ pub fn list_sort(runtime: &Runtime, model: &dyn NetworkDlDataModel) -> Result<()
     let mut data = NetworkDlData {
         data_id: "data_id1".to_string(),
         proc: now,
-        publish: now + Duration::milliseconds(6),
+        publish: now + TimeDelta::try_milliseconds(6).unwrap(),
         resp: None,
         status: -3,
         unit_id: "unit_id1".to_string(),
@@ -932,30 +932,30 @@ pub fn list_sort(runtime: &Runtime, model: &dyn NetworkDlDataModel) -> Result<()
     if let Err(e) = runtime.block_on(async {
         model.add(&data).await?;
         data.data_id = "data_id2".to_string();
-        data.proc = now + Duration::milliseconds(1);
-        data.publish = now + Duration::milliseconds(7);
-        data.resp = Some(now + Duration::milliseconds(4));
+        data.proc = now + TimeDelta::try_milliseconds(1).unwrap();
+        data.publish = now + TimeDelta::try_milliseconds(7).unwrap();
+        data.resp = Some(now + TimeDelta::try_milliseconds(4).unwrap());
         model.add(&data).await?;
         data.data_id = "data_id3".to_string();
-        data.proc = now + Duration::milliseconds(2);
-        data.publish = now + Duration::milliseconds(8);
-        data.resp = Some(now + Duration::milliseconds(3));
+        data.proc = now + TimeDelta::try_milliseconds(2).unwrap();
+        data.publish = now + TimeDelta::try_milliseconds(8).unwrap();
+        data.resp = Some(now + TimeDelta::try_milliseconds(3).unwrap());
         data.device_id = "device_id1_2".to_string();
         data.network_addr = "network_addr1_2".to_string();
         model.add(&data).await?;
         data.data_id = "data_id4".to_string();
-        data.proc = now + Duration::milliseconds(3);
-        data.publish = now + Duration::milliseconds(9);
-        data.resp = Some(now + Duration::milliseconds(2));
+        data.proc = now + TimeDelta::try_milliseconds(3).unwrap();
+        data.publish = now + TimeDelta::try_milliseconds(9).unwrap();
+        data.resp = Some(now + TimeDelta::try_milliseconds(2).unwrap());
         data.device_id = "device_id2".to_string();
         data.network_code = "network_code2".to_string();
         data.network_addr = "network_addr2".to_string();
         model.add(&data).await?;
         data.data_id = "data_id5".to_string();
         data.unit_id = "unit_id2".to_string();
-        data.proc = now + Duration::milliseconds(4);
-        data.publish = now + Duration::milliseconds(10);
-        data.resp = Some(now + Duration::milliseconds(1));
+        data.proc = now + TimeDelta::try_milliseconds(4).unwrap();
+        data.publish = now + TimeDelta::try_milliseconds(10).unwrap();
+        data.resp = Some(now + TimeDelta::try_milliseconds(1).unwrap());
         data.device_id = "device_id3".to_string();
         data.network_code = "network_code3".to_string();
         data.network_addr = "network_addr3".to_string();
@@ -1183,7 +1183,7 @@ pub fn list_offset_limit(runtime: &Runtime, model: &dyn NetworkDlDataModel) -> R
     let mut data = NetworkDlData {
         data_id: "data_id1".to_string(),
         proc: now,
-        publish: now + Duration::milliseconds(6),
+        publish: now + TimeDelta::try_milliseconds(6).unwrap(),
         resp: None,
         status: -3,
         unit_id: "unit_id1".to_string(),
@@ -1197,30 +1197,30 @@ pub fn list_offset_limit(runtime: &Runtime, model: &dyn NetworkDlDataModel) -> R
     if let Err(e) = runtime.block_on(async {
         model.add(&data).await?;
         data.data_id = "data_id2".to_string();
-        data.proc = now + Duration::milliseconds(1);
-        data.publish = now + Duration::milliseconds(7);
-        data.resp = Some(now + Duration::milliseconds(4));
+        data.proc = now + TimeDelta::try_milliseconds(1).unwrap();
+        data.publish = now + TimeDelta::try_milliseconds(7).unwrap();
+        data.resp = Some(now + TimeDelta::try_milliseconds(4).unwrap());
         model.add(&data).await?;
         data.data_id = "data_id3".to_string();
-        data.proc = now + Duration::milliseconds(2);
-        data.publish = now + Duration::milliseconds(8);
-        data.resp = Some(now + Duration::milliseconds(3));
+        data.proc = now + TimeDelta::try_milliseconds(2).unwrap();
+        data.publish = now + TimeDelta::try_milliseconds(8).unwrap();
+        data.resp = Some(now + TimeDelta::try_milliseconds(3).unwrap());
         data.device_id = "device_id1_2".to_string();
         data.network_addr = "network_addr1_2".to_string();
         model.add(&data).await?;
         data.data_id = "data_id4".to_string();
-        data.proc = now + Duration::milliseconds(3);
-        data.publish = now + Duration::milliseconds(9);
-        data.resp = Some(now + Duration::milliseconds(2));
+        data.proc = now + TimeDelta::try_milliseconds(3).unwrap();
+        data.publish = now + TimeDelta::try_milliseconds(9).unwrap();
+        data.resp = Some(now + TimeDelta::try_milliseconds(2).unwrap());
         data.device_id = "device_id2".to_string();
         data.network_code = "network_code2".to_string();
         data.network_addr = "network_addr2".to_string();
         model.add(&data).await?;
         data.data_id = "data_id5".to_string();
         data.unit_id = "unit_id2".to_string();
-        data.proc = now + Duration::milliseconds(4);
-        data.publish = now + Duration::milliseconds(10);
-        data.resp = Some(now + Duration::milliseconds(1));
+        data.proc = now + TimeDelta::try_milliseconds(4).unwrap();
+        data.publish = now + TimeDelta::try_milliseconds(10).unwrap();
+        data.resp = Some(now + TimeDelta::try_milliseconds(1).unwrap());
         data.device_id = "device_id3".to_string();
         data.network_code = "network_code3".to_string();
         data.network_addr = "network_addr3".to_string();
@@ -1306,7 +1306,7 @@ pub fn list_cursor(runtime: &Runtime, model: &dyn NetworkDlDataModel) -> Result<
     let mut data = NetworkDlData {
         data_id: "data_id1".to_string(),
         proc: now,
-        publish: now + Duration::milliseconds(6),
+        publish: now + TimeDelta::try_milliseconds(6).unwrap(),
         resp: None,
         status: -3,
         unit_id: "unit_id1".to_string(),
@@ -1320,30 +1320,30 @@ pub fn list_cursor(runtime: &Runtime, model: &dyn NetworkDlDataModel) -> Result<
     if let Err(e) = runtime.block_on(async {
         model.add(&data).await?;
         data.data_id = "data_id2".to_string();
-        data.proc = now + Duration::milliseconds(1);
-        data.publish = now + Duration::milliseconds(7);
-        data.resp = Some(now + Duration::milliseconds(4));
+        data.proc = now + TimeDelta::try_milliseconds(1).unwrap();
+        data.publish = now + TimeDelta::try_milliseconds(7).unwrap();
+        data.resp = Some(now + TimeDelta::try_milliseconds(4).unwrap());
         model.add(&data).await?;
         data.data_id = "data_id3".to_string();
-        data.proc = now + Duration::milliseconds(2);
-        data.publish = now + Duration::milliseconds(8);
-        data.resp = Some(now + Duration::milliseconds(3));
+        data.proc = now + TimeDelta::try_milliseconds(2).unwrap();
+        data.publish = now + TimeDelta::try_milliseconds(8).unwrap();
+        data.resp = Some(now + TimeDelta::try_milliseconds(3).unwrap());
         data.device_id = "device_id1_2".to_string();
         data.network_addr = "network_addr1_2".to_string();
         model.add(&data).await?;
         data.data_id = "data_id4".to_string();
-        data.proc = now + Duration::milliseconds(3);
-        data.publish = now + Duration::milliseconds(9);
-        data.resp = Some(now + Duration::milliseconds(2));
+        data.proc = now + TimeDelta::try_milliseconds(3).unwrap();
+        data.publish = now + TimeDelta::try_milliseconds(9).unwrap();
+        data.resp = Some(now + TimeDelta::try_milliseconds(2).unwrap());
         data.device_id = "device_id2".to_string();
         data.network_code = "network_code2".to_string();
         data.network_addr = "network_addr2".to_string();
         model.add(&data).await?;
         data.data_id = "data_id5".to_string();
         data.unit_id = "unit_id2".to_string();
-        data.proc = now + Duration::milliseconds(4);
-        data.publish = now + Duration::milliseconds(10);
-        data.resp = Some(now + Duration::milliseconds(1));
+        data.proc = now + TimeDelta::try_milliseconds(4).unwrap();
+        data.publish = now + TimeDelta::try_milliseconds(10).unwrap();
+        data.resp = Some(now + TimeDelta::try_milliseconds(1).unwrap());
         data.device_id = "device_id3".to_string();
         data.network_code = "network_code3".to_string();
         data.network_addr = "network_addr3".to_string();

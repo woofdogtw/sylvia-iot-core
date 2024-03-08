@@ -6,7 +6,7 @@ use actix_web::{
     test::{self, TestRequest},
     App,
 };
-use chrono::{DateTime, Duration, SubsecRound, Utc};
+use chrono::{DateTime, SubsecRound, TimeDelta, Utc};
 use laboratory::{expect, SpecContext};
 use serde_json::{Map, Value};
 use serde_urlencoded;
@@ -4453,8 +4453,8 @@ fn count_list_dataset(
     let now = Utc::now();
 
     let mut device = create_device("manager", "public", "manager-public", true, "owner1");
-    device.created_at = now - Duration::milliseconds(2);
-    device.modified_at = now - Duration::milliseconds(2);
+    device.created_at = now - TimeDelta::try_milliseconds(2).unwrap();
+    device.modified_at = now - TimeDelta::try_milliseconds(2).unwrap();
     runtime.block_on(async {
         if let Err(e) = state.model.device().add(&device).await {
             return Err(format!("add device {} error: {}", device.device_id, e));
@@ -4463,8 +4463,8 @@ fn count_list_dataset(
     })?;
 
     let mut device = create_device("owner1", "public", "owner-public", true, "public");
-    device.created_at = now - Duration::milliseconds(1);
-    device.modified_at = now - Duration::milliseconds(1);
+    device.created_at = now - TimeDelta::try_milliseconds(1).unwrap();
+    device.modified_at = now - TimeDelta::try_milliseconds(1).unwrap();
     runtime.block_on(async {
         if let Err(e) = state.model.device().add(&device).await {
             return Err(format!("add device {} error: {}", device.device_id, e));
@@ -4474,7 +4474,7 @@ fn count_list_dataset(
 
     let mut device = create_device("manager", "manager", "manager", true, "");
     device.created_at = now;
-    device.modified_at = now + Duration::milliseconds(5);
+    device.modified_at = now + TimeDelta::try_milliseconds(5).unwrap();
     runtime.block_on(async {
         if let Err(e) = state.model.device().add(&device).await {
             return Err(format!("add device {} error: {}", device.device_id, e));
@@ -4483,8 +4483,8 @@ fn count_list_dataset(
     })?;
 
     let mut device = create_device("owner1", "owner1", "owner1-1", true, "owner1");
-    device.created_at = now + Duration::milliseconds(1);
-    device.modified_at = now + Duration::milliseconds(4);
+    device.created_at = now + TimeDelta::try_milliseconds(1).unwrap();
+    device.modified_at = now + TimeDelta::try_milliseconds(4).unwrap();
     runtime.block_on(async {
         if let Err(e) = state.model.device().add(&device).await {
             return Err(format!("add device {} error: {}", device.device_id, e));
@@ -4493,8 +4493,8 @@ fn count_list_dataset(
     })?;
 
     let mut device = create_device("owner1", "owner1", "owner1-2", true, "owner1");
-    device.created_at = now + Duration::milliseconds(2);
-    device.modified_at = now + Duration::milliseconds(3);
+    device.created_at = now + TimeDelta::try_milliseconds(2).unwrap();
+    device.modified_at = now + TimeDelta::try_milliseconds(3).unwrap();
     runtime.block_on(async {
         if let Err(e) = state.model.device().add(&device).await {
             return Err(format!("add device {} error: {}", device.device_id, e));
@@ -4503,8 +4503,8 @@ fn count_list_dataset(
     })?;
 
     let mut device = create_device("owner1", "owner1", "owner1-3", true, "owner1");
-    device.created_at = now + Duration::milliseconds(3);
-    device.modified_at = now + Duration::milliseconds(2);
+    device.created_at = now + TimeDelta::try_milliseconds(3).unwrap();
+    device.modified_at = now + TimeDelta::try_milliseconds(2).unwrap();
     runtime.block_on(async {
         if let Err(e) = state.model.device().add(&device).await {
             return Err(format!("add device {} error: {}", device.device_id, e));
@@ -4513,8 +4513,8 @@ fn count_list_dataset(
     })?;
 
     let mut device = create_device("owner2", "owner2", "owner2-1", true, "owner1");
-    device.created_at = now + Duration::milliseconds(4);
-    device.modified_at = now + Duration::milliseconds(1);
+    device.created_at = now + TimeDelta::try_milliseconds(4).unwrap();
+    device.modified_at = now + TimeDelta::try_milliseconds(1).unwrap();
     device.name = "owner2-2".to_string();
     runtime.block_on(async {
         if let Err(e) = state.model.device().add(&device).await {
@@ -4524,7 +4524,7 @@ fn count_list_dataset(
     })?;
 
     let mut device = create_device("owner2", "owner2", "owner2-2", true, "owner2");
-    device.created_at = now + Duration::milliseconds(5);
+    device.created_at = now + TimeDelta::try_milliseconds(5).unwrap();
     device.modified_at = now;
     device.name = "owner2-1".to_string();
     runtime.block_on(async {

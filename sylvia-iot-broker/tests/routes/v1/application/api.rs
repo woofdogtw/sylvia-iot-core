@@ -4,7 +4,7 @@ use actix_web::{
     test::{self, TestRequest},
     App,
 };
-use chrono::{DateTime, Duration, SubsecRound, Utc};
+use chrono::{DateTime, SubsecRound, TimeDelta, Utc};
 use laboratory::{expect, SpecContext};
 use serde_json::{Map, Value};
 use serde_urlencoded;
@@ -1683,8 +1683,8 @@ fn count_list_dataset(
     })?;
 
     let mut application = create_application("owner1-1", "amqp://host", "owner1");
-    application.created_at = now + Duration::milliseconds(1);
-    application.modified_at = now + Duration::milliseconds(5);
+    application.created_at = now + TimeDelta::try_milliseconds(1).unwrap();
+    application.modified_at = now + TimeDelta::try_milliseconds(5).unwrap();
     runtime.block_on(async {
         if let Err(e) = state.model.application().add(&application).await {
             return Err(format!(
@@ -1696,8 +1696,8 @@ fn count_list_dataset(
     })?;
 
     let mut application = create_application("owner1-2", "amqp://host", "owner1");
-    application.created_at = now + Duration::milliseconds(2);
-    application.modified_at = now + Duration::milliseconds(4);
+    application.created_at = now + TimeDelta::try_milliseconds(2).unwrap();
+    application.modified_at = now + TimeDelta::try_milliseconds(4).unwrap();
     runtime.block_on(async {
         if let Err(e) = state.model.application().add(&application).await {
             return Err(format!(
@@ -1709,8 +1709,8 @@ fn count_list_dataset(
     })?;
 
     let mut application = create_application("owner1-3", "amqp://host", "owner1");
-    application.created_at = now + Duration::milliseconds(3);
-    application.modified_at = now + Duration::milliseconds(3);
+    application.created_at = now + TimeDelta::try_milliseconds(3).unwrap();
+    application.modified_at = now + TimeDelta::try_milliseconds(3).unwrap();
     runtime.block_on(async {
         if let Err(e) = state.model.application().add(&application).await {
             return Err(format!(
@@ -1722,8 +1722,8 @@ fn count_list_dataset(
     })?;
 
     let mut application = create_application("owner2-1", "amqp://host", "owner2");
-    application.created_at = now + Duration::milliseconds(4);
-    application.modified_at = now + Duration::milliseconds(2);
+    application.created_at = now + TimeDelta::try_milliseconds(4).unwrap();
+    application.modified_at = now + TimeDelta::try_milliseconds(2).unwrap();
     application.name = "owner2-2".to_string();
     runtime.block_on(async {
         if let Err(e) = state.model.application().add(&application).await {
@@ -1736,8 +1736,8 @@ fn count_list_dataset(
     })?;
 
     let mut application = create_application("owner2-2", "amqp://host", "owner2");
-    application.created_at = now + Duration::milliseconds(5);
-    application.modified_at = now + Duration::milliseconds(1);
+    application.created_at = now + TimeDelta::try_milliseconds(5).unwrap();
+    application.modified_at = now + TimeDelta::try_milliseconds(1).unwrap();
     application.name = "owner2-1".to_string();
     runtime.block_on(async {
         if let Err(e) = state.model.application().add(&application).await {

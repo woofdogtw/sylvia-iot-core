@@ -6,7 +6,7 @@ use actix_web::{
     test::{self, TestRequest},
     App,
 };
-use chrono::{Duration, SubsecRound, Utc};
+use chrono::{SubsecRound, TimeDelta, Utc};
 use laboratory::{expect, SpecContext};
 use serde_json::{Map, Value};
 use serde_urlencoded;
@@ -3364,7 +3364,7 @@ fn count_list_dataset(runtime: &Runtime, state: &routes::State) -> Result<(), St
         "",
     );
     route.created_at = now;
-    route.modified_at = now + Duration::milliseconds(5);
+    route.modified_at = now + TimeDelta::try_milliseconds(5).unwrap();
     runtime.block_on(async {
         if let Err(e) = state.model.device_route().add(&route).await {
             return Err(format!("add device route {} error: {}", route.route_id, e));
@@ -3380,8 +3380,8 @@ fn count_list_dataset(runtime: &Runtime, state: &routes::State) -> Result<(), St
         "manager",
         "",
     );
-    route.created_at = now + Duration::milliseconds(1);
-    route.modified_at = now + Duration::milliseconds(4);
+    route.created_at = now + TimeDelta::try_milliseconds(1).unwrap();
+    route.modified_at = now + TimeDelta::try_milliseconds(4).unwrap();
     runtime.block_on(async {
         if let Err(e) = state.model.device_route().add(&route).await {
             return Err(format!("add device route {} error: {}", route.route_id, e));
@@ -3397,8 +3397,8 @@ fn count_list_dataset(runtime: &Runtime, state: &routes::State) -> Result<(), St
         "owner1-public",
         "",
     );
-    route.created_at = now + Duration::milliseconds(2);
-    route.modified_at = now + Duration::milliseconds(3);
+    route.created_at = now + TimeDelta::try_milliseconds(2).unwrap();
+    route.modified_at = now + TimeDelta::try_milliseconds(3).unwrap();
     runtime.block_on(async {
         if let Err(e) = state.model.device_route().add(&route).await {
             return Err(format!("add device route {} error: {}", route.route_id, e));
@@ -3414,8 +3414,8 @@ fn count_list_dataset(runtime: &Runtime, state: &routes::State) -> Result<(), St
         "owner1-public",
         "",
     );
-    route.created_at = now + Duration::milliseconds(3);
-    route.modified_at = now + Duration::milliseconds(2);
+    route.created_at = now + TimeDelta::try_milliseconds(3).unwrap();
+    route.modified_at = now + TimeDelta::try_milliseconds(2).unwrap();
     runtime.block_on(async {
         if let Err(e) = state.model.device_route().add(&route).await {
             return Err(format!("add device route {} error: {}", route.route_id, e));
@@ -3431,8 +3431,8 @@ fn count_list_dataset(runtime: &Runtime, state: &routes::State) -> Result<(), St
         "owner1-1-1",
         "",
     );
-    route.created_at = now + Duration::milliseconds(4);
-    route.modified_at = now + Duration::milliseconds(1);
+    route.created_at = now + TimeDelta::try_milliseconds(4).unwrap();
+    route.modified_at = now + TimeDelta::try_milliseconds(1).unwrap();
     runtime.block_on(async {
         if let Err(e) = state.model.device_route().add(&route).await {
             return Err(format!("add device route {} error: {}", route.route_id, e));
@@ -3448,7 +3448,7 @@ fn count_list_dataset(runtime: &Runtime, state: &routes::State) -> Result<(), St
         "owner2-1",
         "",
     );
-    route.created_at = now + Duration::milliseconds(5);
+    route.created_at = now + TimeDelta::try_milliseconds(5).unwrap();
     route.modified_at = now;
     runtime.block_on(async {
         if let Err(e) = state.model.device_route().add(&route).await {

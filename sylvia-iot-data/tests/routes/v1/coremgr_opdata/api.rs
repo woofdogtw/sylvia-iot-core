@@ -4,14 +4,14 @@ use actix_web::{
     test::{self, TestRequest},
     App,
 };
-use chrono::{DateTime, Duration, Utc};
+use chrono::{DateTime, TimeDelta, Utc};
 use laboratory::{expect, SpecContext};
 use serde_json::{Map, Value};
 use serde_urlencoded;
 use tokio::runtime::Runtime;
 
-use sylvia_iot_data::{models::coremgr_opdata::CoremgrOpData, routes};
 use sylvia_iot_corelib::err;
+use sylvia_iot_data::{models::coremgr_opdata::CoremgrOpData, routes};
 
 use super::{
     super::{
@@ -281,7 +281,7 @@ pub fn get_list_offset_limit(context: &mut SpecContext<TestState>) -> Result<(),
             runtime,
             &routes_state,
             format!("data_id{}", i).as_str(),
-            now + Duration::milliseconds(i),
+            now + TimeDelta::try_milliseconds(i).unwrap(),
             false,
         )?;
     }
@@ -290,7 +290,7 @@ pub fn get_list_offset_limit(context: &mut SpecContext<TestState>) -> Result<(),
             runtime,
             &routes_state,
             format!("data_id{}", i).as_str(),
-            now + Duration::milliseconds(i),
+            now + TimeDelta::try_milliseconds(i).unwrap(),
             true,
         )?;
     }
@@ -382,7 +382,7 @@ pub fn get_list_format_array_csv(context: &mut SpecContext<TestState>) -> Result
             runtime,
             &routes_state,
             format!("data_id{}", i).as_str(),
-            now + Duration::milliseconds(i),
+            now + TimeDelta::try_milliseconds(i).unwrap(),
             false,
         )?;
     }
@@ -391,7 +391,7 @@ pub fn get_list_format_array_csv(context: &mut SpecContext<TestState>) -> Result
             runtime,
             &routes_state,
             format!("data_id{}", i).as_str(),
-            now + Duration::milliseconds(i),
+            now + TimeDelta::try_milliseconds(i).unwrap(),
             true,
         )?;
     }
@@ -820,7 +820,7 @@ fn count_list_dataset(
     let mut data = CoremgrOpData {
         data_id: "data_id1".to_string(),
         req_time: now,
-        res_time: now + Duration::milliseconds(10),
+        res_time: now + TimeDelta::try_milliseconds(10).unwrap(),
         latency_ms: 10,
         status: 200,
         source_ip: "::1".to_string(),
@@ -835,26 +835,26 @@ fn count_list_dataset(
     if let Err(e) = runtime.block_on(async {
         state.model.coremgr_opdata().add(&data).await?;
         data.data_id = "data_id2".to_string();
-        data.req_time = now + Duration::milliseconds(1);
-        data.res_time = now + Duration::milliseconds(9);
+        data.req_time = now + TimeDelta::try_milliseconds(1).unwrap();
+        data.res_time = now + TimeDelta::try_milliseconds(9).unwrap();
         data.latency_ms = data.res_time.timestamp_millis() - data.req_time.timestamp_millis();
         state.model.coremgr_opdata().add(&data).await?;
         data.data_id = "data_id3".to_string();
-        data.req_time = now + Duration::milliseconds(2);
-        data.res_time = now + Duration::milliseconds(8);
+        data.req_time = now + TimeDelta::try_milliseconds(2).unwrap();
+        data.res_time = now + TimeDelta::try_milliseconds(8).unwrap();
         data.latency_ms = data.res_time.timestamp_millis() - data.req_time.timestamp_millis();
         data.client_id = "client_id2".to_string();
         state.model.coremgr_opdata().add(&data).await?;
         data.data_id = "data_id4".to_string();
-        data.req_time = now + Duration::milliseconds(3);
-        data.res_time = now + Duration::milliseconds(7);
+        data.req_time = now + TimeDelta::try_milliseconds(3).unwrap();
+        data.res_time = now + TimeDelta::try_milliseconds(7).unwrap();
         data.latency_ms = data.res_time.timestamp_millis() - data.req_time.timestamp_millis();
         data.user_id = "user_id2".to_string();
         data.body = Some(Map::new());
         state.model.coremgr_opdata().add(&data).await?;
         data.data_id = "data_id5".to_string();
-        data.req_time = now + Duration::milliseconds(4);
-        data.res_time = now + Duration::milliseconds(6);
+        data.req_time = now + TimeDelta::try_milliseconds(4).unwrap();
+        data.res_time = now + TimeDelta::try_milliseconds(6).unwrap();
         data.latency_ms = data.res_time.timestamp_millis() - data.req_time.timestamp_millis();
         data.user_id = "user_id3".to_string();
         data.client_id = "client_id3".to_string();

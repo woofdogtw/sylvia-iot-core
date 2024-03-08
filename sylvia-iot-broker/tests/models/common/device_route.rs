@@ -1,4 +1,4 @@
-use chrono::{Duration, SubsecRound, Utc};
+use chrono::{SubsecRound, TimeDelta, Utc};
 use laboratory::expect;
 use tokio::runtime::Runtime;
 
@@ -711,7 +711,7 @@ pub fn update(runtime: &Runtime, model: &dyn DeviceRouteModel) -> Result<(), Str
     let update_cond = UpdateQueryCond {
         device_id: "device_id_update",
     };
-    let modified_at = now + Duration::milliseconds(1);
+    let modified_at = now + TimeDelta::try_milliseconds(1).unwrap();
     let updates = Updates {
         profile: Some(""),
         modified_at: Some(modified_at),
@@ -1541,26 +1541,26 @@ pub fn list_sort(runtime: &Runtime, model: &dyn DeviceRouteModel) -> Result<(), 
         network_addr: "network_addr_list1_1".to_string(),
         profile: "profile".to_string(),
         created_at: now,
-        modified_at: now + Duration::seconds(20),
+        modified_at: now + TimeDelta::try_seconds(20).unwrap(),
     };
     if let Err(e) = runtime.block_on(async {
         model.add(&route).await?;
-        now = now + Duration::seconds(1);
+        now = now + TimeDelta::try_seconds(1).unwrap();
         route.route_id = "route_id_list1_2".to_string();
         route.device_id = "device_id_list1_2".to_string();
         route.network_addr = "network_addr_list1_2".to_string();
         route.created_at = now;
-        route.modified_at = now + Duration::seconds(18);
+        route.modified_at = now + TimeDelta::try_seconds(18).unwrap();
         model.add(&route).await?;
-        now = now + Duration::seconds(1);
+        now = now + TimeDelta::try_seconds(1).unwrap();
         route.route_id = "route_id_list1_3".to_string();
         route.device_id = "device_id_list1_3".to_string();
         route.network_id = "network_id_list1_3".to_string();
         route.network_addr = "network_addr_list1_3".to_string();
         route.created_at = now;
-        route.modified_at = now + Duration::seconds(16);
+        route.modified_at = now + TimeDelta::try_seconds(16).unwrap();
         model.add(&route).await?;
-        now = now + Duration::seconds(1);
+        now = now + TimeDelta::try_seconds(1).unwrap();
         route.route_id = "route_id_list2_1".to_string();
         route.application_id = "application_id_list2".to_string();
         route.application_code = "application_code_list2".to_string();
@@ -1569,9 +1569,9 @@ pub fn list_sort(runtime: &Runtime, model: &dyn DeviceRouteModel) -> Result<(), 
         route.network_code = "network_code_list2".to_string();
         route.network_addr = "network_addr_list2_1".to_string();
         route.created_at = now;
-        route.modified_at = now + Duration::seconds(14);
+        route.modified_at = now + TimeDelta::try_seconds(14).unwrap();
         model.add(&route).await?;
-        now = now + Duration::seconds(1);
+        now = now + TimeDelta::try_seconds(1).unwrap();
         route.route_id = "route_id_list3_1".to_string();
         route.unit_id = "unit_id_list3".to_string();
         route.unit_code = "unit_code_list3".to_string();
@@ -1582,7 +1582,7 @@ pub fn list_sort(runtime: &Runtime, model: &dyn DeviceRouteModel) -> Result<(), 
         route.network_code = "network_code_list3".to_string();
         route.network_addr = "network_addr_list3_1".to_string();
         route.created_at = now;
-        route.modified_at = now + Duration::seconds(12);
+        route.modified_at = now + TimeDelta::try_seconds(12).unwrap();
         model.add(&route).await
     }) {
         return Err(format!("model.add() error: {}", e));

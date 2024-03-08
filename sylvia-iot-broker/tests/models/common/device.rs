@@ -1,4 +1,4 @@
-use chrono::{Duration, SubsecRound, Utc};
+use chrono::{SubsecRound, TimeDelta, Utc};
 use laboratory::expect;
 use serde_json::{Map, Value};
 use tokio::runtime::Runtime;
@@ -619,7 +619,7 @@ pub fn update(runtime: &Runtime, model: &dyn DeviceModel) -> Result<(), String> 
     };
 
     // Update only one field.
-    let now = now + Duration::milliseconds(1);
+    let now = now + TimeDelta::try_seconds(1).unwrap();
     let updates = Updates {
         modified_at: Some(now),
         ..Default::default()
@@ -647,7 +647,7 @@ pub fn update(runtime: &Runtime, model: &dyn DeviceModel) -> Result<(), String> 
     expect(get_device.info).to_equal(device.info.clone())?;
 
     // Update all fields.
-    let now = now + Duration::milliseconds(1);
+    let now = now + TimeDelta::try_seconds(1).unwrap();
     let mut info = Map::<String, Value>::new();
     info.insert("key".to_string(), Value::String("value".to_string()));
     let updates = Updates {
@@ -681,7 +681,7 @@ pub fn update(runtime: &Runtime, model: &dyn DeviceModel) -> Result<(), String> 
     expect(get_device.info).to_equal(info)?;
 
     // Update all fields back to None.
-    let now = now + Duration::milliseconds(1);
+    let now = now + TimeDelta::try_seconds(1).unwrap();
     let info = Map::<String, Value>::new();
     let updates = Updates {
         network: Some((device.network_id.as_str(), device.network_code.as_str())),
@@ -1262,7 +1262,7 @@ pub fn list_sort(runtime: &Runtime, model: &dyn DeviceModel) -> Result<(), Strin
     };
     if let Err(e) = runtime.block_on(async {
         model.add(&device).await?;
-        now = now + Duration::seconds(1);
+        now = now + TimeDelta::try_seconds(1).unwrap();
         device.device_id = "device_id_list1_2".to_string();
         device.network_addr = "network_addr_list1_2".to_string();
         device.created_at = now;
@@ -1270,7 +1270,7 @@ pub fn list_sort(runtime: &Runtime, model: &dyn DeviceModel) -> Result<(), Strin
         device.profile = "profile_list1_2".to_string();
         device.name = "name_list1_2".to_string();
         model.add(&device).await?;
-        now = now + Duration::seconds(1);
+        now = now + TimeDelta::try_seconds(1).unwrap();
         device.device_id = "device_id_list2_1".to_string();
         device.network_id = "network_id_list2".to_string();
         device.network_code = "network_code_list2".to_string();
@@ -1280,7 +1280,7 @@ pub fn list_sort(runtime: &Runtime, model: &dyn DeviceModel) -> Result<(), Strin
         device.profile = "profile_list2_1".to_string();
         device.name = "name_list2_1".to_string();
         model.add(&device).await?;
-        now = now + Duration::seconds(1);
+        now = now + TimeDelta::try_seconds(1).unwrap();
         device.device_id = "device_id_list3_1".to_string();
         device.unit_id = "unit_id_list3".to_string();
         device.network_id = "network_id_list3".to_string();

@@ -6,7 +6,7 @@ use actix_web::{
     test::{self, TestRequest},
     App,
 };
-use chrono::{DateTime, Duration, SubsecRound, TimeZone, Utc};
+use chrono::{DateTime, SubsecRound, TimeDelta, TimeZone, Utc};
 use laboratory::{expect, SpecContext};
 use serde_json::{Map, Value};
 use serde_urlencoded;
@@ -1498,7 +1498,7 @@ fn count_list_dataset(runtime: &Runtime, state: &routes::State) -> Result<(), St
     })?;
 
     let mut route = create_network_route("manager-manager", "manager", "manager", "manager");
-    route.created_at = now + Duration::milliseconds(1);
+    route.created_at = now + TimeDelta::try_milliseconds(1).unwrap();
     runtime.block_on(async {
         if let Err(e) = state.model.network_route().add(&route).await {
             return Err(format!("add network route {} error: {}", route.route_id, e));
@@ -1507,7 +1507,7 @@ fn count_list_dataset(runtime: &Runtime, state: &routes::State) -> Result<(), St
     })?;
 
     let mut route = create_network_route("owner1-1-owner1-1", "owner1", "owner1-1", "owner1-1");
-    route.created_at = now + Duration::milliseconds(2);
+    route.created_at = now + TimeDelta::try_milliseconds(2).unwrap();
     runtime.block_on(async {
         if let Err(e) = state.model.network_route().add(&route).await {
             return Err(format!("add network route {} error: {}", route.route_id, e));
@@ -1516,7 +1516,7 @@ fn count_list_dataset(runtime: &Runtime, state: &routes::State) -> Result<(), St
     })?;
 
     let mut route = create_network_route("owner1-2-owner1-1", "owner1", "owner1-1", "owner1-2");
-    route.created_at = now + Duration::milliseconds(3);
+    route.created_at = now + TimeDelta::try_milliseconds(3).unwrap();
     runtime.block_on(async {
         if let Err(e) = state.model.network_route().add(&route).await {
             return Err(format!("add network route {} error: {}", route.route_id, e));
@@ -1525,7 +1525,7 @@ fn count_list_dataset(runtime: &Runtime, state: &routes::State) -> Result<(), St
     })?;
 
     let mut route = create_network_route("owner1-2-owner1-2", "owner1", "owner1-2", "owner1-2");
-    route.created_at = now + Duration::milliseconds(4);
+    route.created_at = now + TimeDelta::try_milliseconds(4).unwrap();
     runtime.block_on(async {
         if let Err(e) = state.model.network_route().add(&route).await {
             return Err(format!("add network route {} error: {}", route.route_id, e));
@@ -1534,7 +1534,7 @@ fn count_list_dataset(runtime: &Runtime, state: &routes::State) -> Result<(), St
     })?;
 
     let mut route = create_network_route("owner2-owner2", "owner2", "owner2", "owner2");
-    route.created_at = now + Duration::milliseconds(5);
+    route.created_at = now + TimeDelta::try_milliseconds(5).unwrap();
     runtime.block_on(async {
         if let Err(e) = state.model.network_route().add(&route).await {
             return Err(format!("add network route {} error: {}", route.route_id, e));

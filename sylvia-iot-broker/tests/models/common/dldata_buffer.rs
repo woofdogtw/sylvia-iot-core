@@ -1,4 +1,4 @@
-use chrono::{Duration, SubsecRound, Utc};
+use chrono::{SubsecRound, TimeDelta, Utc};
 use laboratory::expect;
 use tokio::runtime::Runtime;
 
@@ -740,19 +740,19 @@ pub fn list_sort(runtime: &Runtime, model: &dyn DlDataBufferModel) -> Result<(),
     };
     if let Err(e) = runtime.block_on(async {
         model.add(&data).await?;
-        now = now + Duration::seconds(1);
+        now = now + TimeDelta::try_seconds(1).unwrap();
         data.data_id = "data_id_list1_2".to_string();
         data.application_code = "application_code_list1_2".to_string();
         data.created_at = now;
         data.expired_at = now;
         model.add(&data).await?;
-        now = now + Duration::seconds(1);
+        now = now + TimeDelta::try_seconds(1).unwrap();
         data.data_id = "data_id_list2_1".to_string();
         data.application_code = "application_code_list2_1".to_string();
         data.created_at = now;
         data.expired_at = now;
         model.add(&data).await?;
-        now = now + Duration::seconds(1);
+        now = now + TimeDelta::try_seconds(1).unwrap();
         data.data_id = "data_id_list3_1".to_string();
         data.application_code = "application_code_list3_1".to_string();
         data.created_at = now;

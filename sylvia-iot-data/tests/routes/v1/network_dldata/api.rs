@@ -4,7 +4,7 @@ use actix_web::{
     test::{self, TestRequest},
     App,
 };
-use chrono::{DateTime, Duration, Utc};
+use chrono::{DateTime, TimeDelta, Utc};
 use laboratory::{expect, SpecContext};
 use serde_json::{Map, Value};
 use serde_urlencoded;
@@ -645,7 +645,7 @@ pub fn get_list_offset_limit(context: &mut SpecContext<TestState>) -> Result<(),
             runtime,
             &routes_state,
             format!("data_id{}", i).as_str(),
-            now + Duration::milliseconds(i),
+            now + TimeDelta::try_milliseconds(i).unwrap(),
             false,
         )?;
     }
@@ -654,7 +654,7 @@ pub fn get_list_offset_limit(context: &mut SpecContext<TestState>) -> Result<(),
             runtime,
             &routes_state,
             format!("data_id{}", i).as_str(),
-            now + Duration::milliseconds(i),
+            now + TimeDelta::try_milliseconds(i).unwrap(),
             true,
         )?;
     }
@@ -746,7 +746,7 @@ pub fn get_list_format_array_csv(context: &mut SpecContext<TestState>) -> Result
             runtime,
             &routes_state,
             format!("data_id{}", i).as_str(),
-            now + Duration::milliseconds(i),
+            now + TimeDelta::try_milliseconds(i).unwrap(),
             false,
         )?;
     }
@@ -755,7 +755,7 @@ pub fn get_list_format_array_csv(context: &mut SpecContext<TestState>) -> Result
             runtime,
             &routes_state,
             format!("data_id{}", i).as_str(),
-            now + Duration::milliseconds(i),
+            now + TimeDelta::try_milliseconds(i).unwrap(),
             true,
         )?;
     }
@@ -1197,7 +1197,7 @@ fn count_list_dataset(
     let mut data = NetworkDlData {
         data_id: "data_id1".to_string(),
         proc: now,
-        publish: now + Duration::milliseconds(6),
+        publish: now + TimeDelta::try_milliseconds(6).unwrap(),
         resp: None,
         status: -3,
         unit_id: UNIT_OWNER.to_string(),
@@ -1211,21 +1211,21 @@ fn count_list_dataset(
     if let Err(e) = runtime.block_on(async {
         state.model.network_dldata().add(&data).await?;
         data.data_id = "data_id2".to_string();
-        data.proc = now + Duration::milliseconds(1);
-        data.publish = now + Duration::milliseconds(7);
-        data.resp = Some(now + Duration::milliseconds(4));
+        data.proc = now + TimeDelta::try_milliseconds(1).unwrap();
+        data.publish = now + TimeDelta::try_milliseconds(7).unwrap();
+        data.resp = Some(now + TimeDelta::try_milliseconds(4).unwrap());
         state.model.network_dldata().add(&data).await?;
         data.data_id = "data_id3".to_string();
-        data.proc = now + Duration::milliseconds(2);
-        data.publish = now + Duration::milliseconds(8);
-        data.resp = Some(now + Duration::milliseconds(3));
+        data.proc = now + TimeDelta::try_milliseconds(2).unwrap();
+        data.publish = now + TimeDelta::try_milliseconds(8).unwrap();
+        data.resp = Some(now + TimeDelta::try_milliseconds(3).unwrap());
         data.device_id = "device_id1_2".to_string();
         data.network_addr = "network_addr1_2".to_string();
         state.model.network_dldata().add(&data).await?;
         data.data_id = "data_id4".to_string();
-        data.proc = now + Duration::milliseconds(3);
-        data.publish = now + Duration::milliseconds(9);
-        data.resp = Some(now + Duration::milliseconds(2));
+        data.proc = now + TimeDelta::try_milliseconds(3).unwrap();
+        data.publish = now + TimeDelta::try_milliseconds(9).unwrap();
+        data.resp = Some(now + TimeDelta::try_milliseconds(2).unwrap());
         data.device_id = "device_id2".to_string();
         data.network_code = "network_code2".to_string();
         data.network_addr = "network_addr2".to_string();
@@ -1233,9 +1233,9 @@ fn count_list_dataset(
         state.model.network_dldata().add(&data).await?;
         data.data_id = "data_id5".to_string();
         data.unit_id = "unit_id2".to_string();
-        data.proc = now + Duration::milliseconds(4);
-        data.publish = now + Duration::milliseconds(10);
-        data.resp = Some(now + Duration::milliseconds(1));
+        data.proc = now + TimeDelta::try_milliseconds(4).unwrap();
+        data.publish = now + TimeDelta::try_milliseconds(10).unwrap();
+        data.resp = Some(now + TimeDelta::try_milliseconds(1).unwrap());
         data.device_id = "device_id3".to_string();
         data.network_code = "network_code3".to_string();
         data.network_addr = "network_addr3".to_string();
