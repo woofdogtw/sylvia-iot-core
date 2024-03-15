@@ -1,6 +1,6 @@
 use std::error::Error as StdError;
 
-use redis::{aio::Connection, Client};
+use redis::{aio::MultiplexedConnection, Client};
 
 /// Redis connection options.
 pub struct Options {
@@ -9,9 +9,9 @@ pub struct Options {
 }
 
 /// Connect to Redis.
-pub async fn connect(options: &Options) -> Result<Connection, Box<dyn StdError>> {
+pub async fn connect(options: &Options) -> Result<MultiplexedConnection, Box<dyn StdError>> {
     let conn = Client::open(options.url.as_str())?
-        .get_async_connection()
+        .get_multiplexed_async_connection()
         .await?;
     Ok(conn)
 }

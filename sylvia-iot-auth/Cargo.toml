@@ -29,15 +29,15 @@ log = "0.4.21"
 mongodb = { version = "2.8.1", features = ["bson-chrono-0_4"] }
 oxide-auth = "0.5.4"
 oxide-auth-async = "0.1.1"
-redis = { version = "0.24.0", features = ["tokio-comp"] }
+redis = { version = "0.25.1", features = ["tokio-comp"] }
 rustls = "0.22.2"
 rustls-pemfile = "2.1.1"
 serde = { version = "1.0.197", features = ["derive"] }
 serde_json = "1.0.114"
 serde_urlencoded = "0.7.1"
-serde_with = { version = "3.6.1", features = ["json"] }
+serde_with = { version = "3.7.0", features = ["json"] }
 sql-builder = "3.1.1"
-sqlx = { version = "0.7.3", default-features = false, features = ["macros", "runtime-tokio", "sqlite"] }
+sqlx = { version = "0.7.4", default-features = false, features = ["macros", "runtime-tokio", "sqlite"] }
 sylvia-iot-corelib = { path="../sylvia-iot-corelib" }
 tera = "1.19.1"
 tokio = { version = "1.36.0", features = ["io-util", "macros", "rt-multi-thread", "time"] }

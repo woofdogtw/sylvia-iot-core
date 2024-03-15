@@ -30,7 +30,7 @@ general-mq = { path="../general-mq" }
 hex = "0.4.3"
 json5 = "0.4.1"
 log = "0.4.21"
-reqwest = { version = "0.11.24", default-features = false, features = ["json", "rustls-tls", "stream"] }
+reqwest = { version = "0.11.26", default-features = false, features = ["json", "rustls-tls", "stream"] }
 rumqttd = "0.19.0"
 rustls = "0.22.2"
 rustls-pemfile = "2.1.1"
