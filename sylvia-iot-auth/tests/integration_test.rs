@@ -1,5 +1,5 @@
 use laboratory::{describe, LabResult};
-use redis::aio::Connection as RedisConn;
+use redis::aio::MultiplexedConnection as RedisConn;
 use tokio::runtime::Runtime;
 
 use sylvia_iot_auth::{

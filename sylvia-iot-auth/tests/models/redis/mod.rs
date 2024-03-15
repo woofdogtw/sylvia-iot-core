@@ -1,5 +1,5 @@
 use laboratory::{describe, Suite};
-use redis::{aio::Connection, AsyncCommands, RedisResult};
+use redis::{aio::MultiplexedConnection, AsyncCommands, RedisResult};
 use tokio::runtime::Runtime;
 
 use sylvia_iot_auth::models::redis::conn::{self as models_conn, Options};
@@ -93,7 +93,7 @@ fn new_state(with_pool: bool) -> TestState {
     }
 }
 
-async fn remove_db(conn: &mut Connection) {
+async fn remove_db(conn: &mut MultiplexedConnection) {
     let result: RedisResult<Vec<String>> = conn.keys("*").await;
     let result = match result {
         Err(_) => {

@@ -1,7 +1,7 @@
 use std::error::Error as StdError;
 
 use chrono::{TimeZone, Utc};
-use redis::{aio::Connection, AsyncCommands};
+use redis::{aio::MultiplexedConnection, AsyncCommands};
 use serde::{Deserialize, Serialize};
 use serde_json;
 
@@ -13,7 +13,7 @@ use super::{
 /// Model instance.
 pub struct Model {
     /// The associated database connection.
-    _conn: Connection,
+    _conn: MultiplexedConnection,
 }
 
 /// Redis schema. Use JSON string as the value.
@@ -45,12 +45,12 @@ impl Model {
     }
 }
 
-pub async fn init(_conn: &Connection) -> Result<(), Box<dyn StdError>> {
+pub async fn init(_conn: &MultiplexedConnection) -> Result<(), Box<dyn StdError>> {
     Ok(())
 }
 
 pub async fn get(
-    conn: &mut Connection,
+    conn: &mut MultiplexedConnection,
     code: &str,
 ) -> Result<Option<AuthorizationCode>, Box<dyn StdError>> {
     let result: Option<String> = conn.get(PREFIX.to_string() + code).await?;
@@ -69,7 +69,10 @@ pub async fn get(
     }))
 }
 
-pub async fn add(conn: &mut Connection, code: &AuthorizationCode) -> Result<(), Box<dyn StdError>> {
+pub async fn add(
+    conn: &mut MultiplexedConnection,
+    code: &AuthorizationCode,
+) -> Result<(), Box<dyn StdError>> {
     let code = Schema {
         code: code.code.to_string(),
         expires_at: code.expires_at.timestamp_millis(),
@@ -89,7 +92,10 @@ pub async fn add(conn: &mut Connection, code: &AuthorizationCode) -> Result<(), 
     Ok(())
 }
 
-pub async fn del<'a>(conn: &mut Connection, cond: &QueryCond<'a>) -> Result<(), Box<dyn StdError>> {
+pub async fn del<'a>(
+    conn: &mut MultiplexedConnection,
+    cond: &QueryCond<'a>,
+) -> Result<(), Box<dyn StdError>> {
     if cond.code.is_none() {
         return Ok(());
     }
