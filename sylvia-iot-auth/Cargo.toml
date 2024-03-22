@@ -19,17 +19,17 @@ actix-service = "2.0.2"
 actix-web = { version = "4.5.1", default-features = false, features = ["rustls-0_22"] }
 actix-web-prom = "0.8.0"
 async-stream = "0.3.5"
-async-trait = "0.1.77"
+async-trait = "0.1.78"
 base64 = "0.22.0"
 chrono = { version = "0.4.35", default-features = false, features = ["serde"] }
-clap = { version = "4.5.2", default-features = false, features = ["std", "help", "usage", "error-context"] }
+clap = { version = "4.5.3", default-features = false, features = ["std", "help", "usage", "error-context"] }
 futures = "0.3.30"
 json5 = "0.4.1"
 log = "0.4.21"
-mongodb = { version = "2.8.1", features = ["bson-chrono-0_4"] }
+mongodb = { version = "2.8.2", features = ["bson-chrono-0_4"] }
 oxide-auth = "0.5.4"
 oxide-auth-async = "0.1.1"
-redis = { version = "0.25.1", features = ["tokio-comp"] }
+redis = { version = "0.25.2", features = ["tokio-comp"] }
 rustls = "0.22.2"
 rustls-pemfile = "2.1.1"
 serde = { version = "1.0.197", features = ["derive"] }
