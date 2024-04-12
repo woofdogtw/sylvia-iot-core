@@ -81,7 +81,7 @@ jobs:
     runs-on: ubuntu-20.04
     services:
       mongo:
-        image: mongo:7.0.7
+        image: mongo:7.0.8
         ports:
           - 27017:27017
       redis:
@@ -140,7 +140,7 @@ jobs:
     runs-on: ubuntu-20.04
     services:
       mongo:
-        image: mongo:7.0.7
+        image: mongo:7.0.8
         ports:
           - 27017:27017
       rabbitmq:
@@ -257,7 +257,7 @@ jobs:
     runs-on: ubuntu-20.04
     services:
       mongo:
-        image: mongo:7.0.7
+        image: mongo:7.0.8
         ports:
           - 27017:27017
       rabbitmq:
@@ -339,7 +339,7 @@ jobs:
     runs-on: ubuntu-20.04
     services:
       mongo:
-        image: mongo:7.0.7
+        image: mongo:7.0.8
         ports:
           - 27017:27017
       rabbitmq:
