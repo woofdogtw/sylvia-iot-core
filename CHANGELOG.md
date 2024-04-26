@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.0.37 - 2024-04-26
+
+### Changed
+
+- Update Rust to 1.77.2 with GitHub Actions runner image 20240422.1.1.
+- Update dependencies and fix vulnerabilities.
+
+### Fixed
+
+- Remove access tokens, refresh tokens, authorization codes when changing user passwords or client secrets.
+
 ## 0.0.36 - 2024-02-16
 
 ### Changed

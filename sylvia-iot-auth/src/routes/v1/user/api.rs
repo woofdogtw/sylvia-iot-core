@@ -1,4 +1,4 @@
-use std::{collections::HashMap, error::Error as StdError};
+use std::{collections::HashMap, error::Error as StdError, sync::Arc};
 
 use actix_web::{
     web::{self, Bytes},
@@ -18,8 +18,10 @@ use super::{
     super::super::{ErrReq, State},
     request, response,
 };
-use crate::models::user::{
-    ListOptions, ListQueryCond, QueryCond, SortCond, SortKey, Updates, User,
+use crate::models::{
+    access_token, authorization_code, refresh_token,
+    user::{ListOptions, ListQueryCond, QueryCond, SortCond, SortKey, Updates, User},
+    Model,
 };
 
 #[derive(Default)]
@@ -81,6 +83,9 @@ pub async fn patch_user(
             if let Err(e) = state.model.user().update(user_id, &updates).await {
                 error!("[{}] {}", FN_NAME, e);
                 return Err(ErrResp::ErrDb(Some(e.to_string())));
+            }
+            if updates.password.is_some() {
+                remove_tokens(&FN_NAME, &state.model, user_id).await;
             }
             Ok(HttpResponse::NoContent().finish())
         }
@@ -397,6 +402,9 @@ pub async fn patch_admin_user(
                 error!("[{}] update error: {}", FN_NAME, e);
                 return Err(ErrResp::ErrDb(Some(e.to_string())));
             }
+            if updates.password.is_some() {
+                remove_tokens(&FN_NAME, &state.model, user_id).await;
+            }
             Ok(HttpResponse::NoContent().finish())
         }
     }
@@ -421,13 +429,11 @@ pub async fn delete_admin_user(
             }
         }
     }
-    match state.model.user().del(param.user_id.as_str()).await {
-        Err(e) => {
-            error!("[{}] del error: {}", FN_NAME, e);
-            return Err(ErrResp::ErrDb(Some(e.to_string())));
-        }
-        Ok(_) => Ok(HttpResponse::NoContent().finish()),
+    if let Err(e) = state.model.user().del(param.user_id.as_str()).await {
+        error!("[{}] del error: {}", FN_NAME, e);
+        return Err(ErrResp::ErrDb(Some(e.to_string())));
     }
+    Ok(HttpResponse::NoContent().finish())
 }
 
 fn get_updates(body: &request::PatchUserData) -> Result<Updates, ErrResp> {
@@ -713,5 +719,29 @@ fn user_transform(user: &User, fields_cond: &GetAdminFields) -> response::GetAdm
         roles: user.roles.clone(),
         name: user.name.clone(),
         info: user.info.clone(),
+    }
+}
+
+async fn remove_tokens(fn_name: &str, model: &Arc<dyn Model>, user_id: &str) {
+    let cond = authorization_code::QueryCond {
+        user_id: Some(user_id),
+        ..Default::default()
+    };
+    if let Err(e) = model.authorization_code().del(&cond).await {
+        error!("[{}] delete access token error: {}", fn_name, e);
+    }
+    let cond = access_token::QueryCond {
+        user_id: Some(user_id),
+        ..Default::default()
+    };
+    if let Err(e) = model.access_token().del(&cond).await {
+        error!("[{}] delete access token error: {}", fn_name, e);
+    }
+    let cond = refresh_token::QueryCond {
+        user_id: Some(user_id),
+        ..Default::default()
+    };
+    if let Err(e) = model.refresh_token().del(&cond).await {
+        error!("[{}] delete refresh token error: {}", fn_name, e);
     }
 }

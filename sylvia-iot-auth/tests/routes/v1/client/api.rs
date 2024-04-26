@@ -21,6 +21,8 @@ use sylvia_iot_auth::{
 };
 use sylvia_iot_corelib::{err, role::Role};
 
+use crate::routes::v1::libs::get_token_client_id;
+
 use super::{
     super::{
         super::libs::{create_client, create_user},
@@ -1821,6 +1823,17 @@ fn test_patch(
         true => Some("secret".to_string()),
     };
     add_client_model(runtime, state, client_id, user_id, secret, None)?;
+    let user_token = get_token_client_id(
+        runtime,
+        state,
+        user_id,
+        client_id,
+        match use_secret {
+            false => None,
+            true => Some("secret"),
+        },
+        Some(client_id),
+    )?;
 
     let mut app = runtime.block_on(async {
         test::init_service(
@@ -1878,6 +1891,16 @@ fn test_patch(
     if use_secret {
         expect(client_info.client_secret.is_some()).to_equal(true)?;
         expect(client_info.client_secret.as_ref().unwrap().as_str()).to_not_equal("secret")?;
+    }
+
+    let req = TestRequest::get()
+        .uri("/auth/api/v1/user")
+        .insert_header((header::AUTHORIZATION, format!("Bearer {}", user_token)))
+        .to_request();
+    let resp = runtime.block_on(async { test::call_service(&mut app, req).await });
+    match use_secret {
+        false => expect(resp.status()).to_equal(StatusCode::OK)?,
+        true => expect(resp.status()).to_equal(StatusCode::UNAUTHORIZED)?,
     }
 
     let body = request::PatchClient {
@@ -1985,7 +2008,10 @@ fn add_client_model(
     image: Option<String>,
 ) -> Result<(), String> {
     match runtime.block_on(async {
-        let mut client = create_client(client_id, user_id, secret);
+        let mut client = create_client(client_id, user_id, secret.clone());
+        if secret.is_some() {
+            client.scopes = vec![client_id.to_string()];
+        }
         if let Some(image) = image.as_ref() {
             client.image_url = Some(image.to_string());
         }

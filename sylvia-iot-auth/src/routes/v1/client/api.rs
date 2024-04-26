@@ -1,4 +1,4 @@
-use std::error::Error as StdError;
+use std::{error::Error as StdError, sync::Arc};
 
 use actix_web::{
     web::{self, Bytes},
@@ -18,10 +18,13 @@ use super::{
     request, response,
 };
 use crate::models::{
+    access_token, authorization_code,
     client::{
         Client, ListOptions, ListQueryCond, QueryCond, SortCond, SortKey, UpdateQueryCond, Updates,
     },
+    refresh_token,
     user::{QueryCond as UserQueryCond, User},
+    Model,
 };
 
 const LIST_LIMIT_DEFAULT: u64 = 100;
@@ -409,6 +412,9 @@ pub async fn patch_client(
         error!("[{}] update error: {}", FN_NAME, e);
         return Err(ErrResp::ErrDb(Some(e.to_string())));
     }
+    if updates.client_secret.is_some() {
+        remove_tokens(&FN_NAME, &state.model, cond.client_id).await;
+    }
     Ok(HttpResponse::NoContent().finish())
 }
 
@@ -645,5 +651,29 @@ fn client_transform(client: &Client, is_admin: bool) -> response::GetClientData 
             None => None,
             Some(image) => Some(image.clone()),
         },
+    }
+}
+
+async fn remove_tokens(fn_name: &str, model: &Arc<dyn Model>, client_id: &str) {
+    let cond = authorization_code::QueryCond {
+        client_id: Some(client_id),
+        ..Default::default()
+    };
+    if let Err(e) = model.authorization_code().del(&cond).await {
+        error!("[{}] delete access token error: {}", fn_name, e);
+    }
+    let cond = access_token::QueryCond {
+        client_id: Some(client_id),
+        ..Default::default()
+    };
+    if let Err(e) = model.access_token().del(&cond).await {
+        error!("[{}] delete access token error: {}", fn_name, e);
+    }
+    let cond = refresh_token::QueryCond {
+        client_id: Some(client_id),
+        ..Default::default()
+    };
+    if let Err(e) = model.refresh_token().del(&cond).await {
+        error!("[{}] delete refresh token error: {}", fn_name, e);
     }
 }

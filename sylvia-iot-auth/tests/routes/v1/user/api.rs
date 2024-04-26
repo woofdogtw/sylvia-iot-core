@@ -130,10 +130,22 @@ pub fn patch(context: &mut SpecContext<TestState>) -> Result<(), String> {
     let runtime = state.runtime.as_ref().unwrap();
     let routes_state = state.routes_state.as_ref().unwrap();
 
-    test_patch(runtime, routes_state, "admin")?;
-    test_patch(runtime, routes_state, "manager")?;
-    test_patch(runtime, routes_state, "dev")?;
-    test_patch(runtime, routes_state, "user")
+    test_patch(runtime, routes_state, "admin", false)?;
+    test_patch(runtime, routes_state, "manager", false)?;
+    test_patch(runtime, routes_state, "dev", false)?;
+    test_patch(runtime, routes_state, "user", false)
+}
+
+pub fn patch_password(context: &mut SpecContext<TestState>) -> Result<(), String> {
+    let state = context.state.borrow();
+    let state = state.get(STATE).unwrap();
+    let runtime = state.runtime.as_ref().unwrap();
+    let routes_state = state.routes_state.as_ref().unwrap();
+
+    test_patch(runtime, routes_state, "admin", true)?;
+    test_patch(runtime, routes_state, "manager", true)?;
+    test_patch(runtime, routes_state, "dev", true)?;
+    test_patch(runtime, routes_state, "user", true)
 }
 
 pub fn patch_invalid_param(context: &mut SpecContext<TestState>) -> Result<(), String> {
@@ -1106,8 +1118,21 @@ pub fn patch_admin(context: &mut SpecContext<TestState>) -> Result<(), String> {
     add_user_model(runtime, &routes_state, user_id)?;
     let manager_token = get_token(runtime, routes_state, user_id)?;
 
-    test_patch_admin_admin(runtime, &routes_state, admin_token.as_str())?;
+    test_patch_admin_admin(runtime, &routes_state, admin_token.as_str(), false)?;
     test_patch_admin_manager(runtime, &routes_state, manager_token.as_str())
+}
+
+pub fn patch_admin_password(context: &mut SpecContext<TestState>) -> Result<(), String> {
+    let state = context.state.borrow();
+    let state = state.get(STATE).unwrap();
+    let runtime = state.runtime.as_ref().unwrap();
+    let routes_state = state.routes_state.as_ref().unwrap();
+
+    let user_id = "admin";
+    add_user_model(runtime, &routes_state, user_id)?;
+    let admin_token = get_token(runtime, routes_state, user_id)?;
+
+    test_patch_admin_admin(runtime, &routes_state, admin_token.as_str(), true)
 }
 
 pub fn patch_admin_invalid_param(context: &mut SpecContext<TestState>) -> Result<(), String> {
@@ -1368,7 +1393,12 @@ fn test_get(runtime: &Runtime, state: &routes::State, user_id: &str) -> Result<(
     expect(body.data.info).to_equal(user_info.info)
 }
 
-fn test_patch(runtime: &Runtime, state: &routes::State, user_id: &str) -> Result<(), String> {
+fn test_patch(
+    runtime: &Runtime,
+    state: &routes::State,
+    user_id: &str,
+    patch_password: bool,
+) -> Result<(), String> {
     add_user_model(runtime, state, user_id)?;
     let user_old = get_user_model(runtime, state, user_id)?;
 
@@ -1388,7 +1418,10 @@ fn test_patch(runtime: &Runtime, state: &routes::State, user_id: &str) -> Result
     );
     let body = request::PatchUser {
         data: request::PatchUserData {
-            password: Some("password_update".to_string()),
+            password: match patch_password {
+                false => None,
+                true => Some("password_update".to_string()),
+            },
             name: Some("name_update".to_string()),
             info: Some(info.clone()),
         },
@@ -1404,11 +1437,32 @@ fn test_patch(runtime: &Runtime, state: &routes::State, user_id: &str) -> Result
 
     let user_info = get_user_model(runtime, state, user_id)?;
     expect(user_info.modified_at.ge(&user_old.modified_at)).to_equal(true)?;
-    expect(user_info.salt.as_str()).to_not_equal(user_old.salt.as_str())?;
-    expect(user_info.password.as_str())
-        .to_equal(password_hash("password_update", user_info.salt.as_str()).as_str())?;
+    match patch_password {
+        false => {
+            expect(user_info.salt.as_str()).to_equal(user_old.salt.as_str())?;
+            expect(user_info.password.as_str())
+                .to_equal(password_hash(user_id, user_info.salt.as_str()).as_str())?;
+        }
+        true => {
+            expect(user_info.salt.as_str()).to_not_equal(user_old.salt.as_str())?;
+            expect(user_info.password.as_str())
+                .to_equal(password_hash("password_update", user_info.salt.as_str()).as_str())?;
+        }
+    }
     expect(user_info.name.as_str()).to_equal("name_update")?;
-    expect(user_info.info).to_equal(info)
+    expect(user_info.info).to_equal(info)?;
+
+    // The token is valid if password is not patched.
+    let req = TestRequest::patch()
+        .uri("/auth/api/v1/user")
+        .insert_header((header::AUTHORIZATION, format!("Bearer {}", token)))
+        .set_json(&body)
+        .to_request();
+    let resp = runtime.block_on(async { test::call_service(&mut app, req).await });
+    match patch_password {
+        false => expect(resp.status()).to_equal(StatusCode::NO_CONTENT),
+        true => expect(resp.status()).to_equal(StatusCode::UNAUTHORIZED),
+    }
 }
 
 fn test_patch_invalid_param(
@@ -1892,6 +1946,7 @@ fn test_patch_admin_admin(
     runtime: &Runtime,
     state: &routes::State,
     token: &str,
+    patch_password: bool,
 ) -> Result<(), String> {
     let user_id = "user_patch_admin";
     let mut user = create_user(user_id, Utc::now(), HashMap::<String, bool>::new());
@@ -1901,6 +1956,7 @@ fn test_patch_admin_admin(
         return Err(format!("add user {} error: {}", user_id, e));
     }
     let user_old = get_user_model(runtime, state, user_id)?;
+    let user_token = get_token(runtime, state, user_id)?;
 
     let mut app = runtime.block_on(async {
         test::init_service(
@@ -1926,7 +1982,10 @@ fn test_patch_admin_admin(
         data: Some(request::PatchAdminUserData {
             verified_at: Some(time_before.to_rfc3339_opts(SecondsFormat::Millis, true)),
             roles: Some(roles),
-            password: Some("password_update".to_string()),
+            password: match patch_password {
+                false => None,
+                true => Some("password_update".to_string()),
+            },
             name: Some("name_update".to_string()),
             info: Some(info.clone()),
         }),
@@ -1951,11 +2010,30 @@ fn test_patch_admin_admin(
     expect(user_info.disabled_at.is_some()).to_equal(true)?;
     expect(user_info.disabled_at.as_ref().unwrap().ge(&time_before)).to_equal(true)?;
     expect(user_info.disabled_at.as_ref().unwrap().le(&time_after)).to_equal(true)?;
-    expect(user_info.salt.as_str()).to_not_equal(user_old.salt.as_str())?;
-    expect(user_info.password.as_str())
-        .to_equal(password_hash("password_update", user_info.salt.as_str()).as_str())?;
+    match patch_password {
+        false => {
+            expect(user_info.salt.as_str()).to_equal(user_old.salt.as_str())?;
+            expect(user_info.password.as_str())
+                .to_equal(password_hash(user_id, user_info.salt.as_str()).as_str())?;
+        }
+        true => {
+            expect(user_info.salt.as_str()).to_not_equal(user_old.salt.as_str())?;
+            expect(user_info.password.as_str())
+                .to_equal(password_hash("password_update", user_info.salt.as_str()).as_str())?;
+        }
+    }
     expect(user_info.name.as_str()).to_equal("name_update")?;
     expect(user_info.info).to_equal(info)?;
+
+    let req = TestRequest::get()
+        .uri("/auth/api/v1/user")
+        .insert_header((header::AUTHORIZATION, format!("Bearer {}", user_token)))
+        .to_request();
+    let resp = runtime.block_on(async { test::call_service(&mut app, req).await });
+    match patch_password {
+        false => expect(resp.status()).to_equal(StatusCode::OK)?,
+        true => expect(resp.status()).to_equal(StatusCode::UNAUTHORIZED)?,
+    }
 
     let body = request::PatchAdminUser {
         disable: Some(false),

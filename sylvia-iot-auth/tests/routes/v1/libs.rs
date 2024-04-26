@@ -4,6 +4,7 @@ use actix_web::{
     test::{self, TestRequest},
     App,
 };
+use base64::Engine;
 use laboratory::expect;
 use serde::{Deserialize, Serialize};
 use serde_json::{Map, Value};
@@ -28,10 +29,23 @@ struct PostLoginRequest<'a> {
 }
 
 #[derive(Debug, Serialize)]
+struct PostLoginStateParam<'a> {
+    response_type: &'a str,
+    redirect_uri: &'a str,
+    client_id: &'a str,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    scope: Option<&'a str>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    state: Option<&'a str>,
+}
+
+#[derive(Debug, Serialize)]
 struct PostAuthorizeRequest<'a> {
     response_type: &'a str,
     redirect_uri: &'a str,
     client_id: &'a str,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    scope: Option<&'a str>,
     session_id: &'a str,
     allow: &'a str,
 }
@@ -51,7 +65,8 @@ struct PostTokenRequest<'a> {
     grant_type: &'a str,
     code: &'a str,
     redirect_uri: &'a str,
-    client_id: &'a str,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    client_id: Option<&'a str>,
 }
 
 #[derive(Deserialize)]
@@ -77,6 +92,17 @@ pub fn get_token(
     state: &routes::State,
     user_id: &str,
 ) -> Result<String, String> {
+    get_token_client_id(runtime, state, user_id, "public", None, None)
+}
+
+pub fn get_token_client_id(
+    runtime: &Runtime,
+    state: &routes::State,
+    user_id: &str,
+    client_id: &str,
+    client_secret: Option<&str>,
+    scope: Option<&str>,
+) -> Result<String, String> {
     let mut app = runtime.block_on(async {
         test::init_service(
             App::new()
@@ -87,10 +113,14 @@ pub fn get_token(
     });
 
     // Login to get session ID.
-    let state = format!(
-        "response_type=code&client_id=public&redirect_uri={}&state=/",
-        crate::TEST_REDIRECT_URI
-    );
+    let state = PostLoginStateParam {
+        response_type: "code",
+        redirect_uri: &crate::TEST_REDIRECT_URI,
+        client_id,
+        scope,
+        state: Some("/"),
+    };
+    let state = serde_urlencoded::to_string(state).unwrap();
     let params = PostLoginRequest {
         account: user_id,
         password: user_id,
@@ -115,7 +145,7 @@ pub fn get_token(
                 if !location.as_str().starts_with(crate::TEST_REDIRECT_URI) {
                     return Err(format!("redirect wrong URI: {}", location.as_str()));
                 }
-                return Err(format!("error: {}", resp.error));
+                return Err(format!("login error: {}", resp.error));
             } else if let Ok(resp) = serde_urlencoded::from_str::<PostLoginLocation>(query) {
                 if resp.session_id.len() == 0 {
                     return Err("session_id length zero".to_string());
@@ -130,7 +160,8 @@ pub fn get_token(
     // Get authorization code.
     let params = PostAuthorizeRequest {
         response_type: "code",
-        client_id: "public",
+        client_id,
+        scope,
         redirect_uri: crate::TEST_REDIRECT_URI,
         session_id: session_id.as_str(),
         allow: "yes",
@@ -154,7 +185,7 @@ pub fn get_token(
                 if !location.as_str().starts_with(crate::TEST_REDIRECT_URI) {
                     return Err(format!("redirect wrong URI: {}", location.as_str()));
                 }
-                return Err(format!("error: {}", resp.error));
+                return Err(format!("authorize error: {}", resp.error));
             } else if let Ok(resp) = serde_urlencoded::from_str::<PostAuthorizeLocation>(query) {
                 if !location.as_str().starts_with(crate::TEST_REDIRECT_URI) {
                     return Err(format!("redirect wrong URI: {}", location.as_str()));
@@ -173,12 +204,20 @@ pub fn get_token(
         grant_type: "authorization_code",
         code: code.as_str(),
         redirect_uri: crate::TEST_REDIRECT_URI,
-        client_id: "public",
+        client_id: match client_secret {
+            None => Some(client_id),
+            Some(_) => None,
+        },
     };
-    let req = TestRequest::post()
+    let mut req = TestRequest::post()
         .uri("/auth/oauth2/token")
-        .set_form(&params)
-        .to_request();
+        .set_form(&params);
+    if let Some(secret) = client_secret {
+        let auth = base64::engine::general_purpose::STANDARD
+            .encode(format!("{}:{}", client_id, secret).as_str());
+        req = req.insert_header((header::AUTHORIZATION, format!("Basic {}", auth)));
+    }
+    let req = req.to_request();
     let resp = runtime.block_on(async { test::call_service(&mut app, req).await });
     let status = resp.status();
     if status != StatusCode::OK {
@@ -186,7 +225,12 @@ pub fn get_token(
         if body.error.len() == 0 {
             return Err(format!("post token response not 200, {}", status));
         }
-        return Err(format!("get token error: {}", body.error));
+        return Err(format!(
+            "client {} secret {} get token error: {}",
+            client_id,
+            client_secret.is_some(),
+            body.error
+        ));
     }
     let body: AccessToken = runtime.block_on(async { test::read_body_json(resp).await });
     if body.access_token.len() == 0 {
