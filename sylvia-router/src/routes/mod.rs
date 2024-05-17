@@ -3,10 +3,10 @@ use std::{
     sync::{Arc, Mutex},
 };
 
-use actix_web::{dev::HttpServiceFactory, error, web, HttpResponse, Responder};
+use axum::{response::IntoResponse, Router};
 use reqwest;
 use serde::{Deserialize, Serialize};
-use sylvia_iot_sdk::util::err::ErrResp;
+use sylvia_iot_sdk::util::http::{Json, Query};
 use sysinfo::{CpuRefreshKind, Disks, MemoryRefreshKind, RefreshKind, System};
 
 use crate::libs::config::Config;
@@ -74,32 +74,29 @@ pub async fn new_state(
 }
 
 /// To register service URIs in the specified root path.
-pub fn new_service(state: &State) -> impl HttpServiceFactory {
-    web::scope(state.scope_path)
-        .app_data(web::JsonConfig::default().error_handler(|err, _| {
-            error::ErrorBadRequest(ErrResp::ErrParam(Some(err.to_string())))
-        }))
-        .app_data(web::QueryConfig::default().error_handler(|err, _| {
-            error::ErrorBadRequest(ErrResp::ErrParam(Some(err.to_string())))
-        }))
-        .app_data(web::Data::new(state.clone()))
-        .service(v1::sys::new_service("/api/v1/sys", state))
-        .service(v1::net::new_service("/api/v1/net", state))
+pub fn new_service(state: &State) -> Router {
+    Router::new().nest(
+        &state.scope_path,
+        Router::new()
+            .merge(v1::sys::new_service("/api/v1/sys", state))
+            .merge(v1::net::new_service("/api/v1/net", state)),
+    )
 }
 
-pub async fn get_version(query: web::Query<GetVersionQuery>) -> impl Responder {
+pub async fn get_version(Query(query): Query<GetVersionQuery>) -> impl IntoResponse {
     if let Some(q) = query.q.as_ref() {
         match q.as_str() {
-            "name" => return HttpResponse::Ok().body(SERV_NAME),
-            "version" => return HttpResponse::Ok().body(SERV_VER),
+            "name" => return SERV_NAME.into_response(),
+            "version" => return SERV_VER.into_response(),
             _ => (),
         }
     }
 
-    HttpResponse::Ok().json(GetVersionRes {
+    Json(GetVersionRes {
         data: GetVersionResData {
             name: SERV_NAME,
             version: SERV_VER,
         },
     })
+    .into_response()
 }

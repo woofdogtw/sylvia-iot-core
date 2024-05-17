@@ -1,17 +1,21 @@
 use std::error::Error as StdError;
 
-use actix_web::{
-    dev::HttpServiceFactory,
-    web::{self, Bytes, BytesMut},
-    HttpRequest, Responder,
+use axum::{
+    body::Body,
+    extract::{Path, Request, State},
+    response::IntoResponse,
+    routing, Router,
 };
+use bytes::{Bytes, BytesMut};
 use csv::WriterBuilder;
 use futures_util::StreamExt;
 use log::error;
 use serde::{Deserialize, Serialize};
 use serde_json::{Deserializer, Map, Value};
 
-use super::{super::State, api_bridge, list_api_bridge, ListResp};
+use sylvia_iot_corelib::err::ErrResp;
+
+use super::{super::State as AppState, api_bridge, list_api_bridge, ListResp};
 
 #[derive(Deserialize)]
 struct DeviceIdPath {
@@ -47,108 +51,96 @@ struct Device {
 const CSV_FIELDS: &'static [u8] =
     b"\xEF\xBB\xBFdeviceId,unitId,unitCode,networkId,networkCode,networkAddr,createdAt,modifiedAt,profile,name,info\n";
 
-pub fn new_service(scope_path: &str) -> impl HttpServiceFactory {
-    web::scope(scope_path)
-        .service(web::resource("").route(web::post().to(post_device)))
-        .service(web::resource("/bulk").route(web::post().to(post_device_bulk)))
-        .service(web::resource("/bulk-delete").route(web::post().to(post_device_bulk_del)))
-        .service(web::resource("/range").route(web::post().to(post_device_range)))
-        .service(web::resource("/range-delete").route(web::post().to(post_device_range_del)))
-        .service(web::resource("/count").route(web::get().to(get_device_count)))
-        .service(web::resource("/list").route(web::get().to(get_device_list)))
-        .service(
-            web::resource("/{device_id}")
-                .route(web::get().to(get_device))
-                .route(web::patch().to(patch_device))
-                .route(web::delete().to(delete_device)),
-        )
+pub fn new_service(scope_path: &str, state: &AppState) -> Router {
+    Router::new().nest(
+        scope_path,
+        Router::new()
+            .route("/", routing::post(post_device))
+            .route("/bulk", routing::post(post_device_bulk))
+            .route("/bulk-delete", routing::post(post_device_bulk_del))
+            .route("/range", routing::post(post_device_range))
+            .route("/range-delete", routing::post(post_device_range_del))
+            .route("/count", routing::get(get_device_count))
+            .route("/list", routing::get(get_device_list))
+            .route(
+                "/:device_id",
+                routing::get(get_device)
+                    .patch(patch_device)
+                    .delete(delete_device),
+            )
+            .with_state(state.clone()),
+    )
 }
 
 /// `POST /{base}/api/v1/device`
-async fn post_device(mut req: HttpRequest, body: Bytes, state: web::Data<State>) -> impl Responder {
+async fn post_device(state: State<AppState>, req: Request) -> impl IntoResponse {
     const FN_NAME: &'static str = "post_device";
     let api_path = format!("{}/api/v1/device", state.broker_base);
     let client = state.client.clone();
 
-    api_bridge(FN_NAME, &client, &mut req, api_path.as_str(), Some(body)).await
+    api_bridge(FN_NAME, &client, req, api_path.as_str()).await
 }
 
 /// `POST /{base}/api/v1/device/bulk`
-async fn post_device_bulk(
-    mut req: HttpRequest,
-    body: Bytes,
-    state: web::Data<State>,
-) -> impl Responder {
+async fn post_device_bulk(state: State<AppState>, req: Request) -> impl IntoResponse {
     const FN_NAME: &'static str = "post_device_bulk";
     let api_path = format!("{}/api/v1/device/bulk", state.broker_base);
     let client = state.client.clone();
 
-    api_bridge(FN_NAME, &client, &mut req, api_path.as_str(), Some(body)).await
+    api_bridge(FN_NAME, &client, req, api_path.as_str()).await
 }
 
 /// `POST /{base}/api/v1/device/bulk-delete`
-async fn post_device_bulk_del(
-    mut req: HttpRequest,
-    body: Bytes,
-    state: web::Data<State>,
-) -> impl Responder {
+async fn post_device_bulk_del(state: State<AppState>, req: Request) -> impl IntoResponse {
     const FN_NAME: &'static str = "post_device_bulk_del";
     let api_path = format!("{}/api/v1/device/bulk-delete", state.broker_base);
     let client = state.client.clone();
 
-    api_bridge(FN_NAME, &client, &mut req, api_path.as_str(), Some(body)).await
+    api_bridge(FN_NAME, &client, req, api_path.as_str()).await
 }
 
 /// `POST /{base}/api/v1/device/range`
-async fn post_device_range(
-    mut req: HttpRequest,
-    body: Bytes,
-    state: web::Data<State>,
-) -> impl Responder {
+async fn post_device_range(state: State<AppState>, req: Request) -> impl IntoResponse {
     const FN_NAME: &'static str = "post_device_range";
     let api_path = format!("{}/api/v1/device/range", state.broker_base);
     let client = state.client.clone();
 
-    api_bridge(FN_NAME, &client, &mut req, api_path.as_str(), Some(body)).await
+    api_bridge(FN_NAME, &client, req, api_path.as_str()).await
 }
 
 /// `POST /{base}/api/v1/device/range-delete`
-async fn post_device_range_del(
-    mut req: HttpRequest,
-    body: Bytes,
-    state: web::Data<State>,
-) -> impl Responder {
+async fn post_device_range_del(state: State<AppState>, req: Request) -> impl IntoResponse {
     const FN_NAME: &'static str = "post_device_range_del";
     let api_path = format!("{}/api/v1/device/range-delete", state.broker_base);
     let client = state.client.clone();
 
-    api_bridge(FN_NAME, &client, &mut req, api_path.as_str(), Some(body)).await
+    api_bridge(FN_NAME, &client, req, api_path.as_str()).await
 }
 
 /// `GET /{base}/api/v1/device/count`
-async fn get_device_count(mut req: HttpRequest, state: web::Data<State>) -> impl Responder {
+async fn get_device_count(state: State<AppState>, req: Request) -> impl IntoResponse {
     const FN_NAME: &'static str = "get_device_count";
     let api_path = format!("{}/api/v1/device/count", state.broker_base.as_str());
     let client = state.client.clone();
 
-    api_bridge(FN_NAME, &client, &mut req, api_path.as_str(), None).await
+    api_bridge(FN_NAME, &client, req, api_path.as_str()).await
 }
 
 /// `GET /{base}/api/v1/device/list`
-async fn get_device_list(mut req: HttpRequest, state: web::Data<State>) -> impl Responder {
+async fn get_device_list(state: State<AppState>, req: Request) -> impl IntoResponse {
     const FN_NAME: &'static str = "get_device_list";
     let api_path = format!("{}/api/v1/device/list", state.broker_base.as_str());
     let api_path = api_path.as_str();
     let client = state.client.clone();
 
-    let (api_resp, mut resp) =
-        match list_api_bridge(FN_NAME, &client, &mut req, api_path, false, "device").await {
-            ListResp::ActixWeb(resp) => return resp,
-            ListResp::ArrayStream(api_resp, resp) => (api_resp, resp),
+    let (api_resp, resp_builder) =
+        match list_api_bridge(FN_NAME, &client, req, api_path, false, "device").await {
+            ListResp::Axum(resp) => return resp,
+            ListResp::ArrayStream(api_resp, resp_builder) => (api_resp, resp_builder),
         };
 
     let mut resp_stream = api_resp.bytes_stream();
-    let stream = async_stream::stream! {
+    let body = Body::from_stream(async_stream::stream! {
         yield Ok(Bytes::from(CSV_FIELDS));
 
         let mut buffer = BytesMut::new();
@@ -156,7 +148,7 @@ async fn get_device_list(mut req: HttpRequest, state: web::Data<State>) -> impl 
             match body {
                 Err(e) => {
                     error!("[{}] get body error: {}", FN_NAME, e);
-                    let err: Box<dyn StdError> = Box::new(e);
+                    let err: Box<dyn StdError + Send + Sync> = Box::new(e);
                     yield Err(err);
                     break;
                 }
@@ -173,14 +165,14 @@ async fn get_device_list(mut req: HttpRequest, state: web::Data<State>) -> impl 
                     }
                     let mut writer = WriterBuilder::new().has_headers(false).from_writer(vec![]);
                     if let Err(e) = writer.serialize(v) {
-                        let err: Box<dyn StdError> = Box::new(e);
+                        let err: Box<dyn StdError + Send + Sync> = Box::new(e);
                         yield Err(err);
                         finish = true;
                         break;
                     }
                     match writer.into_inner() {
                         Err(e) => {
-                            let err: Box<dyn StdError> = Box::new(e);
+                            let err: Box<dyn StdError + Send + Sync> = Box::new(e);
                             yield Err(err);
                             finish = true;
                             break;
@@ -215,46 +207,48 @@ async fn get_device_list(mut req: HttpRequest, state: web::Data<State>) -> impl 
             }
             buffer = buffer.split_off(index);
         }
-    };
-    resp.streaming(stream)
+    });
+    match resp_builder.body(body) {
+        Err(e) => ErrResp::ErrRsc(Some(e.to_string())).into_response(),
+        Ok(resp) => resp,
+    }
 }
 
 /// `GET /{base}/api/v1/device/{deviceId}`
 async fn get_device(
-    mut req: HttpRequest,
-    param: web::Path<DeviceIdPath>,
-    state: web::Data<State>,
-) -> impl Responder {
+    state: State<AppState>,
+    Path(param): Path<DeviceIdPath>,
+    req: Request,
+) -> impl IntoResponse {
     const FN_NAME: &'static str = "get_device";
     let api_path = format!("{}/api/v1/device/{}", state.broker_base, param.device_id);
     let client = state.client.clone();
 
-    api_bridge(FN_NAME, &client, &mut req, api_path.as_str(), None).await
+    api_bridge(FN_NAME, &client, req, api_path.as_str()).await
 }
 
 /// `PATCH /{base}/api/v1/device/{deviceId}`
 async fn patch_device(
-    mut req: HttpRequest,
-    param: web::Path<DeviceIdPath>,
-    body: Bytes,
-    state: web::Data<State>,
-) -> impl Responder {
+    state: State<AppState>,
+    Path(param): Path<DeviceIdPath>,
+    req: Request,
+) -> impl IntoResponse {
     const FN_NAME: &'static str = "patch_device";
     let api_path = format!("{}/api/v1/device/{}", state.broker_base, param.device_id);
     let client = state.client.clone();
 
-    api_bridge(FN_NAME, &client, &mut req, api_path.as_str(), Some(body)).await
+    api_bridge(FN_NAME, &client, req, api_path.as_str()).await
 }
 
 /// `DELETE /{base}/api/v1/device/{deviceId}`
 async fn delete_device(
-    mut req: HttpRequest,
-    param: web::Path<DeviceIdPath>,
-    state: web::Data<State>,
-) -> impl Responder {
+    state: State<AppState>,
+    Path(param): Path<DeviceIdPath>,
+    req: Request,
+) -> impl IntoResponse {
     const FN_NAME: &'static str = "delete_device";
     let api_path = format!("{}/api/v1/device/{}", state.broker_base, param.device_id);
     let client = state.client.clone();
 
-    api_bridge(FN_NAME, &client, &mut req, api_path.as_str(), None).await
+    api_bridge(FN_NAME, &client, req, api_path.as_str()).await
 }

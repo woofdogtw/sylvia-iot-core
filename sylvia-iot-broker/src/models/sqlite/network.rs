@@ -334,6 +334,9 @@ fn build_list_where<'a>(
     if let Some(value) = cond.network_id {
         builder.and_where_eq("network_id", quote(value));
     }
+    if let Some(value) = cond.code {
+        builder.and_where_eq("code", quote(value));
+    }
     if let Some(value) = cond.code_contains {
         build_where_like(builder, "code", value.to_lowercase().as_str());
     }

@@ -1,13 +1,11 @@
-use actix_web::{
-    http::{header, StatusCode},
-    middleware::NormalizePath,
-    test::{self, TestRequest},
-    App,
+use axum::{
+    http::{header, HeaderValue, StatusCode},
+    Router,
 };
+use axum_test::TestServer;
 use chrono::{DateTime, TimeDelta, Utc};
 use laboratory::{expect, SpecContext};
 use serde_json::{Map, Value};
-use serde_urlencoded;
 use tokio::runtime::Runtime;
 
 use sylvia_iot_corelib::err;
@@ -178,8 +176,7 @@ pub fn get_count_invalid_token(context: &mut SpecContext<TestState>) -> Result<(
     let runtime = state.runtime.as_ref().unwrap();
     let routes_state = state.routes_state.as_ref().unwrap();
 
-    let req = TestRequest::get().uri("/data/api/v1/network-uldata/count");
-    test_invalid_token(runtime, &routes_state, req)
+    test_invalid_token(runtime, &routes_state, "/data/api/v1/network-uldata/count")
 }
 
 pub fn get_list(context: &mut SpecContext<TestState>) -> Result<(), String> {
@@ -815,8 +812,7 @@ pub fn get_list_invalid_token(context: &mut SpecContext<TestState>) -> Result<()
     let runtime = state.runtime.as_ref().unwrap();
     let routes_state = state.routes_state.as_ref().unwrap();
 
-    let req = TestRequest::get().uri("/data/api/v1/network-uldata/list");
-    test_invalid_token(runtime, &routes_state, req)
+    test_invalid_token(runtime, &routes_state, "/data/api/v1/network-uldata/list")
 }
 
 fn test_get_count(
@@ -826,29 +822,22 @@ fn test_get_count(
     param: Option<&request::GetCount>,
     expect_count: usize,
 ) -> Result<(), String> {
-    let mut app = runtime.block_on(async {
-        test::init_service(
-            App::new()
-                .wrap(NormalizePath::trim())
-                .service(routes::new_service(state)),
-        )
-        .await
-    });
-
-    let uri = match param {
-        None => "/data/api/v1/network-uldata/count".to_string(),
-        Some(param) => format!(
-            "/data/api/v1/network-uldata/count?{}",
-            serde_urlencoded::to_string(&param).unwrap()
-        ),
+    let app = Router::new().merge(routes::new_service(state));
+    let server = match TestServer::new(app) {
+        Err(e) => return Err(format!("new server error: {}", e)),
+        Ok(server) => server,
     };
-    let req = TestRequest::get()
-        .uri(uri.as_str())
-        .insert_header((header::AUTHORIZATION, format!("Bearer {}", token)))
-        .to_request();
-    let resp = runtime.block_on(async { test::call_service(&mut app, req).await });
-    expect(resp.status()).to_equal(StatusCode::OK)?;
-    let body: response::GetCount = runtime.block_on(async { test::read_body_json(resp).await });
+
+    let req = server
+        .get("/data/api/v1/network-uldata/count")
+        .add_query_params(&param)
+        .add_header(
+            header::AUTHORIZATION,
+            HeaderValue::from_str(format!("Bearer {}", token).as_str()).unwrap(),
+        );
+    let resp = runtime.block_on(async { req.await });
+    expect(resp.status_code()).to_equal(StatusCode::OK)?;
+    let body: response::GetCount = resp.json();
     expect(body.data.count).to_equal(expect_count)
 }
 
@@ -860,29 +849,22 @@ fn test_get_list(
     expect_count: usize,
     max_proc: i64,
 ) -> Result<(), String> {
-    let mut app = runtime.block_on(async {
-        test::init_service(
-            App::new()
-                .wrap(NormalizePath::trim())
-                .service(routes::new_service(state)),
-        )
-        .await
-    });
-
-    let uri = match param {
-        None => "/data/api/v1/network-uldata/list".to_string(),
-        Some(param) => format!(
-            "/data/api/v1/network-uldata/list?{}",
-            serde_urlencoded::to_string(&param).unwrap()
-        ),
+    let app = Router::new().merge(routes::new_service(state));
+    let server = match TestServer::new(app) {
+        Err(e) => return Err(format!("new server error: {}", e)),
+        Ok(server) => server,
     };
-    let req = TestRequest::get()
-        .uri(uri.as_str())
-        .insert_header((header::AUTHORIZATION, format!("Bearer {}", token)))
-        .to_request();
-    let resp = runtime.block_on(async { test::call_service(&mut app, req).await });
-    expect(resp.status()).to_equal(StatusCode::OK)?;
-    let body: response::GetList = runtime.block_on(async { test::read_body_json(resp).await });
+
+    let req = server
+        .get("/data/api/v1/network-uldata/list")
+        .add_query_params(&param)
+        .add_header(
+            header::AUTHORIZATION,
+            HeaderValue::from_str(format!("Bearer {}", token).as_str()).unwrap(),
+        );
+    let resp = runtime.block_on(async { req.await });
+    expect(resp.status_code()).to_equal(StatusCode::OK)?;
+    let body: response::GetList = resp.json();
     expect(body.data.len()).to_equal(expect_count)?;
 
     let mut prev_proc = max_proc;
@@ -913,14 +895,11 @@ fn test_get_list_sort(
     param: &mut request::GetList,
     expect_ids: &[&str],
 ) -> Result<(), String> {
-    let mut app = runtime.block_on(async {
-        test::init_service(
-            App::new()
-                .wrap(NormalizePath::trim())
-                .service(routes::new_service(state)),
-        )
-        .await
-    });
+    let app = Router::new().merge(routes::new_service(state));
+    let server = match TestServer::new(app) {
+        Err(e) => return Err(format!("new server error: {}", e)),
+        Ok(server) => server,
+    };
 
     if let Some(sorts) = param.sort_vec.as_ref() {
         let sorts: Vec<String> = sorts
@@ -941,29 +920,26 @@ fn test_get_list_sort(
         }
     }
 
-    let uri = format!(
-        "/data/api/v1/network-uldata/list?{}",
-        serde_urlencoded::to_string(&param).unwrap()
-    );
-    let req = TestRequest::get()
-        .uri(uri.as_str())
-        .insert_header((header::AUTHORIZATION, format!("Bearer {}", token)))
-        .to_request();
-    let resp = runtime.block_on(async { test::call_service(&mut app, req).await });
-    if let Err(_) = expect(resp.status()).to_equal(StatusCode::OK) {
-        let body: ApiError = runtime.block_on(async { test::read_body_json(resp).await });
+    let req = server
+        .get("/data/api/v1/network-uldata/list")
+        .add_query_params(&param)
+        .add_header(
+            header::AUTHORIZATION,
+            HeaderValue::from_str(format!("Bearer {}", token).as_str()).unwrap(),
+        );
+    let resp = runtime.block_on(async { req.await });
+    if let Err(_) = expect(resp.status_code()).to_equal(StatusCode::OK) {
+        let body: ApiError = resp.json();
         let message = match body.message.as_ref() {
             None => "",
             Some(message) => message.as_str(),
         };
         return Err(format!(
-            "response not 200: {}, {}, {}",
-            uri.as_str(),
-            body.code,
-            message
+            "response not 200: /data/api/v1/network-uldata/list, {}, {}",
+            body.code, message
         ));
     }
-    let body: response::GetList = runtime.block_on(async { test::read_body_json(resp).await });
+    let body: response::GetList = resp.json();
     expect(body.data.len()).to_equal(expect_ids.len())?;
 
     let mut index = 0;
@@ -981,26 +957,22 @@ fn test_get_list_offset_limit(
     param: &request::GetList,
     expect_ids: Vec<i32>,
 ) -> Result<(), String> {
-    let mut app = runtime.block_on(async {
-        test::init_service(
-            App::new()
-                .wrap(NormalizePath::trim())
-                .service(routes::new_service(state)),
-        )
-        .await
-    });
+    let app = Router::new().merge(routes::new_service(state));
+    let server = match TestServer::new(app) {
+        Err(e) => return Err(format!("new server error: {}", e)),
+        Ok(server) => server,
+    };
 
-    let uri = format!(
-        "/data/api/v1/network-uldata/list?{}",
-        serde_urlencoded::to_string(&param).unwrap()
-    );
-    let req = TestRequest::get()
-        .uri(uri.as_str())
-        .insert_header((header::AUTHORIZATION, format!("Bearer {}", token)))
-        .to_request();
-    let resp = runtime.block_on(async { test::call_service(&mut app, req).await });
-    expect(resp.status()).to_equal(StatusCode::OK)?;
-    let body: response::GetList = runtime.block_on(async { test::read_body_json(resp).await });
+    let req = server
+        .get("/data/api/v1/network-uldata/list")
+        .add_query_params(&param)
+        .add_header(
+            header::AUTHORIZATION,
+            HeaderValue::from_str(format!("Bearer {}", token).as_str()).unwrap(),
+        );
+    let resp = runtime.block_on(async { req.await });
+    expect(resp.status_code()).to_equal(StatusCode::OK)?;
+    let body: response::GetList = resp.json();
     expect(body.data.len()).to_equal(expect_ids.len())?;
 
     let mut index = 0;
@@ -1018,28 +990,23 @@ fn test_get_list_format_array(
     param: &mut request::GetList,
     expect_ids: Vec<i32>,
 ) -> Result<(), String> {
-    let mut app = runtime.block_on(async {
-        test::init_service(
-            App::new()
-                .wrap(NormalizePath::trim())
-                .service(routes::new_service(state)),
-        )
-        .await
-    });
+    let app = Router::new().merge(routes::new_service(state));
+    let server = match TestServer::new(app) {
+        Err(e) => return Err(format!("new server error: {}", e)),
+        Ok(server) => server,
+    };
 
     param.format = Some("array".to_string());
-    let uri = format!(
-        "/data/api/v1/network-uldata/list?{}",
-        serde_urlencoded::to_string(&param).unwrap()
-    );
-    let req = TestRequest::get()
-        .uri(uri.as_str())
-        .insert_header((header::AUTHORIZATION, format!("Bearer {}", token)))
-        .to_request();
-    let resp = runtime.block_on(async { test::call_service(&mut app, req).await });
-    expect(resp.status()).to_equal(StatusCode::OK)?;
-    let body: Vec<response::GetListData> =
-        runtime.block_on(async { test::read_body_json(resp).await });
+    let req = server
+        .get("/data/api/v1/network-uldata/list")
+        .add_query_params(&param)
+        .add_header(
+            header::AUTHORIZATION,
+            HeaderValue::from_str(format!("Bearer {}", token).as_str()).unwrap(),
+        );
+    let resp = runtime.block_on(async { req.await });
+    expect(resp.status_code()).to_equal(StatusCode::OK)?;
+    let body: Vec<response::GetListData> = resp.json();
     expect(body.len()).to_equal(expect_ids.len())?;
 
     let mut index = 0;
@@ -1057,31 +1024,23 @@ fn test_get_list_format_csv(
     param: &mut request::GetList,
     expect_ids: Vec<i32>,
 ) -> Result<(), String> {
-    let mut app = runtime.block_on(async {
-        test::init_service(
-            App::new()
-                .wrap(NormalizePath::trim())
-                .service(routes::new_service(state)),
-        )
-        .await
-    });
+    let app = Router::new().merge(routes::new_service(state));
+    let server = match TestServer::new(app) {
+        Err(e) => return Err(format!("new server error: {}", e)),
+        Ok(server) => server,
+    };
 
     param.format = Some("csv".to_string());
-    let uri = format!(
-        "/data/api/v1/network-uldata/list?{}",
-        serde_urlencoded::to_string(&param).unwrap()
-    );
-    let req = TestRequest::get()
-        .uri(uri.as_str())
-        .insert_header((header::AUTHORIZATION, format!("Bearer {}", token)))
-        .to_request();
-    let resp = runtime.block_on(async { test::call_service(&mut app, req).await });
-    expect(resp.status()).to_equal(StatusCode::OK)?;
-    let body = runtime.block_on(async { test::read_body(resp).await });
-    let body = match String::from_utf8(body.to_vec()) {
-        Err(e) => return Err(format!("list not csv string: {}", e)),
-        Ok(body) => body,
-    };
+    let req = server
+        .get("/data/api/v1/network-uldata/list")
+        .add_query_params(&param)
+        .add_header(
+            header::AUTHORIZATION,
+            HeaderValue::from_str(format!("Bearer {}", token).as_str()).unwrap(),
+        );
+    let resp = runtime.block_on(async { req.await });
+    expect(resp.status_code()).to_equal(StatusCode::OK)?;
+    let body = resp.text();
 
     let fields =
         b"dataId,proc,unitCode,networkCode,networkAddr,unitId,deviceId,time,profile,data,extension";

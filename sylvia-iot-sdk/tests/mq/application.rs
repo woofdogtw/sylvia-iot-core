@@ -103,8 +103,6 @@ struct TestHandler {
     is_dldata_result_recv: Arc<Mutex<bool>>,
 }
 
-struct TestDummyHandler;
-
 #[derive(Clone)]
 struct TestDlDataHandler {
     // Use Mutex to implement interior mutability.
@@ -177,11 +175,6 @@ impl EventHandler for TestHandler {
         mutex.push(data);
         Ok(())
     }
-}
-
-#[async_trait]
-impl MqMessageHandler for TestDummyHandler {
-    async fn on_message(&self, _queue: Arc<dyn GmqQueue>, _msg: Box<dyn Message>) {}
 }
 
 impl TestDlDataHandler {

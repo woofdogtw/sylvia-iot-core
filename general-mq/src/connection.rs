@@ -37,7 +37,7 @@ pub trait GmqConnection: Send + Sync {
     fn connect(&mut self) -> Result<(), Box<dyn StdError>>;
 
     /// To close the connection.
-    async fn close(&mut self) -> Result<(), Box<dyn StdError>>;
+    async fn close(&mut self) -> Result<(), Box<dyn StdError + Send + Sync>>;
 }
 
 /// The event handler for connections.

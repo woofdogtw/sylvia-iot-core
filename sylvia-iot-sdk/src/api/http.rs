@@ -38,7 +38,7 @@ use std::{
     sync::{Arc, Mutex},
 };
 
-use actix_web::web::Bytes;
+use bytes::Bytes;
 use reqwest::{header, Client as ReqwestClient, Method, StatusCode};
 use serde::Deserialize;
 

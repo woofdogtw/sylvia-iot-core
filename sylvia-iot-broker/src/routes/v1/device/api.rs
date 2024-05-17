@@ -6,11 +6,14 @@ use std::{
     time::Duration,
 };
 
-use actix_web::{
-    web::{self, Bytes},
-    HttpRequest, HttpResponse, Responder,
-};
 use async_trait::async_trait;
+use axum::{
+    body::{Body, Bytes},
+    extract::State,
+    http::{header, StatusCode},
+    response::IntoResponse,
+    Extension,
+};
 use chrono::Utc;
 use log::{error, info, warn};
 use serde::{Deserialize, Serialize};
@@ -23,15 +26,17 @@ use general_mq::{
     Queue,
 };
 use sylvia_iot_corelib::{
+    constants::ContentType,
     err::ErrResp,
+    http::{Json, Path, Query},
     role::Role,
     strings::{self, hex_addr_to_u128, time_str, u128_to_addr},
 };
 
 use super::{
     super::{
-        super::{ErrReq, State},
-        lib::{check_device, check_unit, gen_mgr_key, get_token_id_roles},
+        super::{middleware::GetTokenInfoData, ErrReq, State as AppState},
+        lib::{check_device, check_unit, gen_mgr_key},
     },
     request, response,
 };
@@ -198,7 +203,7 @@ const ID_RAND_LEN: usize = 8;
 const CTRL_QUEUE_NAME: &'static str = "device";
 
 /// Initialize channels.
-pub async fn init(state: &State, ctrl_conf: &CfgCtrl) -> Result<(), Box<dyn StdError>> {
+pub async fn init(state: &AppState, ctrl_conf: &CfgCtrl) -> Result<(), Box<dyn StdError>> {
     const FN_NAME: &'static str = "init";
 
     let q = new_ctrl_receiver(state, ctrl_conf)?;
@@ -278,7 +283,7 @@ pub fn new_ctrl_sender(
 }
 
 /// Create control channel receiver queue.
-pub fn new_ctrl_receiver(state: &State, config: &CfgCtrl) -> Result<Queue, Box<dyn StdError>> {
+pub fn new_ctrl_receiver(state: &AppState, config: &CfgCtrl) -> Result<Queue, Box<dyn StdError>> {
     let url = match config.url.as_ref() {
         None => {
             return Err(Box::new(IoError::new(
@@ -310,14 +315,14 @@ pub fn new_ctrl_receiver(state: &State, config: &CfgCtrl) -> Result<Queue, Box<d
 
 /// `POST /{base}/api/v1/device`
 pub async fn post_device(
-    req: HttpRequest,
-    body: web::Json<request::PostDeviceBody>,
-    state: web::Data<State>,
-) -> impl Responder {
+    State(state): State<AppState>,
+    Extension(token_info): Extension<GetTokenInfoData>,
+    Json(body): Json<request::PostDeviceBody>,
+) -> impl IntoResponse {
     const FN_NAME: &'static str = "post_device";
 
-    let (user_id, roles) = get_token_id_roles(FN_NAME, &req)?;
-    let user_id = user_id.as_str();
+    let user_id = token_info.user_id.as_str();
+    let roles = &token_info.roles;
 
     if body.data.unit_id.len() == 0 {
         return Err(ErrResp::ErrParam(Some(
@@ -340,7 +345,7 @@ pub async fn post_device(
         }
     }
     let unit_id = body.data.unit_id.as_str();
-    let unit = match check_unit(FN_NAME, user_id, &roles, unit_id, true, &state).await? {
+    let unit = match check_unit(FN_NAME, user_id, roles, unit_id, true, &state).await? {
         None => {
             return Err(ErrResp::Custom(
                 ErrReq::UNIT_NOT_EXIST.0,
@@ -351,7 +356,7 @@ pub async fn post_device(
         Some(unit) => unit,
     };
     let network_id = body.data.network_id.as_str();
-    let network = match check_network(FN_NAME, unit_id, network_id, &roles, &state).await? {
+    let network = match check_network(FN_NAME, unit_id, network_id, roles, &state).await? {
         None => {
             return Err(ErrResp::Custom(
                 ErrReq::NETWORK_NOT_EXIST.0,
@@ -436,21 +441,21 @@ pub async fn post_device(
     };
     let _ = send_net_ctrl_message(FN_NAME, &msg, msg_op, &state, &mgr_key).await;
 
-    Ok(HttpResponse::Ok().json(response::PostDevice {
+    Ok(Json(response::PostDevice {
         data: response::PostDeviceData { device_id },
     }))
 }
 
 /// `POST /{base}/api/v1/device/bulk`
 pub async fn post_device_bulk(
-    req: HttpRequest,
-    mut body: web::Json<request::PostDeviceBulkBody>,
-    state: web::Data<State>,
-) -> impl Responder {
+    State(state): State<AppState>,
+    Extension(token_info): Extension<GetTokenInfoData>,
+    Json(mut body): Json<request::PostDeviceBulkBody>,
+) -> impl IntoResponse {
     const FN_NAME: &'static str = "post_device_bulk";
 
-    let (user_id, roles) = get_token_id_roles(FN_NAME, &req)?;
-    let user_id = user_id.as_str();
+    let user_id = token_info.user_id.as_str();
+    let roles = &token_info.roles;
 
     if body.data.unit_id.len() == 0 {
         return Err(ErrResp::ErrParam(Some(
@@ -488,7 +493,7 @@ pub async fn post_device_bulk(
     }
     body.data.network_addrs = addrs;
     let unit_id = body.data.unit_id.as_str();
-    let unit = match check_unit(FN_NAME, user_id, &roles, unit_id, true, &state).await? {
+    let unit = match check_unit(FN_NAME, user_id, roles, unit_id, true, &state).await? {
         None => {
             return Err(ErrResp::Custom(
                 ErrReq::UNIT_NOT_EXIST.0,
@@ -499,7 +504,7 @@ pub async fn post_device_bulk(
         Some(unit) => unit,
     };
     let network_id = body.data.network_id.as_str();
-    let network = match check_network(FN_NAME, unit_id, network_id, &roles, &state).await? {
+    let network = match check_network(FN_NAME, unit_id, network_id, roles, &state).await? {
         None => {
             return Err(ErrResp::Custom(
                 ErrReq::NETWORK_NOT_EXIST.0,
@@ -569,19 +574,19 @@ pub async fn post_device_bulk(
     };
     let _ = send_net_ctrl_message(FN_NAME, &msg, msg_op, &state, &mgr_key).await;
 
-    Ok(HttpResponse::NoContent().finish())
+    Ok(StatusCode::NO_CONTENT)
 }
 
 /// `POST /{base}/api/v1/device/bulk-delete`
 pub async fn post_device_bulk_del(
-    req: HttpRequest,
-    mut body: web::Json<request::PostDeviceBulkBody>,
-    state: web::Data<State>,
-) -> impl Responder {
+    State(state): State<AppState>,
+    Extension(token_info): Extension<GetTokenInfoData>,
+    Json(mut body): Json<request::PostDeviceBulkBody>,
+) -> impl IntoResponse {
     const FN_NAME: &'static str = "post_device_bulk_del";
 
-    let (user_id, roles) = get_token_id_roles(FN_NAME, &req)?;
-    let user_id = user_id.as_str();
+    let user_id = token_info.user_id.as_str();
+    let roles = &token_info.roles;
 
     if body.data.unit_id.len() == 0 {
         return Err(ErrResp::ErrParam(Some(
@@ -612,7 +617,7 @@ pub async fn post_device_bulk_del(
     }
     body.data.network_addrs = addrs;
     let unit_id = body.data.unit_id.as_str();
-    if check_unit(FN_NAME, user_id, &roles, unit_id, true, &state)
+    if check_unit(FN_NAME, user_id, roles, unit_id, true, &state)
         .await?
         .is_none()
     {
@@ -623,7 +628,7 @@ pub async fn post_device_bulk_del(
         ));
     }
     let network_id = body.data.network_id.as_str();
-    let network = match check_network(FN_NAME, unit_id, network_id, &roles, &state).await? {
+    let network = match check_network(FN_NAME, unit_id, network_id, roles, &state).await? {
         None => {
             return Err(ErrResp::Custom(
                 ErrReq::NETWORK_NOT_EXIST.0,
@@ -651,19 +656,19 @@ pub async fn post_device_bulk_del(
     };
     let _ = send_net_ctrl_message(FN_NAME, &msg, msg_op, &state, &mgr_key).await;
 
-    Ok(HttpResponse::NoContent().finish())
+    Ok(StatusCode::NO_CONTENT)
 }
 
 /// `POST /{base}/api/v1/device/range`
 pub async fn post_device_range(
-    req: HttpRequest,
-    body: web::Json<request::PostDeviceRangeBody>,
-    state: web::Data<State>,
-) -> impl Responder {
+    State(state): State<AppState>,
+    Extension(token_info): Extension<GetTokenInfoData>,
+    Json(body): Json<request::PostDeviceRangeBody>,
+) -> impl IntoResponse {
     const FN_NAME: &'static str = "post_device_range";
 
-    let (user_id, roles) = get_token_id_roles(FN_NAME, &req)?;
-    let user_id = user_id.as_str();
+    let user_id = token_info.user_id.as_str();
+    let roles = &token_info.roles;
 
     if body.data.unit_id.len() == 0 {
         return Err(ErrResp::ErrParam(Some(
@@ -705,7 +710,7 @@ pub async fn post_device_range(
     }
 
     let unit_id = body.data.unit_id.as_str();
-    let unit = match check_unit(FN_NAME, user_id, &roles, unit_id, true, &state).await? {
+    let unit = match check_unit(FN_NAME, user_id, roles, unit_id, true, &state).await? {
         None => {
             return Err(ErrResp::Custom(
                 ErrReq::UNIT_NOT_EXIST.0,
@@ -716,7 +721,7 @@ pub async fn post_device_range(
         Some(unit) => unit,
     };
     let network_id = body.data.network_id.as_str();
-    let network = match check_network(FN_NAME, unit_id, network_id, &roles, &state).await? {
+    let network = match check_network(FN_NAME, unit_id, network_id, roles, &state).await? {
         None => {
             return Err(ErrResp::Custom(
                 ErrReq::NETWORK_NOT_EXIST.0,
@@ -790,19 +795,19 @@ pub async fn post_device_range(
     };
     let _ = send_net_ctrl_message(FN_NAME, &msg, msg_op, &state, &mgr_key).await;
 
-    Ok(HttpResponse::NoContent().finish())
+    Ok(StatusCode::NO_CONTENT)
 }
 
 /// `POST /{base}/api/v1/device/range-delete`
 pub async fn post_device_range_del(
-    req: HttpRequest,
-    body: web::Json<request::PostDeviceRangeBody>,
-    state: web::Data<State>,
-) -> impl Responder {
+    State(state): State<AppState>,
+    Extension(token_info): Extension<GetTokenInfoData>,
+    Json(body): Json<request::PostDeviceRangeBody>,
+) -> impl IntoResponse {
     const FN_NAME: &'static str = "post_device_range_del";
 
-    let (user_id, roles) = get_token_id_roles(FN_NAME, &req)?;
-    let user_id = user_id.as_str();
+    let user_id = token_info.user_id.as_str();
+    let roles = &token_info.roles;
 
     if body.data.unit_id.len() == 0 {
         return Err(ErrResp::ErrParam(Some(
@@ -837,7 +842,7 @@ pub async fn post_device_range_del(
     }
 
     let unit_id = body.data.unit_id.as_str();
-    if check_unit(FN_NAME, user_id, &roles, unit_id, true, &state)
+    if check_unit(FN_NAME, user_id, roles, unit_id, true, &state)
         .await?
         .is_none()
     {
@@ -848,7 +853,7 @@ pub async fn post_device_range_del(
         ));
     }
     let network_id = body.data.network_id.as_str();
-    let network = match check_network(FN_NAME, unit_id, network_id, &roles, &state).await? {
+    let network = match check_network(FN_NAME, unit_id, network_id, roles, &state).await? {
         None => {
             return Err(ErrResp::Custom(
                 ErrReq::NETWORK_NOT_EXIST.0,
@@ -890,21 +895,21 @@ pub async fn post_device_range_del(
     };
     let _ = send_net_ctrl_message(FN_NAME, &msg, msg_op, &state, &mgr_key).await;
 
-    Ok(HttpResponse::NoContent().finish())
+    Ok(StatusCode::NO_CONTENT)
 }
 
 /// `GET /{base}/api/v1/device/count`
 pub async fn get_device_count(
-    req: HttpRequest,
-    query: web::Query<request::GetDeviceCountQuery>,
-    state: web::Data<State>,
-) -> impl Responder {
+    State(state): State<AppState>,
+    Extension(token_info): Extension<GetTokenInfoData>,
+    Query(query): Query<request::GetDeviceCountQuery>,
+) -> impl IntoResponse {
     const FN_NAME: &'static str = "get_device_count";
 
-    let (user_id, roles) = get_token_id_roles(FN_NAME, &req)?;
-    let user_id = user_id.as_str();
+    let user_id = token_info.user_id.as_str();
+    let roles = &token_info.roles;
 
-    if !Role::is_role(&roles, Role::ADMIN) && !Role::is_role(&roles, Role::MANAGER) {
+    if !Role::is_role(roles, Role::ADMIN) && !Role::is_role(roles, Role::MANAGER) {
         match query.unit.as_ref() {
             None => return Err(ErrResp::ErrParam(Some("missing `unit`".to_string()))),
             Some(unit_id) => {
@@ -918,17 +923,18 @@ pub async fn get_device_count(
         None => None,
         Some(unit_id) => match unit_id.len() {
             0 => None,
-            _ => match check_unit(FN_NAME, user_id, &roles, unit_id.as_str(), false, &state).await?
-            {
-                None => {
-                    return Err(ErrResp::Custom(
-                        ErrReq::UNIT_NOT_EXIST.0,
-                        ErrReq::UNIT_NOT_EXIST.1,
-                        None,
-                    ))
+            _ => {
+                match check_unit(FN_NAME, user_id, roles, unit_id.as_str(), false, &state).await? {
+                    None => {
+                        return Err(ErrResp::Custom(
+                            ErrReq::UNIT_NOT_EXIST.0,
+                            ErrReq::UNIT_NOT_EXIST.1,
+                            None,
+                        ))
+                    }
+                    Some(_) => Some(unit_id.as_str()),
                 }
-                Some(_) => Some(unit_id.as_str()),
-            },
+            }
         },
     };
     let mut name_contains_cond = None;
@@ -968,7 +974,7 @@ pub async fn get_device_count(
             error!("[{}] count error: {}", FN_NAME, e);
             Err(ErrResp::ErrDb(Some(e.to_string())))
         }
-        Ok(count) => Ok(HttpResponse::Ok().json(response::GetDeviceCount {
+        Ok(count) => Ok(Json(response::GetDeviceCount {
             data: response::GetCountData { count },
         })),
     }
@@ -976,16 +982,16 @@ pub async fn get_device_count(
 
 /// `GET /{base}/api/v1/device/list`
 pub async fn get_device_list(
-    req: HttpRequest,
-    query: web::Query<request::GetDeviceListQuery>,
-    state: web::Data<State>,
-) -> impl Responder {
+    State(state): State<AppState>,
+    Extension(token_info): Extension<GetTokenInfoData>,
+    Query(query): Query<request::GetDeviceListQuery>,
+) -> impl IntoResponse {
     const FN_NAME: &'static str = "get_device_list";
 
-    let (user_id, roles) = get_token_id_roles(FN_NAME, &req)?;
-    let user_id = user_id.as_str();
+    let user_id = token_info.user_id.as_str();
+    let roles = &token_info.roles;
 
-    if !Role::is_role(&roles, Role::ADMIN) && !Role::is_role(&roles, Role::MANAGER) {
+    if !Role::is_role(roles, Role::ADMIN) && !Role::is_role(roles, Role::MANAGER) {
         match query.unit.as_ref() {
             None => return Err(ErrResp::ErrParam(Some("missing `unit`".to_string()))),
             Some(unit_id) => {
@@ -999,17 +1005,18 @@ pub async fn get_device_list(
         None => None,
         Some(unit_id) => match unit_id.len() {
             0 => None,
-            _ => match check_unit(FN_NAME, user_id, &roles, unit_id.as_str(), false, &state).await?
-            {
-                None => {
-                    return Err(ErrResp::Custom(
-                        ErrReq::UNIT_NOT_EXIST.0,
-                        ErrReq::UNIT_NOT_EXIST.1,
-                        None,
-                    ))
+            _ => {
+                match check_unit(FN_NAME, user_id, roles, unit_id.as_str(), false, &state).await? {
+                    None => {
+                        return Err(ErrResp::Custom(
+                            ErrReq::UNIT_NOT_EXIST.0,
+                            ErrReq::UNIT_NOT_EXIST.1,
+                            None,
+                        ))
+                    }
+                    Some(_) => Some(unit_id.as_str()),
                 }
-                Some(_) => Some(unit_id.as_str()),
-            },
+            }
         },
     };
     let mut name_contains_cond = None;
@@ -1067,21 +1074,20 @@ pub async fn get_device_list(
         Ok((list, cursor)) => match cursor {
             None => match query.format {
                 Some(request::ListFormat::Array) => {
-                    return Ok(HttpResponse::Ok().json(device_list_transform(&list)))
+                    return Ok(Json(device_list_transform(&list)).into_response())
                 }
                 _ => {
-                    return Ok(HttpResponse::Ok().json(response::GetDeviceList {
+                    return Ok(Json(response::GetDeviceList {
                         data: device_list_transform(&list),
-                    }))
+                    })
+                    .into_response())
                 }
             },
             Some(_) => (list, cursor),
         },
     };
 
-    // TODO: detect client disconnect
-    let stream = async_stream::stream! {
-        let query = query.0.clone();
+    let body = Body::from_stream(async_stream::stream! {
         let unit_cond = match query.unit.as_ref() {
             None => None,
             Some(unit_id) => match unit_id.len() {
@@ -1144,25 +1150,25 @@ pub async fn get_device_list(
             list = _list;
             cursor = _cursor;
         }
-    };
-    Ok(HttpResponse::Ok().streaming(stream))
+    });
+    Ok(([(header::CONTENT_TYPE, ContentType::JSON)], body).into_response())
 }
 
 /// `GET /{base}/api/v1/device/{deviceId}`
 pub async fn get_device(
-    req: HttpRequest,
-    param: web::Path<request::DeviceIdPath>,
-    state: web::Data<State>,
-) -> impl Responder {
+    State(state): State<AppState>,
+    Extension(token_info): Extension<GetTokenInfoData>,
+    Path(param): Path<request::DeviceIdPath>,
+) -> impl IntoResponse {
     const FN_NAME: &'static str = "get_device";
 
-    let (user_id, roles) = get_token_id_roles(FN_NAME, &req)?;
-    let user_id = user_id.as_str();
+    let user_id = token_info.user_id.as_str();
+    let roles = &token_info.roles;
     let device_id = param.device_id.as_str();
 
-    match check_device(FN_NAME, device_id, user_id, false, &roles, &state).await? {
+    match check_device(FN_NAME, device_id, user_id, false, roles, &state).await? {
         None => Err(ErrResp::ErrNotFound(None)),
-        Some(device) => Ok(HttpResponse::Ok().json(response::GetDevice {
+        Some(device) => Ok(Json(response::GetDevice {
             data: device_transform(&device),
         })),
     }
@@ -1170,15 +1176,15 @@ pub async fn get_device(
 
 /// `PATCH /{base}/api/v1/device/{deviceId}`
 pub async fn patch_device(
-    req: HttpRequest,
-    param: web::Path<request::DeviceIdPath>,
-    mut body: web::Json<request::PatchDeviceBody>,
-    state: web::Data<State>,
-) -> impl Responder {
+    State(state): State<AppState>,
+    Extension(token_info): Extension<GetTokenInfoData>,
+    Path(param): Path<request::DeviceIdPath>,
+    Json(mut body): Json<request::PatchDeviceBody>,
+) -> impl IntoResponse {
     const FN_NAME: &'static str = "patch_device";
 
-    let (user_id, roles) = get_token_id_roles(FN_NAME, &req)?;
-    let user_id = user_id.as_str();
+    let user_id = token_info.user_id.as_str();
+    let roles = &token_info.roles;
     let device_id = param.device_id.as_str();
 
     if let Some(network_id) = body.data.network_id.as_ref() {
@@ -1206,7 +1212,7 @@ pub async fn patch_device(
     let mut updates = get_updates(&mut body.data).await?;
 
     // To check if the device is for the user.
-    let device = match check_device(FN_NAME, device_id, user_id, true, &roles, &state).await? {
+    let device = match check_device(FN_NAME, device_id, user_id, true, roles, &state).await? {
         None => return Err(ErrResp::ErrNotFound(None)),
         Some(device) => device,
     };
@@ -1214,7 +1220,7 @@ pub async fn patch_device(
     let network = match updates.network.as_ref() {
         None => None,
         Some((network_id, _)) => {
-            match check_network(FN_NAME, unit_id, network_id, &roles, &state).await? {
+            match check_network(FN_NAME, unit_id, network_id, roles, &state).await? {
                 None => {
                     return Err(ErrResp::Custom(
                         ErrReq::NETWORK_NOT_EXIST.0,
@@ -1319,26 +1325,26 @@ pub async fn patch_device(
         let _ = send_net_ctrl_message(FN_NAME, &msg, msg_op, &state, &mgr_key).await;
     }
 
-    Ok(HttpResponse::NoContent().finish())
+    Ok(StatusCode::NO_CONTENT)
 }
 
 /// `DELETE /{base}/api/v1/device/{deviceId}`
 pub async fn delete_device(
-    req: HttpRequest,
-    param: web::Path<request::DeviceIdPath>,
-    state: web::Data<State>,
-) -> impl Responder {
+    State(state): State<AppState>,
+    Extension(token_info): Extension<GetTokenInfoData>,
+    Path(param): Path<request::DeviceIdPath>,
+) -> impl IntoResponse {
     const FN_NAME: &'static str = "delete_device";
 
-    let (user_id, roles) = get_token_id_roles(FN_NAME, &req)?;
-    let user_id = user_id.as_str();
+    let user_id = token_info.user_id.as_str();
+    let roles = &token_info.roles;
     let device_id = param.device_id.as_str();
 
     // To check if the device is for the user.
-    let device = match check_device(FN_NAME, device_id, user_id, true, &roles, &state).await {
+    let device = match check_device(FN_NAME, device_id, user_id, true, roles, &state).await {
         Err(e) => return Err(e), // XXX: not use "?" to solve E0282 error.
         Ok(device) => match device {
-            None => return Ok(HttpResponse::NoContent().finish()),
+            None => return Ok(StatusCode::NO_CONTENT),
             Some(device) => device,
         },
     };
@@ -1375,7 +1381,7 @@ pub async fn delete_device(
     };
     let _ = send_net_ctrl_message(FN_NAME, &msg, msg_op, &state, &mgr_key).await;
 
-    Ok(HttpResponse::NoContent().finish())
+    Ok(StatusCode::NO_CONTENT)
 }
 
 fn get_sort_cond(sort_args: &Option<String>) -> Result<Vec<SortCond>, ErrResp> {
@@ -1490,7 +1496,7 @@ async fn check_network(
     unit_id: &str,
     network_id: &str,
     roles: &HashMap<String, bool>,
-    state: &web::Data<State>,
+    state: &AppState,
 ) -> Result<Option<Network>, ErrResp> {
     let cond = NetworkQueryCond {
         network_id: Some(network_id),
@@ -1527,7 +1533,7 @@ async fn check_addr(
     fn_name: &str,
     network_id: &str,
     network_addr: &str,
-    state: &web::Data<State>,
+    state: &AppState,
 ) -> Result<Option<Device>, ErrResp> {
     let cond = ListQueryCond {
         network_id: Some(network_id),
@@ -1563,7 +1569,7 @@ fn device_list_transform_bytes(
     with_start: bool,
     with_end: bool,
     format: Option<&request::ListFormat>,
-) -> Result<Bytes, Box<dyn StdError>> {
+) -> Result<Bytes, Box<dyn StdError + Send + Sync>> {
     let mut build_str = match with_start {
         false => "".to_string(),
         true => match format {
@@ -1611,11 +1617,7 @@ fn device_transform(device: &Device) -> response::GetDeviceData {
     }
 }
 
-async fn del_device_rsc(
-    fn_name: &str,
-    device_id: &str,
-    state: &web::Data<State>,
-) -> Result<(), ErrResp> {
+async fn del_device_rsc(fn_name: &str, device_id: &str, state: &AppState) -> Result<(), ErrResp> {
     let cond = device_route::QueryCond {
         device_id: Some(device_id),
         ..Default::default()
@@ -1650,7 +1652,7 @@ async fn del_device_rsc_bulk(
     fn_name: &str,
     rm_cond: &request::PostDeviceBulkData,
     network: &Network,
-    state: &web::Data<State>,
+    state: &AppState,
 ) -> Result<(), ErrResp> {
     let addrs: Vec<&str> = rm_cond.network_addrs.iter().map(|x| x.as_str()).collect();
 
@@ -1738,7 +1740,7 @@ async fn del_device_rsc_bulk(
 async fn send_del_ctrl_message(
     fn_name: &str,
     msg: &SendCtrlMsg,
-    state: &web::Data<State>,
+    state: &AppState,
 ) -> Result<(), ErrResp> {
     let payload = match serde_json::to_vec(&msg) {
         Err(e) => {
@@ -1777,7 +1779,7 @@ async fn send_net_ctrl_message(
     fn_name: &str,
     msg: &SendNetCtrlMsg,
     msg_op: &str,
-    state: &web::Data<State>,
+    state: &AppState,
     mgr_key: &str,
 ) -> Result<(), ErrResp> {
     let mgr = {

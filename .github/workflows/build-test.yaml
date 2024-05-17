@@ -8,23 +8,23 @@ on:
       - main
 env:
   BINUTILS_VER: v0.3.6
-  GRCOV_VER: v0.8.13
-  MDBOOK_VER: v0.4.32
+  GRCOV_VER: v0.8.19
+  MDBOOK_VER: v0.4.40
 jobs:
   general-mq:
     name: Build and test general-mq
     permissions:
       contents: write
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     services:
       rabbitmq:
-        image: rabbitmq:3.13.0-management-alpine
+        image: rabbitmq:3.13.2-management-alpine
         ports:
           - 5671:5671
           - 5672:5672
           - 15672:15672
       emqx:
-        image: emqx/emqx:5.6.0
+        image: emqx/emqx:5.6.1
         ports:
           - 1883:1883
           - 8883:8883
@@ -43,7 +43,7 @@ jobs:
           mv grcov ~/.cargo/bin/
           mv x86_64-unknown-linux-gnu/* ~/.cargo/bin/
       - name: Check out repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Build bin/lib
         run: cargo build -p $PROJ
       - name: Print system info
@@ -53,7 +53,7 @@ jobs:
           free -m
           netstat -ant
       - name: Run test
-        uses: nick-fields/retry@v2.8.3
+        uses: nick-fields/retry@v3
         with:
           timeout_minutes: 60
           max_attempts: 5
@@ -69,7 +69,7 @@ jobs:
           grcov . --binary-path $TEST_FILE -s $PROJ/src -t html --branch --ignore-not-existing -o ./target/coverage/$PROJ
       - name: Publish coverage
         if: ${{ github.event_name != 'pull_request' }}
-        uses: JamesIves/github-pages-deploy-action@v4.4.3
+        uses: JamesIves/github-pages-deploy-action@v4
         with:
           folder: target/coverage/${{ env.PROJ }}
           target-folder: docs/coverage/${{ env.PROJ }}
@@ -78,10 +78,10 @@ jobs:
     name: Build and test sylvia-iot-auth
     permissions:
       contents: write
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     services:
       mongo:
-        image: mongo:7.0.8
+        image: mongo:7.0.9
         ports:
           - 27017:27017
       redis:
@@ -102,7 +102,7 @@ jobs:
           mv grcov ~/.cargo/bin/
           mv x86_64-unknown-linux-gnu/* ~/.cargo/bin/
       - name: Check out repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Build bin/lib
         run: cargo build -p $PROJ
       - name: Print system info
@@ -112,7 +112,7 @@ jobs:
           free -m
           netstat -ant
       - name: Run test
-        uses: nick-fields/retry@v2.8.3
+        uses: nick-fields/retry@v3
         with:
           timeout_minutes: 60
           max_attempts: 2
@@ -128,7 +128,7 @@ jobs:
           grcov . --binary-path $TEST_FILE -s $PROJ/src -t html --branch --ignore-not-existing -o ./target/coverage/$PROJ
       - name: Publish coverage
         if: ${{ github.event_name != 'pull_request' }}
-        uses: JamesIves/github-pages-deploy-action@v4.4.3
+        uses: JamesIves/github-pages-deploy-action@v4
         with:
           folder: target/coverage/${{ env.PROJ }}
           target-folder: docs/coverage/${{ env.PROJ }}
@@ -137,20 +137,20 @@ jobs:
     name: Build and test sylvia-iot-broker
     permissions:
       contents: write
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     services:
       mongo:
-        image: mongo:7.0.8
+        image: mongo:7.0.9
         ports:
           - 27017:27017
       rabbitmq:
-        image: rabbitmq:3.13.0-management-alpine
+        image: rabbitmq:3.13.2-management-alpine
         ports:
           - 5671:5671
           - 5672:5672
           - 15672:15672
       emqx:
-        image: emqx/emqx:5.6.0
+        image: emqx/emqx:5.6.1
         ports:
           - 1883:1883
           - 8883:8883
@@ -169,7 +169,7 @@ jobs:
           mv grcov ~/.cargo/bin/
           mv x86_64-unknown-linux-gnu/* ~/.cargo/bin/
       - name: Check out repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Build bin/lib
         run: cargo build -p $PROJ
       - name: Print system info
@@ -179,7 +179,7 @@ jobs:
           free -m
           netstat -ant
       - name: Run test
-        uses: nick-fields/retry@v2.8.3
+        uses: nick-fields/retry@v3
         with:
           timeout_minutes: 60
           max_attempts: 5
@@ -195,7 +195,7 @@ jobs:
           grcov . --binary-path $TEST_FILE -s $PROJ/src -t html --branch --ignore-not-existing -o ./target/coverage/$PROJ
       - name: Publish coverage
         if: ${{ github.event_name != 'pull_request' }}
-        uses: JamesIves/github-pages-deploy-action@v4.4.3
+        uses: JamesIves/github-pages-deploy-action@v4
         with:
           folder: target/coverage/${{ env.PROJ }}
           target-folder: docs/coverage/${{ env.PROJ }}
@@ -204,7 +204,7 @@ jobs:
     name: Build and test sylvia-iot-corelib
     permissions:
       contents: write
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     env:
       PROJ: sylvia-iot-corelib
       RUSTFLAGS: "-C instrument-coverage"
@@ -219,7 +219,7 @@ jobs:
           mv grcov ~/.cargo/bin/
           mv x86_64-unknown-linux-gnu/* ~/.cargo/bin/
       - name: Check out repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Build bin/lib
         run: cargo build -p $PROJ
       - name: Print system info
@@ -229,7 +229,7 @@ jobs:
           free -m
           netstat -ant
       - name: Run test
-        uses: nick-fields/retry@v2.8.3
+        uses: nick-fields/retry@v3
         with:
           timeout_minutes: 60
           max_attempts: 2
@@ -245,7 +245,7 @@ jobs:
           grcov . --binary-path $TEST_FILE -s $PROJ/src -t html --branch --ignore-not-existing -o ./target/coverage/$PROJ
       - name: Publish coverage
         if: ${{ github.event_name != 'pull_request' }}
-        uses: JamesIves/github-pages-deploy-action@v4.4.3
+        uses: JamesIves/github-pages-deploy-action@v4
         with:
           folder: target/coverage/${{ env.PROJ }}
           target-folder: docs/coverage/${{ env.PROJ }}
@@ -254,14 +254,14 @@ jobs:
     name: Build and test sylvia-iot-coremgr
     permissions:
       contents: write
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     services:
       mongo:
-        image: mongo:7.0.8
+        image: mongo:7.0.9
         ports:
           - 27017:27017
       rabbitmq:
-        image: rabbitmq:3.13.0-management-alpine
+        image: rabbitmq:3.13.2-management-alpine
         ports:
           - 5671:5671
           - 5672:5672
@@ -280,7 +280,7 @@ jobs:
           mv grcov ~/.cargo/bin/
           mv x86_64-unknown-linux-gnu/* ~/.cargo/bin/
       - name: Check out repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Run EMQX with the specified config file
         run: >
           docker run -d --rm --name emqx
@@ -288,7 +288,7 @@ jobs:
           -e EMQX_LOADED_MODULES="emqx_mod_acl_internal,emqx_mod_presence,emqx_mod_topic_metrics"
           -p 1883:1883 -p 8883:8883 -p 18083:18083
           -v "$(pwd)/.github/workflows/files/emqx.conf":"/opt/emqx/etc/emqx.conf"
-          emqx/emqx:5.6.0
+          emqx/emqx:5.6.1
       - name: Build bin/lib
         run: cargo build -p $PROJ
       - name: Print system info
@@ -298,7 +298,7 @@ jobs:
           free -m
           netstat -ant
       - name: Run test
-        uses: nick-fields/retry@v2.8.3
+        uses: nick-fields/retry@v3
         with:
           timeout_minutes: 60
           max_attempts: 5
@@ -314,7 +314,7 @@ jobs:
           grcov . --binary-path $TEST_FILE -s $PROJ/src -t html --branch --ignore-not-existing -o ./target/coverage/$PROJ
       - name: Publish coverage
         if: ${{ github.event_name != 'pull_request' }}
-        uses: JamesIves/github-pages-deploy-action@v4.4.3
+        uses: JamesIves/github-pages-deploy-action@v4
         with:
           folder: target/coverage/${{ env.PROJ }}
           target-folder: docs/coverage/${{ env.PROJ }}
@@ -323,12 +323,12 @@ jobs:
     name: Build and test sylvia-iot-coremgr-cli
     permissions:
       contents: write
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     env:
       PROJ: sylvia-iot-coremgr-cli
     steps:
       - name: Check out repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Build bin/lib
         run: cargo build -p $PROJ
 
@@ -336,20 +336,20 @@ jobs:
     name: Build and test sylvia-iot-data
     permissions:
       contents: write
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     services:
       mongo:
-        image: mongo:7.0.8
+        image: mongo:7.0.9
         ports:
           - 27017:27017
       rabbitmq:
-        image: rabbitmq:3.13.0-management-alpine
+        image: rabbitmq:3.13.2-management-alpine
         ports:
           - 5671:5671
           - 5672:5672
           - 15672:15672
       emqx:
-        image: emqx/emqx:5.6.0
+        image: emqx/emqx:5.6.1
         ports:
           - 1883:1883
           - 8883:8883
@@ -368,7 +368,7 @@ jobs:
           mv grcov ~/.cargo/bin/
           mv x86_64-unknown-linux-gnu/* ~/.cargo/bin/
       - name: Check out repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Build bin/lib
         run: cargo build -p $PROJ
       - name: Print system info
@@ -378,7 +378,7 @@ jobs:
           free -m
           netstat -ant
       - name: Run test
-        uses: nick-fields/retry@v2.8.3
+        uses: nick-fields/retry@v3
         with:
           timeout_minutes: 60
           max_attempts: 5
@@ -394,7 +394,7 @@ jobs:
           grcov . --binary-path $TEST_FILE -s $PROJ/src -t html --branch --ignore-not-existing -o ./target/coverage/$PROJ
       - name: Publish coverage
         if: ${{ github.event_name != 'pull_request' }}
-        uses: JamesIves/github-pages-deploy-action@v4.4.3
+        uses: JamesIves/github-pages-deploy-action@v4
         with:
           folder: target/coverage/${{ env.PROJ }}
           target-folder: docs/coverage/${{ env.PROJ }}
@@ -403,16 +403,16 @@ jobs:
     name: Build and test sylvia-iot-sdk
     permissions:
       contents: write
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     services:
       rabbitmq:
-        image: rabbitmq:3.13.0-management-alpine
+        image: rabbitmq:3.13.2-management-alpine
         ports:
           - 5671:5671
           - 5672:5672
           - 15672:15672
       emqx:
-        image: emqx/emqx:5.6.0
+        image: emqx/emqx:5.6.1
         ports:
           - 1883:1883
           - 8883:8883
@@ -431,7 +431,7 @@ jobs:
           mv grcov ~/.cargo/bin/
           mv x86_64-unknown-linux-gnu/* ~/.cargo/bin/
       - name: Check out repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Build bin/lib
         run: cargo build -p $PROJ
       - name: Print system info
@@ -441,7 +441,7 @@ jobs:
           free -m
           netstat -ant
       - name: Run test
-        uses: nick-fields/retry@v2.8.3
+        uses: nick-fields/retry@v3
         with:
           timeout_minutes: 60
           max_attempts: 5
@@ -457,28 +457,28 @@ jobs:
           grcov . --binary-path $TEST_FILE -s $PROJ/src -t html --branch --ignore-not-existing -o ./target/coverage/$PROJ
       - name: Publish coverage
         if: ${{ github.event_name != 'pull_request' }}
-        uses: JamesIves/github-pages-deploy-action@v4.4.3
+        uses: JamesIves/github-pages-deploy-action@v4
         with:
           folder: target/coverage/${{ env.PROJ }}
           target-folder: docs/coverage/${{ env.PROJ }}
 
   router:
     name: Build and test sylvia-router
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     env:
       PROJ: sylvia-router
     steps:
       - name: Check out repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Build bin/lib
         run: cargo build -p $PROJ
 
   documentation:
     name: Build documentation
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     steps:
       - name: Check out repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Install tools
         run: |
           curl -kLO https://github.com/rust-lang/mdBook/releases/download/$MDBOOK_VER/mdbook-$MDBOOK_VER-x86_64-unknown-linux-gnu.tar.gz
@@ -492,13 +492,13 @@ jobs:
           mdbook build documentation/book-zh-TW
       - name: Publish book
         if: ${{ github.event_name != 'pull_request' }}
-        uses: JamesIves/github-pages-deploy-action@v4.4.3
+        uses: JamesIves/github-pages-deploy-action@v4
         with:
           folder: documentation/book/book
           target-folder: docs
       - name: Publish book-zh-TW
         if: ${{ github.event_name != 'pull_request' }}
-        uses: JamesIves/github-pages-deploy-action@v4.4.3
+        uses: JamesIves/github-pages-deploy-action@v4
         with:
           folder: documentation/book-zh-TW/book
           target-folder: docs/book-zh-TW

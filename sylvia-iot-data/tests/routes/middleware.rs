@@ -1,17 +1,17 @@
 use std::{cmp::Ordering, collections::HashMap, error::Error as StdError};
 
-use actix_web::{
-    http::{header, StatusCode},
-    middleware::NormalizePath,
-    test::{self, TestRequest},
-    web, App, HttpMessage, HttpRequest, HttpResponse, Responder,
+use axum::{
+    http::{header, HeaderValue, StatusCode},
+    response::IntoResponse,
+    routing, Extension, Router,
 };
+use axum_test::TestServer;
 use chrono::Utc;
 use laboratory::{describe, expect, SpecContext, Suite};
 
-use sylvia_iot_data::routes::middleware::{AuthService, FullTokenInfo};
 use sylvia_iot_auth::models::Model;
 use sylvia_iot_corelib::{err::ErrResp, role::Role};
+use sylvia_iot_data::routes::middleware::{AuthService, GetTokenInfoData};
 
 use super::{
     clear_state,
@@ -82,24 +82,22 @@ fn test_200(context: &mut SpecContext<TestState>) -> Result<(), String> {
     });
     expect(result.is_ok()).to_equal(true)?;
 
-    let mut app = runtime.block_on(async {
-        test::init_service(
-            App::new()
-                .wrap(NormalizePath::trim())
-                .wrap(AuthService::new(auth_uri.clone()))
-                .route("/", web::get().to(dummy_handler)),
-        )
-        .await
-    });
+    let app = Router::new()
+        .route("/", routing::get(dummy_handler))
+        .layer(AuthService::new(auth_uri.clone()));
+    let server = match TestServer::new(app) {
+        Err(e) => return Err(format!("new server error: {}", e)),
+        Ok(server) => server,
+    };
 
-    let req = TestRequest::get()
-        .uri("/")
-        .insert_header((header::AUTHORIZATION, format!("Bearer token")))
-        .to_request();
-    let resp = runtime.block_on(async { test::call_service(&mut app, req).await });
-    let status = resp.status();
+    let req = server.get("/").add_header(
+        header::AUTHORIZATION,
+        HeaderValue::from_str("Bearer token").unwrap(),
+    );
+    let resp = runtime.block_on(async { req.await });
+    let status = resp.status_code();
     if status != StatusCode::NO_CONTENT {
-        let body = runtime.block_on(async { test::read_body(resp).await });
+        let body = resp.text();
         return Err(format!("status {}, body: {:?}", status, body));
     }
     Ok(())
@@ -111,19 +109,30 @@ fn test_400(context: &mut SpecContext<TestState>) -> Result<(), String> {
     let runtime = state.runtime.as_ref().unwrap();
     let auth_uri = state.auth_uri.as_ref().unwrap();
 
-    let mut app = runtime.block_on(async {
-        test::init_service(
-            App::new()
-                .wrap(NormalizePath::trim())
-                .wrap(AuthService::new(auth_uri.clone()))
-                .route("/", web::get().to(dummy_handler)),
-        )
-        .await
-    });
+    let app = Router::new()
+        .route("/", routing::get(dummy_handler))
+        .layer(AuthService::new(auth_uri.clone()));
+    let server = match TestServer::new(app) {
+        Err(e) => return Err(format!("new server error: {}", e)),
+        Ok(server) => server,
+    };
 
-    let req = TestRequest::get().uri("/").to_request();
-    let resp = runtime.block_on(async { test::call_service(&mut app, req).await });
-    expect(resp.status()).to_equal(StatusCode::BAD_REQUEST)
+    let req = server.get("/");
+    let resp = runtime.block_on(async { req.await });
+    expect(resp.status_code()).to_equal(StatusCode::BAD_REQUEST)?;
+
+    let req = server
+        .get("/")
+        .add_header(
+            header::AUTHORIZATION,
+            HeaderValue::from_str("Bearer test").unwrap(),
+        )
+        .add_header(
+            header::AUTHORIZATION,
+            HeaderValue::from_str("Bearer test").unwrap(),
+        );
+    let resp = runtime.block_on(async { req.await });
+    expect(resp.status_code()).to_equal(StatusCode::BAD_REQUEST)
 }
 
 fn test_401(context: &mut SpecContext<TestState>) -> Result<(), String> {
@@ -132,22 +141,20 @@ fn test_401(context: &mut SpecContext<TestState>) -> Result<(), String> {
     let runtime = state.runtime.as_ref().unwrap();
     let auth_uri = state.auth_uri.as_ref().unwrap();
 
-    let mut app = runtime.block_on(async {
-        test::init_service(
-            App::new()
-                .wrap(NormalizePath::trim())
-                .wrap(AuthService::new(auth_uri.clone()))
-                .route("/", web::get().to(dummy_handler)),
-        )
-        .await
-    });
+    let app = Router::new()
+        .route("/", routing::get(dummy_handler))
+        .layer(AuthService::new(auth_uri.clone()));
+    let server = match TestServer::new(app) {
+        Err(e) => return Err(format!("new server error: {}", e)),
+        Ok(server) => server,
+    };
 
-    let req = TestRequest::get()
-        .uri("/")
-        .insert_header((header::AUTHORIZATION, format!("Bearer test")))
-        .to_request();
-    let resp = runtime.block_on(async { test::call_service(&mut app, req).await });
-    expect(resp.status()).to_equal(StatusCode::UNAUTHORIZED)
+    let req = server.get("/").add_header(
+        header::AUTHORIZATION,
+        HeaderValue::from_str("Bearer test").unwrap(),
+    );
+    let resp = runtime.block_on(async { req.await });
+    expect(resp.status_code()).to_equal(StatusCode::UNAUTHORIZED)
 }
 
 fn test_503(context: &mut SpecContext<TestState>) -> Result<(), String> {
@@ -156,52 +163,43 @@ fn test_503(context: &mut SpecContext<TestState>) -> Result<(), String> {
     let runtime = state.runtime.as_ref().unwrap();
     let auth_uri = "http://localhost:65535";
 
-    let mut app = runtime.block_on(async {
-        test::init_service(
-            App::new()
-                .wrap(NormalizePath::trim())
-                .wrap(AuthService::new(auth_uri.to_string()))
-                .route("/", web::get().to(dummy_handler)),
-        )
-        .await
-    });
+    let app = Router::new()
+        .route("/", routing::get(dummy_handler))
+        .layer(AuthService::new(auth_uri.to_string()));
+    let server = match TestServer::new(app) {
+        Err(e) => return Err(format!("new server error: {}", e)),
+        Ok(server) => server,
+    };
 
-    let req = TestRequest::get()
-        .uri("/")
-        .insert_header((header::AUTHORIZATION, format!("Bearer test")))
-        .to_request();
-    let resp = runtime.block_on(async { test::call_service(&mut app, req).await });
-    expect(resp.status()).to_equal(StatusCode::SERVICE_UNAVAILABLE)
+    let req = server.get("/").add_header(
+        header::AUTHORIZATION,
+        HeaderValue::from_str("Bearer test").unwrap(),
+    );
+    let resp = runtime.block_on(async { req.await });
+    expect(resp.status_code()).to_equal(StatusCode::SERVICE_UNAVAILABLE)
 }
 
-async fn dummy_handler(req: HttpRequest) -> impl Responder {
-    match req.extensions_mut().get::<FullTokenInfo>() {
-        None => {
-            return Err(ErrResp::Custom(450, "", None));
-        }
-        Some(data) => {
-            if data.info.user_id.as_str() != "user"
-                && data.info.user_id.as_str() != "user1"
-                && data.info.user_id.as_str() != "user2"
-            {
-                return Err(ErrResp::Custom(451, "", Some(data.info.user_id.clone())));
-            } else if data.info.client_id.as_str() != "client"
-                && data.info.client_id.as_str() != "client1"
-                && data.info.client_id.as_str() != "client2"
-            {
-                return Err(ErrResp::Custom(452, "", Some(data.info.client_id.clone())));
-            }
-            let mut found = false;
-            for (k, v) in data.info.roles.iter() {
-                if k.as_str().cmp(Role::MANAGER) == Ordering::Equal && *v {
-                    found = true;
-                    break;
-                }
-            }
-            if data.info.user_id.as_str() != "user2" && !found {
-                return Err(ErrResp::Custom(453, "", None));
-            }
+async fn dummy_handler(Extension(token_info): Extension<GetTokenInfoData>) -> impl IntoResponse {
+    if token_info.user_id.as_str() != "user"
+        && token_info.user_id.as_str() != "user1"
+        && token_info.user_id.as_str() != "user2"
+    {
+        return Err(ErrResp::Custom(451, "", Some(token_info.user_id.clone())));
+    } else if token_info.client_id.as_str() != "client"
+        && token_info.client_id.as_str() != "client1"
+        && token_info.client_id.as_str() != "client2"
+    {
+        return Err(ErrResp::Custom(452, "", Some(token_info.client_id.clone())));
+    }
+    let mut found = false;
+    for (k, v) in token_info.roles.iter() {
+        if k.as_str().cmp(Role::MANAGER) == Ordering::Equal && *v {
+            found = true;
+            break;
         }
     }
-    Ok(HttpResponse::NoContent().finish())
+    if token_info.user_id.as_str() != "user2" && !found {
+        return Err(ErrResp::Custom(453, "", None));
+    }
+    Ok(StatusCode::NO_CONTENT)
 }

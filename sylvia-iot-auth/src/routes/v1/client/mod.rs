@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use actix_web::{dev::HttpServiceFactory, http::Method, web};
+use axum::{http::Method, routing, Router};
 
 use sylvia_iot_corelib::role::Role;
 
@@ -13,7 +13,7 @@ mod api;
 mod request;
 mod response;
 
-pub fn new_service(scope_path: &str, state: &State) -> impl HttpServiceFactory {
+pub fn new_service(scope_path: &str, state: &State) -> Router {
     let mut role_scopes_root: HashMap<Method, RoleScopeType> = HashMap::new();
     let mut role_scopes_count: HashMap<Method, RoleScopeType> = HashMap::new();
     let mut role_scopes_list: HashMap<Method, RoleScopeType> = HashMap::new();
@@ -71,32 +71,36 @@ pub fn new_service(scope_path: &str, state: &State) -> impl HttpServiceFactory {
         }
     }
 
-    web::scope(scope_path)
-        .service(
-            web::resource("")
-                .wrap(AuthService::new(&state.model, role_scopes_root))
-                .route(web::post().to(api::post_client)),
-        )
-        .service(
-            web::resource("/count")
-                .wrap(AuthService::new(&state.model, role_scopes_count))
-                .route(web::get().to(api::get_client_count)),
-        )
-        .service(
-            web::resource("/list")
-                .wrap(AuthService::new(&state.model, role_scopes_list))
-                .route(web::get().to(api::get_client_list)),
-        )
-        .service(
-            web::resource("/{client_id}")
-                .wrap(AuthService::new(&state.model, role_scopes_param))
-                .route(web::get().to(api::get_client))
-                .route(web::patch().to(api::patch_client))
-                .route(web::delete().to(api::delete_client)),
-        )
-        .service(
-            web::resource("/user/{user_id}")
-                .wrap(AuthService::new(&state.model, role_scopes_user_param))
-                .route(web::delete().to(api::delete_client_user)),
-        )
+    Router::new().nest(
+        scope_path,
+        Router::new()
+            .route(
+                "/",
+                routing::post(api::post_client)
+                    .layer(AuthService::new(&state.model, role_scopes_root)),
+            )
+            .route(
+                "/count",
+                routing::get(api::get_client_count)
+                    .layer(AuthService::new(&state.model, role_scopes_count)),
+            )
+            .route(
+                "/list",
+                routing::get(api::get_client_list)
+                    .layer(AuthService::new(&state.model, role_scopes_list)),
+            )
+            .route(
+                "/:client_id",
+                routing::get(api::get_client)
+                    .patch(api::patch_client)
+                    .delete(api::delete_client)
+                    .layer(AuthService::new(&state.model, role_scopes_param)),
+            )
+            .route(
+                "/user/:user_id",
+                routing::delete(api::delete_client_user)
+                    .layer(AuthService::new(&state.model, role_scopes_user_param)),
+            )
+            .with_state(state.clone()),
+    )
 }

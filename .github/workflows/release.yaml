@@ -4,15 +4,15 @@ on:
     tags:
       - v*
 env:
-  GHR_VER: v0.16.0
+  GHR_VER: v0.16.2
   BIN_DIR: dist
 jobs:
   release:
     name: Publish GitHub Releases and Docker Hub
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     steps:
       - name: Check out repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           ref: ${{ github.ref_name }}
       - name: Build general-mq
@@ -52,13 +52,13 @@ jobs:
           xz -z -9 -e ${BIN_DIR}/*
           echo -n ${RELEASE_VER:1} > ${BIN_DIR}/VERSION
       - name: Login to Docker Hub
-        uses: docker/login-action@v2
+        uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
       - name: Docker meta auth
         id: meta-auth
-        uses: docker/metadata-action@v4
+        uses: docker/metadata-action@v5
         with:
           images: |
             woofdogtw/sylvia-iot-auth
@@ -67,7 +67,7 @@ jobs:
             type=semver,pattern={{major}}.{{minor}}
             type=semver,pattern={{major}}
       - name: Create auth Docker image
-        uses: docker/build-push-action@v4
+        uses: docker/build-push-action@v5
         with:
           build-args: |
             BIN_DIR=${{ env.BIN_DIR }}
@@ -79,7 +79,7 @@ jobs:
           tags: ${{ steps.meta-auth.outputs.tags }}
       - name: Docker meta broker
         id: meta-broker
-        uses: docker/metadata-action@v4
+        uses: docker/metadata-action@v5
         with:
           images: |
             woofdogtw/sylvia-iot-broker
@@ -88,7 +88,7 @@ jobs:
             type=semver,pattern={{major}}.{{minor}}
             type=semver,pattern={{major}}
       - name: Create broker Docker image
-        uses: docker/build-push-action@v4
+        uses: docker/build-push-action@v5
         with:
           build-args: |
             BIN_DIR=${{ env.BIN_DIR }}
@@ -100,7 +100,7 @@ jobs:
           tags: ${{ steps.meta-broker.outputs.tags }}
       - name: Docker meta coremgr
         id: meta-coremgr
-        uses: docker/metadata-action@v4
+        uses: docker/metadata-action@v5
         with:
           images: |
             woofdogtw/sylvia-iot-coremgr
@@ -109,7 +109,7 @@ jobs:
             type=semver,pattern={{major}}.{{minor}}
             type=semver,pattern={{major}}
       - name: Create coremgr Docker
-        uses: docker/build-push-action@v4
+        uses: docker/build-push-action@v5
         with:
           build-args: |
             BIN_DIR=${{ env.BIN_DIR }}
@@ -121,7 +121,7 @@ jobs:
           tags: ${{ steps.meta-coremgr.outputs.tags }}
       - name: Docker meta data
         id: meta-data
-        uses: docker/metadata-action@v4
+        uses: docker/metadata-action@v5
         with:
           images: |
             woofdogtw/sylvia-iot-data
@@ -130,7 +130,7 @@ jobs:
             type=semver,pattern={{major}}.{{minor}}
             type=semver,pattern={{major}}
       - name: Create data Docker
-        uses: docker/build-push-action@v4
+        uses: docker/build-push-action@v5
         with:
           build-args: |
             BIN_DIR=${{ env.BIN_DIR }}
@@ -142,7 +142,7 @@ jobs:
           tags: ${{ steps.meta-data.outputs.tags }}
       - name: Docker meta core
         id: meta-core
-        uses: docker/metadata-action@v4
+        uses: docker/metadata-action@v5
         with:
           images: |
             woofdogtw/sylvia-iot-core
@@ -151,7 +151,7 @@ jobs:
             type=semver,pattern={{major}}.{{minor}}
             type=semver,pattern={{major}}
       - name: Create core Docker
-        uses: docker/build-push-action@v4
+        uses: docker/build-push-action@v5
         with:
           build-args: |
             BIN_DIR=${{ env.BIN_DIR }}
@@ -171,13 +171,13 @@ jobs:
           ./ghr_${GHR_VER}_linux_amd64/ghr -u "${GITHUB_REPOSITORY%/*}" -r "${GITHUB_REPOSITORY#*/}" "${GITHUB_REF#refs/tags/}" ${BIN_DIR}
   crates:
     name: Publish crates.io
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     env:
       CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
       RELEASE_VER: ${{ github.ref_name }}
     steps:
       - name: Check out repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           ref: ${{ github.ref_name }}
       - name: Login to crates.io

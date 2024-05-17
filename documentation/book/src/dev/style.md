@@ -169,7 +169,7 @@ There is a potential ambiguity: `[op]` and `{id}`. The former represents a fixed
 latter represents a variable object ID. When designing IDs, it is essential to avoid conflicts with
 the names of actions.
 
-> When mounting routes using Actix Web, the fixed `[op]` should be placed before the variable
+> When mounting routes using axum, the fixed `[op]` should be placed before the variable
   `{id}`.
 
 For example, let's consider the Broker's

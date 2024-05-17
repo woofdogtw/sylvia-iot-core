@@ -1,18 +1,27 @@
 use std::{collections::HashMap, error::Error as StdError};
 
-use actix_web::{
-    web::{self, Bytes},
-    HttpRequest, HttpResponse, Responder,
+use axum::{
+    body::{Body, Bytes},
+    extract::State,
+    http::{header, StatusCode},
+    response::IntoResponse,
+    Extension,
 };
 use log::error;
 use serde_json;
 
-use sylvia_iot_corelib::{err::ErrResp, role::Role, strings::time_str};
+use sylvia_iot_corelib::{
+    constants::ContentType,
+    err::ErrResp,
+    http::{Json, Path, Query},
+    role::Role,
+    strings::time_str,
+};
 
 use super::{
     super::{
-        super::{ErrReq, State},
-        lib::{check_unit, get_token_id_roles},
+        super::{middleware::GetTokenInfoData, ErrReq, State as AppState},
+        lib::check_unit,
     },
     request, response,
 };
@@ -25,16 +34,16 @@ const LIST_CURSOR_MAX: u64 = 100;
 
 /// `GET /{base}/api/v1/dldata-buffer/count`
 pub async fn get_dldata_buffer_count(
-    req: HttpRequest,
-    query: web::Query<request::GetDlDataBufferCountQuery>,
-    state: web::Data<State>,
-) -> impl Responder {
+    State(state): State<AppState>,
+    Extension(token_info): Extension<GetTokenInfoData>,
+    Query(query): Query<request::GetDlDataBufferCountQuery>,
+) -> impl IntoResponse {
     const FN_NAME: &'static str = "get_dldata_buffer_count";
 
-    let (user_id, roles) = get_token_id_roles(FN_NAME, &req)?;
-    let user_id = user_id.as_str();
+    let user_id = token_info.user_id.as_str();
+    let roles = &token_info.roles;
 
-    if !Role::is_role(&roles, Role::ADMIN) && !Role::is_role(&roles, Role::MANAGER) {
+    if !Role::is_role(roles, Role::ADMIN) && !Role::is_role(roles, Role::MANAGER) {
         match query.unit.as_ref() {
             None => return Err(ErrResp::ErrParam(Some("missing `unit`".to_string()))),
             Some(unit_id) => {
@@ -48,17 +57,18 @@ pub async fn get_dldata_buffer_count(
         None => None,
         Some(unit_id) => match unit_id.len() {
             0 => None,
-            _ => match check_unit(FN_NAME, user_id, &roles, unit_id.as_str(), false, &state).await?
-            {
-                None => {
-                    return Err(ErrResp::Custom(
-                        ErrReq::UNIT_NOT_EXIST.0,
-                        ErrReq::UNIT_NOT_EXIST.1,
-                        None,
-                    ))
+            _ => {
+                match check_unit(FN_NAME, user_id, roles, unit_id.as_str(), false, &state).await? {
+                    None => {
+                        return Err(ErrResp::Custom(
+                            ErrReq::UNIT_NOT_EXIST.0,
+                            ErrReq::UNIT_NOT_EXIST.1,
+                            None,
+                        ))
+                    }
+                    Some(_) => Some(unit_id.as_str()),
                 }
-                Some(_) => Some(unit_id.as_str()),
-            },
+            }
         },
     };
     let cond = ListQueryCond {
@@ -91,7 +101,7 @@ pub async fn get_dldata_buffer_count(
             error!("[{}] count error: {}", FN_NAME, e);
             Err(ErrResp::ErrDb(Some(e.to_string())))
         }
-        Ok(count) => Ok(HttpResponse::Ok().json(response::GetDlDataBufferCount {
+        Ok(count) => Ok(Json(response::GetDlDataBufferCount {
             data: response::GetCountData { count },
         })),
     }
@@ -99,16 +109,16 @@ pub async fn get_dldata_buffer_count(
 
 /// `GET /{base}/api/v1/dldata-buffer/list`
 pub async fn get_dldata_buffer_list(
-    req: HttpRequest,
-    query: web::Query<request::GetDlDataBufferListQuery>,
-    state: web::Data<State>,
-) -> impl Responder {
+    State(state): State<AppState>,
+    Extension(token_info): Extension<GetTokenInfoData>,
+    Query(query): Query<request::GetDlDataBufferListQuery>,
+) -> impl IntoResponse {
     const FN_NAME: &'static str = "get_dldata_buffer_list";
 
-    let (user_id, roles) = get_token_id_roles(FN_NAME, &req)?;
-    let user_id = user_id.as_str();
+    let user_id = token_info.user_id.as_str();
+    let roles = &token_info.roles;
 
-    if !Role::is_role(&roles, Role::ADMIN) && !Role::is_role(&roles, Role::MANAGER) {
+    if !Role::is_role(roles, Role::ADMIN) && !Role::is_role(roles, Role::MANAGER) {
         match query.unit.as_ref() {
             None => return Err(ErrResp::ErrParam(Some("missing `unit`".to_string()))),
             Some(unit_id) => {
@@ -122,17 +132,18 @@ pub async fn get_dldata_buffer_list(
         None => None,
         Some(unit_id) => match unit_id.len() {
             0 => None,
-            _ => match check_unit(FN_NAME, user_id, &roles, unit_id.as_str(), false, &state).await?
-            {
-                None => {
-                    return Err(ErrResp::Custom(
-                        ErrReq::UNIT_NOT_EXIST.0,
-                        ErrReq::UNIT_NOT_EXIST.1,
-                        None,
-                    ))
+            _ => {
+                match check_unit(FN_NAME, user_id, roles, unit_id.as_str(), false, &state).await? {
+                    None => {
+                        return Err(ErrResp::Custom(
+                            ErrReq::UNIT_NOT_EXIST.0,
+                            ErrReq::UNIT_NOT_EXIST.1,
+                            None,
+                        ))
+                    }
+                    Some(_) => Some(unit_id.as_str()),
                 }
-                Some(_) => Some(unit_id.as_str()),
-            },
+            }
         },
     };
     let cond = ListQueryCond {
@@ -183,21 +194,20 @@ pub async fn get_dldata_buffer_list(
         Ok((list, cursor)) => match cursor {
             None => match query.format {
                 Some(request::ListFormat::Array) => {
-                    return Ok(HttpResponse::Ok().json(data_list_transform(&list)))
+                    return Ok(Json(data_list_transform(&list)).into_response())
                 }
                 _ => {
-                    return Ok(HttpResponse::Ok().json(response::GetDlDataBufferList {
+                    return Ok(Json(response::GetDlDataBufferList {
                         data: data_list_transform(&list),
-                    }))
+                    })
+                    .into_response())
                 }
             },
             Some(_) => (list, cursor),
         },
     };
 
-    // TODO: detect client disconnect
-    let stream = async_stream::stream! {
-        let query = query.0.clone();
+    let body = Body::from_stream(async_stream::stream! {
         let unit_cond = match query.unit.as_ref() {
             None => None,
             Some(unit_id) => match unit_id.len() {
@@ -260,25 +270,25 @@ pub async fn get_dldata_buffer_list(
             list = _list;
             cursor = _cursor;
         }
-    };
-    Ok(HttpResponse::Ok().streaming(stream))
+    });
+    Ok(([(header::CONTENT_TYPE, ContentType::JSON)], body).into_response())
 }
 
 /// `DELETE /{base}/api/v1/dldata-buffer/{dataId}`
 pub async fn delete_dldata_buffer(
-    req: HttpRequest,
-    param: web::Path<request::DataIdPath>,
-    state: web::Data<State>,
-) -> impl Responder {
+    State(state): State<AppState>,
+    Extension(token_info): Extension<GetTokenInfoData>,
+    Path(param): Path<request::DataIdPath>,
+) -> impl IntoResponse {
     const FN_NAME: &'static str = "delete_dldata_buffer";
 
-    let (user_id, roles) = get_token_id_roles(FN_NAME, &req)?;
-    let user_id = user_id.as_str();
+    let user_id = token_info.user_id.as_str();
+    let roles = &token_info.roles;
     let data_id = param.data_id.as_str();
 
     // To check if the dldata buffer is for the user.
-    match check_data(FN_NAME, data_id, user_id, true, &roles, &state).await? {
-        None => return Ok(HttpResponse::NoContent().finish()),
+    match check_data(FN_NAME, data_id, user_id, true, roles, &state).await? {
+        None => return Ok(StatusCode::NO_CONTENT),
         Some(_) => (),
     }
 
@@ -291,7 +301,7 @@ pub async fn delete_dldata_buffer(
         return Err(ErrResp::ErrDb(Some(e.to_string())));
     }
 
-    Ok(HttpResponse::NoContent().finish())
+    Ok(StatusCode::NO_CONTENT)
 }
 
 fn get_sort_cond(sort_args: &Option<String>) -> Result<Vec<SortCond>, ErrResp> {
@@ -362,7 +372,7 @@ async fn check_data(
     user_id: &str,
     only_owner: bool, // to check if this `user_id` is the owner.
     roles: &HashMap<String, bool>,
-    state: &web::Data<State>,
+    state: &AppState,
 ) -> Result<Option<DlDataBuffer>, ErrResp> {
     let data = match state.model.dldata_buffer().get(data_id).await {
         Err(e) => {
@@ -394,7 +404,7 @@ fn data_list_transform_bytes(
     with_start: bool,
     with_end: bool,
     format: Option<&request::ListFormat>,
-) -> Result<Bytes, Box<dyn StdError>> {
+) -> Result<Bytes, Box<dyn StdError + Send + Sync>> {
     let mut build_str = match with_start {
         false => "".to_string(),
         true => match format {

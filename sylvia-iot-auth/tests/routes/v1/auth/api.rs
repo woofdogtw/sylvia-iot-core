@@ -1,11 +1,10 @@
 use std::collections::HashMap;
 
-use actix_web::{
-    http::{header, StatusCode},
-    middleware::NormalizePath,
-    test::{self, TestRequest},
-    App,
+use axum::{
+    http::{header, HeaderValue, StatusCode},
+    Router,
 };
+use axum_test::TestServer;
 use chrono::{TimeDelta, TimeZone, Utc};
 use laboratory::{expect, SpecContext};
 use mongodb::bson::Document;
@@ -175,23 +174,20 @@ fn test_get_tokeninfo(
     let user_info = get_user_model(runtime, state, user_id)?;
     let client_info = get_client_model(runtime, state, "public")?;
 
-    let mut app = runtime.block_on(async {
-        test::init_service(
-            App::new()
-                .wrap(NormalizePath::trim())
-                .service(routes::new_service(state)),
-        )
-        .await
-    });
+    let app = Router::new().merge(routes::new_service(&state));
+    let server = match TestServer::new(app) {
+        Err(e) => return Err(format!("new server error: {}", e)),
+        Ok(server) => server,
+    };
 
     let token = get_token(runtime, state, user_id)?;
-    let req = TestRequest::get()
-        .uri("/auth/api/v1/auth/tokeninfo")
-        .insert_header((header::AUTHORIZATION, format!("Bearer {}", token)))
-        .to_request();
-    let resp = runtime.block_on(async { test::call_service(&mut app, req).await });
-    expect(resp.status()).to_equal(StatusCode::OK)?;
-    let body: response::GetTokenInfo = runtime.block_on(async { test::read_body_json(resp).await });
+    let req = server.get("/auth/api/v1/auth/tokeninfo").add_header(
+        header::AUTHORIZATION,
+        HeaderValue::from_str(format!("Bearer {}", token).as_str()).unwrap(),
+    );
+    let resp = runtime.block_on(async { req.await });
+    expect(resp.status_code()).to_equal(StatusCode::OK)?;
+    let body: response::GetTokenInfo = resp.json();
     expect(body.data.user_id.as_str()).to_equal(user_info.user_id.as_str())?;
     expect(body.data.account.as_str()).to_equal(user_info.account.as_str())?;
     expect(body.data.name.as_str()).to_equal(user_info.name.as_str())?;
@@ -270,34 +266,31 @@ fn test_post_logout(runtime: &Runtime, state: &routes::State) -> Result<(), Stri
         Ok(())
     })?;
 
-    let mut app = runtime.block_on(async {
-        test::init_service(
-            App::new()
-                .wrap(NormalizePath::trim())
-                .service(routes::new_service(state)),
-        )
-        .await
-    });
+    let app = Router::new().merge(routes::new_service(&state));
+    let server = match TestServer::new(app) {
+        Err(e) => return Err(format!("new server error: {}", e)),
+        Ok(server) => server,
+    };
 
-    let req = TestRequest::post()
-        .uri("/auth/api/v1/auth/logout")
-        .insert_header((header::AUTHORIZATION, "Bearer access-user2".to_string()))
-        .to_request();
-    let resp = runtime.block_on(async { test::call_service(&mut app, req).await });
-    expect(resp.status()).to_equal(StatusCode::NO_CONTENT)?;
+    let req = server.post("/auth/api/v1/auth/logout").add_header(
+        header::AUTHORIZATION,
+        HeaderValue::from_str(format!("Bearer access-user2").as_str()).unwrap(),
+    );
+    let resp = runtime.block_on(async { req.await });
+    expect(resp.status_code()).to_equal(StatusCode::NO_CONTENT)?;
     runtime.block_on(async {
         match state.model.authorization_code().get("code-user1").await {
             Err(e) => return Err(format!("get code-user1 error: {}", e)),
             Ok(token) => match token {
-                None => (),
-                Some(_) => return Err("should not get code-user1".to_string()),
+                None => return Err("should get code-user1".to_string()),
+                Some(_) => (),
             },
         }
         match state.model.authorization_code().get("code-user2").await {
             Err(e) => return Err(format!("get code-user2 error: {}", e)),
             Ok(token) => match token {
-                None => (),
-                Some(_) => return Err("should not get code-user2".to_string()),
+                None => return Err("should get code-user2".to_string()),
+                Some(_) => (),
             },
         }
         match state.model.authorization_code().get("code-admin").await {
@@ -311,8 +304,8 @@ fn test_post_logout(runtime: &Runtime, state: &routes::State) -> Result<(), Stri
         match state.model.access_token().get("access-user1").await {
             Err(e) => return Err(format!("get access-user1 error: {}", e)),
             Ok(token) => match token {
-                None => (),
-                Some(_) => return Err("should not get access-user1".to_string()),
+                None => return Err("should get access-user1".to_string()),
+                Some(_) => (),
             },
         }
         match state.model.access_token().get("access-user2").await {
@@ -333,15 +326,15 @@ fn test_post_logout(runtime: &Runtime, state: &routes::State) -> Result<(), Stri
         match state.model.refresh_token().get("refresh-user1").await {
             Err(e) => return Err(format!("get refresh-user1 error: {}", e)),
             Ok(token) => match token {
-                None => (),
-                Some(_) => return Err("should not get refresh-user1".to_string()),
+                None => return Err("should get refresh-user1".to_string()),
+                Some(_) => (),
             },
         }
         match state.model.refresh_token().get("refresh-user2").await {
             Err(e) => return Err(format!("get refresh-user2 error: {}", e)),
             Ok(token) => match token {
-                None => (),
-                Some(_) => return Err("should not get refresh-user2".to_string()),
+                None => return Err("should get refresh-user2".to_string()),
+                Some(_) => (),
             },
         }
         match state.model.refresh_token().get("refresh-admin").await {

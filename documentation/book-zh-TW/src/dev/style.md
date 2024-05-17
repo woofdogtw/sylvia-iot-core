@@ -151,7 +151,7 @@ Sylvia-IoT 設計理念中，「任意抽換」是一個相當重視的概念。
 
 上面有個歧義處：`[op]` 和 `{id}`。前者是固定的行為，後者是會變動的對象 ID。設計 ID 的時候要盡量避免與行為的名稱衝突。
 
-> 使用 Actix Web 掛載路由的時候，須將固定的 `[op]` 放在變數 `{id}` 的前面。
+> 使用 axum 掛載路由的時候，須將固定的 `[op]` 放在變數 `{id}` 的前面。
 
 這邊舉 Broker 的 [**Device API**](https://github.com/woofdogtw/sylvia-iot-core/blob/main/sylvia-iot-broker/doc/api.md#contents) 為例子：
 

@@ -1,16 +1,17 @@
-use actix_web::{
-    http::header::{self, HeaderValue},
-    web::{self, Bytes},
-    HttpRequest, HttpResponse, HttpResponseBuilder, ResponseError,
+use axum::{
+    body::{self, Body},
+    extract::Request,
+    http::{header, response::Builder, HeaderValue, StatusCode},
+    response::{IntoResponse, Response},
 };
 use log::error;
-use reqwest::{self, Client, Method, StatusCode};
+use reqwest::{self, Client, Method};
 use serde_urlencoded;
 use url::Url;
 
 use sylvia_iot_corelib::err::ErrResp;
 
-use super::{AmqpState, MqttState, State};
+use super::{AmqpState, MqttState, State as AppState};
 use crate::libs::mq::{emqx, rabbitmq, QueueType};
 
 pub mod application;
@@ -28,9 +29,10 @@ pub mod user;
 
 enum ListResp {
     /// The complete response. Return this directly.
-    ActixWeb(HttpResponse),
-    /// Get body from [`reqwest::Response`]. Use [`HttpResponseBuilder`] to build response body.
-    ArrayStream(reqwest::Response, HttpResponseBuilder),
+    Axum(Response),
+    /// Get body from [`reqwest::Response`].
+    /// Use [`axum::http::response::Builder`] to build response body.
+    ArrayStream(reqwest::Response, Builder),
 }
 
 struct CreateQueueResource<'a> {
@@ -55,44 +57,33 @@ struct PatchHost {
 }
 
 /// To launch a HTTP request as bridge from coremgr to auth/broker.
-async fn api_bridge(
-    fn_name: &str,
-    client: &Client,
-    req: &mut HttpRequest,
-    api_path: &str,
-    body: Option<Bytes>,
-) -> HttpResponse {
-    let token = match req.headers().get(header::AUTHORIZATION) {
-        None => {
-            return ErrResp::ErrParam(Some("missing Authorization".to_string())).error_response()
-        }
-        Some(value) => value.clone(),
-    };
+async fn api_bridge(fn_name: &str, client: &Client, req: Request, api_path: &str) -> Response {
+    let (parts, body) = req.into_parts();
 
     let mut builder = client
-        .request(req.method().clone(), api_path)
-        .header(reqwest::header::AUTHORIZATION, token);
-    if req.query_string().len() > 0 {
-        let query = match serde_urlencoded::from_str::<Vec<(String, String)>>(req.query_string()) {
+        .request(parts.method, api_path)
+        .headers(parts.headers);
+    if let Some(query_str) = parts.uri.query() {
+        match serde_urlencoded::from_str::<Vec<(String, String)>>(query_str) {
             Err(e) => {
                 let e = format!("parse query error: {}", e);
-                return ErrResp::ErrParam(Some(e)).error_response();
+                return ErrResp::ErrParam(Some(e)).into_response();
             }
-            Ok(query) => query,
-        };
-        builder = builder.query(&query);
+            Ok(query) => builder = builder.query(&query),
+        }
     }
-    if let Some(content_type) = req.headers().get(header::CONTENT_TYPE) {
-        builder = builder.header(reqwest::header::CONTENT_TYPE, content_type);
-    }
-    if let Some(body) = body {
-        builder = builder.body(body);
+    match body::to_bytes(body, usize::MAX).await {
+        Err(e) => {
+            let e = format!("convert body error: {}", e);
+            return ErrResp::ErrParam(Some(e)).into_response();
+        }
+        Ok(body) => builder = builder.body(body),
     }
     let api_req = match builder.build() {
         Err(e) => {
             let e = format!("generate request error: {}", e);
             error!("[{}] {}", fn_name, e);
-            return ErrResp::ErrRsc(Some(e)).error_response();
+            return ErrResp::ErrRsc(Some(e)).into_response();
         }
         Ok(req) => req,
     };
@@ -100,48 +91,45 @@ async fn api_bridge(
         Err(e) => {
             let e = format!("execute request error: {}", e);
             error!("[{}] {}", fn_name, e);
-            return ErrResp::ErrIntMsg(Some(e)).error_response();
+            return ErrResp::ErrIntMsg(Some(e)).into_response();
         }
         Ok(resp) => resp,
     };
 
-    let status_code = api_resp.status();
-    let mut resp = HttpResponseBuilder::new(status_code);
-    if let Some(content_type) = api_resp.headers().get(header::CONTENT_TYPE) {
-        resp.insert_header((header::CONTENT_TYPE, content_type.clone()));
+    let mut resp_builder = Response::builder().status(api_resp.status());
+    for (k, v) in api_resp.headers() {
+        resp_builder = resp_builder.header(k, v);
     }
-    if let Some(auth) = api_resp.headers().get(header::WWW_AUTHENTICATE) {
-        resp.insert_header((header::WWW_AUTHENTICATE, auth.clone()));
+    match resp_builder.body(Body::from_stream(api_resp.bytes_stream())) {
+        Err(e) => {
+            let e = format!("wrap response body error: {}", e);
+            error!("[{}] {}", fn_name, e);
+            ErrResp::ErrIntMsg(Some(e)).into_response()
+        }
+        Ok(resp) => resp,
     }
-    resp.streaming(api_resp.bytes_stream())
 }
 
 /// To launch a HTTP request for one `/list` API as bridge from coremgr to auth/broker.
 async fn list_api_bridge(
     fn_name: &str,
     client: &Client,
-    req: &mut HttpRequest,
+    req: Request,
     api_path: &str,
     force_array: bool,
     csv_file: &str,
 ) -> ListResp {
-    let token = match req.headers().get(header::AUTHORIZATION) {
-        None => {
-            let msg = "missing Authorization".to_string();
-            return ListResp::ActixWeb(ErrResp::ErrParam(Some(msg)).error_response());
-        }
-        Some(value) => value.clone(),
-    };
+    let (parts, _body) = req.into_parts();
 
     let mut is_csv = false;
     let mut builder = client
-        .request(req.method().clone(), api_path)
-        .header(reqwest::header::AUTHORIZATION, token);
-    if req.query_string().len() > 0 {
-        let query = match serde_urlencoded::from_str::<Vec<(String, String)>>(req.query_string()) {
+        .request(parts.method, api_path)
+        .headers(parts.headers);
+    if let Some(query_str) = parts.uri.query() {
+        let query = match serde_urlencoded::from_str::<Vec<(String, String)>>(query_str) {
             Err(e) => {
                 let e = format!("parse query error: {}", e);
-                return ListResp::ActixWeb(ErrResp::ErrParam(Some(e)).error_response());
+                return ListResp::Axum(ErrResp::ErrParam(Some(e)).into_response());
             }
             Ok(query) => query,
         };
@@ -173,7 +161,7 @@ async fn list_api_bridge(
         Err(e) => {
             let e = format!("generate request error: {}", e);
             error!("[{}] {}", fn_name, e);
-            return ListResp::ActixWeb(ErrResp::ErrRsc(Some(e)).error_response());
+            return ListResp::Axum(ErrResp::ErrRsc(Some(e)).into_response());
         }
         Ok(req) => req,
     };
@@ -181,27 +169,38 @@ async fn list_api_bridge(
         Err(e) => {
             let e = format!("execute request error: {}", e);
             error!("[{}] {}", fn_name, e);
-            return ListResp::ActixWeb(ErrResp::ErrIntMsg(Some(e)).error_response());
+            return ListResp::Axum(ErrResp::ErrIntMsg(Some(e)).into_response());
         }
         Ok(resp) => resp,
     };
 
-    let status_code = api_resp.status();
-    let mut resp = HttpResponseBuilder::new(status_code);
+    let mut resp_builder = Response::builder().status(api_resp.status());
     if is_csv {
-        resp.insert_header((header::CONTENT_TYPE, "text/csv"));
-        let csv_file = format!("attachment;filename={}.csv", csv_file);
-        resp.insert_header((header::CONTENT_DISPOSITION, csv_file));
-    } else if let Some(content_type) = api_resp.headers().get(header::CONTENT_TYPE) {
-        resp.insert_header((header::CONTENT_TYPE, content_type.clone()));
+        resp_builder = resp_builder
+            .header(header::CONTENT_TYPE, "text/csv")
+            .header(
+                header::CONTENT_DISPOSITION,
+                format!("attachment;filename={}.csv", csv_file),
+            );
+        if let Some(auth) = api_resp.headers().get(header::WWW_AUTHENTICATE) {
+            resp_builder = resp_builder.header(header::WWW_AUTHENTICATE, auth.clone());
+        }
+    } else {
+        for (k, v) in api_resp.headers() {
+            resp_builder = resp_builder.header(k, v);
+        }
     }
-    if let Some(auth) = api_resp.headers().get(header::WWW_AUTHENTICATE) {
-        resp.insert_header((header::WWW_AUTHENTICATE, auth.clone()));
+    if api_resp.status() == reqwest::StatusCode::OK && (is_csv || force_array) {
+        return ListResp::ArrayStream(api_resp, resp_builder);
     }
-    if status_code == reqwest::StatusCode::OK && (is_csv || force_array) {
-        return ListResp::ArrayStream(api_resp, resp);
+    match resp_builder.body(Body::from_stream(api_resp.bytes_stream())) {
+        Err(e) => {
+            let e = format!("wrap response body error: {}", e);
+            error!("[{}] {}", fn_name, e);
+            ListResp::Axum(ErrResp::ErrIntMsg(Some(e)).into_response())
+        }
+        Ok(resp) => ListResp::Axum(resp),
     }
-    ListResp::ActixWeb(resp.streaming(api_resp.bytes_stream()))
 }
 
 async fn get_tokeninfo_inner(
@@ -209,14 +208,14 @@ async fn get_tokeninfo_inner(
     client: &Client,
     auth_base: &str,
     token: &HeaderValue,
-) -> Result<response::TokenInfo, HttpResponse> {
+) -> Result<response::TokenInfo, Response> {
     let uri = format!("{}/api/v1/auth/tokeninfo", auth_base);
     let resp = get_stream_resp(fn_name, token, &client, uri.as_str()).await?;
     match resp.json::<response::GetTokenInfo>().await {
         Err(e) => {
             let e = format!("wrong response of token info: {}", e);
             error!("[{}] {}", fn_name, e);
-            Err(ErrResp::ErrIntMsg(Some(e)).error_response())
+            Err(ErrResp::ErrIntMsg(Some(e)).into_response())
         }
         Ok(info) => Ok(info.data),
     }
@@ -228,7 +227,7 @@ async fn get_unit_inner(
     broker_base: &str,
     unit_id: &str,
     token: &HeaderValue,
-) -> Result<Option<response::Unit>, HttpResponse> {
+) -> Result<Option<response::Unit>, Response> {
     let uri = format!("{}/api/v1/unit/{}", broker_base, unit_id);
     match get_stream_resp(fn_name, token, &client, uri.as_str()).await {
         Err(resp) => match resp.status() {
@@ -239,7 +238,7 @@ async fn get_unit_inner(
             Err(e) => {
                 let e = format!("wrong response of unit: {}", e);
                 error!("[{}] {}", fn_name, e);
-                Err(ErrResp::ErrIntMsg(Some(e)).error_response())
+                Err(ErrResp::ErrIntMsg(Some(e)).into_response())
             }
             Ok(unit) => Ok(Some(unit.data)),
         },
@@ -252,7 +251,7 @@ async fn get_device_inner(
     broker_base: &str,
     device_id: &str,
     token: &HeaderValue,
-) -> Result<Option<response::Device>, HttpResponse> {
+) -> Result<Option<response::Device>, Response> {
     let uri = format!("{}/api/v1/device/{}", broker_base, device_id);
     match get_stream_resp(fn_name, token, &client, uri.as_str()).await {
         Err(resp) => match resp.status() {
@@ -263,7 +262,7 @@ async fn get_device_inner(
             Err(e) => {
                 let e = format!("wrong response of device: {}", e);
                 error!("[{}] {}", fn_name, e);
-                Err(ErrResp::ErrIntMsg(Some(e)).error_response())
+                Err(ErrResp::ErrIntMsg(Some(e)).into_response())
             }
             Ok(device) => Ok(Some(device.data)),
         },
@@ -275,7 +274,7 @@ async fn get_stream_resp(
     token: &HeaderValue,
     client: &Client,
     uri: &str,
-) -> Result<reqwest::Response, HttpResponse> {
+) -> Result<reqwest::Response, Response> {
     match client
         .request(Method::GET, uri)
         .header(reqwest::header::AUTHORIZATION, token)
@@ -284,25 +283,29 @@ async fn get_stream_resp(
         Err(e) => {
             let e = format!("generate request error: {}", e);
             error!("[{}] {}", fn_name, e);
-            Err(ErrResp::ErrRsc(Some(e)).error_response())
+            Err(ErrResp::ErrRsc(Some(e)).into_response())
         }
         Ok(req) => match client.execute(req).await {
             Err(e) => {
                 let e = format!("execute request error: {}", e);
                 error!("[{}] {}", fn_name, e);
-                Err(ErrResp::ErrIntMsg(Some(e)).error_response())
+                Err(ErrResp::ErrIntMsg(Some(e)).into_response())
             }
             Ok(resp) => match resp.status() {
                 StatusCode::OK => Ok(resp),
                 _ => {
-                    let mut new_resp = HttpResponseBuilder::new(resp.status());
-                    if let Some(content_type) = resp.headers().get(header::CONTENT_TYPE) {
-                        new_resp.insert_header((header::CONTENT_TYPE, content_type.clone()));
+                    let mut resp_builder = Response::builder().status(resp.status());
+                    for (k, v) in resp.headers() {
+                        resp_builder = resp_builder.header(k, v);
                     }
-                    if let Some(auth) = resp.headers().get(header::WWW_AUTHENTICATE) {
-                        new_resp.insert_header((header::WWW_AUTHENTICATE, auth.clone()));
+                    match resp_builder.body(Body::from_stream(resp.bytes_stream())) {
+                        Err(e) => {
+                            let e = format!("wrap response body error: {}", e);
+                            error!("[{}] {}", fn_name, e);
+                            Err(ErrResp::ErrIntMsg(Some(e)).into_response())
+                        }
+                        Ok(resp) => Err(resp),
                     }
-                    Err(new_resp.streaming(resp.bytes_stream()))
                 }
             },
         },
@@ -352,9 +355,9 @@ fn cmp_host_uri(src: &str, dst: &str) -> bool {
 /// To set-up queue resources (vhost, ACL, ...) in the broker.
 async fn create_queue_rsc<'a>(
     fn_name: &str,
-    state: &web::Data<State>,
+    state: &AppState,
     rsc: &CreateQueueResource<'a>,
-) -> Result<(), HttpResponse> {
+) -> Result<(), Response> {
     let scheme = rsc.scheme;
     match scheme {
         "amqp" | "amqps" => match &state.amqp {
@@ -370,12 +373,12 @@ async fn create_queue_rsc<'a>(
                 };
                 if let Err(e) = rabbitmq::put_user(&client, opts, host, username, password).await {
                     error!("[{}] add RabbitMQ user {} error: {}", fn_name, username, e);
-                    return Err(e.error_response());
+                    return Err(e.into_response());
                 }
                 if let Err(e) = rabbitmq::put_vhost(&client, opts, host, username).await {
                     let _ = clear_queue_rsc(fn_name, &state, &clear_rsc);
                     error!("[{}] add RabbitMQ vhost {} error: {}", fn_name, username, e);
-                    return Err(e.error_response());
+                    return Err(e.into_response());
                 }
                 if let Err(e) =
                     rabbitmq::put_permissions(&client, opts, host, rsc.q_type, username).await
@@ -385,7 +388,7 @@ async fn create_queue_rsc<'a>(
                         "[{}] add RabbitMQ permission {} error: {}",
                         fn_name, username, e
                     );
-                    return Err(e.error_response());
+                    return Err(e.into_response());
                 }
                 if rsc.ttl.is_some() && rsc.ttl.is_some() {
                     let policies = rabbitmq::BrokerPolicies {
@@ -396,7 +399,7 @@ async fn create_queue_rsc<'a>(
                         rabbitmq::put_policies(&client, opts, host, username, &policies).await
                     {
                         error!("[{}] patch RabbitMQ {} error: {}", fn_name, username, e);
-                        return Err(e.error_response());
+                        return Err(e.into_response());
                     }
                 }
             }
@@ -423,30 +426,30 @@ async fn create_queue_rsc<'a>(
                 .await
                 {
                     error!("[{}] add EMQX user {} error: {}", fn_name, username, e);
-                    return Err(e.error_response());
+                    return Err(e.into_response());
                 }
                 if let Err(e) =
                     emqx::post_user(&client, opts, host, username, password, false).await
                 {
                     error!("[{}] add EMQX user {} error: {}", fn_name, username, e);
-                    return Err(e.error_response());
+                    return Err(e.into_response());
                 }
                 if let Err(e) = emqx::post_acl(&client, opts, host, rsc.q_type, username).await {
                     let _ = clear_queue_rsc(fn_name, &state, &clear_rsc);
                     error!("[{}] add EMQX ACL {} error: {}", fn_name, username, e);
-                    return Err(e.error_response());
+                    return Err(e.into_response());
                 }
                 if let Err(e) =
                     emqx::post_topic_metrics(&client, opts, host, rsc.q_type, username).await
                 {
                     let _ = clear_queue_rsc(fn_name, &state, &clear_rsc);
                     error!("[{}] add EMQX metrics {} error: {}", fn_name, username, e);
-                    return Err(e.error_response());
+                    return Err(e.into_response());
                 }
             }
             MqttState::Rumqttd => {}
         },
-        _ => return Err(ErrResp::ErrParam(Some("unsupport scheme".to_string())).error_response()),
+        _ => return Err(ErrResp::ErrParam(Some("unsupport scheme".to_string())).into_response()),
     }
     Ok(())
 }
@@ -454,9 +457,9 @@ async fn create_queue_rsc<'a>(
 /// To clear queue resources (vhost, ACL, ...) in the broker.
 async fn clear_queue_rsc<'a>(
     fn_name: &str,
-    state: &web::Data<State>,
+    state: &AppState,
     rsc: &ClearQueueResource<'a>,
-) -> Result<(), HttpResponse> {
+) -> Result<(), Response> {
     match rsc.scheme {
         "amqp" | "amqps" => match &state.amqp {
             AmqpState::RabbitMq(opts) => {
@@ -466,7 +469,7 @@ async fn clear_queue_rsc<'a>(
                         "[{}] clear RabbitMQ user {} error: {}",
                         fn_name, rsc.username, e
                     );
-                    return Err(e.error_response());
+                    return Err(e.into_response());
                 }
                 if let Err(e) = rabbitmq::delete_vhost(&client, opts, rsc.host, rsc.username).await
                 {
@@ -474,7 +477,7 @@ async fn clear_queue_rsc<'a>(
                         "[{}] clear RabbitMQ vhost {} error: {}",
                         fn_name, rsc.username, e
                     );
-                    return Err(e.error_response());
+                    return Err(e.into_response());
                 }
             }
         },
@@ -486,12 +489,12 @@ async fn clear_queue_rsc<'a>(
                         "[{}] clear EMQX user {} error: {}",
                         fn_name, rsc.username, e
                     );
-                    return Err(e.error_response());
+                    return Err(e.into_response());
                 }
                 let q_type = QueueType::Application;
                 if let Err(e) = emqx::delete_acl(&client, opts, rsc.host, rsc.username).await {
                     error!("[{}] clear EMQX ACL {} error: {}", fn_name, rsc.username, e);
-                    return Err(e.error_response());
+                    return Err(e.into_response());
                 }
                 if let Err(e) =
                     emqx::delete_topic_metrics(&client, opts, rsc.host, q_type, rsc.username).await
@@ -500,7 +503,7 @@ async fn clear_queue_rsc<'a>(
                         "[{}] clear EMQX topic metrics {} error: {}",
                         fn_name, rsc.username, e
                     );
-                    return Err(e.error_response());
+                    return Err(e.into_response());
                 }
             }
             MqttState::Rumqttd => {}
@@ -511,7 +514,7 @@ async fn clear_queue_rsc<'a>(
 }
 
 /// To clear new resources after something wrong when patching the application/network.
-async fn clear_patch_host(fn_name: &str, state: &web::Data<State>, patch_host: &Option<PatchHost>) {
+async fn clear_patch_host(fn_name: &str, state: &AppState, patch_host: &Option<PatchHost>) {
     if let Some(patch_host) = patch_host {
         if let Some(host) = patch_host.host_uri.host_str() {
             let clear_rsc = ClearQueueResource {
@@ -525,7 +528,7 @@ async fn clear_patch_host(fn_name: &str, state: &web::Data<State>, patch_host: &
 }
 
 /// To composite management plugin's information in the URI for sylvia-iot-broker.
-fn transfer_host_uri(state: &web::Data<State>, host_uri: &mut Url, mq_username: &str) {
+fn transfer_host_uri(state: &AppState, host_uri: &mut Url, mq_username: &str) {
     match host_uri.scheme() {
         "amqp" | "amqps" => match &state.amqp {
             AmqpState::RabbitMq(opts) => {

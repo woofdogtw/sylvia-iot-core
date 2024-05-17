@@ -1,17 +1,15 @@
-use std::{collections::HashMap, sync::mpsc, thread, time::Duration};
+use std::{collections::HashMap, net::SocketAddr, time::Duration};
 
-use actix_http::KeepAlive;
-use actix_web::{
-    http::{header, StatusCode},
-    middleware::NormalizePath,
-    test::{self, TestRequest},
-    App, HttpServer,
+use axum::{
+    http::{header, HeaderValue, Method, StatusCode},
+    Router,
 };
+use axum_test::{TestRequest, TestServer};
 use chrono::{DateTime, TimeZone, Utc};
 use laboratory::expect;
 use serde::Deserialize;
 use serde_json::{Map, Value};
-use tokio::{runtime::Runtime, time};
+use tokio::{net::TcpListener, runtime::Runtime, time};
 
 use sylvia_iot_auth::{
     libs::config as sylvia_iot_auth_config,
@@ -367,70 +365,58 @@ pub fn new_state(
         Ok(state) => state,
     };
 
-    let (tx, rx) = mpsc::channel();
-    {
-        let auth_state = match runtime.block_on(async {
-            let mut path = std::env::temp_dir();
-            path.push(sylvia_iot_auth_config::DEF_SQLITE_PATH);
-            let conf = sylvia_iot_auth_config::Config {
-                db: Some(sylvia_iot_auth_config::Db {
-                    engine: Some(DbEngine::SQLITE.to_string()),
-                    sqlite: Some(sylvia_iot_auth_config::Sqlite {
-                        path: Some(path.to_str().unwrap().to_string()),
-                    }),
-                    ..Default::default()
+    let auth_state = match runtime.block_on(async {
+        let mut path = std::env::temp_dir();
+        path.push(sylvia_iot_auth_config::DEF_SQLITE_PATH);
+        let conf = sylvia_iot_auth_config::Config {
+            db: Some(sylvia_iot_auth_config::Db {
+                engine: Some(DbEngine::SQLITE.to_string()),
+                sqlite: Some(sylvia_iot_auth_config::Sqlite {
+                    path: Some(path.to_str().unwrap().to_string()),
                 }),
                 ..Default::default()
-            };
-            sylvia_iot_auth_routes::new_state("/auth", &conf).await
-        }) {
-            Err(e) => panic!("create auth state error: {}", e),
-            Ok(state) => state,
+            }),
+            ..Default::default()
         };
-        let broker_state = match runtime.block_on(async {
-            let mut path = std::env::temp_dir();
-            path.push(sylvia_iot_broker_config::DEF_SQLITE_PATH);
-            let conf = sylvia_iot_broker_config::Config {
-                db: Some(sylvia_iot_broker_config::Db {
-                    engine: Some(DbEngine::SQLITE.to_string()),
-                    sqlite: Some(sylvia_iot_broker_config::Sqlite {
-                        path: Some(path.to_str().unwrap().to_string()),
-                    }),
-                    ..Default::default()
-                }),
-                ..Default::default()
-            };
-            sylvia_iot_broker_routes::new_state("/broker", &conf).await
-        }) {
-            Err(e) => panic!("create broker state error: {}", e),
-            Ok(state) => state,
-        };
-
-        thread::spawn(move || {
-            let srv = match HttpServer::new(move || {
-                App::new()
-                    .wrap(NormalizePath::trim())
-                    .service(sylvia_iot_auth_routes::new_service(&auth_state))
-                    .service(sylvia_iot_broker_routes::new_service(&broker_state))
-            })
-            .keep_alive(KeepAlive::Timeout(Duration::from_secs(60)))
-            .shutdown_timeout(1)
-            .bind("0.0.0.0:1080")
-            {
-                Err(e) => panic!("bind auth/broker server error: {}", e),
-                Ok(server) => server,
-            }
-            .run();
-
-            let _ = tx.send(srv.handle());
-            let runtime = match Runtime::new() {
-                Err(e) => panic!("create auth/broker server runtime error: {}", e),
-                Ok(runtime) => runtime,
-            };
-            runtime.block_on(async { srv.await })
-        });
+        sylvia_iot_auth_routes::new_state("/auth", &conf).await
+    }) {
+        Err(e) => panic!("create auth state error: {}", e),
+        Ok(state) => state,
     };
-    let auth_broker_svc = rx.recv().unwrap();
+    let broker_state = match runtime.block_on(async {
+        let mut path = std::env::temp_dir();
+        path.push(sylvia_iot_broker_config::DEF_SQLITE_PATH);
+        let conf = sylvia_iot_broker_config::Config {
+            db: Some(sylvia_iot_broker_config::Db {
+                engine: Some(DbEngine::SQLITE.to_string()),
+                sqlite: Some(sylvia_iot_broker_config::Sqlite {
+                    path: Some(path.to_str().unwrap().to_string()),
+                }),
+                ..Default::default()
+            }),
+            ..Default::default()
+        };
+        sylvia_iot_broker_routes::new_state("/broker", &conf).await
+    }) {
+        Err(e) => panic!("create broker state error: {}", e),
+        Ok(state) => state,
+    };
+
+    let auth_broker_svc = runtime.spawn(async move {
+        let app = Router::new()
+            .merge(sylvia_iot_auth_routes::new_service(&auth_state))
+            .merge(sylvia_iot_broker_routes::new_service(&broker_state));
+        let listener = match TcpListener::bind("0.0.0.0:1080").await {
+            Err(e) => panic!("bind auth/broker server error: {}", e),
+            Ok(listener) => listener,
+        };
+        axum::serve(
+            listener,
+            app.into_make_service_with_connect_info::<SocketAddr>(),
+        )
+        .await
+        .unwrap()
+    });
 
     if let Err(e) = runtime.block_on(async {
         for _ in 0..WAIT_COUNT {
@@ -506,60 +492,49 @@ pub fn new_state(
     }
 }
 
+/// A utility function for [`test_invalid_param`].
+pub fn new_test_server(state: &routes::State) -> Result<TestServer, String> {
+    let app = Router::new().merge(routes::new_service(&state));
+    match TestServer::new(app) {
+        Err(e) => Err(format!("new server error: {}", e)),
+        Ok(server) => Ok(server),
+    }
+}
+
 pub fn test_invalid_token(
     runtime: &Runtime,
     state: &routes::State,
-    req: TestRequest,
+    method: Method,
+    uri: &str,
 ) -> Result<(), String> {
-    let mut app = runtime.block_on(async {
-        test::init_service(
-            App::new()
-                .wrap(NormalizePath::trim())
-                .service(routes::new_service(&state)),
-        )
-        .await
-    });
+    let server = new_test_server(state)?;
 
-    let req = req
-        .insert_header((header::AUTHORIZATION, "Bearer token"))
-        .to_request();
-    let resp = runtime.block_on(async { test::call_service(&mut app, req).await });
-    expect(resp.status()).to_equal(StatusCode::UNAUTHORIZED)
+    let req = server.method(method, uri).add_header(
+        header::AUTHORIZATION,
+        HeaderValue::from_str("Bearer token").unwrap(),
+    );
+    let resp = runtime.block_on(async { req.await });
+    expect(resp.status_code()).to_equal(StatusCode::UNAUTHORIZED)
 }
 
 pub fn test_invalid_param(
     runtime: &Runtime,
-    state: &routes::State,
     req: TestRequest,
     expect_code: &str,
 ) -> Result<(), String> {
-    let mut app = runtime.block_on(async {
-        test::init_service(
-            App::new()
-                .wrap(NormalizePath::trim())
-                .service(routes::new_service(&state)),
-        )
-        .await
-    });
-
-    let req = req.to_request();
-    let resp = runtime.block_on(async { test::call_service(&mut app, req).await });
+    let resp = runtime.block_on(async { req.await });
     match expect_code {
-        "err_not_found" => expect(resp.status()).to_equal(StatusCode::NOT_FOUND)?,
-        _ => expect(resp.status()).to_equal(StatusCode::BAD_REQUEST)?,
+        "err_not_found" => expect(resp.status_code()).to_equal(StatusCode::NOT_FOUND)?,
+        _ => expect(resp.status_code()).to_equal(StatusCode::BAD_REQUEST)?,
     }
-    let body = runtime.block_on(async { test::read_body(resp).await });
-    match String::from_utf8(body.to_vec()) {
-        Err(e) => Err(format!("response not JSON string: {}", e)),
-        Ok(body) => match serde_json::from_str::<ApiError>(body.as_str()) {
-            Err(e) => Err(format!("response error format error: {}", e)),
-            Ok(err) => match err.code.as_str() == expect_code {
-                false => Err(format!(
-                    "error code {} not equal to {}",
-                    err.code, expect_code
-                )),
-                true => Ok(()),
-            },
+    match serde_json::from_str::<ApiError>(resp.text().as_str()) {
+        Err(e) => Err(format!("response error format error: {}", e)),
+        Ok(err) => match err.code.as_str() == expect_code {
+            false => Err(format!(
+                "error code {} not equal to {}",
+                err.code, expect_code
+            )),
+            true => Ok(()),
         },
     }
 }
@@ -568,36 +543,30 @@ pub fn test_count(
     runtime: &Runtime,
     state: &routes::State,
     uri: &str,
+    query: &[(&str, &str)],
     token: &str,
     count: usize,
 ) -> Result<(), String> {
-    let mut app = runtime.block_on(async {
-        test::init_service(
-            App::new()
-                .wrap(NormalizePath::trim())
-                .service(routes::new_service(&state)),
-        )
-        .await
-    });
+    let server = new_test_server(state)?;
 
-    let req = TestRequest::get()
-        .uri(uri)
-        .insert_header((header::AUTHORIZATION, format!("Bearer {}", token)))
-        .to_request();
-    let resp = runtime.block_on(async { test::call_service(&mut app, req).await });
-    expect(resp.status()).to_equal(StatusCode::OK)?;
-    let body = runtime.block_on(async { test::read_body(resp).await });
-    match String::from_utf8(body.to_vec()) {
-        Err(e) => return Err(format!("list not JSON string: {}", e)),
-        Ok(body) => match uri.contains("/list") {
-            false => match serde_json::from_str::<GetCountRes>(body.as_str()) {
-                Err(e) => Err(format!("count format error: {}", e)),
-                Ok(res) => expect(count).equals(res.data.count),
-            },
-            true => match serde_json::from_str::<GetListRes>(body.as_str()) {
-                Err(e) => Err(format!("list format error: {}", e)),
-                Ok(res) => expect(count).equals(res.data.len()),
-            },
+    let req = server
+        .method(Method::GET, uri)
+        .add_query_params(query)
+        .add_header(
+            header::AUTHORIZATION,
+            HeaderValue::from_str(format!("Bearer {}", token).as_str()).unwrap(),
+        );
+    let resp = runtime.block_on(async { req.await });
+    expect(resp.status_code()).to_equal(StatusCode::OK)?;
+    let body = resp.text();
+    match uri.contains("/list") {
+        false => match serde_json::from_str::<GetCountRes>(body.as_str()) {
+            Err(e) => Err(format!("count format error: {}", e)),
+            Ok(res) => expect(count).equals(res.data.count),
+        },
+        true => match serde_json::from_str::<GetListRes>(body.as_str()) {
+            Err(e) => Err(format!("list format error: {}", e)),
+            Ok(res) => expect(count).equals(res.data.len()),
         },
     }
 }
@@ -609,76 +578,60 @@ pub fn test_list(
     token: &str,
     fields: &str,
 ) -> Result<(), String> {
-    let mut app = runtime.block_on(async {
-        test::init_service(
-            App::new()
-                .wrap(NormalizePath::trim())
-                .service(routes::new_service(&state)),
-        )
-        .await
-    });
+    let server = new_test_server(state)?;
 
-    let req = TestRequest::get()
-        .uri(uri)
-        .insert_header((header::AUTHORIZATION, format!("Bearer {}", token)))
-        .to_request();
-    let resp = runtime.block_on(async { test::call_service(&mut app, req).await });
-    expect(resp.status()).to_equal(StatusCode::OK)?;
-    let body = runtime.block_on(async { test::read_body(resp).await });
-    let list = match String::from_utf8(body.to_vec()) {
-        Err(e) => return Err(format!("list not JSON string: {}", e)),
-        Ok(body) => match serde_json::from_str::<GetListRes>(body.as_str()) {
-            Err(e) => return Err(format!("list format error: {}", e)),
-            Ok(list) => list.data,
-        },
+    let req = server.get(uri).add_header(
+        header::AUTHORIZATION,
+        HeaderValue::from_str(format!("Bearer {}", token).as_str()).unwrap(),
+    );
+    let resp = runtime.block_on(async { req.await });
+    expect(resp.status_code()).to_equal(StatusCode::OK)?;
+    let list = match serde_json::from_str::<GetListRes>(resp.text().as_str()) {
+        Err(e) => return Err(format!("list format error: {}", e)),
+        Ok(list) => list.data,
     };
     expect(list.len() == 100).to_equal(true)?;
 
-    let req = TestRequest::get()
-        .uri(format!("{}?limit=0", uri).as_str())
-        .insert_header((header::AUTHORIZATION, format!("Bearer {}", token)))
-        .to_request();
-    let resp = runtime.block_on(async { test::call_service(&mut app, req).await });
-    expect(resp.status()).to_equal(StatusCode::OK)?;
-    let body = runtime.block_on(async { test::read_body(resp).await });
-    let list = match String::from_utf8(body.to_vec()) {
-        Err(e) => return Err(format!("list not JSON string: {}", e)),
-        Ok(body) => match serde_json::from_str::<GetListRes>(body.as_str()) {
-            Err(e) => return Err(format!("list format error: {}", e)),
-            Ok(list) => list.data,
-        },
+    let req = server.get(uri).add_query_param("limit", 0).add_header(
+        header::AUTHORIZATION,
+        HeaderValue::from_str(format!("Bearer {}", token).as_str()).unwrap(),
+    );
+    let resp = runtime.block_on(async { req.await });
+    expect(resp.status_code()).to_equal(StatusCode::OK)?;
+    let list = match serde_json::from_str::<GetListRes>(resp.text().as_str()) {
+        Err(e) => return Err(format!("list format error: {}", e)),
+        Ok(list) => list.data,
     };
     expect(list.len() > 100).to_equal(true)?;
 
-    let req = TestRequest::get()
-        .uri(format!("{}?limit=0&format=array", uri).as_str())
-        .insert_header((header::AUTHORIZATION, format!("Bearer {}", token)))
-        .to_request();
-    let resp = runtime.block_on(async { test::call_service(&mut app, req).await });
-    expect(resp.status()).to_equal(StatusCode::OK)?;
-    let body = runtime.block_on(async { test::read_body(resp).await });
-    let list = match String::from_utf8(body.to_vec()) {
-        Err(e) => return Err(format!("list not JSON string: {}", e)),
-        Ok(body) => match serde_json::from_str::<Vec<Data>>(body.as_str()) {
-            Err(e) => return Err(format!("list format error: {}", e)),
-            Ok(list) => list,
-        },
+    let req = server
+        .get(uri)
+        .add_query_param("limit", 0)
+        .add_query_param("format", "array")
+        .add_header(
+            header::AUTHORIZATION,
+            HeaderValue::from_str(format!("Bearer {}", token).as_str()).unwrap(),
+        );
+    let resp = runtime.block_on(async { req.await });
+    expect(resp.status_code()).to_equal(StatusCode::OK)?;
+    let list = match serde_json::from_str::<Vec<Data>>(resp.text().as_str()) {
+        Err(e) => return Err(format!("list format error: {}", e)),
+        Ok(list) => list,
     };
     expect(list.len() > 100).to_equal(true)?;
 
-    let req = TestRequest::get()
-        .uri(format!("{}?limit=0&format=csv", uri).as_str())
-        .insert_header((header::AUTHORIZATION, format!("Bearer {}", token)))
-        .to_request();
-    let resp = runtime.block_on(async { test::call_service(&mut app, req).await });
-    expect(resp.status()).to_equal(StatusCode::OK)?;
-    let body = runtime.block_on(async { test::read_body(resp).await });
-    let body = match String::from_utf8(body.to_vec()) {
-        Err(e) => return Err(format!("list not csv string: {}", e)),
-        Ok(body) => body,
-    };
+    let req = server
+        .get(uri)
+        .add_query_param("limit", 0)
+        .add_query_param("format", "csv")
+        .add_header(
+            header::AUTHORIZATION,
+            HeaderValue::from_str(format!("Bearer {}", token).as_str()).unwrap(),
+        );
+    let resp = runtime.block_on(async { req.await });
+    expect(resp.status_code()).to_equal(StatusCode::OK)?;
     let mut count = 0;
-    for line in body.lines() {
+    for line in resp.text().lines() {
         if count == 0 {
             let mut fields_line: Vec<u8> = vec![0xEF, 0xBB, 0xBF];
             fields_line.extend_from_slice(fields.as_bytes());
@@ -688,21 +641,20 @@ pub fn test_list(
     }
     expect(list.len() + 1).to_equal(count)?;
 
-    let req = TestRequest::get()
-        .uri(format!("{}?format=test", uri).as_str())
-        .insert_header((header::AUTHORIZATION, format!("Bearer {}", token)))
-        .to_request();
-    let resp = runtime.block_on(async { test::call_service(&mut app, req).await });
-    expect(resp.status()).to_equal(StatusCode::BAD_REQUEST)?;
-    let body = runtime.block_on(async { test::read_body(resp).await });
-    match String::from_utf8(body.to_vec()) {
-        Err(e) => Err(format!("response not JSON string: {}", e)),
-        Ok(body) => match serde_json::from_str::<ApiError>(body.as_str()) {
-            Err(e) => Err(format!("response error format error: {}", e)),
-            Ok(err) => match err.code.as_str() == "err_param" {
-                false => Err(format!("error code {} not equal to err_param", err.code)),
-                true => Ok(()),
-            },
+    let req = server
+        .get(uri)
+        .add_query_param("format", "test")
+        .add_header(
+            header::AUTHORIZATION,
+            HeaderValue::from_str(format!("Bearer {}", token).as_str()).unwrap(),
+        );
+    let resp = runtime.block_on(async { req.await });
+    expect(resp.status_code()).to_equal(StatusCode::BAD_REQUEST)?;
+    match serde_json::from_str::<ApiError>(resp.text().as_str()) {
+        Err(e) => Err(format!("response error format error: {}", e)),
+        Ok(err) => match err.code.as_str() == "err_param" {
+            false => Err(format!("error code {} not equal to err_param", err.code)),
+            true => Ok(()),
         },
     }
 }

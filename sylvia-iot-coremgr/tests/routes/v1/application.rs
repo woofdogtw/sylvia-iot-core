@@ -1,12 +1,7 @@
 use std::{collections::HashMap, sync::Arc, time::Duration};
 
-use actix_web::{
-    http::{header, StatusCode},
-    middleware::NormalizePath,
-    test::{self, TestRequest},
-    App,
-};
 use async_trait::async_trait;
+use axum::http::{header, HeaderValue, Method, StatusCode};
 use base64::{engine::general_purpose, Engine};
 use chrono::{DateTime, SubsecRound, Utc};
 use hex;
@@ -22,13 +17,13 @@ use general_mq::{
     MqttConnectionOptions, MqttQueue, MqttQueueOptions,
 };
 use sylvia_iot_broker::models::{device, network, Model};
-use sylvia_iot_corelib::err;
+use sylvia_iot_corelib::{constants::ContentType, err};
 use sylvia_iot_coremgr::{
     libs::mq::{self, emqx, rabbitmq, to_username, QueueType},
     routes,
 };
 
-use crate::{WAIT_COUNT, WAIT_TICK};
+use crate::{routes::libs::new_test_server, WAIT_COUNT, WAIT_TICK};
 
 use super::{
     super::{
@@ -210,8 +205,12 @@ pub fn get_count(context: &mut SpecContext<TestState>) -> Result<(), String> {
     let runtime = state.runtime.as_ref().unwrap();
     let routes_state = state.routes_state.as_ref().unwrap();
 
-    let req = TestRequest::get().uri("/coremgr/api/v1/application/count");
-    test_invalid_token(runtime, &routes_state, req)
+    test_invalid_token(
+        runtime,
+        &routes_state,
+        Method::GET,
+        "/coremgr/api/v1/application/count",
+    )
 }
 
 pub fn get_list(context: &mut SpecContext<TestState>) -> Result<(), String> {
@@ -290,7 +289,9 @@ pub fn post(context: &mut SpecContext<TestState>) -> Result<(), String> {
             time::sleep(Duration::from_millis(100)).await;
         }
         Err("broker does not consume application dldata".to_string())
-    })
+    })?;
+
+    create_application_dup(runtime, routes_state, &param)
 }
 
 pub fn post_invalid(context: &mut SpecContext<TestState>) -> Result<(), String> {
@@ -309,6 +310,8 @@ pub fn post_invalid(context: &mut SpecContext<TestState>) -> Result<(), String> 
         Ok(_) => (),
     }
 
+    let server = new_test_server(routes_state)?;
+
     let param = PostApplication {
         data: PostApplicationData {
             code: APP_CODE.to_string(),
@@ -323,16 +326,21 @@ pub fn post_invalid(context: &mut SpecContext<TestState>) -> Result<(), String> 
             length: None,
         },
     };
-    let req = TestRequest::post()
-        .uri("/coremgr/api/v1/application")
-        .set_json(param);
-    test_invalid_param(runtime, routes_state, req, "err_param")?;
+    let req = server.post("/coremgr/api/v1/application").json(&param);
+    test_invalid_param(runtime, req, "err_param")?;
 
-    let req = TestRequest::post()
-        .uri("/coremgr/api/v1/application")
-        .insert_header((header::AUTHORIZATION, format!("Bearer {}", TOKEN_MANAGER)))
-        .set_payload("{");
-    test_invalid_param(runtime, routes_state, req, "err_param")?;
+    let req = server
+        .post("/coremgr/api/v1/application")
+        .add_header(
+            header::AUTHORIZATION,
+            HeaderValue::from_str(format!("Bearer {}", TOKEN_MANAGER).as_str()).unwrap(),
+        )
+        .add_header(
+            header::CONTENT_TYPE,
+            HeaderValue::from_str(ContentType::JSON).unwrap(),
+        )
+        .bytes("{".into());
+    test_invalid_param(runtime, req, "err_param")?;
 
     let param = PostApplication {
         data: PostApplicationData {
@@ -348,11 +356,14 @@ pub fn post_invalid(context: &mut SpecContext<TestState>) -> Result<(), String> 
             length: None,
         },
     };
-    let req = TestRequest::post()
-        .uri("/coremgr/api/v1/application")
-        .insert_header((header::AUTHORIZATION, format!("Bearer {}", TOKEN_MANAGER)))
-        .set_json(param);
-    test_invalid_param(runtime, routes_state, req, "err_param")?;
+    let req = server
+        .post("/coremgr/api/v1/application")
+        .add_header(
+            header::AUTHORIZATION,
+            HeaderValue::from_str(format!("Bearer {}", TOKEN_MANAGER).as_str()).unwrap(),
+        )
+        .json(&param);
+    test_invalid_param(runtime, req, "err_param")?;
 
     let param = PostApplication {
         data: PostApplicationData {
@@ -368,11 +379,14 @@ pub fn post_invalid(context: &mut SpecContext<TestState>) -> Result<(), String> 
             length: None,
         },
     };
-    let req = TestRequest::post()
-        .uri("/coremgr/api/v1/application")
-        .insert_header((header::AUTHORIZATION, format!("Bearer {}", TOKEN_MANAGER)))
-        .set_json(param);
-    test_invalid_param(runtime, routes_state, req, "err_param")?;
+    let req = server
+        .post("/coremgr/api/v1/application")
+        .add_header(
+            header::AUTHORIZATION,
+            HeaderValue::from_str(format!("Bearer {}", TOKEN_MANAGER).as_str()).unwrap(),
+        )
+        .json(&param);
+    test_invalid_param(runtime, req, "err_param")?;
 
     let param = PostApplication {
         data: PostApplicationData {
@@ -385,11 +399,14 @@ pub fn post_invalid(context: &mut SpecContext<TestState>) -> Result<(), String> 
             length: None,
         },
     };
-    let req = TestRequest::post()
-        .uri("/coremgr/api/v1/application")
-        .insert_header((header::AUTHORIZATION, format!("Bearer {}", TOKEN_MANAGER)))
-        .set_json(param);
-    test_invalid_param(runtime, routes_state, req, "err_param")?;
+    let req = server
+        .post("/coremgr/api/v1/application")
+        .add_header(
+            header::AUTHORIZATION,
+            HeaderValue::from_str(format!("Bearer {}", TOKEN_MANAGER).as_str()).unwrap(),
+        )
+        .json(&param);
+    test_invalid_param(runtime, req, "err_param")?;
 
     let param = PostApplication {
         data: PostApplicationData {
@@ -402,11 +419,14 @@ pub fn post_invalid(context: &mut SpecContext<TestState>) -> Result<(), String> 
             length: None,
         },
     };
-    let req = TestRequest::post()
-        .uri("/coremgr/api/v1/application")
-        .insert_header((header::AUTHORIZATION, format!("Bearer {}", TOKEN_MANAGER)))
-        .set_json(param);
-    test_invalid_param(runtime, routes_state, req, "err_param")?;
+    let req = server
+        .post("/coremgr/api/v1/application")
+        .add_header(
+            header::AUTHORIZATION,
+            HeaderValue::from_str(format!("Bearer {}", TOKEN_MANAGER).as_str()).unwrap(),
+        )
+        .json(&param);
+    test_invalid_param(runtime, req, "err_param")?;
 
     let param = PostApplication {
         data: PostApplicationData {
@@ -419,11 +439,14 @@ pub fn post_invalid(context: &mut SpecContext<TestState>) -> Result<(), String> 
             length: None,
         },
     };
-    let req = TestRequest::post()
-        .uri("/coremgr/api/v1/application")
-        .insert_header((header::AUTHORIZATION, format!("Bearer {}", TOKEN_MEMBER)))
-        .set_json(param);
-    test_invalid_param(runtime, routes_state, req, "err_broker_unit_not_exist")?;
+    let req = server
+        .post("/coremgr/api/v1/application")
+        .add_header(
+            header::AUTHORIZATION,
+            HeaderValue::from_str(format!("Bearer {}", TOKEN_MEMBER).as_str()).unwrap(),
+        )
+        .json(&param);
+    test_invalid_param(runtime, req, "err_broker_unit_not_exist")?;
 
     Ok(())
 }
@@ -473,13 +496,16 @@ pub fn get_invalid(context: &mut SpecContext<TestState>) -> Result<(), String> {
     let runtime = state.runtime.as_ref().unwrap();
     let routes_state = state.routes_state.as_ref().unwrap();
 
-    let req = TestRequest::get().uri("/coremgr/api/v1/application/test");
-    test_invalid_param(runtime, routes_state, req, "err_param")?;
+    let server = new_test_server(routes_state)?;
 
-    let req = TestRequest::get()
-        .uri("/coremgr/api/v1/application/test")
-        .insert_header((header::AUTHORIZATION, format!("Bearer {}", TOKEN_MANAGER)));
-    test_invalid_param(runtime, routes_state, req, "err_not_found")
+    let req = server.get("/coremgr/api/v1/application/test");
+    test_invalid_param(runtime, req, "err_param")?;
+
+    let req = server.get("/coremgr/api/v1/application/test").add_header(
+        header::AUTHORIZATION,
+        HeaderValue::from_str(format!("Bearer {}", TOKEN_MANAGER).as_str()).unwrap(),
+    );
+    test_invalid_param(runtime, req, "err_not_found")
 }
 
 /// Test PATCH API with the following steps:
@@ -644,20 +670,7 @@ pub fn patch_invalid(context: &mut SpecContext<TestState>) -> Result<(), String>
     let broker_db = state.broker_db.as_ref().unwrap();
     let host = crate::TEST_MQ_HOST;
 
-    let param = PatchApplication {
-        data: PatchApplicationData {
-            host_uri: None,
-            name: None,
-            info: None,
-            ttl: None,
-            length: None,
-            password: None,
-        },
-    };
-    let req = TestRequest::patch()
-        .uri("/coremgr/api/v1/application/test")
-        .set_json(&param);
-    test_invalid_param(runtime, routes_state, req, "err_param")?;
+    let server = new_test_server(routes_state)?;
 
     let param = PatchApplication {
         data: PatchApplicationData {
@@ -669,11 +682,29 @@ pub fn patch_invalid(context: &mut SpecContext<TestState>) -> Result<(), String>
             password: None,
         },
     };
-    let req = TestRequest::patch()
-        .uri("/coremgr/api/v1/application/test")
-        .insert_header((header::AUTHORIZATION, format!("Bearer {}", TOKEN_MANAGER)))
-        .set_json(&param);
-    test_invalid_param(runtime, routes_state, req, "err_param")?;
+    let req = server
+        .patch("/coremgr/api/v1/application/test")
+        .json(&param);
+    test_invalid_param(runtime, req, "err_param")?;
+
+    let param = PatchApplication {
+        data: PatchApplicationData {
+            host_uri: None,
+            name: None,
+            info: None,
+            ttl: None,
+            length: None,
+            password: None,
+        },
+    };
+    let req = server
+        .patch("/coremgr/api/v1/application/test")
+        .add_header(
+            header::AUTHORIZATION,
+            HeaderValue::from_str(format!("Bearer {}", TOKEN_MANAGER).as_str()).unwrap(),
+        )
+        .json(&param);
+    test_invalid_param(runtime, req, "err_param")?;
 
     let param = PatchApplication {
         data: PatchApplicationData {
@@ -685,11 +716,14 @@ pub fn patch_invalid(context: &mut SpecContext<TestState>) -> Result<(), String>
             password: None,
         },
     };
-    let req = TestRequest::patch()
-        .uri("/coremgr/api/v1/application/test")
-        .insert_header((header::AUTHORIZATION, format!("Bearer {}", TOKEN_MANAGER)))
-        .set_json(&param);
-    test_invalid_param(runtime, routes_state, req, "err_not_found")?;
+    let req = server
+        .patch("/coremgr/api/v1/application/test")
+        .add_header(
+            header::AUTHORIZATION,
+            HeaderValue::from_str(format!("Bearer {}", TOKEN_MANAGER).as_str()).unwrap(),
+        )
+        .json(&param);
+    test_invalid_param(runtime, req, "err_not_found")?;
 
     // Create unit and application.
     match runtime.block_on(async {
@@ -730,11 +764,14 @@ pub fn patch_invalid(context: &mut SpecContext<TestState>) -> Result<(), String>
             password: None,
         },
     };
-    let req = TestRequest::patch()
-        .uri(format!("/coremgr/api/v1/application/{}", application_id).as_str())
-        .insert_header((header::AUTHORIZATION, format!("Bearer {}", TOKEN_MANAGER)))
-        .set_json(&param);
-    test_invalid_param(runtime, routes_state, req, "err_param")?;
+    let req = server
+        .patch(format!("/coremgr/api/v1/application/{}", application_id).as_str())
+        .add_header(
+            header::AUTHORIZATION,
+            HeaderValue::from_str(format!("Bearer {}", TOKEN_MANAGER).as_str()).unwrap(),
+        )
+        .json(&param);
+    test_invalid_param(runtime, req, "err_param")?;
 
     let param = PatchApplication {
         data: PatchApplicationData {
@@ -746,11 +783,14 @@ pub fn patch_invalid(context: &mut SpecContext<TestState>) -> Result<(), String>
             password: Some("".to_string()),
         },
     };
-    let req = TestRequest::patch()
-        .uri(format!("/coremgr/api/v1/application/{}", application_id).as_str())
-        .insert_header((header::AUTHORIZATION, format!("Bearer {}", TOKEN_MANAGER)))
-        .set_json(&param);
-    test_invalid_param(runtime, routes_state, req, "err_param")?;
+    let req = server
+        .patch(format!("/coremgr/api/v1/application/{}", application_id).as_str())
+        .add_header(
+            header::AUTHORIZATION,
+            HeaderValue::from_str(format!("Bearer {}", TOKEN_MANAGER).as_str()).unwrap(),
+        )
+        .json(&param);
+    test_invalid_param(runtime, req, "err_param")?;
 
     let param = PatchApplication {
         data: PatchApplicationData {
@@ -762,11 +802,14 @@ pub fn patch_invalid(context: &mut SpecContext<TestState>) -> Result<(), String>
             password: Some("".to_string()),
         },
     };
-    let req = TestRequest::patch()
-        .uri(format!("/coremgr/api/v1/application/{}", application_id).as_str())
-        .insert_header((header::AUTHORIZATION, format!("Bearer {}", TOKEN_MANAGER)))
-        .set_json(&param);
-    test_invalid_param(runtime, routes_state, req, "err_param")?;
+    let req = server
+        .patch(format!("/coremgr/api/v1/application/{}", application_id).as_str())
+        .add_header(
+            header::AUTHORIZATION,
+            HeaderValue::from_str(format!("Bearer {}", TOKEN_MANAGER).as_str()).unwrap(),
+        )
+        .json(&param);
+    test_invalid_param(runtime, req, "err_param")?;
 
     let param = PatchApplication {
         data: PatchApplicationData {
@@ -778,11 +821,14 @@ pub fn patch_invalid(context: &mut SpecContext<TestState>) -> Result<(), String>
             password: Some("test".to_string()),
         },
     };
-    let req = TestRequest::patch()
-        .uri(format!("/coremgr/api/v1/application/{}", application_id).as_str())
-        .insert_header((header::AUTHORIZATION, format!("Bearer {}", TOKEN_MANAGER)))
-        .set_json(&param);
-    test_invalid_param(runtime, routes_state, req, "err_param")?;
+    let req = server
+        .patch(format!("/coremgr/api/v1/application/{}", application_id).as_str())
+        .add_header(
+            header::AUTHORIZATION,
+            HeaderValue::from_str(format!("Bearer {}", TOKEN_MANAGER).as_str()).unwrap(),
+        )
+        .json(&param);
+    test_invalid_param(runtime, req, "err_param")?;
 
     let param = PatchApplication {
         data: PatchApplicationData {
@@ -794,11 +840,14 @@ pub fn patch_invalid(context: &mut SpecContext<TestState>) -> Result<(), String>
             password: Some("test".to_string()),
         },
     };
-    let req = TestRequest::patch()
-        .uri(format!("/coremgr/api/v1/application/{}", application_id).as_str())
-        .insert_header((header::AUTHORIZATION, format!("Bearer {}", TOKEN_MANAGER)))
-        .set_json(&param);
-    test_invalid_param(runtime, routes_state, req, "err_param")?;
+    let req = server
+        .patch(format!("/coremgr/api/v1/application/{}", application_id).as_str())
+        .add_header(
+            header::AUTHORIZATION,
+            HeaderValue::from_str(format!("Bearer {}", TOKEN_MANAGER).as_str()).unwrap(),
+        )
+        .json(&param);
+    test_invalid_param(runtime, req, "err_param")?;
 
     Ok(())
 }
@@ -874,13 +923,18 @@ pub fn delete_invalid(context: &mut SpecContext<TestState>) -> Result<(), String
     let runtime = state.runtime.as_ref().unwrap();
     let routes_state = state.routes_state.as_ref().unwrap();
 
-    let req = TestRequest::delete().uri("/coremgr/api/v1/application/test");
-    test_invalid_param(runtime, routes_state, req, "err_param")?;
+    let server = new_test_server(routes_state)?;
 
-    let req = TestRequest::delete()
-        .uri("/coremgr/api/v1/application/test")
-        .insert_header((header::AUTHORIZATION, format!("Bearer {}", TOKEN_MANAGER)));
-    test_invalid_param(runtime, routes_state, req, "err_not_found")
+    let req = server.delete("/coremgr/api/v1/application/test");
+    test_invalid_param(runtime, req, "err_param")?;
+
+    let req = server
+        .delete("/coremgr/api/v1/application/test")
+        .add_header(
+            header::AUTHORIZATION,
+            HeaderValue::from_str(format!("Bearer {}", TOKEN_MANAGER).as_str()).unwrap(),
+        );
+    test_invalid_param(runtime, req, "err_not_found")
 }
 
 pub fn stats(context: &mut SpecContext<TestState>) -> Result<(), String> {
@@ -959,13 +1013,18 @@ pub fn stats_invalid(context: &mut SpecContext<TestState>) -> Result<(), String>
     let runtime = state.runtime.as_ref().unwrap();
     let routes_state = state.routes_state.as_ref().unwrap();
 
-    let req = TestRequest::get().uri("/coremgr/api/v1/application/test/stats");
-    test_invalid_param(runtime, routes_state, req, "err_param")?;
+    let server = new_test_server(routes_state)?;
 
-    let req = TestRequest::get()
-        .uri("/coremgr/api/v1/application/test/stats")
-        .insert_header((header::AUTHORIZATION, format!("Bearer {}", TOKEN_MANAGER)));
-    test_invalid_param(runtime, routes_state, req, "err_not_found")
+    let req = server.get("/coremgr/api/v1/application/test/stats");
+    test_invalid_param(runtime, req, "err_param")?;
+
+    let req = server
+        .get("/coremgr/api/v1/application/test/stats")
+        .add_header(
+            header::AUTHORIZATION,
+            HeaderValue::from_str(format!("Bearer {}", TOKEN_MANAGER).as_str()).unwrap(),
+        );
+    test_invalid_param(runtime, req, "err_not_found")
 }
 
 pub fn dldata(context: &mut SpecContext<TestState>) -> Result<(), String> {
@@ -1100,22 +1159,27 @@ pub fn dldata_invalid(context: &mut SpecContext<TestState>) -> Result<(), String
     let broker_db = state.broker_db.as_ref().unwrap();
     let host = crate::TEST_MQ_HOST;
 
+    let server = new_test_server(routes_state)?;
+
     let mut body = PostApplicationDlDataBody {
         data: PostApplicationDlData {
             device_id: "device".to_string(),
             payload: hex::encode("payload"),
         },
     };
-    let req = TestRequest::post()
-        .uri("/coremgr/api/v1/application/test/dldata")
-        .set_json(&body);
-    test_invalid_param(runtime, routes_state, req, "err_param")?;
+    let req = server
+        .post("/coremgr/api/v1/application/test/dldata")
+        .json(&body);
+    test_invalid_param(runtime, req, "err_param")?;
 
-    let req = TestRequest::post()
-        .uri("/coremgr/api/v1/application/test/dldata")
-        .insert_header((header::AUTHORIZATION, format!("Bearer {}", TOKEN_MANAGER)))
-        .set_json(&body);
-    test_invalid_param(runtime, routes_state, req, "err_not_found")?;
+    let req = server
+        .post("/coremgr/api/v1/application/test/dldata")
+        .add_header(
+            header::AUTHORIZATION,
+            HeaderValue::from_str(format!("Bearer {}", TOKEN_MANAGER).as_str()).unwrap(),
+        )
+        .json(&body);
+    test_invalid_param(runtime, req, "err_not_found")?;
 
     // Create unit, network, device and application.
     match runtime.block_on(async {
@@ -1158,27 +1222,36 @@ pub fn dldata_invalid(context: &mut SpecContext<TestState>) -> Result<(), String
     let application_id = info.application_id.as_str();
 
     body.data.device_id = "".to_string();
-    let req = TestRequest::post()
-        .uri(format!("/coremgr/api/v1/application/{}/dldata", application_id).as_str())
-        .insert_header((header::AUTHORIZATION, format!("Bearer {}", TOKEN_MANAGER)))
-        .set_json(&body);
-    test_invalid_param(runtime, routes_state, req, "err_param")?;
+    let req = server
+        .post(format!("/coremgr/api/v1/application/{}/dldata", application_id).as_str())
+        .add_header(
+            header::AUTHORIZATION,
+            HeaderValue::from_str(format!("Bearer {}", TOKEN_MANAGER).as_str()).unwrap(),
+        )
+        .json(&body);
+    test_invalid_param(runtime, req, "err_param")?;
 
     body.data.device_id = "device".to_string();
     body.data.payload = "payload".to_string();
-    let req = TestRequest::post()
-        .uri(format!("/coremgr/api/v1/application/{}/dldata", application_id).as_str())
-        .insert_header((header::AUTHORIZATION, format!("Bearer {}", TOKEN_MANAGER)))
-        .set_json(&body);
-    test_invalid_param(runtime, routes_state, req, "err_param")?;
+    let req = server
+        .post(format!("/coremgr/api/v1/application/{}/dldata", application_id).as_str())
+        .add_header(
+            header::AUTHORIZATION,
+            HeaderValue::from_str(format!("Bearer {}", TOKEN_MANAGER).as_str()).unwrap(),
+        )
+        .json(&body);
+    test_invalid_param(runtime, req, "err_param")?;
 
     body.data.device_id = "test".to_string();
     body.data.payload = hex::encode("payload");
-    let req = TestRequest::post()
-        .uri(format!("/coremgr/api/v1/application/{}/dldata", application_id).as_str())
-        .insert_header((header::AUTHORIZATION, format!("Bearer {}", TOKEN_MANAGER)))
-        .set_json(&body);
-    test_invalid_param(runtime, routes_state, req, "err_broker_device_not_exist")
+    let req = server
+        .post(format!("/coremgr/api/v1/application/{}/dldata", application_id).as_str())
+        .add_header(
+            header::AUTHORIZATION,
+            HeaderValue::from_str(format!("Bearer {}", TOKEN_MANAGER).as_str()).unwrap(),
+        )
+        .json(&body);
+    test_invalid_param(runtime, req, "err_broker_device_not_exist")
 }
 
 fn test_get(
@@ -1190,36 +1263,27 @@ fn test_get(
     let info = create_application(runtime, state, &param)?;
     let end = Utc::now().trunc_subsecs(3);
 
-    let mut app = runtime.block_on(async {
-        test::init_service(
-            App::new()
-                .wrap(NormalizePath::trim())
-                .service(routes::new_service(state)),
-        )
-        .await
-    });
+    let server = new_test_server(state)?;
 
-    let req = TestRequest::get()
-        .uri(format!("/coremgr/api/v1/application/{}", info.application_id).as_str())
-        .insert_header((header::AUTHORIZATION, format!("Bearer {}", TOKEN_MANAGER)))
-        .to_request();
-    let resp = runtime.block_on(async { test::call_service(&mut app, req).await });
-    if resp.status() != StatusCode::OK {
-        let status = resp.status();
-        let body = runtime.block_on(async { test::read_body(resp).await });
-        let body = match String::from_utf8(body.to_vec()) {
-            Err(e) => format!("(no body with error: {})", e),
-            Ok(body) => body,
-        };
-        return Err(format!("API not 200, status: {}, body: {}", status, body));
+    let req = server
+        .get(format!("/coremgr/api/v1/application/{}", info.application_id).as_str())
+        .add_header(
+            header::AUTHORIZATION,
+            HeaderValue::from_str(format!("Bearer {}", TOKEN_MANAGER).as_str()).unwrap(),
+        );
+    let resp = runtime.block_on(async { req.await });
+    let status = resp.status_code();
+    if status != StatusCode::OK {
+        return Err(format!(
+            "API not 200, status: {}, body: {}",
+            status,
+            resp.text()
+        ));
     }
-    let body = runtime.block_on(async { test::read_body(resp).await });
-    let body = match String::from_utf8(body.to_vec()) {
-        Err(e) => return Err(format!("response body is not UTF-8: {}", e)),
-        Ok(body) => match serde_json::from_str::<GetApplicationRes>(body.as_str()) {
-            Err(e) => return Err(format!("unexpected response format: {}, body: {}", e, body)),
-            Ok(body) => body.data,
-        },
+    let body = resp.text();
+    let body = match serde_json::from_str::<GetApplicationRes>(body.as_str()) {
+        Err(e) => return Err(format!("unexpected response format: {}, body: {}", e, body)),
+        Ok(body) => body.data,
     };
     match DateTime::parse_from_rfc3339(body.created_at.as_str()) {
         Err(e) => return Err(format!("invalid createdAt {}: {}", body.created_at, e)),
@@ -1292,52 +1356,44 @@ fn test_patch(
     unit: &str,
     code: &str,
 ) -> Result<(), String> {
-    let mut app = runtime.block_on(async {
-        test::init_service(
-            App::new()
-                .wrap(NormalizePath::trim())
-                .service(routes::new_service(state)),
+    let server = new_test_server(state)?;
+
+    let req = server
+        .patch(format!("/coremgr/api/v1/application/{}", application_id).as_str())
+        .add_header(
+            header::AUTHORIZATION,
+            HeaderValue::from_str(format!("Bearer {}", TOKEN_MANAGER).as_str()).unwrap(),
         )
-        .await
-    });
-
-    let req = TestRequest::patch()
-        .uri(format!("/coremgr/api/v1/application/{}", application_id).as_str())
-        .insert_header((header::AUTHORIZATION, format!("Bearer {}", TOKEN_MANAGER)))
-        .set_json(param)
-        .to_request();
-    let resp = runtime.block_on(async { test::call_service(&mut app, req).await });
-    if resp.status() != StatusCode::NO_CONTENT {
-        let status = resp.status();
-        let body = runtime.block_on(async { test::read_body(resp).await });
-        let body = match String::from_utf8(body.to_vec()) {
-            Err(e) => format!("(no body with error: {})", e),
-            Ok(body) => body,
-        };
-        return Err(format!("API not 204, status: {}, body: {}", status, body));
+        .json(&param);
+    let resp = runtime.block_on(async { req.await });
+    let status = resp.status_code();
+    if status != StatusCode::NO_CONTENT {
+        return Err(format!(
+            "API not 204, status: {}, body: {}",
+            status,
+            resp.text()
+        ));
     }
 
-    let req = TestRequest::get()
-        .uri(format!("/coremgr/api/v1/application/{}", application_id).as_str())
-        .insert_header((header::AUTHORIZATION, format!("Bearer {}", TOKEN_MANAGER)))
-        .to_request();
-    let resp = runtime.block_on(async { test::call_service(&mut app, req).await });
-    if resp.status() != StatusCode::OK {
-        let status = resp.status();
-        let body = runtime.block_on(async { test::read_body(resp).await });
-        let body = match String::from_utf8(body.to_vec()) {
-            Err(e) => format!("(no body with error: {})", e),
-            Ok(body) => body,
-        };
-        return Err(format!("API not 200, status: {}, body: {}", status, body));
+    let req = server
+        .get(format!("/coremgr/api/v1/application/{}", application_id).as_str())
+        .add_header(
+            header::AUTHORIZATION,
+            HeaderValue::from_str(format!("Bearer {}", TOKEN_MANAGER).as_str()).unwrap(),
+        );
+    let resp = runtime.block_on(async { req.await });
+    let status = resp.status_code();
+    if status != StatusCode::OK {
+        return Err(format!(
+            "API not 200, status: {}, body: {}",
+            status,
+            resp.text()
+        ));
     }
-    let body = runtime.block_on(async { test::read_body(resp).await });
-    let body = match String::from_utf8(body.to_vec()) {
-        Err(e) => return Err(format!("response body is not UTF-8: {}", e)),
-        Ok(body) => match serde_json::from_str::<GetApplicationRes>(body.as_str()) {
-            Err(e) => return Err(format!("unexpected response format: {}, body: {}", e, body)),
-            Ok(body) => body.data,
-        },
+    let body = resp.text();
+    let body = match serde_json::from_str::<GetApplicationRes>(body.as_str()) {
+        Err(e) => return Err(format!("unexpected response format: {}, body: {}", e, body)),
+        Ok(body) => body.data,
     };
     if let Some(host_uri) = param.data.host_uri.as_ref() {
         expect(host_uri.as_str()).to_equal(body.host_uri.as_str())?;
@@ -1389,28 +1445,22 @@ fn test_delete(
     code: &str,
     is_rumqttd: bool,
 ) -> Result<(), String> {
-    let mut app = runtime.block_on(async {
-        test::init_service(
-            App::new()
-                .wrap(NormalizePath::trim())
-                .service(routes::new_service(state)),
-        )
-        .await
-    });
+    let server = new_test_server(state)?;
 
-    let req = TestRequest::delete()
-        .uri(format!("/coremgr/api/v1/application/{}", application_id).as_str())
-        .insert_header((header::AUTHORIZATION, format!("Bearer {}", TOKEN_MANAGER)))
-        .to_request();
-    let resp = runtime.block_on(async { test::call_service(&mut app, req).await });
-    if resp.status() != StatusCode::NO_CONTENT {
-        let status = resp.status();
-        let body = runtime.block_on(async { test::read_body(resp).await });
-        let body = match String::from_utf8(body.to_vec()) {
-            Err(e) => format!("(no body with error: {})", e),
-            Ok(body) => body,
-        };
-        return Err(format!("API not 204, status: {}, body: {}", status, body));
+    let req = server
+        .delete(format!("/coremgr/api/v1/application/{}", application_id).as_str())
+        .add_header(
+            header::AUTHORIZATION,
+            HeaderValue::from_str(format!("Bearer {}", TOKEN_MANAGER).as_str()).unwrap(),
+        );
+    let resp = runtime.block_on(async { req.await });
+    let status = resp.status_code();
+    if status != StatusCode::NO_CONTENT {
+        return Err(format!(
+            "API not 204, status: {}, body: {}",
+            status,
+            resp.text()
+        ));
     }
 
     runtime.block_on(async {
@@ -1466,40 +1516,29 @@ fn test_stats(
     application_id: &str,
     is_rumqttd: bool,
 ) -> Result<(), String> {
-    let mut app = runtime.block_on(async {
-        test::init_service(
-            App::new()
-                .wrap(NormalizePath::trim())
-                .service(routes::new_service(state)),
-        )
-        .await
-    });
+    let server = new_test_server(state)?;
 
     runtime.block_on(async {
         for _ in 0..WAIT_COUNT {
-            let req = TestRequest::get()
-                .uri(format!("/coremgr/api/v1/application/{}/stats", application_id).as_str())
-                .insert_header((header::AUTHORIZATION, format!("Bearer {}", TOKEN_MANAGER)))
-                .to_request();
-            let resp = test::call_service(&mut app, req).await;
-            if resp.status() != StatusCode::OK {
-                let status = resp.status();
-                let body = test::read_body(resp).await;
-                let body = match String::from_utf8(body.to_vec()) {
-                    Err(e) => format!("(no body with error: {})", e),
-                    Ok(body) => body,
-                };
-                return Err(format!("API not 200, status: {}, body: {}", status, body));
+            let req = server
+                .get(format!("/coremgr/api/v1/application/{}/stats", application_id).as_str())
+                .add_header(
+                    header::AUTHORIZATION,
+                    HeaderValue::from_str(format!("Bearer {}", TOKEN_MANAGER).as_str()).unwrap(),
+                );
+            let resp = req.await;
+            let status = resp.status_code();
+            if status != StatusCode::OK {
+                return Err(format!(
+                    "API not 200, status: {}, body: {}",
+                    status,
+                    resp.text()
+                ));
             }
-            let body = test::read_body(resp).await;
-            let stats = match String::from_utf8(body.to_vec()) {
-                Err(e) => return Err(format!("response body is not UTF-8: {}", e)),
-                Ok(body) => match serde_json::from_str::<GetApplicationStatsRes>(body.as_str()) {
-                    Err(e) => {
-                        return Err(format!("unexpected response format: {}, body: {}", e, body))
-                    }
-                    Ok(body) => body.data.uldata,
-                },
+            let body = resp.text();
+            let stats = match serde_json::from_str::<GetApplicationStatsRes>(body.as_str()) {
+                Err(e) => return Err(format!("unexpected response format: {}, body: {}", e, body)),
+                Ok(body) => body.data.uldata,
             };
 
             if is_rumqttd {
@@ -1521,28 +1560,19 @@ fn test_dldata(
     body: &PostApplicationDlDataBody, // use "amqp" as payload to check stats
     is_rumqttd: bool,
 ) -> Result<(), String> {
-    let mut app = runtime.block_on(async {
-        test::init_service(
-            App::new()
-                .wrap(NormalizePath::trim())
-                .service(routes::new_service(state)),
-        )
-        .await
-    });
+    let server = new_test_server(state)?;
 
-    let req = TestRequest::post()
-        .uri(format!("/coremgr/api/v1/application/{}/dldata", application_id).as_str())
-        .insert_header((header::AUTHORIZATION, format!("Bearer {}", TOKEN_MANAGER)))
-        .set_json(body)
-        .to_request();
-    let resp = runtime.block_on(async { test::call_service(&mut app, req).await });
-    if resp.status() != StatusCode::NO_CONTENT {
-        let status = resp.status();
-        let body = runtime.block_on(async { test::read_body(resp).await });
-        let body = match String::from_utf8(body.to_vec()) {
-            Err(e) => format!("(no body with error: {})", e),
-            Ok(body) => body,
-        };
+    let req = server
+        .post(format!("/coremgr/api/v1/application/{}/dldata", application_id).as_str())
+        .add_header(
+            header::AUTHORIZATION,
+            HeaderValue::from_str(format!("Bearer {}", TOKEN_MANAGER).as_str()).unwrap(),
+        )
+        .json(&body);
+    let resp = runtime.block_on(async { req.await });
+    let status = resp.status_code();
+    if status != StatusCode::NO_CONTENT {
+        let body = resp.text();
         if is_rumqttd {
             if let Ok(e) = serde_json::from_str::<ApiError>(body.as_str()) {
                 if e.code.as_str() == err::E_PARAM {
@@ -1563,37 +1593,58 @@ fn create_application(
     state: &routes::State,
     param: &PostApplication,
 ) -> Result<PostApplicationResData, String> {
-    let mut app = runtime.block_on(async {
-        test::init_service(
-            App::new()
-                .wrap(NormalizePath::trim())
-                .service(routes::new_service(state)),
-        )
-        .await
-    });
+    let server = new_test_server(state)?;
 
-    let req = TestRequest::post()
-        .uri("/coremgr/api/v1/application")
-        .insert_header((header::AUTHORIZATION, format!("Bearer {}", TOKEN_MANAGER)))
-        .set_json(param)
-        .to_request();
-    let resp = runtime.block_on(async { test::call_service(&mut app, req).await });
-    if resp.status() != StatusCode::OK {
-        let status = resp.status();
-        let body = runtime.block_on(async { test::read_body(resp).await });
-        let body = match String::from_utf8(body.to_vec()) {
-            Err(e) => format!("(no body with error: {})", e),
-            Ok(body) => body,
-        };
-        return Err(format!("API not 200, status: {}, body: {}", status, body));
+    let req = server
+        .post("/coremgr/api/v1/application")
+        .add_header(
+            header::AUTHORIZATION,
+            HeaderValue::from_str(format!("Bearer {}", TOKEN_MANAGER).as_str()).unwrap(),
+        )
+        .json(&param);
+    let resp = runtime.block_on(async { req.await });
+    let status = resp.status_code();
+    if status != StatusCode::OK {
+        return Err(format!(
+            "API not 200, status: {}, body: {}",
+            status,
+            resp.text()
+        ));
     }
-    let body = runtime.block_on(async { test::read_body(resp).await });
-    match String::from_utf8(body.to_vec()) {
-        Err(e) => Err(format!("response body is not UTF-8: {}", e)),
-        Ok(body) => match serde_json::from_str::<PostApplicationRes>(body.as_str()) {
-            Err(e) => Err(format!("unexpected response format: {}, body: {}", e, body)),
-            Ok(body) => Ok(body.data),
-        },
+    let body = resp.text();
+    match serde_json::from_str::<PostApplicationRes>(body.as_str()) {
+        Err(e) => Err(format!("unexpected response format: {}, body: {}", e, body)),
+        Ok(body) => Ok(body.data),
+    }
+}
+
+fn create_application_dup(
+    runtime: &Runtime,
+    state: &routes::State,
+    param: &PostApplication,
+) -> Result<(), String> {
+    let server = new_test_server(state)?;
+
+    let req = server
+        .post("/coremgr/api/v1/application")
+        .add_header(
+            header::AUTHORIZATION,
+            HeaderValue::from_str(format!("Bearer {}", TOKEN_MANAGER).as_str()).unwrap(),
+        )
+        .json(&param);
+    let resp = runtime.block_on(async { req.await });
+    let status = resp.status_code();
+    if status != StatusCode::BAD_REQUEST {
+        return Err(format!(
+            "API not 400, status: {}, body: {}",
+            status,
+            resp.text()
+        ));
+    }
+    let body = resp.text();
+    match serde_json::from_str::<ApiError>(body.as_str()) {
+        Err(e) => Err(format!("unexpected response format: {}, body: {}", e, body)),
+        Ok(body) => expect(body.code.as_str()).to_equal("err_broker_application_exist"),
     }
 }
 

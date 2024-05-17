@@ -1,8 +1,8 @@
 # 快速開始
 
-本章節描述在 Ubuntu 20.04 環境的快速安裝步驟。
+本章節描述在 Ubuntu 22.04 環境的快速安裝步驟。
 
-> 目前的可執行檔採用 GLIBC 2.31 編譯，可以在 Ubuntu 20.04 或以上的 OS 執行。
+> 目前的可執行檔採用 GLIBC 2.31 編譯，可以在 Ubuntu 22.04 或以上的 OS 執行。
 > 較舊的 OS 可以使用 [**Docker 映像**](https://hub.docker.com/r/woofdogtw/sylvia-iot-core)。
 > 相關的設定和環境變數將於 [**設定檔**](configuration.md) 說明。
 
@@ -32,9 +32,9 @@ sudo usermod -aG docker $USER
 啟動服務（版本和資料保存的資料夾可以視情形調整）：
 
 ```shell
-export MONGODB_VER=6.0.8
-export RABBITMQ_VER=3.12.1
-export EMQX_VER=5.1.1
+export MONGODB_VER=7.0.9
+export RABBITMQ_VER=3.13.2
+export EMQX_VER=5.6.1
 
 export MONGODB_DIR=$HOME/db/mongodb
 export RABBITMQ_DIR=$HOME/db/rabbitmq

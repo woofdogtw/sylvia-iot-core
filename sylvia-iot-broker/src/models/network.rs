@@ -65,6 +65,8 @@ pub struct ListQueryCond<'a> {
     pub unit_id: Option<Option<&'a str>>,
     /// To get the specified network.
     pub network_id: Option<&'a str>,
+    /// To get the specified network by code.
+    pub code: Option<&'a str>,
     /// To get unit that their **code** contains the specified (partial) word.
     pub code_contains: Option<&'a str>,
     /// To get unit that their **name** contains the specified (partial) word.

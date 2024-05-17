@@ -179,7 +179,7 @@ impl GmqConnection for MqttConnection {
         Ok(())
     }
 
-    async fn close(&mut self) -> Result<(), Box<dyn StdError>> {
+    async fn close(&mut self) -> Result<(), Box<dyn StdError + Send + Sync>> {
         match { self.ev_loop.lock().unwrap().take() } {
             None => return Ok(()),
             Some(handle) => handle.abort(),

@@ -1,5 +1,28 @@
 # Changelog
 
+## 0.1.0 - 2024-05-17
+
+### Added
+
+- **broker**: Add `code` query parameter for application/network `GET /count` and `GET /list` APIs.
+
+### Changed
+
+- Update Rust to 1.78.0 with GitHub Actions runner image 20240516.1.1.
+- Replace Actix-Web with axum.
+- Update CI tools.
+- Update dependencies.
+- Release using Ubuntu 22.04.
+
+### Fixed
+
+- Fix a bug that it cannot detect client disconnect when using `GET /list` APIs for long response.
+    - This is solved by using axum.
+- **general-mq**: Fix return `Err` with additional `Send + Sync`.
+- **auth**: Remove tokens when modifying user passwords or client secrets.
+- **auth**: Only remove the request access token when using `POST /logout`.
+- **coremgr**: Check duplicate application/network before update (AMQP/MQTT) brokers' resources.
+
 ## 0.0.36 - 2024-02-16
 
 ### Changed

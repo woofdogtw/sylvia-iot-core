@@ -1,16 +1,14 @@
 use std::collections::HashMap;
 
-use actix_web::{
-    http::{header, StatusCode},
-    middleware::NormalizePath,
-    test::{self, TestRequest},
-    App,
+use axum::{
+    http::{header, HeaderValue, Method, StatusCode},
+    Router,
 };
+use axum_test::TestServer;
 use chrono::{DateTime, SubsecRound, TimeDelta, Utc};
 use laboratory::{expect, SpecContext};
 use mongodb::bson::Document;
 use serde_json::{Map, Value};
-use serde_urlencoded;
 use sql_builder::SqlBuilder;
 use sqlx;
 use tokio::runtime::Runtime;
@@ -20,6 +18,8 @@ use sylvia_iot_auth::{
     routes,
 };
 use sylvia_iot_corelib::{err, role::Role};
+
+use crate::routes::v1::libs::get_token_client_id;
 
 use super::{
     super::{
@@ -222,14 +222,11 @@ pub fn post_dup(context: &mut SpecContext<TestState>) -> Result<(), String> {
     let user_id = "admin";
     let token = get_token(runtime, routes_state, user_id)?;
 
-    let mut app = runtime.block_on(async {
-        test::init_service(
-            App::new()
-                .wrap(NormalizePath::trim())
-                .service(routes::new_service(routes_state)),
-        )
-        .await
-    });
+    let app = Router::new().merge(routes::new_service(routes_state));
+    let server = match TestServer::new(app) {
+        Err(e) => return Err(format!("new server error: {}", e)),
+        Ok(server) => server,
+    };
 
     let param = request::PostClient {
         data: request::PostClientData {
@@ -253,14 +250,16 @@ pub fn post_dup(context: &mut SpecContext<TestState>) -> Result<(), String> {
         credentials: None,
     };
 
-    let req = TestRequest::post()
-        .uri("/auth/api/v1/client")
-        .insert_header((header::AUTHORIZATION, format!("Bearer {}", token)))
-        .set_json(param)
-        .to_request();
-    let resp = runtime.block_on(async { test::call_service(&mut app, req).await });
-    expect(resp.status()).to_equal(StatusCode::OK)?;
-    let body: response::PostClient = runtime.block_on(async { test::read_body_json(resp).await });
+    let req = server
+        .post("/auth/api/v1/client")
+        .add_header(
+            header::AUTHORIZATION,
+            HeaderValue::from_str(format!("Bearer {}", token).as_str()).unwrap(),
+        )
+        .json(&param);
+    let resp = runtime.block_on(async { req.await });
+    expect(resp.status_code()).to_equal(StatusCode::OK)?;
+    let body: response::PostClient = resp.json();
     expect(body.data.client_id.len() > 0).to_equal(true)?;
 
     let client_info = match runtime.block_on(async {
@@ -394,8 +393,7 @@ pub fn post_invalid_token(context: &mut SpecContext<TestState>) -> Result<(), St
     let runtime = state.runtime.as_ref().unwrap();
     let routes_state = state.routes_state.as_ref().unwrap();
 
-    let req = TestRequest::post().uri("/auth/api/v1/client");
-    test_invalid_token(runtime, &routes_state, req)
+    test_invalid_token(runtime, &routes_state, Method::POST, "/auth/api/v1/client")
 }
 
 pub fn post_invalid_perm(context: &mut SpecContext<TestState>) -> Result<(), String> {
@@ -404,17 +402,17 @@ pub fn post_invalid_perm(context: &mut SpecContext<TestState>) -> Result<(), Str
     let runtime = state.runtime.as_ref().unwrap();
     let routes_state = state.routes_state.as_ref().unwrap();
 
+    let method = Method::POST;
+    let uri = "/auth/api/v1/client";
+
     let token = get_token(runtime, routes_state, "manager")?;
-    let req = TestRequest::post().uri("/auth/api/v1/client");
-    test_invalid_perm(runtime, &routes_state, token.as_str(), req)?;
+    test_invalid_perm(runtime, &routes_state, token.as_str(), method.clone(), uri)?;
 
     let token = get_token(runtime, routes_state, "service")?;
-    let req = TestRequest::post().uri("/auth/api/v1/client");
-    test_invalid_perm(runtime, &routes_state, token.as_str(), req)?;
+    test_invalid_perm(runtime, &routes_state, token.as_str(), method.clone(), uri)?;
 
     let token = get_token(runtime, routes_state, "user")?;
-    let req = TestRequest::post().uri("/auth/api/v1/client");
-    test_invalid_perm(runtime, &routes_state, token.as_str(), req)
+    test_invalid_perm(runtime, &routes_state, token.as_str(), method, uri)
 }
 
 pub fn get_count(context: &mut SpecContext<TestState>) -> Result<(), String> {
@@ -456,8 +454,12 @@ pub fn get_count_invalid_token(context: &mut SpecContext<TestState>) -> Result<(
     let runtime = state.runtime.as_ref().unwrap();
     let routes_state = state.routes_state.as_ref().unwrap();
 
-    let req = TestRequest::get().uri("/auth/api/v1/client/count");
-    test_invalid_token(runtime, &routes_state, req)
+    test_invalid_token(
+        runtime,
+        &routes_state,
+        Method::GET,
+        "/auth/api/v1/client/count",
+    )
 }
 
 pub fn get_count_invalid_perm(context: &mut SpecContext<TestState>) -> Result<(), String> {
@@ -466,17 +468,17 @@ pub fn get_count_invalid_perm(context: &mut SpecContext<TestState>) -> Result<()
     let runtime = state.runtime.as_ref().unwrap();
     let routes_state = state.routes_state.as_ref().unwrap();
 
+    let method = Method::GET;
+    let uri = "/auth/api/v1/client/count";
+
     let token = get_token(runtime, routes_state, "manager")?;
-    let req = TestRequest::get().uri("/auth/api/v1/client/count");
-    test_invalid_perm(runtime, &routes_state, token.as_str(), req)?;
+    test_invalid_perm(runtime, &routes_state, token.as_str(), method.clone(), uri)?;
 
     let token = get_token(runtime, routes_state, "service")?;
-    let req = TestRequest::get().uri("/auth/api/v1/client/count");
-    test_invalid_perm(runtime, &routes_state, token.as_str(), req)?;
+    test_invalid_perm(runtime, &routes_state, token.as_str(), method.clone(), uri)?;
 
     let token = get_token(runtime, routes_state, "user")?;
-    let req = TestRequest::get().uri("/auth/api/v1/client/count");
-    test_invalid_perm(runtime, &routes_state, token.as_str(), req)
+    test_invalid_perm(runtime, &routes_state, token.as_str(), method, uri)
 }
 
 pub fn get_list(context: &mut SpecContext<TestState>) -> Result<(), String> {
@@ -827,8 +829,12 @@ pub fn get_list_invalid_token(context: &mut SpecContext<TestState>) -> Result<()
     let runtime = state.runtime.as_ref().unwrap();
     let routes_state = state.routes_state.as_ref().unwrap();
 
-    let req = TestRequest::get().uri("/auth/api/v1/client/list");
-    test_invalid_token(runtime, &routes_state, req)
+    test_invalid_token(
+        runtime,
+        &routes_state,
+        Method::GET,
+        "/auth/api/v1/client/list",
+    )
 }
 
 pub fn get_list_invalid_perm(context: &mut SpecContext<TestState>) -> Result<(), String> {
@@ -837,17 +843,17 @@ pub fn get_list_invalid_perm(context: &mut SpecContext<TestState>) -> Result<(),
     let runtime = state.runtime.as_ref().unwrap();
     let routes_state = state.routes_state.as_ref().unwrap();
 
+    let method = Method::GET;
+    let uri = "/auth/api/v1/client/list";
+
     let token = get_token(runtime, routes_state, "manager")?;
-    let req = TestRequest::get().uri("/auth/api/v1/client/list");
-    test_invalid_perm(runtime, &routes_state, token.as_str(), req)?;
+    test_invalid_perm(runtime, &routes_state, token.as_str(), method.clone(), uri)?;
 
     let token = get_token(runtime, routes_state, "service")?;
-    let req = TestRequest::get().uri("/auth/api/v1/client/list");
-    test_invalid_perm(runtime, &routes_state, token.as_str(), req)?;
+    test_invalid_perm(runtime, &routes_state, token.as_str(), method.clone(), uri)?;
 
     let token = get_token(runtime, routes_state, "user")?;
-    let req = TestRequest::get().uri("/auth/api/v1/client/list");
-    test_invalid_perm(runtime, &routes_state, token.as_str(), req)
+    test_invalid_perm(runtime, &routes_state, token.as_str(), method, uri)
 }
 
 pub fn get(context: &mut SpecContext<TestState>) -> Result<(), String> {
@@ -898,35 +904,32 @@ pub fn get_wrong_id(context: &mut SpecContext<TestState>) -> Result<(), String> 
     let runtime = state.runtime.as_ref().unwrap();
     let routes_state = state.routes_state.as_ref().unwrap();
 
-    let mut app = runtime.block_on(async {
-        test::init_service(
-            App::new()
-                .wrap(NormalizePath::trim())
-                .service(routes::new_service(&routes_state)),
-        )
-        .await
-    });
+    let app = Router::new().merge(routes::new_service(routes_state));
+    let server = match TestServer::new(app) {
+        Err(e) => return Err(format!("new server error: {}", e)),
+        Ok(server) => server,
+    };
 
     let admin_token = get_token(runtime, routes_state, "admin")?;
-    let req = TestRequest::get()
-        .uri("/auth/api/v1/client/id")
-        .insert_header((header::AUTHORIZATION, format!("Bearer {}", admin_token)))
-        .to_request();
-    let resp = runtime.block_on(async { test::call_service(&mut app, req).await });
-    expect(resp.status()).to_equal(StatusCode::NOT_FOUND)?;
-    let body: ApiError = runtime.block_on(async { test::read_body_json(resp).await });
+    let req = server.get("/auth/api/v1/client/id").add_header(
+        header::AUTHORIZATION,
+        HeaderValue::from_str(format!("Bearer {}", admin_token).as_str()).unwrap(),
+    );
+    let resp = runtime.block_on(async { req.await });
+    expect(resp.status_code()).to_equal(StatusCode::NOT_FOUND)?;
+    let body: ApiError = resp.json();
     if body.code.as_str() != err::E_NOT_FOUND {
         return Err(format!("unexpected 404 error: {}", body.code.as_str()));
     }
 
     let public_token = get_token(runtime, routes_state, "public")?;
-    let req = TestRequest::get()
-        .uri("/auth/api/v1/client/client_user1")
-        .insert_header((header::AUTHORIZATION, format!("Bearer {}", public_token)))
-        .to_request();
-    let resp = runtime.block_on(async { test::call_service(&mut app, req).await });
-    expect(resp.status()).to_equal(StatusCode::NOT_FOUND)?;
-    let body: ApiError = runtime.block_on(async { test::read_body_json(resp).await });
+    let req = server.get("/auth/api/v1/client/client_user1").add_header(
+        header::AUTHORIZATION,
+        HeaderValue::from_str(format!("Bearer {}", public_token).as_str()).unwrap(),
+    );
+    let resp = runtime.block_on(async { req.await });
+    expect(resp.status_code()).to_equal(StatusCode::NOT_FOUND)?;
+    let body: ApiError = resp.json();
     if body.code.as_str() != err::E_NOT_FOUND {
         return Err(format!("unexpected 404 error: {}", body.code.as_str()));
     }
@@ -939,8 +942,12 @@ pub fn get_invalid_token(context: &mut SpecContext<TestState>) -> Result<(), Str
     let runtime = state.runtime.as_ref().unwrap();
     let routes_state = state.routes_state.as_ref().unwrap();
 
-    let req = TestRequest::get().uri("/auth/api/v1/client/id");
-    test_invalid_token(runtime, &routes_state, req)
+    test_invalid_token(
+        runtime,
+        &routes_state,
+        Method::GET,
+        "/auth/api/v1/client/id",
+    )
 }
 
 pub fn get_invalid_perm(context: &mut SpecContext<TestState>) -> Result<(), String> {
@@ -949,17 +956,17 @@ pub fn get_invalid_perm(context: &mut SpecContext<TestState>) -> Result<(), Stri
     let runtime = state.runtime.as_ref().unwrap();
     let routes_state = state.routes_state.as_ref().unwrap();
 
+    let method = Method::GET;
+    let uri = "/auth/api/v1/client/id";
+
     let token = get_token(runtime, routes_state, "manager")?;
-    let req = TestRequest::get().uri("/auth/api/v1/client/id");
-    test_invalid_perm(runtime, &routes_state, token.as_str(), req)?;
+    test_invalid_perm(runtime, &routes_state, token.as_str(), method.clone(), uri)?;
 
     let token = get_token(runtime, routes_state, "service")?;
-    let req = TestRequest::get().uri("/auth/api/v1/client/id");
-    test_invalid_perm(runtime, &routes_state, token.as_str(), req)?;
+    test_invalid_perm(runtime, &routes_state, token.as_str(), method.clone(), uri)?;
 
     let token = get_token(runtime, routes_state, "user")?;
-    let req = TestRequest::get().uri("/auth/api/v1/client/id");
-    test_invalid_perm(runtime, &routes_state, token.as_str(), req)
+    test_invalid_perm(runtime, &routes_state, token.as_str(), method, uri)
 }
 
 pub fn patch(context: &mut SpecContext<TestState>) -> Result<(), String> {
@@ -1008,14 +1015,11 @@ pub fn patch_wrong_id(context: &mut SpecContext<TestState>) -> Result<(), String
     let admin_token = get_token(runtime, routes_state, "admin")?;
     let public_token = get_token(runtime, routes_state, "public")?;
 
-    let mut app = runtime.block_on(async {
-        test::init_service(
-            App::new()
-                .wrap(NormalizePath::trim())
-                .service(routes::new_service(&routes_state)),
-        )
-        .await
-    });
+    let app = Router::new().merge(routes::new_service(routes_state));
+    let server = match TestServer::new(app) {
+        Err(e) => return Err(format!("new server error: {}", e)),
+        Ok(server) => server,
+    };
 
     let param = request::PatchClient {
         data: Some(request::PatchClientData {
@@ -1025,26 +1029,30 @@ pub fn patch_wrong_id(context: &mut SpecContext<TestState>) -> Result<(), String
         ..Default::default()
     };
 
-    let req = TestRequest::patch()
-        .uri("/auth/api/v1/client/id")
-        .insert_header((header::AUTHORIZATION, format!("Bearer {}", admin_token)))
-        .set_json(&param)
-        .to_request();
-    let resp = runtime.block_on(async { test::call_service(&mut app, req).await });
-    expect(resp.status()).to_equal(StatusCode::NOT_FOUND)?;
-    let body: ApiError = runtime.block_on(async { test::read_body_json(resp).await });
+    let req = server
+        .patch("/auth/api/v1/client/id")
+        .add_header(
+            header::AUTHORIZATION,
+            HeaderValue::from_str(format!("Bearer {}", admin_token).as_str()).unwrap(),
+        )
+        .json(&param);
+    let resp = runtime.block_on(async { req.await });
+    expect(resp.status_code()).to_equal(StatusCode::NOT_FOUND)?;
+    let body: ApiError = resp.json();
     if body.code.as_str() != err::E_NOT_FOUND {
         return Err(format!("unexpected 404 error: {}", body.code.as_str()));
     }
 
-    let req = TestRequest::patch()
-        .uri("/auth/api/v1/client/client_user")
-        .insert_header((header::AUTHORIZATION, format!("Bearer {}", public_token)))
-        .set_json(&param)
-        .to_request();
-    let resp = runtime.block_on(async { test::call_service(&mut app, req).await });
-    expect(resp.status()).to_equal(StatusCode::NOT_FOUND)?;
-    let body: ApiError = runtime.block_on(async { test::read_body_json(resp).await });
+    let req = server
+        .patch("/auth/api/v1/client/client_user")
+        .add_header(
+            header::AUTHORIZATION,
+            HeaderValue::from_str(format!("Bearer {}", public_token).as_str()).unwrap(),
+        )
+        .json(&param);
+    let resp = runtime.block_on(async { req.await });
+    expect(resp.status_code()).to_equal(StatusCode::NOT_FOUND)?;
+    let body: ApiError = resp.json();
     if body.code.as_str() != err::E_NOT_FOUND {
         return Err(format!("unexpected 404 error: {}", body.code.as_str()));
     }
@@ -1179,8 +1187,12 @@ pub fn patch_invalid_token(context: &mut SpecContext<TestState>) -> Result<(), S
     let runtime = state.runtime.as_ref().unwrap();
     let routes_state = state.routes_state.as_ref().unwrap();
 
-    let req = TestRequest::patch().uri("/auth/api/v1/client/id");
-    test_invalid_token(runtime, &routes_state, req)
+    test_invalid_token(
+        runtime,
+        &routes_state,
+        Method::PATCH,
+        "/auth/api/v1/client/id",
+    )
 }
 
 pub fn patch_invalid_perm(context: &mut SpecContext<TestState>) -> Result<(), String> {
@@ -1189,17 +1201,17 @@ pub fn patch_invalid_perm(context: &mut SpecContext<TestState>) -> Result<(), St
     let runtime = state.runtime.as_ref().unwrap();
     let routes_state = state.routes_state.as_ref().unwrap();
 
+    let method = Method::PATCH;
+    let uri = "/auth/api/v1/client/id";
+
     let token = get_token(runtime, routes_state, "manager")?;
-    let req = TestRequest::patch().uri("/auth/api/v1/client/id");
-    test_invalid_perm(runtime, &routes_state, token.as_str(), req)?;
+    test_invalid_perm(runtime, &routes_state, token.as_str(), method.clone(), uri)?;
 
     let token = get_token(runtime, routes_state, "service")?;
-    let req = TestRequest::patch().uri("/auth/api/v1/client/id");
-    test_invalid_perm(runtime, &routes_state, token.as_str(), req)?;
+    test_invalid_perm(runtime, &routes_state, token.as_str(), method.clone(), uri)?;
 
     let token = get_token(runtime, routes_state, "user")?;
-    let req = TestRequest::patch().uri("/auth/api/v1/client/id");
-    test_invalid_perm(runtime, &routes_state, token.as_str(), req)
+    test_invalid_perm(runtime, &routes_state, token.as_str(), method, uri)
 }
 
 pub fn delete(context: &mut SpecContext<TestState>) -> Result<(), String> {
@@ -1221,60 +1233,59 @@ pub fn delete(context: &mut SpecContext<TestState>) -> Result<(), String> {
     let admin_token = get_token(runtime, routes_state, "admin")?;
     let public_token = get_token(runtime, routes_state, "public")?;
 
-    let mut app = runtime.block_on(async {
-        test::init_service(
-            App::new()
-                .wrap(NormalizePath::trim())
-                .service(routes::new_service(&routes_state)),
-        )
-        .await
-    });
+    let app = Router::new().merge(routes::new_service(routes_state));
+    let server = match TestServer::new(app) {
+        Err(e) => return Err(format!("new server error: {}", e)),
+        Ok(server) => server,
+    };
 
-    let req = TestRequest::delete()
-        .uri("/auth/api/v1/client/id")
-        .insert_header((header::AUTHORIZATION, format!("Bearer {}", admin_token)))
-        .to_request();
-    let resp = runtime.block_on(async { test::call_service(&mut app, req).await });
-    expect(resp.status()).to_equal(StatusCode::NO_CONTENT)?;
+    let req = server.delete("/auth/api/v1/client/id").add_header(
+        header::AUTHORIZATION,
+        HeaderValue::from_str(format!("Bearer {}", admin_token).as_str()).unwrap(),
+    );
+    let resp = runtime.block_on(async { req.await });
+    expect(resp.status_code()).to_equal(StatusCode::NO_CONTENT)?;
     let _ = get_client_model(runtime, &routes_state, "client_public")?;
 
-    let req = TestRequest::delete()
-        .uri("/auth/api/v1/client/client_public")
-        .insert_header((header::AUTHORIZATION, format!("Bearer {}", public_token)))
-        .to_request();
-    let resp = runtime.block_on(async { test::call_service(&mut app, req).await });
-    expect(resp.status()).to_equal(StatusCode::NO_CONTENT)?;
+    let req = server
+        .delete("/auth/api/v1/client/client_public")
+        .add_header(
+            header::AUTHORIZATION,
+            HeaderValue::from_str(format!("Bearer {}", public_token).as_str()).unwrap(),
+        );
+    let resp = runtime.block_on(async { req.await });
+    expect(resp.status_code()).to_equal(StatusCode::NO_CONTENT)?;
     match get_client_model(runtime, &routes_state, "client_public") {
         Err(e) => expect(e.contains(NO_ID_ERR_STR)).to_equal(true)?,
         Ok(_) => return Err("public cannot delete client_public".to_string()),
     }
 
-    let req = TestRequest::delete()
-        .uri("/auth/api/v1/client/client_user")
-        .insert_header((header::AUTHORIZATION, format!("Bearer {}", public_token)))
-        .to_request();
-    let resp = runtime.block_on(async { test::call_service(&mut app, req).await });
-    expect(resp.status()).to_equal(StatusCode::NO_CONTENT)?;
+    let req = server.delete("/auth/api/v1/client/client_user").add_header(
+        header::AUTHORIZATION,
+        HeaderValue::from_str(format!("Bearer {}", public_token).as_str()).unwrap(),
+    );
+    let resp = runtime.block_on(async { req.await });
+    expect(resp.status_code()).to_equal(StatusCode::NO_CONTENT)?;
     get_client_model(runtime, &routes_state, "client_user")?;
 
-    let req = TestRequest::delete()
-        .uri("/auth/api/v1/client/client_user")
-        .insert_header((header::AUTHORIZATION, format!("Bearer {}", admin_token)))
-        .to_request();
-    let resp = runtime.block_on(async { test::call_service(&mut app, req).await });
-    expect(resp.status()).to_equal(StatusCode::NO_CONTENT)?;
+    let req = server.delete("/auth/api/v1/client/client_user").add_header(
+        header::AUTHORIZATION,
+        HeaderValue::from_str(format!("Bearer {}", admin_token).as_str()).unwrap(),
+    );
+    let resp = runtime.block_on(async { req.await });
+    expect(resp.status_code()).to_equal(StatusCode::NO_CONTENT)?;
     match get_client_model(runtime, &routes_state, "client_user") {
         Err(e) => expect(e.contains(NO_ID_ERR_STR)).to_equal(true)?,
         Ok(_) => return Err("admin cannot delete client_user".to_string()),
     }
 
-    let req = TestRequest::delete()
-        .uri("/auth/api/v1/client/public")
-        .insert_header((header::AUTHORIZATION, format!("Bearer {}", public_token)))
-        .to_request();
-    let resp = runtime.block_on(async { test::call_service(&mut app, req).await });
-    expect(resp.status()).to_equal(StatusCode::FORBIDDEN)?;
-    let body: ApiError = runtime.block_on(async { test::read_body_json(resp).await });
+    let req = server.delete("/auth/api/v1/client/public").add_header(
+        header::AUTHORIZATION,
+        HeaderValue::from_str(format!("Bearer {}", public_token).as_str()).unwrap(),
+    );
+    let resp = runtime.block_on(async { req.await });
+    expect(resp.status_code()).to_equal(StatusCode::FORBIDDEN)?;
+    let body: ApiError = resp.json();
     if body.code.as_str() != err::E_PERM {
         return Err(format!("unexpected 403 error: {}", body.code.as_str()));
     }
@@ -1288,8 +1299,12 @@ pub fn delete_invalid_token(context: &mut SpecContext<TestState>) -> Result<(), 
     let runtime = state.runtime.as_ref().unwrap();
     let routes_state = state.routes_state.as_ref().unwrap();
 
-    let req = TestRequest::delete().uri("/auth/api/v1/client/id");
-    test_invalid_token(runtime, &routes_state, req)
+    test_invalid_token(
+        runtime,
+        &routes_state,
+        Method::DELETE,
+        "/auth/api/v1/client/id",
+    )
 }
 
 pub fn delete_invalid_perm(context: &mut SpecContext<TestState>) -> Result<(), String> {
@@ -1298,17 +1313,17 @@ pub fn delete_invalid_perm(context: &mut SpecContext<TestState>) -> Result<(), S
     let runtime = state.runtime.as_ref().unwrap();
     let routes_state = state.routes_state.as_ref().unwrap();
 
+    let method = Method::DELETE;
+    let uri = "/auth/api/v1/client/id";
+
     let token = get_token(runtime, routes_state, "manager")?;
-    let req = TestRequest::delete().uri("/auth/api/v1/client/id");
-    test_invalid_perm(runtime, &routes_state, token.as_str(), req)?;
+    test_invalid_perm(runtime, &routes_state, token.as_str(), method.clone(), uri)?;
 
     let token = get_token(runtime, routes_state, "service")?;
-    let req = TestRequest::delete().uri("/auth/api/v1/client/id");
-    test_invalid_perm(runtime, &routes_state, token.as_str(), req)?;
+    test_invalid_perm(runtime, &routes_state, token.as_str(), method.clone(), uri)?;
 
     let token = get_token(runtime, routes_state, "user")?;
-    let req = TestRequest::delete().uri("/auth/api/v1/client/id");
-    test_invalid_perm(runtime, &routes_state, token.as_str(), req)
+    test_invalid_perm(runtime, &routes_state, token.as_str(), method, uri)
 }
 
 pub fn delete_user(context: &mut SpecContext<TestState>) -> Result<(), String> {
@@ -1329,21 +1344,18 @@ pub fn delete_user(context: &mut SpecContext<TestState>) -> Result<(), String> {
 
     let token = get_token(runtime, routes_state, "admin")?;
 
-    let mut app = runtime.block_on(async {
-        test::init_service(
-            App::new()
-                .wrap(NormalizePath::trim())
-                .service(routes::new_service(&routes_state)),
-        )
-        .await
-    });
+    let app = Router::new().merge(routes::new_service(routes_state));
+    let server = match TestServer::new(app) {
+        Err(e) => return Err(format!("new server error: {}", e)),
+        Ok(server) => server,
+    };
 
-    let req = TestRequest::delete()
-        .uri("/auth/api/v1/client/user/user")
-        .insert_header((header::AUTHORIZATION, format!("Bearer {}", token)))
-        .to_request();
-    let resp = runtime.block_on(async { test::call_service(&mut app, req).await });
-    expect(resp.status()).to_equal(StatusCode::NO_CONTENT)?;
+    let req = server.delete("/auth/api/v1/client/user/user").add_header(
+        header::AUTHORIZATION,
+        HeaderValue::from_str(format!("Bearer {}", token).as_str()).unwrap(),
+    );
+    let resp = runtime.block_on(async { req.await });
+    expect(resp.status_code()).to_equal(StatusCode::NO_CONTENT)?;
     match get_client_model(runtime, &routes_state, "client_user") {
         Err(e) => expect(e.contains(NO_ID_ERR_STR)).to_equal(true)?,
         Ok(_) => return Err("admin cannot delete user's clients".to_string()),
@@ -1357,8 +1369,12 @@ pub fn delete_user_invalid_token(context: &mut SpecContext<TestState>) -> Result
     let runtime = state.runtime.as_ref().unwrap();
     let routes_state = state.routes_state.as_ref().unwrap();
 
-    let req = TestRequest::delete().uri("/auth/api/v1/client/user/id");
-    test_invalid_token(runtime, &routes_state, req)
+    test_invalid_token(
+        runtime,
+        &routes_state,
+        Method::DELETE,
+        "/auth/api/v1/client/user/id",
+    )
 }
 
 pub fn delete_user_invalid_perm(context: &mut SpecContext<TestState>) -> Result<(), String> {
@@ -1367,21 +1383,20 @@ pub fn delete_user_invalid_perm(context: &mut SpecContext<TestState>) -> Result<
     let runtime = state.runtime.as_ref().unwrap();
     let routes_state = state.routes_state.as_ref().unwrap();
 
+    let method = Method::DELETE;
+    let uri = "/auth/api/v1/client/user/id";
+
     let token = get_token(runtime, routes_state, "manager")?;
-    let req = TestRequest::delete().uri("/auth/api/v1/client/user/id");
-    test_invalid_perm(runtime, &routes_state, token.as_str(), req)?;
+    test_invalid_perm(runtime, &routes_state, token.as_str(), method.clone(), uri)?;
 
     let token = get_token(runtime, routes_state, "public")?;
-    let req = TestRequest::delete().uri("/auth/api/v1/client/user/id");
-    test_invalid_perm(runtime, &routes_state, token.as_str(), req)?;
+    test_invalid_perm(runtime, &routes_state, token.as_str(), method.clone(), uri)?;
 
     let token = get_token(runtime, routes_state, "service")?;
-    let req = TestRequest::delete().uri("/auth/api/v1/client/user/id");
-    test_invalid_perm(runtime, &routes_state, token.as_str(), req)?;
+    test_invalid_perm(runtime, &routes_state, token.as_str(), method.clone(), uri)?;
 
     let token = get_token(runtime, routes_state, "user")?;
-    let req = TestRequest::delete().uri("/auth/api/v1/client/user/id");
-    test_invalid_perm(runtime, &routes_state, token.as_str(), req)
+    test_invalid_perm(runtime, &routes_state, token.as_str(), method, uri)
 }
 
 fn test_post(
@@ -1392,26 +1407,25 @@ fn test_post(
     param: &request::PostClient,
     expect_code: &str,
 ) -> Result<(), String> {
-    let mut app = runtime.block_on(async {
-        test::init_service(
-            App::new()
-                .wrap(NormalizePath::trim())
-                .service(routes::new_service(state)),
-        )
-        .await
-    });
+    let app = Router::new().merge(routes::new_service(state));
+    let server = match TestServer::new(app) {
+        Err(e) => return Err(format!("new server error: {}", e)),
+        Ok(server) => server,
+    };
 
     let time_before = Utc::now().trunc_subsecs(3);
-    let req = TestRequest::post()
-        .uri("/auth/api/v1/client")
-        .insert_header((header::AUTHORIZATION, format!("Bearer {}", token)))
-        .set_json(param)
-        .to_request();
-    let resp = runtime.block_on(async { test::call_service(&mut app, req).await });
+    let req = server
+        .post("/auth/api/v1/client")
+        .add_header(
+            header::AUTHORIZATION,
+            HeaderValue::from_str(format!("Bearer {}", token).as_str()).unwrap(),
+        )
+        .json(param);
+    let resp = runtime.block_on(async { req.await });
     let time_after = Utc::now().trunc_subsecs(3);
-    if resp.status() != StatusCode::OK {
-        let status = resp.status();
-        let body: ApiError = runtime.block_on(async { test::read_body_json(resp).await });
+    let status = resp.status_code();
+    if status != StatusCode::OK {
+        let body: ApiError = resp.json();
         let message = match body.message.as_ref() {
             None => "",
             Some(message) => message.as_str(),
@@ -1426,7 +1440,7 @@ fn test_post(
             message
         ));
     }
-    let body: response::PostClient = runtime.block_on(async { test::read_body_json(resp).await });
+    let body: response::PostClient = resp.json();
     expect(body.data.client_id.len() > 0).to_equal(true)?;
 
     let client_info = match runtime.block_on(async {
@@ -1486,25 +1500,22 @@ fn test_post_invalid_param(
     token: &str,
     param: Option<&request::PostClient>,
 ) -> Result<(), String> {
-    let mut app = runtime.block_on(async {
-        test::init_service(
-            App::new()
-                .wrap(NormalizePath::trim())
-                .service(routes::new_service(state)),
-        )
-        .await
-    });
-
-    let req = TestRequest::post()
-        .uri("/auth/api/v1/client")
-        .insert_header((header::AUTHORIZATION, format!("Bearer {}", token)));
-    let req = match param {
-        None => req.to_request(),
-        Some(param) => req.set_json(&param).to_request(),
+    let app = Router::new().merge(routes::new_service(state));
+    let server = match TestServer::new(app) {
+        Err(e) => return Err(format!("new server error: {}", e)),
+        Ok(server) => server,
     };
-    let resp = runtime.block_on(async { test::call_service(&mut app, req).await });
-    expect(resp.status()).to_equal(StatusCode::BAD_REQUEST)?;
-    let body: ApiError = runtime.block_on(async { test::read_body_json(resp).await });
+
+    let mut req = server.post("/auth/api/v1/client").add_header(
+        header::AUTHORIZATION,
+        HeaderValue::from_str(format!("Bearer {}", token).as_str()).unwrap(),
+    );
+    if let Some(param) = param {
+        req = req.json(&param);
+    }
+    let resp = runtime.block_on(async { req.await });
+    expect(resp.status_code()).to_equal(StatusCode::BAD_REQUEST)?;
+    let body: ApiError = resp.json();
     if body.code.as_str() != err::E_PARAM {
         return Err(format!("unexpected 400 error: {}", body.code.as_str()));
     }
@@ -1518,30 +1529,22 @@ fn test_get_count(
     param: Option<&request::GetClientCount>,
     expect_count: usize,
 ) -> Result<(), String> {
-    let mut app = runtime.block_on(async {
-        test::init_service(
-            App::new()
-                .wrap(NormalizePath::trim())
-                .service(routes::new_service(state)),
-        )
-        .await
-    });
-
-    let uri = match param {
-        None => "/auth/api/v1/client/count".to_string(),
-        Some(param) => format!(
-            "/auth/api/v1/client/count?{}",
-            serde_urlencoded::to_string(&param).unwrap()
-        ),
+    let app = Router::new().merge(routes::new_service(&state));
+    let server = match TestServer::new(app) {
+        Err(e) => return Err(format!("new server error: {}", e)),
+        Ok(server) => server,
     };
-    let req = TestRequest::get()
-        .uri(uri.as_str())
-        .insert_header((header::AUTHORIZATION, format!("Bearer {}", token)))
-        .to_request();
-    let resp = runtime.block_on(async { test::call_service(&mut app, req).await });
-    expect(resp.status()).to_equal(StatusCode::OK)?;
-    let body: response::GetClientCount =
-        runtime.block_on(async { test::read_body_json(resp).await });
+
+    let req = server
+        .get("/auth/api/v1/client/count")
+        .add_query_params(&param)
+        .add_header(
+            header::AUTHORIZATION,
+            HeaderValue::from_str(format!("Bearer {}", token).as_str()).unwrap(),
+        );
+    let resp = runtime.block_on(async { req.await });
+    expect(resp.status_code()).to_equal(StatusCode::OK)?;
+    let body: response::GetClientCount = resp.json();
     expect(body.data.count).to_equal(expect_count)
 }
 
@@ -1553,30 +1556,22 @@ fn test_get_list(
     param: Option<&request::GetClientList>,
     expect_count: usize,
 ) -> Result<(), String> {
-    let mut app = runtime.block_on(async {
-        test::init_service(
-            App::new()
-                .wrap(NormalizePath::trim())
-                .service(routes::new_service(state)),
-        )
-        .await
-    });
-
-    let uri = match param {
-        None => "/auth/api/v1/client/list".to_string(),
-        Some(param) => format!(
-            "/auth/api/v1/client/list?{}",
-            serde_urlencoded::to_string(&param).unwrap()
-        ),
+    let app = Router::new().merge(routes::new_service(state));
+    let server = match TestServer::new(app) {
+        Err(e) => return Err(format!("new server error: {}", e)),
+        Ok(server) => server,
     };
-    let req = TestRequest::get()
-        .uri(uri.as_str())
-        .insert_header((header::AUTHORIZATION, format!("Bearer {}", token)))
-        .to_request();
-    let resp = runtime.block_on(async { test::call_service(&mut app, req).await });
-    expect(resp.status()).to_equal(StatusCode::OK)?;
-    let body: response::GetClientList =
-        runtime.block_on(async { test::read_body_json(resp).await });
+
+    let req = server
+        .get("/auth/api/v1/client/list")
+        .add_query_params(&param)
+        .add_header(
+            header::AUTHORIZATION,
+            HeaderValue::from_str(format!("Bearer {}", token).as_str()).unwrap(),
+        );
+    let resp = runtime.block_on(async { req.await });
+    expect(resp.status_code()).to_equal(StatusCode::OK)?;
+    let body: response::GetClientList = resp.json();
     expect(body.data.len()).to_equal(expect_count)?;
 
     let mut name_min = "";
@@ -1601,14 +1596,11 @@ fn test_get_list_sort(
     param: &mut request::GetClientList,
     expect_ids: &[&str],
 ) -> Result<(), String> {
-    let mut app = runtime.block_on(async {
-        test::init_service(
-            App::new()
-                .wrap(NormalizePath::trim())
-                .service(routes::new_service(state)),
-        )
-        .await
-    });
+    let app = Router::new().merge(routes::new_service(state));
+    let server = match TestServer::new(app) {
+        Err(e) => return Err(format!("new server error: {}", e)),
+        Ok(server) => server,
+    };
 
     if let Some(sorts) = param.sort_vec.as_ref() {
         let sorts: Vec<String> = sorts
@@ -1629,30 +1621,26 @@ fn test_get_list_sort(
         }
     }
 
-    let uri = format!(
-        "/auth/api/v1/client/list?{}",
-        serde_urlencoded::to_string(&param).unwrap()
-    );
-    let req = TestRequest::get()
-        .uri(uri.as_str())
-        .insert_header((header::AUTHORIZATION, format!("Bearer {}", token)))
-        .to_request();
-    let resp = runtime.block_on(async { test::call_service(&mut app, req).await });
-    if let Err(_) = expect(resp.status()).to_equal(StatusCode::OK) {
-        let body: ApiError = runtime.block_on(async { test::read_body_json(resp).await });
+    let req = server
+        .get("/auth/api/v1/client/list")
+        .add_query_params(param)
+        .add_header(
+            header::AUTHORIZATION,
+            HeaderValue::from_str(format!("Bearer {}", token).as_str()).unwrap(),
+        );
+    let resp = runtime.block_on(async { req.await });
+    if let Err(_) = expect(resp.status_code()).to_equal(StatusCode::OK) {
+        let body: ApiError = resp.json();
         let message = match body.message.as_ref() {
             None => "",
             Some(message) => message.as_str(),
         };
         return Err(format!(
-            "response not 200: {}, {}, {}",
-            uri.as_str(),
-            body.code,
-            message
+            "response not 200: /auth/api/v1/client/list, {}, {}",
+            body.code, message
         ));
     }
-    let body: response::GetClientList =
-        runtime.block_on(async { test::read_body_json(resp).await });
+    let body: response::GetClientList = resp.json();
     expect(body.data.len()).to_equal(expect_ids.len())?;
 
     let mut index = 0;
@@ -1670,27 +1658,22 @@ fn test_get_list_offset_limit(
     param: &request::GetClientList,
     expect_ids: Vec<i32>,
 ) -> Result<(), String> {
-    let mut app = runtime.block_on(async {
-        test::init_service(
-            App::new()
-                .wrap(NormalizePath::trim())
-                .service(routes::new_service(state)),
-        )
-        .await
-    });
+    let app = Router::new().merge(routes::new_service(&state));
+    let server = match TestServer::new(app) {
+        Err(e) => return Err(format!("new server error: {}", e)),
+        Ok(server) => server,
+    };
 
-    let uri = format!(
-        "/auth/api/v1/client/list?{}",
-        serde_urlencoded::to_string(&param).unwrap()
-    );
-    let req = TestRequest::get()
-        .uri(uri.as_str())
-        .insert_header((header::AUTHORIZATION, format!("Bearer {}", token)))
-        .to_request();
-    let resp = runtime.block_on(async { test::call_service(&mut app, req).await });
-    expect(resp.status()).to_equal(StatusCode::OK)?;
-    let body: response::GetClientList =
-        runtime.block_on(async { test::read_body_json(resp).await });
+    let req = server
+        .get("/auth/api/v1/client/list")
+        .add_query_params(param)
+        .add_header(
+            header::AUTHORIZATION,
+            HeaderValue::from_str(format!("Bearer {}", token).as_str()).unwrap(),
+        );
+    let resp = runtime.block_on(async { req.await });
+    expect(resp.status_code()).to_equal(StatusCode::OK)?;
+    let body: response::GetClientList = resp.json();
     expect(body.data.len()).to_equal(expect_ids.len())?;
 
     let mut index = 0;
@@ -1709,27 +1692,22 @@ fn test_get_list_format_array(
     param: &request::GetClientList,
     expect_ids: Vec<i32>,
 ) -> Result<(), String> {
-    let mut app = runtime.block_on(async {
-        test::init_service(
-            App::new()
-                .wrap(NormalizePath::trim())
-                .service(routes::new_service(state)),
-        )
-        .await
-    });
+    let app = Router::new().merge(routes::new_service(&state));
+    let server = match TestServer::new(app) {
+        Err(e) => return Err(format!("new server error: {}", e)),
+        Ok(server) => server,
+    };
 
-    let uri = format!(
-        "/auth/api/v1/client/list?{}",
-        serde_urlencoded::to_string(&param).unwrap()
-    );
-    let req = TestRequest::get()
-        .uri(uri.as_str())
-        .insert_header((header::AUTHORIZATION, format!("Bearer {}", token)))
-        .to_request();
-    let resp = runtime.block_on(async { test::call_service(&mut app, req).await });
-    expect(resp.status()).to_equal(StatusCode::OK)?;
-    let body: Vec<response::GetClientListData> =
-        runtime.block_on(async { test::read_body_json(resp).await });
+    let req = server
+        .get("/auth/api/v1/client/list")
+        .add_query_params(param)
+        .add_header(
+            header::AUTHORIZATION,
+            HeaderValue::from_str(format!("Bearer {}", token).as_str()).unwrap(),
+        );
+    let resp = runtime.block_on(async { req.await });
+    expect(resp.status_code()).to_equal(StatusCode::OK)?;
+    let body: Vec<response::GetClientListData> = resp.json();
     expect(body.len()).to_equal(expect_ids.len())?;
 
     let mut index = 0;
@@ -1748,25 +1726,22 @@ fn test_get(
     is_admin: bool,
     client_id: &str,
 ) -> Result<(), String> {
-    let mut app = runtime.block_on(async {
-        test::init_service(
-            App::new()
-                .wrap(NormalizePath::trim())
-                .service(routes::new_service(state)),
-        )
-        .await
-    });
+    let app = Router::new().merge(routes::new_service(&state));
+    let server = match TestServer::new(app) {
+        Err(e) => return Err(format!("new server error: {}", e)),
+        Ok(server) => server,
+    };
 
     let client_info = get_client_model(runtime, state, client_id)?;
 
     let uri = format!("/auth/api/v1/client/{}", client_id);
-    let req = TestRequest::get()
-        .uri(uri.as_str())
-        .insert_header((header::AUTHORIZATION, format!("Bearer {}", token)))
-        .to_request();
-    let resp = runtime.block_on(async { test::call_service(&mut app, req).await });
-    expect(resp.status()).to_equal(StatusCode::OK)?;
-    let body: response::GetClient = runtime.block_on(async { test::read_body_json(resp).await });
+    let req = server.get(uri.as_str()).add_header(
+        header::AUTHORIZATION,
+        HeaderValue::from_str(format!("Bearer {}", token).as_str()).unwrap(),
+    );
+    let resp = runtime.block_on(async { req.await });
+    expect(resp.status_code()).to_equal(StatusCode::OK)?;
+    let body: response::GetClient = resp.json();
     expect(body.data.client_id.as_str()).to_equal(client_info.client_id.as_str())?;
     expect(
         DateTime::parse_from_rfc3339(body.data.created_at.as_str())
@@ -1821,15 +1796,23 @@ fn test_patch(
         true => Some("secret".to_string()),
     };
     add_client_model(runtime, state, client_id, user_id, secret, None)?;
+    let user_token = get_token_client_id(
+        runtime,
+        state,
+        user_id,
+        client_id,
+        match use_secret {
+            false => None,
+            true => Some("secret"),
+        },
+        Some(client_id),
+    )?;
 
-    let mut app = runtime.block_on(async {
-        test::init_service(
-            App::new()
-                .wrap(NormalizePath::trim())
-                .service(routes::new_service(state)),
-        )
-        .await
-    });
+    let app = Router::new().merge(routes::new_service(state));
+    let server = match TestServer::new(app) {
+        Err(e) => return Err(format!("new server error: {}", e)),
+        Ok(server) => server,
+    };
 
     let time_before = Utc::now().trunc_subsecs(3);
     let mut redirect_uris = vec![
@@ -1854,13 +1837,15 @@ fn test_patch(
             true => Some(true),
         },
     };
-    let req = TestRequest::patch()
-        .uri(format!("/auth/api/v1/client/{}", client_id).as_str())
-        .insert_header((header::AUTHORIZATION, format!("Bearer {}", token)))
-        .set_json(&body)
-        .to_request();
-    let resp = runtime.block_on(async { test::call_service(&mut app, req).await });
-    expect(resp.status()).to_equal(StatusCode::NO_CONTENT)?;
+    let req = server
+        .patch(format!("/auth/api/v1/client/{}", client_id).as_str())
+        .add_header(
+            header::AUTHORIZATION,
+            HeaderValue::from_str(format!("Bearer {}", token).as_str()).unwrap(),
+        )
+        .json(&body);
+    let resp = runtime.block_on(async { req.await });
+    expect(resp.status_code()).to_equal(StatusCode::NO_CONTENT)?;
 
     let time_after = Utc::now().trunc_subsecs(3);
     let client_info = get_client_model(runtime, state, client_id)?;
@@ -1880,6 +1865,16 @@ fn test_patch(
         expect(client_info.client_secret.as_ref().unwrap().as_str()).to_not_equal("secret")?;
     }
 
+    let req = server.get("/auth/api/v1/user").add_header(
+        header::AUTHORIZATION,
+        HeaderValue::from_str(format!("Bearer {}", user_token).as_str()).unwrap(),
+    );
+    let resp = runtime.block_on(async { req.await });
+    match use_secret {
+        false => expect(resp.status_code()).to_equal(StatusCode::OK)?,
+        true => expect(resp.status_code()).to_equal(StatusCode::UNAUTHORIZED)?,
+    }
+
     let body = request::PatchClient {
         data: Some(request::PatchClientData {
             redirect_uris: Some(vec![]),
@@ -1888,13 +1883,15 @@ fn test_patch(
         }),
         ..Default::default()
     };
-    let req = TestRequest::patch()
-        .uri(format!("/auth/api/v1/client/{}", client_id).as_str())
-        .insert_header((header::AUTHORIZATION, format!("Bearer {}", token)))
-        .set_json(&body)
-        .to_request();
-    let resp = runtime.block_on(async { test::call_service(&mut app, req).await });
-    expect(resp.status()).to_equal(StatusCode::NO_CONTENT)?;
+    let req = server
+        .patch(format!("/auth/api/v1/client/{}", client_id).as_str())
+        .add_header(
+            header::AUTHORIZATION,
+            HeaderValue::from_str(format!("Bearer {}", token).as_str()).unwrap(),
+        )
+        .json(&body);
+    let resp = runtime.block_on(async { req.await });
+    expect(resp.status_code()).to_equal(StatusCode::NO_CONTENT)?;
 
     let client_info = get_client_model(runtime, state, client_id)?;
     expect(client_info.redirect_uris.len()).to_equal(0)?;
@@ -1909,13 +1906,15 @@ fn test_patch(
         }),
         ..Default::default()
     };
-    let req = TestRequest::patch()
-        .uri(format!("/auth/api/v1/client/{}", client_id).as_str())
-        .insert_header((header::AUTHORIZATION, format!("Bearer {}", token)))
-        .set_json(&body)
-        .to_request();
-    let resp = runtime.block_on(async { test::call_service(&mut app, req).await });
-    expect(resp.status()).to_equal(StatusCode::NO_CONTENT)?;
+    let req = server
+        .patch(format!("/auth/api/v1/client/{}", client_id).as_str())
+        .add_header(
+            header::AUTHORIZATION,
+            HeaderValue::from_str(format!("Bearer {}", token).as_str()).unwrap(),
+        )
+        .json(&body);
+    let resp = runtime.block_on(async { req.await });
+    expect(resp.status_code()).to_equal(StatusCode::NO_CONTENT)?;
 
     let client_info = get_client_model(runtime, state, client_id)?;
     if use_secret {
@@ -1931,25 +1930,24 @@ fn test_patch_invalid_param(
     client_id: &str,
     param: Option<&request::PatchClient>,
 ) -> Result<(), String> {
-    let mut app = runtime.block_on(async {
-        test::init_service(
-            App::new()
-                .wrap(NormalizePath::trim())
-                .service(routes::new_service(state)),
-        )
-        .await
-    });
-
-    let req = TestRequest::patch()
-        .uri(format!("/auth/api/v1/client/{}", client_id).as_str())
-        .insert_header((header::AUTHORIZATION, format!("Bearer {}", token)));
-    let req = match param {
-        None => req.to_request(),
-        Some(param) => req.set_json(&param).to_request(),
+    let app = Router::new().merge(routes::new_service(state));
+    let server = match TestServer::new(app) {
+        Err(e) => return Err(format!("new server error: {}", e)),
+        Ok(server) => server,
     };
-    let resp = runtime.block_on(async { test::call_service(&mut app, req).await });
-    expect(resp.status()).to_equal(StatusCode::BAD_REQUEST)?;
-    let body: ApiError = runtime.block_on(async { test::read_body_json(resp).await });
+
+    let mut req = server
+        .patch(format!("/auth/api/v1/client/{}", client_id).as_str())
+        .add_header(
+            header::AUTHORIZATION,
+            HeaderValue::from_str(format!("Bearer {}", token).as_str()).unwrap(),
+        );
+    if let Some(param) = param {
+        req = req.json(&param);
+    }
+    let resp = runtime.block_on(async { req.await });
+    expect(resp.status_code()).to_equal(StatusCode::BAD_REQUEST)?;
+    let body: ApiError = resp.json();
     if body.code.as_str() != err::E_PARAM {
         return Err(format!("unexpected 400 error: {}", body.code.as_str()));
     }
@@ -1985,7 +1983,10 @@ fn add_client_model(
     image: Option<String>,
 ) -> Result<(), String> {
     match runtime.block_on(async {
-        let mut client = create_client(client_id, user_id, secret);
+        let mut client = create_client(client_id, user_id, secret.clone());
+        if secret.is_some() {
+            client.scopes = vec![client_id.to_string()];
+        }
         if let Some(image) = image.as_ref() {
             client.image_url = Some(image.to_string());
         }

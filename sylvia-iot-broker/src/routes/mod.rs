@@ -5,7 +5,7 @@ use std::{
     sync::{Arc, Mutex},
 };
 
-use actix_web::{dev::HttpServiceFactory, error, web, HttpResponse, Responder};
+use axum::{response::IntoResponse, Router};
 use reqwest;
 use serde::{Deserialize, Serialize};
 use url::Url;
@@ -19,7 +19,7 @@ use general_mq::{
 };
 use sylvia_iot_corelib::{
     constants::{CacheEngine, DbEngine},
-    err::ErrResp,
+    http::{Json, Query},
 };
 
 use crate::{
@@ -206,7 +206,10 @@ pub async fn new_state(
         },
     };
     let state = State {
-        scope_path,
+        scope_path: match scope_path.len() {
+            0 => "/",
+            _ => scope_path,
+        },
         api_scopes: conf.api_scopes.as_ref().unwrap().clone(),
         model,
         cache,
@@ -240,28 +243,24 @@ pub async fn new_state(
 }
 
 /// To register service URIs in the specified root path.
-pub fn new_service(state: &State) -> impl HttpServiceFactory {
-    web::scope(state.scope_path)
-        .app_data(web::JsonConfig::default().error_handler(|err, _| {
-            error::ErrorBadRequest(ErrResp::ErrParam(Some(err.to_string())))
-        }))
-        .app_data(web::QueryConfig::default().error_handler(|err, _| {
-            error::ErrorBadRequest(ErrResp::ErrParam(Some(err.to_string())))
-        }))
-        .app_data(web::Data::new(state.clone()))
-        .service(v1::unit::new_service("/api/v1/unit", state))
-        .service(v1::application::new_service("/api/v1/application", state))
-        .service(v1::network::new_service("/api/v1/network", state))
-        .service(v1::device::new_service("/api/v1/device", state))
-        .service(v1::device_route::new_service("/api/v1/device-route", state))
-        .service(v1::network_route::new_service(
-            "/api/v1/network-route",
-            state,
-        ))
-        .service(v1::dldata_buffer::new_service(
-            "/api/v1/dldata-buffer",
-            state,
-        ))
+pub fn new_service(state: &State) -> Router {
+    Router::new().nest(
+        &state.scope_path,
+        Router::new()
+            .merge(v1::unit::new_service("/api/v1/unit", state))
+            .merge(v1::application::new_service("/api/v1/application", state))
+            .merge(v1::network::new_service("/api/v1/network", state))
+            .merge(v1::device::new_service("/api/v1/device", state))
+            .merge(v1::device_route::new_service("/api/v1/device-route", state))
+            .merge(v1::network_route::new_service(
+                "/api/v1/network-route",
+                state,
+            ))
+            .merge(v1::dldata_buffer::new_service(
+                "/api/v1/dldata-buffer",
+                state,
+            )),
+    )
 }
 
 pub fn new_ctrl_senders(
@@ -314,19 +313,20 @@ pub fn new_data_sender(
     }
 }
 
-pub async fn get_version(query: web::Query<GetVersionQuery>) -> impl Responder {
+pub async fn get_version(Query(query): Query<GetVersionQuery>) -> impl IntoResponse {
     if let Some(q) = query.q.as_ref() {
         match q.as_str() {
-            "name" => return HttpResponse::Ok().body(SERV_NAME),
-            "version" => return HttpResponse::Ok().body(SERV_VER),
+            "name" => return SERV_NAME.into_response(),
+            "version" => return SERV_VER.into_response(),
             _ => (),
         }
     }
 
-    HttpResponse::Ok().json(GetVersionRes {
+    Json(GetVersionRes {
         data: GetVersionResData {
             name: SERV_NAME,
             version: SERV_VER,
         },
     })
+    .into_response()
 }

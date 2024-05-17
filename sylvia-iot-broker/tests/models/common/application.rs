@@ -492,7 +492,7 @@ pub fn count(runtime: &Runtime, model: &dyn ApplicationModel) -> Result<(), Stri
         application.name = "name_count2_1".to_string();
         model.add(&application).await?;
         application.application_id = "application_id_count3_1".to_string();
-        application.code = "code_count3_1".to_string();
+        application.code = "code_count1_1".to_string();
         application.unit_id = "unit_id_count3".to_string();
         application.unit_code = "unit_code_count3".to_string();
         application.name = "name_count_1".to_string();
@@ -548,6 +548,49 @@ pub fn count(runtime: &Runtime, model: &dyn ApplicationModel) -> Result<(), Stri
     };
     let count = match runtime.block_on(async { model.count(&cond).await }) {
         Err(e) => return Err(format!("count application3-unit result error: {}", e)),
+        Ok(count) => count,
+    };
+    expect(count).to_equal(0)?;
+
+    let cond = ListQueryCond {
+        code: Some("code_count1_1"),
+        ..Default::default()
+    };
+    let count = match runtime.block_on(async { model.count(&cond).await }) {
+        Err(e) => return Err(format!("count code_count1_1 result error: {}", e)),
+        Ok(count) => count,
+    };
+    expect(count).to_equal(2)?;
+
+    let cond = ListQueryCond {
+        code: Some("code_count1_1"),
+        unit_id: Some("unit_id_count"),
+        ..Default::default()
+    };
+    let count = match runtime.block_on(async { model.count(&cond).await }) {
+        Err(e) => return Err(format!("count code_count1_1-unit result error: {}", e)),
+        Ok(count) => count,
+    };
+    expect(count).to_equal(1)?;
+
+    let cond = ListQueryCond {
+        code: Some("code_count1_1"),
+        unit_id: Some("unit_id_count3"),
+        ..Default::default()
+    };
+    let count = match runtime.block_on(async { model.count(&cond).await }) {
+        Err(e) => return Err(format!("count code_count1_1-unit3 result error: {}", e)),
+        Ok(count) => count,
+    };
+    expect(count).to_equal(1)?;
+
+    let cond = ListQueryCond {
+        code: Some("code_count1_2"),
+        unit_id: Some("unit_id_count3"),
+        ..Default::default()
+    };
+    let count = match runtime.block_on(async { model.count(&cond).await }) {
+        Err(e) => return Err(format!("count code_count1_2-unit3 result error: {}", e)),
         Ok(count) => count,
     };
     expect(count).to_equal(0)?;
@@ -631,7 +674,7 @@ pub fn list(runtime: &Runtime, model: &dyn ApplicationModel) -> Result<(), Strin
         application.name = "name_list2_1".to_string();
         model.add(&application).await?;
         application.application_id = "application_id_list3_1".to_string();
-        application.code = "code_list3_1".to_string();
+        application.code = "code_list1_1".to_string();
         application.unit_id = "unit_id_list3".to_string();
         application.unit_code = "unit_code_list3".to_string();
         application.name = "name\\\\%%''_list_1".to_string();
@@ -703,6 +746,53 @@ pub fn list(runtime: &Runtime, model: &dyn ApplicationModel) -> Result<(), Strin
     expect(list.len()).to_equal(0)?;
 
     let cond = ListQueryCond {
+        code: Some("code_list1_1"),
+        ..Default::default()
+    };
+    opts.cond = &cond;
+    let list = match runtime.block_on(async { model.list(&opts, None).await }) {
+        Err(e) => return Err(format!("list code_list1_1 result error: {}", e)),
+        Ok((list, _)) => list,
+    };
+    expect(list.len()).to_equal(2)?;
+
+    let cond = ListQueryCond {
+        code: Some("code_list1_1"),
+        unit_id: Some("unit_id_list"),
+        ..Default::default()
+    };
+    opts.cond = &cond;
+    let list = match runtime.block_on(async { model.list(&opts, None).await }) {
+        Err(e) => return Err(format!("list code_list1_1-unit result error: {}", e)),
+        Ok((list, _)) => list,
+    };
+    expect(list.len()).to_equal(1)?;
+
+    let cond = ListQueryCond {
+        code: Some("code_list1_1"),
+        unit_id: Some("unit_id_list3"),
+        ..Default::default()
+    };
+    opts.cond = &cond;
+    let list = match runtime.block_on(async { model.list(&opts, None).await }) {
+        Err(e) => return Err(format!("list code_list1_1-unit3 result error: {}", e)),
+        Ok((list, _)) => list,
+    };
+    expect(list.len()).to_equal(1)?;
+
+    let cond = ListQueryCond {
+        code: Some("code_list1_2"),
+        unit_id: Some("unit_id_list3"),
+        ..Default::default()
+    };
+    opts.cond = &cond;
+    let list = match runtime.block_on(async { model.list(&opts, None).await }) {
+        Err(e) => return Err(format!("list code_list1_2-unit3 result error: {}", e)),
+        Ok((list, _)) => list,
+    };
+    expect(list.len()).to_equal(0)?;
+
+    let cond = ListQueryCond {
         code_contains: Some("_1"),
         ..Default::default()
     };
@@ -769,7 +859,7 @@ pub fn list(runtime: &Runtime, model: &dyn ApplicationModel) -> Result<(), Strin
         Err(e) => return Err(format!("list name-case result error: {}", e)),
         Ok((list, _)) => list,
     };
-    expect(list.len()).to_equal(2)?;
+    expect(list.len()).to_equal(3)?;
 
     let cond = ListQueryCond {
         name_contains: Some("lIsT_1"),

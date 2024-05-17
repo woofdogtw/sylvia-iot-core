@@ -24,6 +24,8 @@ pub struct GetNetworkCount {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub unit: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    pub code: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub contains: Option<String>,
 }
 
@@ -31,6 +33,8 @@ pub struct GetNetworkCount {
 pub struct GetNetworkList {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub unit: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub code: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub contains: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]

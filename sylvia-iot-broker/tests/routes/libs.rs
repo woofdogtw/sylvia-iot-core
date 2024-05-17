@@ -1,19 +1,16 @@
-use std::{collections::HashMap, sync::mpsc, thread, time::Duration};
+use std::{collections::HashMap, net::SocketAddr, time::Duration};
 
-use actix_http::KeepAlive;
-use actix_web::{
-    http::{header, StatusCode},
-    middleware::NormalizePath,
-    test::{self, TestRequest},
-    App, HttpServer,
+use axum::{
+    http::{header, HeaderValue, Method, StatusCode},
+    Router,
 };
+use axum_test::TestServer;
 use chrono::{DateTime, TimeZone, Utc};
 use laboratory::expect;
 use reqwest;
 use serde::Deserialize;
 use serde_json::{Map, Value};
-use serde_urlencoded;
-use tokio::{runtime::Runtime, time};
+use tokio::{net::TcpListener, runtime::Runtime, time};
 
 use sylvia_iot_auth::{
     libs::config as sylvia_iot_auth_config,
@@ -772,51 +769,38 @@ pub fn new_state(
         Ok(state) => state,
     };
 
-    let (tx, rx) = mpsc::channel();
-    {
-        let state = match runtime.block_on(async {
-            let mut path = std::env::temp_dir();
-            path.push(sylvia_iot_auth_config::DEF_SQLITE_PATH);
-            let conf = sylvia_iot_auth_config::Config {
-                db: Some(sylvia_iot_auth_config::Db {
-                    engine: Some(DbEngine::SQLITE.to_string()),
-                    sqlite: Some(sylvia_iot_auth_config::Sqlite {
-                        path: Some(path.to_str().unwrap().to_string()),
-                    }),
-                    ..Default::default()
+    let svc_state = match runtime.block_on(async {
+        let mut path = std::env::temp_dir();
+        path.push(sylvia_iot_auth_config::DEF_SQLITE_PATH);
+        let conf = sylvia_iot_auth_config::Config {
+            db: Some(sylvia_iot_auth_config::Db {
+                engine: Some(DbEngine::SQLITE.to_string()),
+                sqlite: Some(sylvia_iot_auth_config::Sqlite {
+                    path: Some(path.to_str().unwrap().to_string()),
                 }),
                 ..Default::default()
-            };
-            sylvia_iot_auth_routes::new_state("/auth", &conf).await
-        }) {
-            Err(e) => panic!("create auth state error: {}", e),
-            Ok(state) => state,
+            }),
+            ..Default::default()
         };
-
-        thread::spawn(move || {
-            let srv = match HttpServer::new(move || {
-                App::new()
-                    .wrap(NormalizePath::trim())
-                    .service(sylvia_iot_auth_routes::new_service(&state))
-            })
-            .keep_alive(KeepAlive::Timeout(Duration::from_secs(60)))
-            .shutdown_timeout(1)
-            .bind("0.0.0.0:1080")
-            {
-                Err(e) => panic!("bind auth server error: {}", e),
-                Ok(server) => server,
-            }
-            .run();
-
-            let _ = tx.send(srv.handle());
-            let runtime = match Runtime::new() {
-                Err(e) => panic!("create auth server runtime error: {}", e),
-                Ok(runtime) => runtime,
-            };
-            runtime.block_on(async { srv.await })
-        });
+        sylvia_iot_auth_routes::new_state("/auth", &conf).await
+    }) {
+        Err(e) => panic!("create auth state error: {}", e),
+        Ok(state) => state,
     };
-    let auth_svc = rx.recv().unwrap();
+
+    let auth_svc = runtime.spawn(async move {
+        let app = Router::new().merge(sylvia_iot_auth_routes::new_service(&svc_state));
+        let listener = match TcpListener::bind("0.0.0.0:1080").await {
+            Err(e) => panic!("bind auth server error: {}", e),
+            Ok(listener) => listener,
+        };
+        axum::serve(
+            listener,
+            app.into_make_service_with_connect_info::<SocketAddr>(),
+        )
+        .await
+        .unwrap()
+    });
 
     if let Err(e) = runtime.block_on(async {
         for _ in 0..WAIT_COUNT {
@@ -895,23 +879,22 @@ pub fn test_invalid_perm(
     runtime: &Runtime,
     state: &routes::State,
     token: &str,
-    req: TestRequest,
+    method: Method,
+    uri: &str,
 ) -> Result<(), String> {
-    let mut app = runtime.block_on(async {
-        test::init_service(
-            App::new()
-                .wrap(NormalizePath::trim())
-                .service(routes::new_service(&state)),
-        )
-        .await
-    });
+    let app = Router::new().merge(routes::new_service(&state));
+    let server = match TestServer::new(app) {
+        Err(e) => return Err(format!("new server error: {}", e)),
+        Ok(server) => server,
+    };
 
-    let req = req
-        .insert_header((header::AUTHORIZATION, format!("Bearer {}", token)))
-        .to_request();
-    let resp = runtime.block_on(async { test::call_service(&mut app, req).await });
-    expect(resp.status()).to_equal(StatusCode::FORBIDDEN)?;
-    let body: ApiError = runtime.block_on(async { test::read_body_json(resp).await });
+    let req = server.method(method, uri).add_header(
+        header::AUTHORIZATION,
+        HeaderValue::from_str(format!("Bearer {}", token).as_str()).unwrap(),
+    );
+    let resp = runtime.block_on(async { req.await });
+    expect(resp.status_code()).to_equal(StatusCode::FORBIDDEN)?;
+    let body: ApiError = resp.json();
     if body.code.as_str() != err::E_PERM {
         return Err(format!("unexpected 403 error: {}", body.code.as_str()));
     }
@@ -921,22 +904,21 @@ pub fn test_invalid_perm(
 pub fn test_invalid_token(
     runtime: &Runtime,
     state: &routes::State,
-    req: TestRequest,
+    method: Method,
+    uri: &str,
 ) -> Result<(), String> {
-    let mut app = runtime.block_on(async {
-        test::init_service(
-            App::new()
-                .wrap(NormalizePath::trim())
-                .service(routes::new_service(&state)),
-        )
-        .await
-    });
+    let app = Router::new().merge(routes::new_service(&state));
+    let server = match TestServer::new(app) {
+        Err(e) => return Err(format!("new server error: {}", e)),
+        Ok(server) => server,
+    };
 
-    let req = req
-        .insert_header((header::AUTHORIZATION, "Bearer token"))
-        .to_request();
-    let resp = runtime.block_on(async { test::call_service(&mut app, req).await });
-    expect(resp.status()).to_equal(StatusCode::UNAUTHORIZED)
+    let req = server.method(method, uri).add_header(
+        header::AUTHORIZATION,
+        HeaderValue::from_str("Bearer token").unwrap(),
+    );
+    let resp = runtime.block_on(async { req.await });
+    expect(resp.status_code()).to_equal(StatusCode::UNAUTHORIZED)
 }
 
 pub fn test_get_400(
@@ -947,23 +929,19 @@ pub fn test_get_400(
     param: &Map<String, Value>,
     expect_code: &str,
 ) -> Result<(), String> {
-    let mut app = runtime.block_on(async {
-        test::init_service(
-            App::new()
-                .wrap(NormalizePath::trim())
-                .service(routes::new_service(state)),
-        )
-        .await
-    });
+    let app = Router::new().merge(routes::new_service(&state));
+    let server = match TestServer::new(app) {
+        Err(e) => return Err(format!("new server error: {}", e)),
+        Ok(server) => server,
+    };
 
-    let uri = format!("{}?{}", uri, serde_urlencoded::to_string(param).unwrap());
-    let req = TestRequest::get()
-        .uri(uri.as_str())
-        .insert_header((header::AUTHORIZATION, format!("Bearer {}", token)))
-        .to_request();
-    let resp = runtime.block_on(async { test::call_service(&mut app, req).await });
-    expect(resp.status()).to_equal(StatusCode::BAD_REQUEST)?;
-    let body: ApiError = runtime.block_on(async { test::read_body_json(resp).await });
+    let req = server.get(uri).add_query_params(param).add_header(
+        header::AUTHORIZATION,
+        HeaderValue::from_str(format!("Bearer {}", token).as_str()).unwrap(),
+    );
+    let resp = runtime.block_on(async { req.await });
+    expect(resp.status_code()).to_equal(StatusCode::BAD_REQUEST)?;
+    let body: ApiError = resp.json();
     if body.code.as_str() != expect_code {
         return Err(format!(
             "unexpected 400 error: {}, not {}",

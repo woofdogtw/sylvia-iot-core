@@ -5,8 +5,8 @@ use std::{
     sync::{Arc, Mutex},
 };
 
-use actix_web::{dev::HttpServiceFactory, error, web, HttpResponse, Responder};
 use async_trait::async_trait;
+use axum::{response::IntoResponse, Router};
 use log::{error, info, warn};
 use reqwest;
 use serde::{Deserialize, Serialize};
@@ -16,7 +16,10 @@ use general_mq::{
     queue::{EventHandler as QueueEventHandler, GmqQueue, Message, MessageHandler, Status},
     Queue,
 };
-use sylvia_iot_corelib::{constants::MqEngine, err::ErrResp};
+use sylvia_iot_corelib::{
+    constants::MqEngine,
+    http::{Json, Query},
+};
 
 use crate::libs::{
     config::{self, Config},
@@ -100,8 +103,10 @@ const SERV_NAME: &'static str = env!("CARGO_PKG_NAME");
 const SERV_VER: &'static str = env!("CARGO_PKG_VERSION");
 
 impl ErrReq {
-    pub const UNIT_NOT_EXIST: (u16, &'static str) = (400, "err_broker_unit_not_exist");
+    pub const APPLICATION_EXIST: (u16, &'static str) = (400, "err_broker_application_exist");
     pub const DEVICE_NOT_EXIST: (u16, &'static str) = (400, "err_broker_device_not_exist");
+    pub const NETWORK_EXIST: (u16, &'static str) = (400, "err_broker_network_exist");
+    pub const UNIT_NOT_EXIST: (u16, &'static str) = (400, "err_broker_unit_not_exist");
 }
 
 #[async_trait]
@@ -166,7 +171,10 @@ pub async fn new_state(
         },
     };
     let state = State {
-        scope_path,
+        scope_path: match scope_path.len() {
+            0 => "/",
+            _ => scope_path,
+        },
         auth_base,
         broker_base,
         client: reqwest::Client::new(),
@@ -179,27 +187,32 @@ pub async fn new_state(
 }
 
 /// To register service URIs in the specified root path.
-pub fn new_service(state: &State) -> impl HttpServiceFactory {
+pub fn new_service(state: &State) -> Router {
     let auth_uri = format!("{}/api/v1/auth/tokeninfo", state.auth_base.as_str());
-    web::scope(state.scope_path)
-        .wrap(middleware::LogService::new(
-            auth_uri,
-            state.data_sender.clone(),
-        ))
-        .app_data(web::JsonConfig::default().error_handler(|err, _| {
-            error::ErrorBadRequest(ErrResp::ErrParam(Some(err.to_string())))
-        }))
-        .app_data(web::Data::new(state.clone()))
-        .service(v1::auth::new_service("/api/v1/auth"))
-        .service(v1::user::new_service("/api/v1/user"))
-        .service(v1::client::new_service("/api/v1/client"))
-        .service(v1::unit::new_service("/api/v1/unit"))
-        .service(v1::application::new_service("/api/v1/application"))
-        .service(v1::network::new_service("/api/v1/network"))
-        .service(v1::device::new_service("/api/v1/device"))
-        .service(v1::device_route::new_service("/api/v1/device-route"))
-        .service(v1::network_route::new_service("/api/v1/network-route"))
-        .service(v1::dldata_buffer::new_service("/api/v1/dldata-buffer"))
+    Router::new().nest(
+        &state.scope_path,
+        Router::new()
+            .merge(v1::auth::new_service("/api/v1/auth", state))
+            .merge(v1::user::new_service("/api/v1/user", state))
+            .merge(v1::client::new_service("/api/v1/client", state))
+            .merge(v1::unit::new_service("/api/v1/unit", state))
+            .merge(v1::application::new_service("/api/v1/application", state))
+            .merge(v1::network::new_service("/api/v1/network", state))
+            .merge(v1::device::new_service("/api/v1/device", state))
+            .merge(v1::device_route::new_service("/api/v1/device-route", state))
+            .merge(v1::network_route::new_service(
+                "/api/v1/network-route",
+                state,
+            ))
+            .merge(v1::dldata_buffer::new_service(
+                "/api/v1/dldata-buffer",
+                state,
+            ))
+            .layer(middleware::LogService::new(
+                auth_uri,
+                state.data_sender.clone(),
+            )),
+    )
 }
 
 /// Create data channel sender queue.
@@ -230,19 +243,20 @@ fn new_data_sender(
     }
 }
 
-pub async fn get_version(query: web::Query<GetVersionQuery>) -> impl Responder {
+pub async fn get_version(Query(query): Query<GetVersionQuery>) -> impl IntoResponse {
     if let Some(q) = query.q.as_ref() {
         match q.as_str() {
-            "name" => return HttpResponse::Ok().body(SERV_NAME),
-            "version" => return HttpResponse::Ok().body(SERV_VER),
+            "name" => return SERV_NAME.into_response(),
+            "version" => return SERV_VER.into_response(),
             _ => (),
         }
     }
 
-    HttpResponse::Ok().json(GetVersionRes {
+    Json(GetVersionRes {
         data: GetVersionResData {
             name: SERV_NAME,
             version: SERV_VER,
         },
     })
+    .into_response()
 }

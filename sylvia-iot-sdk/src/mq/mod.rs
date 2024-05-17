@@ -143,7 +143,7 @@ async fn remove_connection(
     conn_pool: &Arc<Mutex<HashMap<String, Connection>>>,
     host_uri: &String,
     count: isize,
-) -> Result<(), Box<dyn StdError>> {
+) -> Result<(), Box<dyn StdError + Send + Sync>> {
     let conn = {
         let mut mutex = conn_pool.lock().unwrap();
         match mutex.get(host_uri) {

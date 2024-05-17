@@ -12,12 +12,14 @@ pub fn integration_test() -> LabResult {
         context.describe("err", |context| {
             context.it("to_json", err::to_json);
             context.it("ErrResp::fmt", err::fmt);
-            context.it("ErrResp::status_code", err::status_code);
-            context.it("ErrResp::error_response", err::error_response);
+            context.it("ErrResp::into_response", err::into_response);
         });
 
         context.describe("http", |context| {
             context.it("parse_header_auth", http::parse_header_auth);
+            context.it("Json extractor", http::test_json);
+            context.it("Path extractor", http::test_path);
+            context.it("Query extractor", http::test_query);
         });
 
         context.describe("logger", |context| {

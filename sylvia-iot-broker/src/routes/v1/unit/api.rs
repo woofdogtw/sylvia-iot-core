@@ -7,11 +7,14 @@ use std::{
     time::Duration,
 };
 
-use actix_web::{
-    web::{self, Bytes},
-    HttpRequest, HttpResponse, Responder,
-};
 use async_trait::async_trait;
+use axum::{
+    body::{Body, Bytes},
+    extract::State,
+    http::{header, StatusCode},
+    response::IntoResponse,
+    Extension,
+};
 use chrono::Utc;
 use log::{error, info, warn};
 use serde::{Deserialize, Serialize};
@@ -24,16 +27,17 @@ use general_mq::{
     Queue,
 };
 use sylvia_iot_corelib::{
+    constants::ContentType,
     err::ErrResp,
-    http as sylvia_http,
+    http::{Json, Path, Query},
     role::Role,
     strings::{self, time_str},
 };
 
 use super::{
     super::{
-        super::{ErrReq, State},
-        lib::{check_unit, gen_mgr_key, get_token_id_roles},
+        super::{middleware::GetTokenInfoData, ErrReq, State as AppState},
+        lib::{check_unit, gen_mgr_key},
     },
     request, response,
 };
@@ -100,7 +104,7 @@ const ID_RAND_LEN: usize = 8;
 const CTRL_QUEUE_NAME: &'static str = "unit";
 
 /// Initialize channels.
-pub async fn init(state: &State, ctrl_conf: &CfgCtrl) -> Result<(), Box<dyn StdError>> {
+pub async fn init(state: &AppState, ctrl_conf: &CfgCtrl) -> Result<(), Box<dyn StdError>> {
     const FN_NAME: &'static str = "init";
 
     let q = new_ctrl_receiver(state, ctrl_conf)?;
@@ -177,7 +181,7 @@ pub fn new_ctrl_sender(
 }
 
 /// Create control channel receiver queue.
-pub fn new_ctrl_receiver(state: &State, config: &CfgCtrl) -> Result<Queue, Box<dyn StdError>> {
+pub fn new_ctrl_receiver(state: &AppState, config: &CfgCtrl) -> Result<Queue, Box<dyn StdError>> {
     let url = match config.url.as_ref() {
         None => {
             return Err(Box::new(IoError::new(
@@ -209,13 +213,15 @@ pub fn new_ctrl_receiver(state: &State, config: &CfgCtrl) -> Result<Queue, Box<d
 
 /// `POST /{base}/api/v1/unit`
 pub async fn post_unit(
-    req: HttpRequest,
-    body: web::Json<request::PostUnitBody>,
-    state: web::Data<State>,
-) -> impl Responder {
+    State(state): State<AppState>,
+    Extension(token_info): Extension<GetTokenInfoData>,
+    Json(body): Json<request::PostUnitBody>,
+) -> impl IntoResponse {
     const FN_NAME: &'static str = "post_unit";
 
-    let (user_id, roles) = get_token_id_roles(FN_NAME, &req)?;
+    let user_id = token_info.user_id.as_str();
+    let roles = &token_info.roles;
+    let token = token_info.token.as_str();
 
     let code = body.data.code.to_lowercase();
     if !strings::is_code(code.as_str()) {
@@ -226,13 +232,13 @@ pub async fn post_unit(
     let owner_id = match body.data.owner_id.as_ref() {
         None => user_id,
         Some(owner_id) => {
-            if Role::is_role(&roles, Role::ADMIN) || Role::is_role(&roles, Role::MANAGER) {
+            if Role::is_role(roles, Role::ADMIN) || Role::is_role(roles, Role::MANAGER) {
                 if owner_id.len() == 0 {
                     return Err(ErrResp::ErrParam(Some(
                         "`ownerId` must with at least one character".to_string(),
                     )));
                 }
-                match check_user(FN_NAME, &req, owner_id.as_str(), &state).await {
+                match check_user(FN_NAME, token, owner_id.as_str(), &state).await {
                     Err(e) => return Err(e),
                     Ok(result) => match result {
                         false => {
@@ -242,7 +248,7 @@ pub async fn post_unit(
                                 None,
                             ))
                         }
-                        true => owner_id.clone(),
+                        true => owner_id.as_str(),
                     },
                 }
             } else {
@@ -287,8 +293,8 @@ pub async fn post_unit(
         code,
         created_at: now,
         modified_at: now,
-        owner_id: owner_id.clone(),
-        member_ids: vec![owner_id],
+        owner_id: owner_id.to_string(),
+        member_ids: vec![owner_id.to_string()],
         name: match body.data.name.as_ref() {
             None => "".to_string(),
             Some(name) => name.clone(),
@@ -302,7 +308,7 @@ pub async fn post_unit(
         error!("[{}] add error: {}", FN_NAME, e);
         return Err(ErrResp::ErrDb(Some(e.to_string())));
     }
-    Ok(HttpResponse::Ok().json(response::PostUnit {
+    Ok(Json(response::PostUnit {
         data: response::PostUnitData {
             unit_id: unit.unit_id,
         },
@@ -311,18 +317,19 @@ pub async fn post_unit(
 
 /// `GET /{base}/api/v1/unit/count`
 pub async fn get_unit_count(
-    req: HttpRequest,
-    query: web::Query<request::GetUnitCountQuery>,
-    state: web::Data<State>,
-) -> impl Responder {
+    State(state): State<AppState>,
+    Extension(token_info): Extension<GetTokenInfoData>,
+    Query(query): Query<request::GetUnitCountQuery>,
+) -> impl IntoResponse {
     const FN_NAME: &'static str = "get_unit_count";
 
-    let (user_id, roles) = get_token_id_roles(FN_NAME, &req)?;
+    let user_id = token_info.user_id.as_str();
+    let roles = &token_info.roles;
 
     let mut owner_cond = None;
     let mut member_cond = None;
     let mut code_contains_cond = None;
-    if Role::is_role(&roles, Role::ADMIN) || Role::is_role(&roles, Role::MANAGER) {
+    if Role::is_role(roles, Role::ADMIN) || Role::is_role(roles, Role::MANAGER) {
         if let Some(owner) = query.owner.as_ref() {
             if owner.len() > 0 {
                 owner_cond = Some(owner.as_str());
@@ -334,7 +341,7 @@ pub async fn get_unit_count(
             }
         }
     } else {
-        member_cond = Some(user_id.as_str());
+        member_cond = Some(user_id);
     }
     if let Some(contains) = query.contains.as_ref() {
         if contains.len() > 0 {
@@ -352,7 +359,7 @@ pub async fn get_unit_count(
             error!("[{}] count error: {}", FN_NAME, e);
             Err(ErrResp::ErrDb(Some(e.to_string())))
         }
-        Ok(count) => Ok(HttpResponse::Ok().json(response::GetUnitCount {
+        Ok(count) => Ok(Json(response::GetUnitCount {
             data: response::GetCountData { count },
         })),
     }
@@ -360,13 +367,14 @@ pub async fn get_unit_count(
 
 /// `GET /{base}/api/v1/unit/list`
 pub async fn get_unit_list(
-    req: HttpRequest,
-    query: web::Query<request::GetUnitListQuery>,
-    state: web::Data<State>,
-) -> impl Responder {
+    State(state): State<AppState>,
+    Extension(token_info): Extension<GetTokenInfoData>,
+    Query(query): Query<request::GetUnitListQuery>,
+) -> impl IntoResponse {
     const FN_NAME: &'static str = "get_unit_list";
 
-    let (user_id, roles) = get_token_id_roles(FN_NAME, &req)?;
+    let user_id = token_info.user_id;
+    let roles = token_info.roles;
 
     let mut owner_cond = None;
     let mut member_cond = None;
@@ -419,21 +427,20 @@ pub async fn get_unit_list(
         Ok((list, cursor)) => match cursor {
             None => match query.format {
                 Some(request::ListFormat::Array) => {
-                    return Ok(HttpResponse::Ok().json(unit_list_transform(&list)))
+                    return Ok(Json(unit_list_transform(&list)).into_response())
                 }
                 _ => {
-                    return Ok(HttpResponse::Ok().json(response::GetUnitList {
+                    return Ok(Json(response::GetUnitList {
                         data: unit_list_transform(&list),
-                    }))
+                    })
+                    .into_response())
                 }
             },
             Some(_) => (list, cursor),
         },
     };
 
-    // TODO: detect client disconnect
-    let stream = async_stream::stream! {
-        let query = query.0.clone();
+    let body = Body::from_stream(async_stream::stream! {
         let mut owner_cond = None;
         let mut member_cond = Some(user_id.as_str());
         let mut code_contains_cond = None;
@@ -492,25 +499,25 @@ pub async fn get_unit_list(
             list = _list;
             cursor = _cursor;
         }
-    };
-    Ok(HttpResponse::Ok().streaming(stream))
+    });
+    Ok(([(header::CONTENT_TYPE, ContentType::JSON)], body).into_response())
 }
 
 /// `GET /{base}/api/v1/unit/{unitId}`
 pub async fn get_unit(
-    req: HttpRequest,
-    param: web::Path<request::UnitIdPath>,
-    state: web::Data<State>,
-) -> impl Responder {
+    State(state): State<AppState>,
+    Extension(token_info): Extension<GetTokenInfoData>,
+    Path(param): Path<request::UnitIdPath>,
+) -> impl IntoResponse {
     const FN_NAME: &'static str = "get_unit";
 
-    let (user_id, roles) = get_token_id_roles(FN_NAME, &req)?;
-
-    let user_id = user_id.as_str();
+    let user_id = token_info.user_id.as_str();
+    let roles = &token_info.roles;
     let unit_id = param.unit_id.as_str();
-    match check_unit(FN_NAME, user_id, &roles, unit_id, false, &state).await? {
+
+    match check_unit(FN_NAME, user_id, roles, unit_id, false, &state).await? {
         None => Err(ErrResp::ErrNotFound(None)),
-        Some(unit) => Ok(HttpResponse::Ok().json(response::GetUnit {
+        Some(unit) => Ok(Json(response::GetUnit {
             data: unit_transform(&unit),
         })),
     }
@@ -518,51 +525,50 @@ pub async fn get_unit(
 
 /// `PATCH /{base}/api/v1/unit/{unitId}`
 pub async fn patch_unit(
-    req: HttpRequest,
-    param: web::Path<request::UnitIdPath>,
-    mut body: web::Json<request::PatchUnitBody>,
-    state: web::Data<State>,
-) -> impl Responder {
+    State(state): State<AppState>,
+    Extension(token_info): Extension<GetTokenInfoData>,
+    Path(param): Path<request::UnitIdPath>,
+    Json(mut body): Json<request::PatchUnitBody>,
+) -> impl IntoResponse {
     const FN_NAME: &'static str = "patch_unit";
 
-    let (user_id, roles) = get_token_id_roles(FN_NAME, &req)?;
+    let user_id = token_info.user_id.as_str();
+    let roles = &token_info.roles;
+    let unit_id = param.unit_id.as_str();
+    let token = &token_info.token;
 
     // To check if the unit is for the owner.
-    let user_id = user_id.as_str();
-    let unit_id = param.unit_id.as_str();
-    let target_unit = match check_unit(FN_NAME, user_id, &roles, unit_id, true, &state).await? {
+    let target_unit = match check_unit(FN_NAME, user_id, roles, unit_id, true, &state).await? {
         None => return Err(ErrResp::ErrNotFound(None)),
         Some(unit) => unit,
     };
 
-    let updates = get_updates(FN_NAME, &req, &state, &mut body.data, &roles, &target_unit).await?;
-    let cond = UpdateQueryCond {
-        unit_id: param.unit_id.as_str(),
-    };
+    let updates = get_updates(FN_NAME, token, &state, &mut body.data, roles, &target_unit).await?;
+    let cond = UpdateQueryCond { unit_id };
     if let Err(e) = state.model.unit().update(&cond, &updates).await {
         error!("[{}] update error: {}", FN_NAME, e);
         return Err(ErrResp::ErrDb(Some(e.to_string())));
     }
-    Ok(HttpResponse::NoContent().finish())
+    Ok(StatusCode::NO_CONTENT)
 }
 
 /// `DELETE /{base}/api/v1/unit/{unitId}`
 pub async fn delete_unit(
-    req: HttpRequest,
-    param: web::Path<request::UnitIdPath>,
-    state: web::Data<State>,
-) -> impl Responder {
+    State(state): State<AppState>,
+    Extension(token_info): Extension<GetTokenInfoData>,
+    Path(param): Path<request::UnitIdPath>,
+) -> impl IntoResponse {
     const FN_NAME: &'static str = "delete_unit";
 
-    let (user_id, roles) = get_token_id_roles(FN_NAME, &req)?;
-    let user_id = user_id.as_str();
+    let user_id = token_info.user_id.as_str();
+    let roles = &token_info.roles;
     let unit_id = param.unit_id.as_str();
 
     // To check if the unit is for the owner.
-    let unit = match check_unit(FN_NAME, user_id, &roles, unit_id, true, &state).await {
+    let unit = match check_unit(FN_NAME, user_id, roles, unit_id, true, &state).await {
         Err(e) => return Err(e), // XXX: not use "?" to solve E0282 error.
         Ok(unit) => match unit {
-            None => return Ok(HttpResponse::NoContent().finish()),
+            None => return Ok(StatusCode::NO_CONTENT),
             Some(unit) => unit,
         },
     };
@@ -570,14 +576,14 @@ pub async fn delete_unit(
     del_unit_rsc(FN_NAME, unit_id, unit.code.as_str(), &state).await?;
     send_del_ctrl_message(FN_NAME, unit, &state).await?;
 
-    Ok(HttpResponse::NoContent().finish())
+    Ok(StatusCode::NO_CONTENT)
 }
 
 /// `DELETE /{base}/api/v1/unit/user/{userId}`
 pub async fn delete_unit_user(
-    param: web::Path<request::UserIdPath>,
-    state: web::Data<State>,
-) -> impl Responder {
+    State(state): State<AppState>,
+    Path(param): Path<request::UserIdPath>,
+) -> impl IntoResponse {
     const FN_NAME: &'static str = "delete_unit_user";
 
     let cond = ListQueryCond {
@@ -592,18 +598,15 @@ pub async fn delete_unit_user(
         cursor_max: Some(LIST_CURSOR_MAX),
     };
     let mut cursor: Option<Box<dyn Cursor>> = None;
+    let mut rm_units = vec![];
     loop {
         match state.model.unit().list(&opts, cursor).await {
             Err(e) => {
                 error!("[{}] list error: {}", FN_NAME, e);
                 return Err(ErrResp::ErrDb(Some(e.to_string())));
             }
-            Ok((list, _cursor)) => {
-                for unit in list {
-                    del_unit_rsc(FN_NAME, unit.unit_id.as_str(), unit.code.as_str(), &state)
-                        .await?;
-                    send_del_ctrl_message(FN_NAME, unit, &state).await?;
-                }
+            Ok((mut list, _cursor)) => {
+                rm_units.append(&mut list);
                 if _cursor.is_none() {
                     break;
                 }
@@ -611,8 +614,12 @@ pub async fn delete_unit_user(
             }
         }
     }
+    for unit in rm_units {
+        del_unit_rsc(FN_NAME, unit.unit_id.as_str(), unit.code.as_str(), &state).await?;
+        send_del_ctrl_message(FN_NAME, unit, &state).await?;
+    }
 
-    Ok(HttpResponse::NoContent().finish())
+    Ok(StatusCode::NO_CONTENT)
 }
 
 fn get_sort_cond(sort_args: &Option<String>) -> Result<Vec<SortCond>, ErrResp> {
@@ -668,8 +675,8 @@ fn get_sort_cond(sort_args: &Option<String>) -> Result<Vec<SortCond>, ErrResp> {
 
 async fn get_updates<'a>(
     fn_name: &str,
-    http_req: &HttpRequest,
-    state: &web::Data<State>,
+    token: &str,
+    state: &AppState,
     body: &'a mut request::PatchUnitData,
     roles: &HashMap<String, bool>,
     target_unit: &Unit,
@@ -678,14 +685,14 @@ async fn get_updates<'a>(
         ..Default::default()
     };
     let mut count = 0;
-    if Role::is_role(&roles, Role::ADMIN) || Role::is_role(&roles, Role::MANAGER) {
+    if Role::is_role(roles, Role::ADMIN) || Role::is_role(roles, Role::MANAGER) {
         let mut target_owner_id = target_unit.owner_id.as_str();
         if let Some(owner_id) = body.owner_id.as_ref() {
             if owner_id.len() == 0 {
                 return Err(ErrResp::ErrParam(Some(
                     "`ownerId` must with at least one character".to_string(),
                 )));
-            } else if !check_user(fn_name, http_req, owner_id.as_str(), state).await? {
+            } else if !check_user(fn_name, token, owner_id.as_str(), state).await? {
                 return Err(ErrResp::Custom(
                     ErrReq::OWNER_NOT_EXIST.0,
                     ErrReq::OWNER_NOT_EXIST.1,
@@ -709,7 +716,7 @@ async fn get_updates<'a>(
                     return Err(ErrResp::ErrParam(Some(
                         "`memberIds` item must with at least one character".to_string(),
                     )));
-                } else if !check_user(fn_name, http_req, v.as_str(), state).await? {
+                } else if !check_user(fn_name, token, v.as_str(), state).await? {
                     return Err(ErrResp::Custom(
                         ErrReq::MEMBER_NOT_EXIST.0,
                         ErrReq::MEMBER_NOT_EXIST.1,
@@ -759,19 +766,15 @@ async fn get_updates<'a>(
 /// Returns OK if status code is 200/404. Otherwise errors will be returned.
 async fn check_user(
     fn_name: &str,
-    http_req: &HttpRequest,
+    token: &str,
     owner_id: &str,
-    state: &web::Data<State>,
+    state: &AppState,
 ) -> Result<bool, ErrResp> {
     let uri = format!("{}/api/v1/user/{}", state.auth_base.as_str(), owner_id);
-    let auth = match sylvia_http::parse_header_auth(http_req)? {
-        None => return Err(ErrResp::ErrParam(Some("invalid Authorization".to_string()))),
-        Some(auth) => auth,
-    };
     let req = match state
         .client
         .request(reqwest::Method::GET, uri)
-        .header(reqwest::header::AUTHORIZATION, auth)
+        .header(reqwest::header::AUTHORIZATION, format!("Bearer {}", token))
         .build()
     {
         Err(e) => {
@@ -825,7 +828,7 @@ fn unit_list_transform_bytes(
     with_start: bool,
     with_end: bool,
     format: Option<&request::ListFormat>,
-) -> Result<Bytes, Box<dyn StdError>> {
+) -> Result<Bytes, Box<dyn StdError + Send + Sync>> {
     let mut build_str = match with_start {
         false => "".to_string(),
         true => match format {
@@ -874,7 +877,7 @@ async fn del_unit_rsc(
     fn_name: &str,
     unit_id: &str,
     unit_code: &str,
-    state: &web::Data<State>,
+    state: &AppState,
 ) -> Result<(), ErrResp> {
     let cond = ApplicationCond {
         unit_id: Some(unit_id),
@@ -888,6 +891,7 @@ async fn del_unit_rsc(
         cursor_max: Some(LIST_CURSOR_MAX),
     };
     let mut cursor: Option<Box<dyn ApplicationCursor>> = None;
+    let mut rm_mgrs = vec![];
     loop {
         match state.model.application().list(&opts, cursor).await {
             Err(e) => {
@@ -900,12 +904,7 @@ async fn del_unit_rsc(
                     match { state.application_mgrs.lock().unwrap().remove(&key) } {
                         None => error!("[{}] get no application manager {}", fn_name, key),
                         Some(old_mgr) => {
-                            if let Err(e) = old_mgr.close().await {
-                                error!(
-                                    "[{}] close old application manager {} error: {}",
-                                    fn_name, key, e
-                                );
-                            }
+                            rm_mgrs.push(old_mgr);
                         }
                     }
                 }
@@ -914,6 +913,16 @@ async fn del_unit_rsc(
                 }
                 cursor = _cursor;
             }
+        }
+    }
+    for mgr in rm_mgrs {
+        if let Err(e) = mgr.close().await {
+            error!(
+                "[{}] close old application manager {} error: {}",
+                fn_name,
+                mgr.name(),
+                e
+            );
         }
     }
 
@@ -929,6 +938,7 @@ async fn del_unit_rsc(
         cursor_max: Some(LIST_CURSOR_MAX),
     };
     let mut cursor: Option<Box<dyn NetworkCursor>> = None;
+    let mut rm_mgrs = vec![];
     loop {
         match state.model.network().list(&opts, cursor).await {
             Err(e) => {
@@ -941,12 +951,7 @@ async fn del_unit_rsc(
                     match { state.network_mgrs.lock().unwrap().remove(&key) } {
                         None => error!("[{}] get no network manager {}", fn_name, key),
                         Some(old_mgr) => {
-                            if let Err(e) = old_mgr.close().await {
-                                error!(
-                                    "[{}] close old network manager {} error: {}",
-                                    fn_name, key, e
-                                );
-                            }
+                            rm_mgrs.push(old_mgr);
                         }
                     }
                 }
@@ -955,6 +960,16 @@ async fn del_unit_rsc(
                 }
                 cursor = _cursor;
             }
+        }
+    }
+    for mgr in rm_mgrs {
+        if let Err(e) = mgr.close().await {
+            error!(
+                "[{}] close old network manager {} error: {}",
+                fn_name,
+                mgr.name(),
+                e
+            );
         }
     }
 
@@ -1025,11 +1040,7 @@ async fn del_unit_rsc(
 }
 
 /// Send delete control message.
-async fn send_del_ctrl_message(
-    fn_name: &str,
-    unit: Unit,
-    state: &web::Data<State>,
-) -> Result<(), ErrResp> {
+async fn send_del_ctrl_message(fn_name: &str, unit: Unit, state: &AppState) -> Result<(), ErrResp> {
     if state.cache.is_some() {
         let msg = SendCtrlMsg::DelUnit {
             operation: CtrlMsgOp::DEL_UNIT.to_string(),

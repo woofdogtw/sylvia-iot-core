@@ -1,21 +1,28 @@
 use std::error::Error as StdError;
 
-use actix_web::{
-    http::header::{self, HeaderValue},
-    web::{self, Bytes},
-    HttpMessage, HttpRequest, HttpResponse, Responder, ResponseError,
+use axum::{
+    body::{Body, Bytes},
+    extract::State,
+    http::header,
+    response::IntoResponse,
+    Extension,
 };
 use chrono::{TimeZone, Utc};
 use csv::WriterBuilder;
 use log::error;
 use serde_json;
 
-use sylvia_iot_corelib::{err::ErrResp, role::Role, strings};
+use sylvia_iot_corelib::{
+    constants::ContentType,
+    err::ErrResp,
+    http::{Json, Query},
+    strings,
+};
 
 use super::{
     super::{
-        super::{middleware::FullTokenInfo, ErrReq, State},
-        get_unit_inner,
+        super::{middleware::GetTokenInfoData, State as AppState},
+        get_unit_cond,
     },
     request, response,
 };
@@ -30,13 +37,12 @@ const CSV_FIELDS: &'static str =
 
 /// `GET /{base}/api/v1/application-uldata/count`
 pub async fn get_count(
-    req: HttpRequest,
-    query: web::Query<request::GetCountQuery>,
-    state: web::Data<State>,
-) -> impl Responder {
+    State(state): State<AppState>,
+    Extension(token_info): Extension<GetTokenInfoData>,
+    Query(mut query): Query<request::GetCountQuery>,
+) -> impl IntoResponse {
     const FN_NAME: &'static str = "get_count";
 
-    let mut query: request::GetCountQuery = (*query).clone();
     if let Some(network) = query.network {
         query.network = Some(network.to_lowercase());
     }
@@ -44,31 +50,28 @@ pub async fn get_count(
         query.addr = Some(addr.to_lowercase());
     }
 
-    let unit_cond = match get_unit_cond(FN_NAME, &req, query.unit.as_ref(), &state).await {
-        Err(e) => return e,
-        Ok(cond) => cond,
-    };
+    let unit_cond = get_unit_cond(FN_NAME, &token_info, query.unit.as_ref(), &state).await?;
     let cond = match get_list_cond(&query, &unit_cond).await {
-        Err(e) => return e.error_response(),
+        Err(e) => return Err(e.into_response()),
         Ok(cond) => cond,
     };
     match state.model.application_uldata().count(&cond).await {
         Err(e) => {
             error!("[{}] count error: {}", FN_NAME, e);
-            ErrResp::ErrDb(Some(e.to_string())).error_response()
+            Err(ErrResp::ErrDb(Some(e.to_string())).into_response())
         }
-        Ok(count) => HttpResponse::Ok().json(response::GetCount {
+        Ok(count) => Ok(Json(response::GetCount {
             data: response::GetCountData { count },
-        }),
+        })),
     }
 }
 
 /// `GET /{base}/api/v1/application-uldata/list`
 pub async fn get_list(
-    req: HttpRequest,
-    query: web::Query<request::GetListQuery>,
-    state: web::Data<State>,
-) -> impl Responder {
+    State(state): State<AppState>,
+    Extension(token_info): Extension<GetTokenInfoData>,
+    Query(query): Query<request::GetListQuery>,
+) -> impl IntoResponse {
     const FN_NAME: &'static str = "get_list";
 
     let cond_query = request::GetCountQuery {
@@ -87,7 +90,7 @@ pub async fn get_list(
         tstart: query.tstart,
         tend: query.tend,
     };
-    let unit_cond = match get_unit_cond(FN_NAME, &req, query.unit.as_ref(), &state).await {
+    let unit_cond = match get_unit_cond(FN_NAME, &token_info, query.unit.as_ref(), &state).await {
         Err(e) => return Ok(e),
         Ok(cond) => cond,
     };
@@ -118,41 +121,42 @@ pub async fn get_list(
         Ok((list, cursor)) => match cursor {
             None => match query.format.as_ref() {
                 Some(request::ListFormat::Array) => {
-                    return Ok(HttpResponse::Ok().json(list_transform(&list)))
+                    return Ok(Json(list_transform(&list)).into_response())
                 }
                 Some(request::ListFormat::Csv) => {
                     let bytes = match list_transform_bytes(&list, true, true, query.format.as_ref())
                     {
                         Err(e) => {
-                            return Err(ErrResp::ErrUnknown(Some(format!(
-                                "transform CSV error: {}",
-                                e
-                            ))))
+                            let e = format!("transform CSV error: {}", e);
+                            return Err(ErrResp::ErrUnknown(Some(e)));
                         }
                         Ok(bytes) => bytes,
                     };
-                    return Ok(HttpResponse::Ok()
-                        .insert_header((header::CONTENT_TYPE, "text/csv"))
-                        .insert_header((
-                            header::CONTENT_DISPOSITION,
-                            "attachment;filename=application-uldata.csv",
-                        ))
-                        .body(bytes));
+                    return Ok((
+                        [
+                            (header::CONTENT_TYPE, ContentType::CSV),
+                            (
+                                header::CONTENT_DISPOSITION,
+                                "attachment;filename=application-uldata.csv",
+                            ),
+                        ],
+                        bytes,
+                    )
+                        .into_response());
                 }
                 _ => {
-                    return Ok(HttpResponse::Ok().json(response::GetList {
+                    return Ok(Json(response::GetList {
                         data: list_transform(&list),
-                    }))
+                    })
+                    .into_response())
                 }
             },
             Some(_) => (list, cursor),
         },
     };
 
-    // TODO: detect client disconnect
     let query_format = query.format.clone();
-    let stream = async_stream::stream! {
-        let query = query.0.clone();
+    let body = Body::from_stream(async_stream::stream! {
         let cond_query = request::GetCountQuery {
             unit: query.unit.clone(),
             device: query.device.clone(),
@@ -194,16 +198,20 @@ pub async fn get_list(
             list = _list;
             cursor = _cursor;
         }
-    };
+    });
     match query_format {
-        Some(request::ListFormat::Csv) => Ok(HttpResponse::Ok()
-            .insert_header((header::CONTENT_TYPE, "text/csv"))
-            .insert_header((
-                header::CONTENT_DISPOSITION,
-                "attachment;filename=application-uldata.csv",
-            ))
-            .streaming(stream)),
-        _ => Ok(HttpResponse::Ok().streaming(stream)),
+        Some(request::ListFormat::Csv) => Ok((
+            [
+                (header::CONTENT_TYPE, ContentType::CSV),
+                (
+                    header::CONTENT_DISPOSITION,
+                    "attachment;filename=application-uldata.csv",
+                ),
+            ],
+            body,
+        )
+            .into_response()),
+        _ => Ok(([(header::CONTENT_TYPE, ContentType::JSON)], body).into_response()),
     }
 }
 
@@ -262,66 +270,6 @@ async fn get_list_cond<'a>(
     }
 
     Ok(cond)
-}
-
-async fn get_unit_cond(
-    fn_name: &str,
-    req: &HttpRequest,
-    query_unit: Option<&String>,
-    state: &web::Data<State>,
-) -> Result<Option<String>, HttpResponse> {
-    let token_info = match req.extensions_mut().get::<FullTokenInfo>() {
-        None => {
-            error!("[{}] token not found", fn_name);
-            return Err(
-                ErrResp::ErrUnknown(Some("token info not found".to_string())).error_response(),
-            );
-        }
-        Some(token_info) => token_info.clone(),
-    };
-    let broker_base = state.broker_base.as_str();
-    let client = state.client.clone();
-
-    match query_unit {
-        None => {
-            if !Role::is_role(&token_info.info.roles, Role::ADMIN)
-                && !Role::is_role(&token_info.info.roles, Role::MANAGER)
-            {
-                return Err(ErrResp::ErrParam(Some("missing `unit`".to_string())).error_response());
-            }
-            Ok(None)
-        }
-        Some(unit_id) => match unit_id.len() {
-            0 => Ok(None),
-            _ => {
-                let token = match HeaderValue::from_str(token_info.token.as_str()) {
-                    Err(e) => {
-                        error!("[{}] get token error: {}", fn_name, e);
-                        return Err(ErrResp::ErrUnknown(Some(format!("get token error: {}", e)))
-                            .error_response());
-                    }
-                    Ok(value) => value,
-                };
-                match get_unit_inner(fn_name, &client, broker_base, unit_id, &token).await {
-                    Err(e) => {
-                        error!("[{}] get unit error", fn_name);
-                        return Err(e);
-                    }
-                    Ok(unit) => match unit {
-                        None => {
-                            return Err(ErrResp::Custom(
-                                ErrReq::UNIT_NOT_EXIST.0,
-                                ErrReq::UNIT_NOT_EXIST.1,
-                                None,
-                            )
-                            .error_response())
-                        }
-                        Some(_) => Ok(Some(unit_id.clone())),
-                    },
-                }
-            }
-        },
-    }
 }
 
 fn get_sort_cond(sort_args: &Option<String>) -> Result<Vec<SortCond>, ErrResp> {
@@ -389,7 +337,7 @@ fn list_transform_bytes(
     with_start: bool,
     with_end: bool,
     format: Option<&request::ListFormat>,
-) -> Result<Bytes, Box<dyn StdError>> {
+) -> Result<Bytes, Box<dyn StdError + Send + Sync>> {
     let mut build_str = match with_start {
         false => "".to_string(),
         true => match format {

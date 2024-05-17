@@ -1,17 +1,21 @@
 use std::error::Error as StdError;
 
-use actix_web::{
-    dev::HttpServiceFactory,
-    web::{self, Bytes, BytesMut},
-    HttpRequest, Responder,
+use axum::{
+    body::Body,
+    extract::{Path, Request, State},
+    response::IntoResponse,
+    routing, Router,
 };
+use bytes::{Bytes, BytesMut};
 use csv::WriterBuilder;
 use futures_util::StreamExt;
 use log::error;
 use serde::{Deserialize, Serialize};
 use serde_json::Deserializer;
 
-use super::{super::State, api_bridge, list_api_bridge, ListResp};
+use sylvia_iot_corelib::err::ErrResp;
+
+use super::{super::State as AppState, api_bridge, list_api_bridge, ListResp};
 
 #[derive(Deserialize)]
 struct RouteIdPath {
@@ -39,51 +43,51 @@ struct NetworkRoute {
 const CSV_FIELDS: &'static [u8] =
     b"\xEF\xBB\xBFrouteId,unitId,applicationId,applicationCode,networkId,networkCode,createdAt\n";
 
-pub fn new_service(scope_path: &str) -> impl HttpServiceFactory {
-    web::scope(scope_path)
-        .service(web::resource("").route(web::post().to(post_network_route)))
-        .service(web::resource("/count").route(web::get().to(get_network_route_count)))
-        .service(web::resource("/list").route(web::get().to(get_network_route_list)))
-        .service(web::resource("/{route_id}").route(web::delete().to(delete_network_route)))
+pub fn new_service(scope_path: &str, state: &AppState) -> Router {
+    Router::new().nest(
+        scope_path,
+        Router::new()
+            .route("/", routing::post(post_network_route))
+            .route("/count", routing::get(get_network_route_count))
+            .route("/list", routing::get(get_network_route_list))
+            .route("/:route_id", routing::delete(delete_network_route))
+            .with_state(state.clone()),
+    )
 }
 
 /// `POST /{base}/api/v1/network-route`
-async fn post_network_route(
-    mut req: HttpRequest,
-    body: Bytes,
-    state: web::Data<State>,
-) -> impl Responder {
+async fn post_network_route(state: State<AppState>, req: Request) -> impl IntoResponse {
     const FN_NAME: &'static str = "post_network_route";
     let api_path = format!("{}/api/v1/network-route", state.broker_base);
     let client = state.client.clone();
 
-    api_bridge(FN_NAME, &client, &mut req, api_path.as_str(), Some(body)).await
+    api_bridge(FN_NAME, &client, req, api_path.as_str()).await
 }
 
 /// `GET /{base}/api/v1/network-route/count`
-async fn get_network_route_count(mut req: HttpRequest, state: web::Data<State>) -> impl Responder {
+async fn get_network_route_count(state: State<AppState>, req: Request) -> impl IntoResponse {
     const FN_NAME: &'static str = "get_network_route_count";
     let api_path = format!("{}/api/v1/network-route/count", state.broker_base.as_str());
     let client = state.client.clone();
 
-    api_bridge(FN_NAME, &client, &mut req, api_path.as_str(), None).await
+    api_bridge(FN_NAME, &client, req, api_path.as_str()).await
 }
 
 /// `GET /{base}/api/v1/network-route/list`
-async fn get_network_route_list(mut req: HttpRequest, state: web::Data<State>) -> impl Responder {
+async fn get_network_route_list(state: State<AppState>, req: Request) -> impl IntoResponse {
     const FN_NAME: &'static str = "get_network_route_list";
     let api_path = format!("{}/api/v1/network-route/list", state.broker_base.as_str());
     let api_path = api_path.as_str();
     let client = state.client.clone();
 
-    let (api_resp, mut resp) =
-        match list_api_bridge(FN_NAME, &client, &mut req, api_path, false, "network-route").await {
-            ListResp::ActixWeb(resp) => return resp,
-            ListResp::ArrayStream(api_resp, resp) => (api_resp, resp),
+    let (api_resp, resp_builder) =
+        match list_api_bridge(FN_NAME, &client, req, api_path, false, "network-route").await {
+            ListResp::Axum(resp) => return resp,
+            ListResp::ArrayStream(api_resp, resp_builder) => (api_resp, resp_builder),
         };
 
     let mut resp_stream = api_resp.bytes_stream();
-    let stream = async_stream::stream! {
+    let body = Body::from_stream(async_stream::stream! {
         yield Ok(Bytes::from(CSV_FIELDS));
 
         let mut buffer = BytesMut::new();
@@ -91,7 +95,7 @@ async fn get_network_route_list(mut req: HttpRequest, state: web::Data<State>) -
             match body {
                 Err(e) => {
                     error!("[{}] get body error: {}", FN_NAME, e);
-                    let err: Box<dyn StdError> = Box::new(e);
+                    let err: Box<dyn StdError + Send + Sync> = Box::new(e);
                     yield Err(err);
                     break;
                 }
@@ -106,14 +110,14 @@ async fn get_network_route_list(mut req: HttpRequest, state: web::Data<State>) -
                 if let Some(Ok(v)) = json_stream.next() {
                     let mut writer = WriterBuilder::new().has_headers(false).from_writer(vec![]);
                     if let Err(e) = writer.serialize(v) {
-                        let err: Box<dyn StdError> = Box::new(e);
+                        let err: Box<dyn StdError + Send + Sync> = Box::new(e);
                         yield Err(err);
                         finish = true;
                         break;
                     }
                     match writer.into_inner() {
                         Err(e) => {
-                            let err: Box<dyn StdError> = Box::new(e);
+                            let err: Box<dyn StdError + Send + Sync> = Box::new(e);
                             yield Err(err);
                             finish = true;
                             break;
@@ -148,16 +152,19 @@ async fn get_network_route_list(mut req: HttpRequest, state: web::Data<State>) -
             }
             buffer = buffer.split_off(index);
         }
-    };
-    resp.streaming(stream)
+    });
+    match resp_builder.body(body) {
+        Err(e) => ErrResp::ErrRsc(Some(e.to_string())).into_response(),
+        Ok(resp) => resp,
+    }
 }
 
 /// `DELETE /{base}/api/v1/network-route/{routeId}`
 async fn delete_network_route(
-    mut req: HttpRequest,
-    param: web::Path<RouteIdPath>,
-    state: web::Data<State>,
-) -> impl Responder {
+    state: State<AppState>,
+    Path(param): Path<RouteIdPath>,
+    req: Request,
+) -> impl IntoResponse {
     const FN_NAME: &'static str = "delete_network_route";
     let api_path = format!(
         "{}/api/v1/network-route/{}",
@@ -165,5 +172,5 @@ async fn delete_network_route(
     );
     let client = state.client.clone();
 
-    api_bridge(FN_NAME, &client, &mut req, api_path.as_str(), None).await
+    api_bridge(FN_NAME, &client, req, api_path.as_str()).await
 }

@@ -3,80 +3,82 @@
 //! Here is an example to wrap the auth middleware and how to get token information:
 //!
 //! ```rust
-//! use actix_web::{dev::HttpServiceFactory, web, HttpMessage, HttpRequest, HttpResponse, Responder};
-//! use sylvia_iot_sdk::middlewares::auth::{AuthService, FullTokenInfo};
+//! use axum::{
+//!     extract::Request,
+//!     http::{header, StatusCode},
+//!     response::{IntoResponse, Response},
+//!     routing, Extension, Router,
+//! };
+//! use sylvia_iot_sdk::middlewares::auth::{AuthService, GetTokenInfoData};
 //!
-//! fn new_service() -> impl HttpServiceFactory {
+//! fn new_service() -> Router {
 //!     let auth_uri = "http://localhost:1080/auth/api/v1/auth/tokeninfo";
-//!     web::scope("/").service(
-//!         web::resource("/api")
-//!             .wrap(AuthService::new(auth_uri.to_string()))
-//!             .route(web::get().to(api)),
-//!     )
+//!     Router::new()
+//!         .route("/api", routing::get(api))
+//!         .layer(AuthService::new(auth_uri.clone()))
 //! }
 //!
-//! async fn api(req: HttpRequest) -> impl Responder {
-//!     match req.extensions_mut().get::<FullTokenInfo>() {
-//!         None => (),
-//!         Some(info) => (),
-//!     }
-//!     HttpResponse::NoContent().finish()
+//! async fn api(Extension(token_info): Extension<GetTokenInfoData>) -> impl IntoResponse {
+//!     StatusCode::NO_CONTENT
 //! }
 //! ```
 
-use std::{
-    cell::RefCell,
-    collections::HashMap,
-    rc::Rc,
-    task::{Context, Poll},
-};
-
-use actix_service::{Service, Transform};
-use actix_web::{
-    body::BoxBody,
-    dev::{ServiceRequest, ServiceResponse},
+use axum::{
+    extract::Request,
     http::header,
-    Error, HttpMessage, HttpRequest,
+    response::{IntoResponse, Response},
 };
-use futures::future::{self, LocalBoxFuture, Ready};
+use futures::future::BoxFuture;
 use reqwest;
 use serde::{self, Deserialize};
+use std::{
+    collections::HashMap,
+    task::{Context, Poll},
+};
+use tower::{Layer, Service};
 
 use crate::util::err::ErrResp;
 
-/// The information contains [`GetTokenInfoData`] and access token.
 #[derive(Clone)]
-pub struct FullTokenInfo {
-    pub token: String,
-    pub info: GetTokenInfoData,
-}
-
-/// The user/client information of the token.
-#[derive(Clone, Deserialize)]
-pub struct GetTokenInfo {
-    pub data: GetTokenInfoData,
-}
-
-#[derive(Clone, Deserialize)]
 pub struct GetTokenInfoData {
-    #[serde(rename = "userId")]
+    /// The access token.
+    pub token: String,
     pub user_id: String,
     pub account: String,
     pub roles: HashMap<String, bool>,
     pub name: String,
-    #[serde(rename = "clientId")]
     pub client_id: String,
     pub scopes: Vec<String>,
 }
 
+#[derive(Clone)]
 pub struct AuthService {
     auth_uri: String,
 }
 
+#[derive(Clone)]
 pub struct AuthMiddleware<S> {
     client: reqwest::Client,
     auth_uri: String,
-    service: Rc<RefCell<S>>,
+    service: S,
+}
+
+/// The user/client information of the token.
+#[derive(Clone, Deserialize)]
+struct GetTokenInfo {
+    data: GetTokenInfoDataInner,
+}
+
+#[derive(Clone, Deserialize)]
+struct GetTokenInfoDataInner {
+    #[serde(rename = "userId")]
+    user_id: String,
+    account: String,
+    roles: HashMap<String, bool>,
+    name: String,
+    #[serde(rename = "clientId")]
+    client_id: String,
+    scopes: Vec<String>,
 }
 
 impl AuthService {
@@ -85,86 +87,67 @@ impl AuthService {
     }
 }
 
-impl<S> Transform<S, ServiceRequest> for AuthService
-where
-    S: Service<ServiceRequest, Response = ServiceResponse<BoxBody>, Error = Error> + 'static,
-    S::Future: 'static,
-{
-    type Response = ServiceResponse<BoxBody>;
-    type Error = Error;
-    type Transform = AuthMiddleware<S>;
-    type InitError = ();
-    type Future = Ready<Result<Self::Transform, Self::InitError>>;
+impl<S> Layer<S> for AuthService {
+    type Service = AuthMiddleware<S>;
 
-    fn new_transform(&self, service: S) -> Self::Future {
-        future::ok(AuthMiddleware {
+    fn layer(&self, inner: S) -> Self::Service {
+        AuthMiddleware {
             client: reqwest::Client::new(),
             auth_uri: self.auth_uri.clone(),
-            service: Rc::new(RefCell::new(service)),
-        })
+            service: inner,
+        }
     }
 }
 
-impl<S> Service<ServiceRequest> for AuthMiddleware<S>
+impl<S> Service<Request> for AuthMiddleware<S>
 where
-    S: Service<ServiceRequest, Response = ServiceResponse<BoxBody>, Error = Error> + 'static,
-    S::Future: 'static,
+    S: Service<Request, Response = Response> + Clone + Send + 'static,
+    S::Future: Send + 'static,
 {
-    type Response = ServiceResponse<BoxBody>;
-    type Error = Error;
-    type Future = LocalBoxFuture<'static, Result<Self::Response, Self::Error>>;
+    type Response = S::Response;
+    type Error = S::Error;
+    type Future = BoxFuture<'static, Result<Self::Response, Self::Error>>;
 
-    fn poll_ready(&self, cx: &mut Context<'_>) -> Poll<Result<(), Self::Error>> {
+    fn poll_ready(&mut self, cx: &mut Context<'_>) -> Poll<Result<(), Self::Error>> {
         self.service.poll_ready(cx)
     }
 
-    fn call(&self, mut req: ServiceRequest) -> Self::Future {
-        let svc = self.service.clone();
+    fn call(&mut self, mut req: Request) -> Self::Future {
+        let mut svc = self.service.clone();
         let client = self.client.clone();
         let auth_uri = self.auth_uri.clone();
 
         Box::pin(async move {
-            let (http_req, _) = req.parts_mut();
-            let token = match parse_header_auth(&http_req) {
-                Err(e) => {
-                    return Ok(ServiceResponse::from_err(e, http_req.clone()));
-                }
+            let token = match parse_header_auth(&req) {
+                Err(e) => return Ok(e.into_response()),
                 Ok(token) => match token {
                     None => {
                         let e = ErrResp::ErrParam(Some("missing token".to_string()));
-                        return Ok(ServiceResponse::from_err(e, http_req.clone()));
+                        return Ok(e.into_response());
                     }
-                    Some(token) => {
-                        let token = token.trim();
-                        if token.len() < 8 || token[..7].to_lowercase().ne("bearer ") {
-                            let e = ErrResp::ErrParam(Some("not bearer token".to_string()));
-                            return Ok(ServiceResponse::from_err(e, http_req.clone()));
-                        }
-                        token[7..].to_string()
-                    }
+                    Some(token) => token,
                 },
             };
 
             let token_req = match client
                 .request(reqwest::Method::GET, auth_uri.as_str())
-                .header(reqwest::header::AUTHORIZATION, format!("Bearer {}", token))
+                .header(reqwest::header::AUTHORIZATION, token.as_str())
                 .build()
             {
                 Err(e) => {
                     let e = ErrResp::ErrRsc(Some(format!("request auth error: {}", e)));
-                    return Ok(ServiceResponse::from_err(e, http_req.clone()));
+                    return Ok(e.into_response());
                 }
                 Ok(req) => req,
             };
             let resp = match client.execute(token_req).await {
                 Err(e) => {
                     let e = ErrResp::ErrIntMsg(Some(format!("auth error: {}", e)));
-                    return Ok(ServiceResponse::from_err(e, http_req.clone()));
+                    return Ok(e.into_response());
                 }
                 Ok(resp) => match resp.status() {
                     reqwest::StatusCode::UNAUTHORIZED => {
-                        let e = ErrResp::ErrAuth(None);
-                        return Ok(ServiceResponse::from_err(e, http_req.clone()));
+                        return Ok(ErrResp::ErrAuth(None).into_response())
                     }
                     reqwest::StatusCode::OK => resp,
                     _ => {
@@ -172,21 +155,36 @@ where
                             "auth error with status code: {}",
                             resp.status()
                         )));
-                        return Ok(ServiceResponse::from_err(e, http_req.clone()));
+                        return Ok(e.into_response());
                     }
                 },
             };
             let token_info = match resp.json::<GetTokenInfo>().await {
                 Err(e) => {
                     let e = ErrResp::ErrIntMsg(Some(format!("read auth body error: {}", e)));
-                    return Ok(ServiceResponse::from_err(e, http_req.clone()));
+                    return Ok(e.into_response());
                 }
                 Ok(info) => info,
             };
 
-            req.extensions_mut().insert(FullTokenInfo {
+            let mut split = token.split_whitespace();
+            split.next(); // skip "Bearer".
+            let token = match split.next() {
+                None => {
+                    let e = ErrResp::ErrUnknown(Some("parse token error".to_string()));
+                    return Ok(e.into_response());
+                }
+                Some(token) => token.to_string(),
+            };
+
+            req.extensions_mut().insert(GetTokenInfoData {
                 token,
-                info: token_info.data,
+                user_id: token_info.data.user_id,
+                account: token_info.data.account,
+                roles: token_info.data.roles,
+                name: token_info.data.name,
+                client_id: token_info.data.client_id,
+                scopes: token_info.data.scopes,
             });
 
             let res = svc.call(req).await?;
@@ -196,8 +194,8 @@ where
 }
 
 /// Parse Authorization header content. Returns `None` means no Authorization header.
-pub fn parse_header_auth(req: &HttpRequest) -> Result<Option<String>, ErrResp> {
-    let mut auth_all = req.headers().get_all(header::AUTHORIZATION);
+pub fn parse_header_auth(req: &Request) -> Result<Option<String>, ErrResp> {
+    let mut auth_all = req.headers().get_all(header::AUTHORIZATION).iter();
     let auth = match auth_all.next() {
         None => return Ok(None),
         Some(auth) => match auth.to_str() {

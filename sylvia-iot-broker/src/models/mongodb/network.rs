@@ -259,6 +259,9 @@ fn get_list_query_filter(cond: &ListQueryCond) -> Document {
     if let Some(value) = cond.network_id {
         filter.insert("networkId", value);
     }
+    if let Some(value) = cond.code {
+        filter.insert("code", value);
+    }
     if let Some(value) = cond.code_contains {
         filter.insert(
             "code",

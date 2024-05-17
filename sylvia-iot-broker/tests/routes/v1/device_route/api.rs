@@ -1,15 +1,13 @@
 use std::cmp::Ordering;
 
-use actix_web::{
-    http::{header, StatusCode},
-    middleware::NormalizePath,
-    test::{self, TestRequest},
-    App,
+use axum::{
+    http::{header, HeaderValue, Method, StatusCode},
+    Router,
 };
+use axum_test::TestServer;
 use chrono::{SubsecRound, TimeDelta, Utc};
 use laboratory::{expect, SpecContext};
 use serde_json::{Map, Value};
-use serde_urlencoded;
 use tokio::runtime::Runtime;
 
 use sylvia_iot_broker::{
@@ -393,8 +391,12 @@ pub fn post_invalid_token(context: &mut SpecContext<TestState>) -> Result<(), St
     let runtime = state.runtime.as_ref().unwrap();
     let routes_state = state.routes_state.as_ref().unwrap();
 
-    let req = TestRequest::post().uri("/broker/api/v1/device-route");
-    test_invalid_token(runtime, &routes_state, req)
+    test_invalid_token(
+        runtime,
+        &routes_state,
+        Method::POST,
+        "/broker/api/v1/device-route",
+    )
 }
 
 pub fn post_bulk(context: &mut SpecContext<TestState>) -> Result<(), String> {
@@ -707,8 +709,12 @@ pub fn post_bulk_invalid_token(context: &mut SpecContext<TestState>) -> Result<(
     let runtime = state.runtime.as_ref().unwrap();
     let routes_state = state.routes_state.as_ref().unwrap();
 
-    let req = TestRequest::post().uri("/broker/api/v1/device-route/bulk");
-    test_invalid_token(runtime, &routes_state, req)
+    test_invalid_token(
+        runtime,
+        &routes_state,
+        Method::POST,
+        "/broker/api/v1/device-route/bulk",
+    )
 }
 
 pub fn post_bulk_del(context: &mut SpecContext<TestState>) -> Result<(), String> {
@@ -1010,8 +1016,12 @@ pub fn post_bulk_del_invalid_token(context: &mut SpecContext<TestState>) -> Resu
     let runtime = state.runtime.as_ref().unwrap();
     let routes_state = state.routes_state.as_ref().unwrap();
 
-    let req = TestRequest::post().uri("/broker/api/v1/device-route/bulk-delete");
-    test_invalid_token(runtime, &routes_state, req)
+    test_invalid_token(
+        runtime,
+        &routes_state,
+        Method::POST,
+        "/broker/api/v1/device-route/bulk-delete",
+    )
 }
 
 pub fn post_range(context: &mut SpecContext<TestState>) -> Result<(), String> {
@@ -1374,8 +1384,12 @@ pub fn post_range_invalid_token(context: &mut SpecContext<TestState>) -> Result<
     let runtime = state.runtime.as_ref().unwrap();
     let routes_state = state.routes_state.as_ref().unwrap();
 
-    let req = TestRequest::post().uri("/broker/api/v1/device-route/range");
-    test_invalid_token(runtime, &routes_state, req)
+    test_invalid_token(
+        runtime,
+        &routes_state,
+        Method::POST,
+        "/broker/api/v1/device-route/range",
+    )
 }
 
 pub fn post_range_del(context: &mut SpecContext<TestState>) -> Result<(), String> {
@@ -1738,8 +1752,12 @@ pub fn post_range_del_invalid_token(context: &mut SpecContext<TestState>) -> Res
     let runtime = state.runtime.as_ref().unwrap();
     let routes_state = state.routes_state.as_ref().unwrap();
 
-    let req = TestRequest::post().uri("/broker/api/v1/device-route/range-delete");
-    test_invalid_token(runtime, &routes_state, req)
+    test_invalid_token(
+        runtime,
+        &routes_state,
+        Method::POST,
+        "/broker/api/v1/device-route/range-delete",
+    )
 }
 
 pub fn get_count(context: &mut SpecContext<TestState>) -> Result<(), String> {
@@ -1943,8 +1961,12 @@ pub fn get_count_invalid_token(context: &mut SpecContext<TestState>) -> Result<(
     let runtime = state.runtime.as_ref().unwrap();
     let routes_state = state.routes_state.as_ref().unwrap();
 
-    let req = TestRequest::get().uri("/broker/api/v1/device-route/count");
-    test_invalid_token(runtime, &routes_state, req)
+    test_invalid_token(
+        runtime,
+        &routes_state,
+        Method::GET,
+        "/broker/api/v1/device-route/count",
+    )
 }
 
 pub fn get_list(context: &mut SpecContext<TestState>) -> Result<(), String> {
@@ -2626,8 +2648,12 @@ pub fn get_list_invalid_token(context: &mut SpecContext<TestState>) -> Result<()
     let runtime = state.runtime.as_ref().unwrap();
     let routes_state = state.routes_state.as_ref().unwrap();
 
-    let req = TestRequest::get().uri("/broker/api/v1/device-route/list");
-    test_invalid_token(runtime, &routes_state, req)
+    test_invalid_token(
+        runtime,
+        &routes_state,
+        Method::GET,
+        "/broker/api/v1/device-route/list",
+    )
 }
 
 pub fn delete(context: &mut SpecContext<TestState>) -> Result<(), String> {
@@ -2678,39 +2704,40 @@ pub fn delete(context: &mut SpecContext<TestState>) -> Result<(), String> {
         "",
     )?;
 
-    let mut app = runtime.block_on(async {
-        test::init_service(
-            App::new()
-                .wrap(NormalizePath::trim())
-                .service(routes::new_service(&routes_state)),
-        )
-        .await
-    });
+    let app = Router::new().merge(routes::new_service(routes_state));
+    let server = match TestServer::new(app) {
+        Err(e) => return Err(format!("new server error: {}", e)),
+        Ok(server) => server,
+    };
 
-    let req = TestRequest::delete()
-        .uri("/broker/api/v1/device-route/id")
-        .insert_header((header::AUTHORIZATION, format!("Bearer {}", TOKEN_MANAGER)))
-        .to_request();
-    let resp = runtime.block_on(async { test::call_service(&mut app, req).await });
-    expect(resp.status()).to_equal(StatusCode::NO_CONTENT)?;
+    let req = server.delete("/broker/api/v1/device-route/id").add_header(
+        header::AUTHORIZATION,
+        HeaderValue::from_str(format!("Bearer {}", TOKEN_MANAGER).as_str()).unwrap(),
+    );
+    let resp = runtime.block_on(async { req.await });
+    expect(resp.status_code()).to_equal(StatusCode::NO_CONTENT)?;
     let _ = get_device_route_model(runtime, &routes_state, "route1", true)?;
     let _ = get_device_route_model(runtime, &routes_state, "route2", true)?;
 
-    let req = TestRequest::delete()
-        .uri("/broker/api/v1/device-route/route1")
-        .insert_header((header::AUTHORIZATION, format!("Bearer {}", TOKEN_OWNER)))
-        .to_request();
-    let resp = runtime.block_on(async { test::call_service(&mut app, req).await });
-    expect(resp.status()).to_equal(StatusCode::NO_CONTENT)?;
+    let req = server
+        .delete("/broker/api/v1/device-route/route1")
+        .add_header(
+            header::AUTHORIZATION,
+            HeaderValue::from_str(format!("Bearer {}", TOKEN_OWNER).as_str()).unwrap(),
+        );
+    let resp = runtime.block_on(async { req.await });
+    expect(resp.status_code()).to_equal(StatusCode::NO_CONTENT)?;
     let _ = get_device_route_model(runtime, &routes_state, "route1", true)?;
     let _ = get_device_route_model(runtime, &routes_state, "route2", true)?;
 
-    let req = TestRequest::delete()
-        .uri("/broker/api/v1/device-route/route1")
-        .insert_header((header::AUTHORIZATION, format!("Bearer {}", TOKEN_MANAGER)))
-        .to_request();
-    let resp = runtime.block_on(async { test::call_service(&mut app, req).await });
-    expect(resp.status()).to_equal(StatusCode::NO_CONTENT)?;
+    let req = server
+        .delete("/broker/api/v1/device-route/route1")
+        .add_header(
+            header::AUTHORIZATION,
+            HeaderValue::from_str(format!("Bearer {}", TOKEN_MANAGER).as_str()).unwrap(),
+        );
+    let resp = runtime.block_on(async { req.await });
+    expect(resp.status_code()).to_equal(StatusCode::NO_CONTENT)?;
     let _ = get_device_route_model(runtime, &routes_state, "route1", false)?;
     let _ = get_device_route_model(runtime, &routes_state, "route2", true)?;
 
@@ -2723,8 +2750,12 @@ pub fn delete_invalid_token(context: &mut SpecContext<TestState>) -> Result<(), 
     let runtime = state.runtime.as_ref().unwrap();
     let routes_state = state.routes_state.as_ref().unwrap();
 
-    let req = TestRequest::delete().uri("/broker/api/v1/device-route/id");
-    test_invalid_token(runtime, &routes_state, req)
+    test_invalid_token(
+        runtime,
+        &routes_state,
+        Method::DELETE,
+        "/broker/api/v1/device-route/id",
+    )
 }
 
 fn test_post(
@@ -2734,26 +2765,25 @@ fn test_post(
     param: &request::PostDeviceRoute,
     expect_code: &str,
 ) -> Result<(), String> {
-    let mut app = runtime.block_on(async {
-        test::init_service(
-            App::new()
-                .wrap(NormalizePath::trim())
-                .service(routes::new_service(state)),
-        )
-        .await
-    });
+    let app = Router::new().merge(routes::new_service(state));
+    let server = match TestServer::new(app) {
+        Err(e) => return Err(format!("new server error: {}", e)),
+        Ok(server) => server,
+    };
 
     let time_before = Utc::now().trunc_subsecs(3);
-    let req = TestRequest::post()
-        .uri("/broker/api/v1/device-route")
-        .insert_header((header::AUTHORIZATION, format!("Bearer {}", token)))
-        .set_json(param)
-        .to_request();
-    let resp = runtime.block_on(async { test::call_service(&mut app, req).await });
+    let req = server
+        .post("/broker/api/v1/device-route")
+        .add_header(
+            header::AUTHORIZATION,
+            HeaderValue::from_str(format!("Bearer {}", token).as_str()).unwrap(),
+        )
+        .json(param);
+    let resp = runtime.block_on(async { req.await });
     let time_after = Utc::now().trunc_subsecs(3);
-    if resp.status() != StatusCode::OK {
-        let status = resp.status();
-        let body: ApiError = runtime.block_on(async { test::read_body_json(resp).await });
+    let status = resp.status_code();
+    if status != StatusCode::OK {
+        let body: ApiError = resp.json();
         let message = match body.message.as_ref() {
             None => "",
             Some(message) => message.as_str(),
@@ -2768,8 +2798,7 @@ fn test_post(
             message
         ));
     }
-    let body: response::PostDeviceRoute =
-        runtime.block_on(async { test::read_body_json(resp).await });
+    let body: response::PostDeviceRoute = resp.json();
     expect(body.data.route_id.len() > 0).to_equal(true)?;
 
     let device_id = param.data.device_id.as_str();
@@ -2806,25 +2835,22 @@ fn test_post_invalid_param(
     token: &str,
     param: Option<&request::PostDeviceRoute>,
 ) -> Result<(), String> {
-    let mut app = runtime.block_on(async {
-        test::init_service(
-            App::new()
-                .wrap(NormalizePath::trim())
-                .service(routes::new_service(state)),
-        )
-        .await
-    });
-
-    let req = TestRequest::post()
-        .uri("/broker/api/v1/device-route")
-        .insert_header((header::AUTHORIZATION, format!("Bearer {}", token)));
-    let req = match param {
-        None => req.to_request(),
-        Some(param) => req.set_json(&param).to_request(),
+    let app = Router::new().merge(routes::new_service(state));
+    let server = match TestServer::new(app) {
+        Err(e) => return Err(format!("new server error: {}", e)),
+        Ok(server) => server,
     };
-    let resp = runtime.block_on(async { test::call_service(&mut app, req).await });
-    expect(resp.status()).to_equal(StatusCode::BAD_REQUEST)?;
-    let body: ApiError = runtime.block_on(async { test::read_body_json(resp).await });
+
+    let req = server
+        .post("/broker/api/v1/device-route")
+        .add_header(
+            header::AUTHORIZATION,
+            HeaderValue::from_str(format!("Bearer {}", token).as_str()).unwrap(),
+        )
+        .json(&param);
+    let resp = runtime.block_on(async { req.await });
+    expect(resp.status_code()).to_equal(StatusCode::BAD_REQUEST)?;
+    let body: ApiError = resp.json();
     if body.code.as_str() != err::E_PARAM {
         return Err(format!("unexpected 400 error: {}", body.code.as_str()));
     }
@@ -2840,27 +2866,26 @@ fn test_post_bulk(
     expect_code: &str,
     expect_network_addrs: &Vec<String>,
 ) -> Result<(), String> {
-    let mut app = runtime.block_on(async {
-        test::init_service(
-            App::new()
-                .wrap(NormalizePath::trim())
-                .service(routes::new_service(state)),
-        )
-        .await
-    });
+    let app = Router::new().merge(routes::new_service(state));
+    let server = match TestServer::new(app) {
+        Err(e) => return Err(format!("new server error: {}", e)),
+        Ok(server) => server,
+    };
 
     let req = match use_post {
-        false => TestRequest::post().uri("/broker/api/v1/device-route/bulk-delete"),
-        true => TestRequest::post().uri("/broker/api/v1/device-route/bulk"),
+        false => server.post("/broker/api/v1/device-route/bulk-delete"),
+        true => server.post("/broker/api/v1/device-route/bulk"),
     };
     let req = req
-        .insert_header((header::AUTHORIZATION, format!("Bearer {}", token)))
-        .set_json(param)
-        .to_request();
-    let resp = runtime.block_on(async { test::call_service(&mut app, req).await });
-    if resp.status() != StatusCode::NO_CONTENT {
-        let status = resp.status();
-        let body: ApiError = runtime.block_on(async { test::read_body_json(resp).await });
+        .add_header(
+            header::AUTHORIZATION,
+            HeaderValue::from_str(format!("Bearer {}", token).as_str()).unwrap(),
+        )
+        .json(param);
+    let resp = runtime.block_on(async { req.await });
+    let status = resp.status_code();
+    if status != StatusCode::NO_CONTENT {
+        let body: ApiError = resp.json();
         let message = match body.message.as_ref() {
             None => "",
             Some(message) => message.as_str(),
@@ -2925,26 +2950,25 @@ fn test_post_bulk_invalid_param(
     use_post: bool,
     param: Option<&request::PostDeviceRouteBulk>,
 ) -> Result<(), String> {
-    let mut app = runtime.block_on(async {
-        test::init_service(
-            App::new()
-                .wrap(NormalizePath::trim())
-                .service(routes::new_service(state)),
-        )
-        .await
-    });
+    let app = Router::new().merge(routes::new_service(state));
+    let server = match TestServer::new(app) {
+        Err(e) => return Err(format!("new server error: {}", e)),
+        Ok(server) => server,
+    };
 
     let req = match use_post {
-        false => TestRequest::post().uri("/broker/api/v1/device-route/bulk-delete"),
-        true => TestRequest::post().uri("/broker/api/v1/device-route/bulk"),
+        false => server.post("/broker/api/v1/device-route/bulk-delete"),
+        true => server.post("/broker/api/v1/device-route/bulk"),
     };
     let req = req
-        .insert_header((header::AUTHORIZATION, format!("Bearer {}", token)))
-        .set_json(&param)
-        .to_request();
-    let resp = runtime.block_on(async { test::call_service(&mut app, req).await });
-    expect(resp.status()).to_equal(StatusCode::BAD_REQUEST)?;
-    let body: ApiError = runtime.block_on(async { test::read_body_json(resp).await });
+        .add_header(
+            header::AUTHORIZATION,
+            HeaderValue::from_str(format!("Bearer {}", token).as_str()).unwrap(),
+        )
+        .json(&param);
+    let resp = runtime.block_on(async { req.await });
+    expect(resp.status_code()).to_equal(StatusCode::BAD_REQUEST)?;
+    let body: ApiError = resp.json();
     if body.code.as_str() != err::E_PARAM {
         return Err(format!("unexpected 400 error: {}", body.code.as_str()));
     }
@@ -2960,27 +2984,26 @@ fn test_post_range(
     expect_code: &str,
     expect_network_addrs: &Vec<String>,
 ) -> Result<(), String> {
-    let mut app = runtime.block_on(async {
-        test::init_service(
-            App::new()
-                .wrap(NormalizePath::trim())
-                .service(routes::new_service(state)),
-        )
-        .await
-    });
+    let app = Router::new().merge(routes::new_service(state));
+    let server = match TestServer::new(app) {
+        Err(e) => return Err(format!("new server error: {}", e)),
+        Ok(server) => server,
+    };
 
     let req = match use_post {
-        false => TestRequest::post().uri("/broker/api/v1/device-route/range-delete"),
-        true => TestRequest::post().uri("/broker/api/v1/device-route/range"),
+        false => server.post("/broker/api/v1/device-route/range-delete"),
+        true => server.post("/broker/api/v1/device-route/range"),
     };
     let req = req
-        .insert_header((header::AUTHORIZATION, format!("Bearer {}", token)))
-        .set_json(param)
-        .to_request();
-    let resp = runtime.block_on(async { test::call_service(&mut app, req).await });
-    if resp.status() != StatusCode::NO_CONTENT {
-        let status = resp.status();
-        let body: ApiError = runtime.block_on(async { test::read_body_json(resp).await });
+        .add_header(
+            header::AUTHORIZATION,
+            HeaderValue::from_str(format!("Bearer {}", token).as_str()).unwrap(),
+        )
+        .json(param);
+    let resp = runtime.block_on(async { req.await });
+    let status = resp.status_code();
+    if status != StatusCode::NO_CONTENT {
+        let body: ApiError = resp.json();
         let message = match body.message.as_ref() {
             None => "",
             Some(message) => message.as_str(),
@@ -3045,26 +3068,25 @@ fn test_post_range_invalid_param(
     use_post: bool,
     param: Option<&request::PostDeviceRouteRange>,
 ) -> Result<(), String> {
-    let mut app = runtime.block_on(async {
-        test::init_service(
-            App::new()
-                .wrap(NormalizePath::trim())
-                .service(routes::new_service(state)),
-        )
-        .await
-    });
+    let app = Router::new().merge(routes::new_service(state));
+    let server = match TestServer::new(app) {
+        Err(e) => return Err(format!("new server error: {}", e)),
+        Ok(server) => server,
+    };
 
     let req = match use_post {
-        false => TestRequest::post().uri("/broker/api/v1/device-route/range-delete"),
-        true => TestRequest::post().uri("/broker/api/v1/device-route/range"),
+        false => server.post("/broker/api/v1/device-route/range-delete"),
+        true => server.post("/broker/api/v1/device-route/range"),
     };
     let req = req
-        .insert_header((header::AUTHORIZATION, format!("Bearer {}", token)))
-        .set_json(&param)
-        .to_request();
-    let resp = runtime.block_on(async { test::call_service(&mut app, req).await });
-    expect(resp.status()).to_equal(StatusCode::BAD_REQUEST)?;
-    let body: ApiError = runtime.block_on(async { test::read_body_json(resp).await });
+        .add_header(
+            header::AUTHORIZATION,
+            HeaderValue::from_str(format!("Bearer {}", token).as_str()).unwrap(),
+        )
+        .json(&param);
+    let resp = runtime.block_on(async { req.await });
+    expect(resp.status_code()).to_equal(StatusCode::BAD_REQUEST)?;
+    let body: ApiError = resp.json();
     if body.code.as_str() != err::E_PARAM {
         return Err(format!("unexpected 400 error: {}", body.code.as_str()));
     }
@@ -3078,30 +3100,22 @@ fn test_get_count(
     param: Option<&request::GetDeviceRouteCount>,
     expect_count: usize,
 ) -> Result<(), String> {
-    let mut app = runtime.block_on(async {
-        test::init_service(
-            App::new()
-                .wrap(NormalizePath::trim())
-                .service(routes::new_service(state)),
-        )
-        .await
-    });
-
-    let uri = match param {
-        None => "/broker/api/v1/device-route/count".to_string(),
-        Some(param) => format!(
-            "/broker/api/v1/device-route/count?{}",
-            serde_urlencoded::to_string(&param).unwrap()
-        ),
+    let app = Router::new().merge(routes::new_service(state));
+    let server = match TestServer::new(app) {
+        Err(e) => return Err(format!("new server error: {}", e)),
+        Ok(server) => server,
     };
-    let req = TestRequest::get()
-        .uri(uri.as_str())
-        .insert_header((header::AUTHORIZATION, format!("Bearer {}", token)))
-        .to_request();
-    let resp = runtime.block_on(async { test::call_service(&mut app, req).await });
-    expect(resp.status()).to_equal(StatusCode::OK)?;
-    let body: response::GetDeviceRouteCount =
-        runtime.block_on(async { test::read_body_json(resp).await });
+
+    let req = server
+        .get("/broker/api/v1/device-route/count")
+        .add_query_params(&param)
+        .add_header(
+            header::AUTHORIZATION,
+            HeaderValue::from_str(format!("Bearer {}", token).as_str()).unwrap(),
+        );
+    let resp = runtime.block_on(async { req.await });
+    expect(resp.status_code()).to_equal(StatusCode::OK)?;
+    let body: response::GetDeviceRouteCount = resp.json();
     expect(body.data.count).to_equal(expect_count)
 }
 
@@ -3112,30 +3126,22 @@ fn test_get_list(
     param: Option<&request::GetDeviceRouteList>,
     expect_count: usize,
 ) -> Result<(), String> {
-    let mut app = runtime.block_on(async {
-        test::init_service(
-            App::new()
-                .wrap(NormalizePath::trim())
-                .service(routes::new_service(state)),
-        )
-        .await
-    });
-
-    let uri = match param {
-        None => "/broker/api/v1/device-route/list".to_string(),
-        Some(param) => format!(
-            "/broker/api/v1/device-route/list?{}",
-            serde_urlencoded::to_string(&param).unwrap()
-        ),
+    let app = Router::new().merge(routes::new_service(state));
+    let server = match TestServer::new(app) {
+        Err(e) => return Err(format!("new server error: {}", e)),
+        Ok(server) => server,
     };
-    let req = TestRequest::get()
-        .uri(uri.as_str())
-        .insert_header((header::AUTHORIZATION, format!("Bearer {}", token)))
-        .to_request();
-    let resp = runtime.block_on(async { test::call_service(&mut app, req).await });
-    expect(resp.status()).to_equal(StatusCode::OK)?;
-    let body: response::GetDeviceRouteList =
-        runtime.block_on(async { test::read_body_json(resp).await });
+
+    let req = server
+        .get("/broker/api/v1/device-route/list")
+        .add_query_params(&param)
+        .add_header(
+            header::AUTHORIZATION,
+            HeaderValue::from_str(format!("Bearer {}", token).as_str()).unwrap(),
+        );
+    let resp = runtime.block_on(async { req.await });
+    expect(resp.status_code()).to_equal(StatusCode::OK)?;
+    let body: response::GetDeviceRouteList = resp.json();
     expect(body.data.len()).to_equal(expect_count)?;
 
     let mut code_min = "";
@@ -3173,14 +3179,11 @@ fn test_get_list_sort(
     param: &mut request::GetDeviceRouteList,
     expect_ids: &[&str],
 ) -> Result<(), String> {
-    let mut app = runtime.block_on(async {
-        test::init_service(
-            App::new()
-                .wrap(NormalizePath::trim())
-                .service(routes::new_service(state)),
-        )
-        .await
-    });
+    let app = Router::new().merge(routes::new_service(state));
+    let server = match TestServer::new(app) {
+        Err(e) => return Err(format!("new server error: {}", e)),
+        Ok(server) => server,
+    };
 
     if let Some(sorts) = param.sort_vec.as_ref() {
         let sorts: Vec<String> = sorts
@@ -3201,30 +3204,26 @@ fn test_get_list_sort(
         }
     }
 
-    let uri = format!(
-        "/broker/api/v1/device-route/list?{}",
-        serde_urlencoded::to_string(&param).unwrap()
-    );
-    let req = TestRequest::get()
-        .uri(uri.as_str())
-        .insert_header((header::AUTHORIZATION, format!("Bearer {}", token)))
-        .to_request();
-    let resp = runtime.block_on(async { test::call_service(&mut app, req).await });
-    if let Err(_) = expect(resp.status()).to_equal(StatusCode::OK) {
-        let body: ApiError = runtime.block_on(async { test::read_body_json(resp).await });
+    let req = server
+        .get("/broker/api/v1/device-route/list")
+        .add_query_params(&param)
+        .add_header(
+            header::AUTHORIZATION,
+            HeaderValue::from_str(format!("Bearer {}", token).as_str()).unwrap(),
+        );
+    let resp = runtime.block_on(async { req.await });
+    if let Err(_) = expect(resp.status_code()).to_equal(StatusCode::OK) {
+        let body: ApiError = resp.json();
         let message = match body.message.as_ref() {
             None => "",
             Some(message) => message.as_str(),
         };
         return Err(format!(
-            "response not 200: {}, {}, {}",
-            uri.as_str(),
-            body.code,
-            message
+            "response not 200: /broker/api/v1/device-route/list, {}, {}",
+            body.code, message
         ));
     }
-    let body: response::GetDeviceRouteList =
-        runtime.block_on(async { test::read_body_json(resp).await });
+    let body: response::GetDeviceRouteList = resp.json();
     expect(body.data.len()).to_equal(expect_ids.len())?;
 
     let mut index = 0;
@@ -3242,27 +3241,22 @@ fn test_get_list_offset_limit(
     param: &request::GetDeviceRouteList,
     expect_ids: Vec<i32>,
 ) -> Result<(), String> {
-    let mut app = runtime.block_on(async {
-        test::init_service(
-            App::new()
-                .wrap(NormalizePath::trim())
-                .service(routes::new_service(state)),
-        )
-        .await
-    });
+    let app = Router::new().merge(routes::new_service(state));
+    let server = match TestServer::new(app) {
+        Err(e) => return Err(format!("new server error: {}", e)),
+        Ok(server) => server,
+    };
 
-    let uri = format!(
-        "/broker/api/v1/device-route/list?{}",
-        serde_urlencoded::to_string(&param).unwrap()
-    );
-    let req = TestRequest::get()
-        .uri(uri.as_str())
-        .insert_header((header::AUTHORIZATION, format!("Bearer {}", token)))
-        .to_request();
-    let resp = runtime.block_on(async { test::call_service(&mut app, req).await });
-    expect(resp.status()).to_equal(StatusCode::OK)?;
-    let body: response::GetDeviceRouteList =
-        runtime.block_on(async { test::read_body_json(resp).await });
+    let req = server
+        .get("/broker/api/v1/device-route/list")
+        .add_query_params(&param)
+        .add_header(
+            header::AUTHORIZATION,
+            HeaderValue::from_str(format!("Bearer {}", token).as_str()).unwrap(),
+        );
+    let resp = runtime.block_on(async { req.await });
+    expect(resp.status_code()).to_equal(StatusCode::OK)?;
+    let body: response::GetDeviceRouteList = resp.json();
     expect(body.data.len()).to_equal(expect_ids.len())?;
 
     let mut index = 0;
@@ -3280,27 +3274,22 @@ fn test_get_list_format_array(
     param: &request::GetDeviceRouteList,
     expect_ids: Vec<i32>,
 ) -> Result<(), String> {
-    let mut app = runtime.block_on(async {
-        test::init_service(
-            App::new()
-                .wrap(NormalizePath::trim())
-                .service(routes::new_service(state)),
-        )
-        .await
-    });
+    let app = Router::new().merge(routes::new_service(state));
+    let server = match TestServer::new(app) {
+        Err(e) => return Err(format!("new server error: {}", e)),
+        Ok(server) => server,
+    };
 
-    let uri = format!(
-        "/broker/api/v1/device-route/list?{}",
-        serde_urlencoded::to_string(&param).unwrap()
-    );
-    let req = TestRequest::get()
-        .uri(uri.as_str())
-        .insert_header((header::AUTHORIZATION, format!("Bearer {}", token)))
-        .to_request();
-    let resp = runtime.block_on(async { test::call_service(&mut app, req).await });
-    expect(resp.status()).to_equal(StatusCode::OK)?;
-    let body: Vec<response::GetDeviceRouteListData> =
-        runtime.block_on(async { test::read_body_json(resp).await });
+    let req = server
+        .get("/broker/api/v1/device-route/list")
+        .add_query_params(&param)
+        .add_header(
+            header::AUTHORIZATION,
+            HeaderValue::from_str(format!("Bearer {}", token).as_str()).unwrap(),
+        );
+    let resp = runtime.block_on(async { req.await });
+    expect(resp.status_code()).to_equal(StatusCode::OK)?;
+    let body: Vec<response::GetDeviceRouteListData> = resp.json();
     expect(body.len()).to_equal(expect_ids.len())?;
 
     let mut index = 0;

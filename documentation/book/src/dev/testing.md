@@ -44,8 +44,8 @@ variables:
 
 ## routes
 
-- Although you can use Actix Web's `test::init_service()` as a virtual service, services required by
-  middleware or API bridges need to be started using threads.
+- Although you can use axum's `TestServer::new()` as a virtual service, services required by
+  middleware or API bridges need to be started using Tokio Task.
 - You can use model trait interfaces for initializing test datasets and data validation after API
   requests.
 - You can use model delete to delete test data in `after`.

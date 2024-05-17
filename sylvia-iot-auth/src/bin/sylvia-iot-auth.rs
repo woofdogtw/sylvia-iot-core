@@ -1,30 +1,25 @@
 use std::{
     error::Error as StdError,
-    fs::{self, File},
-    io::{BufReader, Error as IoError, ErrorKind},
+    fs::{self},
     net::{Ipv6Addr, SocketAddr, SocketAddrV6},
     time::Duration,
 };
 
-use actix_cors::Cors;
-use actix_files;
-use actix_http::KeepAlive;
-use actix_web::{
-    middleware::{Logger, NormalizePath},
-    web, App, HttpServer,
-};
-use actix_web_prom::PrometheusMetricsBuilder;
+use axum::{routing, Router};
+use axum_prometheus::PrometheusMetricLayer;
+use axum_server::{self, tls_rustls::RustlsConfig};
 use clap::{Arg as ClapArg, Command};
 use json5;
-use log::{self, error};
-use rustls::ServerConfig;
-use rustls_pemfile;
+use log::{self, error, info};
 use serde::Deserialize;
-use tokio;
+use tokio::{self, net::TcpListener};
+use tower_http::{
+    cors::CorsLayer, normalize_path::NormalizePathLayer, services::ServeDir, timeout::TimeoutLayer,
+};
 
 use sylvia_iot_auth::{libs, routes};
 use sylvia_iot_corelib::{
-    logger::{self, ACTIX_LOGGER_FORMAT},
+    logger::{self, LoggerLayer},
     server_config,
 };
 
@@ -66,73 +61,91 @@ async fn main() -> std::io::Result<()> {
         }
         Ok(state) => state,
     };
-    let prometheus = match PrometheusMetricsBuilder::new(PROJ_NAME.replace("-", "_").as_str())
-        .endpoint("/metrics")
-        .build()
-    {
-        Err(e) => {
-            error!("[{}] new Prometheus error: {}", FN_NAME, e);
-            return Ok(());
-        }
-        Ok(p) => p,
+    let (prometheus_layer, metric_handle) = PrometheusMetricLayer::pair();
+
+    let static_path = match conf.server.static_path.as_ref() {
+        None => STATIC_PATH,
+        Some(path) => path.as_str(),
     };
 
-    let mut serv = HttpServer::new(move || {
-        let static_path = match conf.server.static_path.as_ref() {
-            None => STATIC_PATH,
-            Some(path) => path.as_str(),
-        };
-        App::new()
-            .wrap(Logger::new(ACTIX_LOGGER_FORMAT))
-            .wrap(prometheus.clone())
-            .wrap(NormalizePath::trim())
-            .wrap(Cors::permissive())
-            .service(routes::new_service(&auth_state))
-            .route("/version", web::get().to(routes::get_version))
-            .service(actix_files::Files::new("/", static_path).index_file("index.html"))
-    })
-    .keep_alive(KeepAlive::Timeout(Duration::from_secs(60)));
+    let app = Router::new()
+        .merge(routes::new_service(&auth_state))
+        .route("/version", routing::get(routes::get_version))
+        .route(
+            "/metrics",
+            routing::get(|| async move { metric_handle.render() }),
+        )
+        .nest_service("/", ServeDir::new(static_path))
+        .layer(TimeoutLayer::new(Duration::from_secs(60)))
+        .layer(CorsLayer::permissive())
+        .layer(NormalizePathLayer::trim_trailing_slash())
+        .layer(prometheus_layer)
+        .layer(LoggerLayer::new());
+
+    // Serve HTTP.
     let ipv6_addr = Ipv6Addr::from([0u8; 16]);
-    let addrs = match conf.server.http_port {
-        None => [SocketAddr::V6(SocketAddrV6::new(
-            ipv6_addr, HTTP_PORT, 0, 0,
-        ))],
-        Some(port) => [SocketAddr::V6(SocketAddrV6::new(ipv6_addr, port, 0, 0))],
+    let http_addr = match conf.server.http_port {
+        None => SocketAddr::V6(SocketAddrV6::new(ipv6_addr, HTTP_PORT, 0, 0)),
+        Some(port) => SocketAddr::V6(SocketAddrV6::new(ipv6_addr, port, 0, 0)),
     };
-    serv = serv.bind(addrs.as_slice())?;
+
+    // Serve HTTPS.
     if let Some(cert_file) = conf.server.cert_file.as_ref() {
         if let Some(key_file) = conf.server.key_file.as_ref() {
-            let cert = rustls_pemfile::certs(&mut BufReader::new(File::open(cert_file)?))
-                .filter_map(|result| result.ok())
-                .collect();
-            let key = match rustls_pemfile::private_key(&mut BufReader::new(File::open(
-                key_file.as_str(),
-            )?)) {
-                Err(_) => return Err(IoError::new(ErrorKind::InvalidData, "invalid private key")),
-                Ok(key) => match key {
-                    None => {
-                        return Err(IoError::new(ErrorKind::InvalidData, "invalid private key"))
-                    }
-                    Some(key) => key,
-                },
+            let config = match RustlsConfig::from_pem_file(cert_file, key_file).await {
+                Err(e) => {
+                    error!("[{}] read cert/key error: {}", FN_NAME, e);
+                    return Ok(());
+                }
+                Ok(config) => config,
             };
-            let secure_config = match ServerConfig::builder()
-                .with_no_client_auth()
-                .with_single_cert(cert, key)
-            {
-                Err(e) => return Err(IoError::new(ErrorKind::InvalidData, e)),
-                Ok(conf) => conf,
+            let addr = match conf.server.https_port {
+                None => SocketAddr::V6(SocketAddrV6::new(ipv6_addr, HTTPS_PORT, 0, 0)),
+                Some(port) => SocketAddr::V6(SocketAddrV6::new(ipv6_addr, port, 0, 0)),
             };
-            let addrs = match conf.server.https_port {
-                None => [SocketAddr::V6(SocketAddrV6::new(
-                    ipv6_addr, HTTPS_PORT, 0, 0,
-                ))],
-                Some(port) => [SocketAddr::V6(SocketAddrV6::new(ipv6_addr, port, 0, 0))],
-            };
-            serv = serv.bind_rustls_0_22(addrs.as_slice(), secure_config)?;
+            let http_app = app.clone();
+            let http_serv = tokio::spawn(async move {
+                axum_server::bind(http_addr)
+                    .serve(http_app.into_make_service_with_connect_info::<SocketAddr>())
+                    .await
+                    .unwrap()
+            });
+            let https_serv = tokio::spawn(async move {
+                axum_server::bind_rustls(addr, config)
+                    .serve(app.into_make_service_with_connect_info::<SocketAddr>())
+                    .await
+                    .unwrap()
+            });
+            info!(
+                "[{}] running {} service (v{})",
+                FN_NAME, PROJ_NAME, PROJ_VER
+            );
+            let _ = tokio::join!(http_serv, https_serv);
+            return Ok(());
         }
     }
-    serv.run().await
+
+    let listener = match TcpListener::bind(http_addr).await {
+        Err(e) => {
+            error!("[{}] bind addr {} error: {}", FN_NAME, http_addr, e);
+            return Ok(());
+        }
+        Ok(listener) => listener,
+    };
+    info!(
+        "[{}] running {} service (v{})",
+        FN_NAME, PROJ_NAME, PROJ_VER
+    );
+    if let Err(e) = axum::serve(
+        listener,
+        app.into_make_service_with_connect_info::<SocketAddr>(),
+    )
+    .await
+    {
+        error!("[{}] launch server error: {}", FN_NAME, e);
+        return Ok(());
+    }
+    Ok(())
 }
 
 fn init_config() -> Result<AppConfig, Box<dyn StdError>> {

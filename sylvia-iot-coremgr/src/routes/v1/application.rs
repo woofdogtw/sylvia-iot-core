@@ -1,15 +1,14 @@
 use std::error::Error as StdError;
 
-use actix_web::{
-    dev::HttpServiceFactory,
-    http::{
-        header::{self, HeaderValue},
-        StatusCode,
-    },
-    web::{self, Bytes, BytesMut},
-    HttpRequest, HttpResponse, HttpResponseBuilder, Responder, ResponseError,
+use axum::{
+    body::Body,
+    extract::{Request, State},
+    http::{header, HeaderMap, HeaderValue, StatusCode},
+    response::{IntoResponse, Response},
+    routing, Router,
 };
 use base64::{engine::general_purpose, Engine};
+use bytes::{Bytes, BytesMut};
 use csv::WriterBuilder;
 use futures_util::StreamExt;
 use hex;
@@ -19,10 +18,14 @@ use serde::{Deserialize, Serialize};
 use serde_json::{Deserializer, Map, Value};
 use url::Url;
 
-use sylvia_iot_corelib::{err::ErrResp, strings};
+use sylvia_iot_corelib::{
+    err::ErrResp,
+    http::{Json, Path},
+    strings,
+};
 
 use super::{
-    super::{AmqpState, ErrReq, MqttState, State},
+    super::{AmqpState, ErrReq, MqttState, State as AppState},
     api_bridge, clear_patch_host, clear_queue_rsc, cmp_host_uri, create_queue_rsc,
     get_device_inner, get_stream_resp, get_unit_inner, list_api_bridge, request, response,
     transfer_host_uri, trunc_host_uri, ClearQueueResource, CreateQueueResource, ListResp,
@@ -97,40 +100,45 @@ struct DlData {
 const CSV_FIELDS: &'static [u8] =
     b"\xEF\xBB\xBFapplicationId,code,unitId,unitCode,createdAt,modifiedAt,hostUri,name,info\n";
 
-pub fn new_service(scope_path: &str) -> impl HttpServiceFactory {
-    web::scope(scope_path)
-        .service(web::resource("").route(web::post().to(post_application)))
-        .service(web::resource("/count").route(web::get().to(get_application_count)))
-        .service(web::resource("/list").route(web::get().to(get_application_list)))
-        .service(
-            web::resource("/{application_id}")
-                .route(web::get().to(get_application))
-                .route(web::patch().to(patch_application))
-                .route(web::delete().to(delete_application)),
-        )
-        .service(
-            web::resource("/{application_id}/stats").route(web::get().to(get_application_stats)),
-        )
-        .service(
-            web::resource("/{application_id}/dldata")
-                .route(web::post().to(post_application_dldata)),
-        )
+pub fn new_service(scope_path: &str, state: &AppState) -> Router {
+    Router::new().nest(
+        scope_path,
+        Router::new()
+            .route("/", routing::post(post_application))
+            .route("/count", routing::get(get_application_count))
+            .route("/list", routing::get(get_application_list))
+            .route(
+                "/:application_id",
+                routing::get(get_application)
+                    .patch(patch_application)
+                    .delete(delete_application),
+            )
+            .route(
+                "/:application_id/stats",
+                routing::get(get_application_stats),
+            )
+            .route(
+                "/:application_id/dldata",
+                routing::post(post_application_dldata),
+            )
+            .with_state(state.clone()),
+    )
 }
 
 /// `POST /{base}/api/v1/application`
 async fn post_application(
-    req: HttpRequest,
-    mut body: web::Json<request::PostApplicationBody>,
-    state: web::Data<State>,
-) -> impl Responder {
+    State(state): State<AppState>,
+    headers: HeaderMap,
+    Json(mut body): Json<request::PostApplicationBody>,
+) -> impl IntoResponse {
     const FN_NAME: &'static str = "post_application";
     let broker_base = state.broker_base.as_str();
     let api_path = format!("{}/api/v1/application", broker_base);
     let client = state.client.clone();
-    let token = match req.headers().get(header::AUTHORIZATION) {
+    let token = match headers.get(header::AUTHORIZATION) {
         None => {
             let e = "missing Authorization".to_string();
-            return ErrResp::ErrParam(Some(e)).error_response();
+            return ErrResp::ErrParam(Some(e)).into_response();
         }
         Some(value) => value.clone(),
     };
@@ -141,14 +149,14 @@ async fn post_application(
         return ErrResp::ErrParam(Some(
             "`unitId` must with at least one character".to_string(),
         ))
-        .error_response();
+        .into_response();
     }
     let unit = match get_unit_inner(FN_NAME, &client, broker_base, unit_id, &token).await {
         Err(e) => return e,
         Ok(unit) => match unit {
             None => {
                 return ErrResp::Custom(ErrReq::UNIT_NOT_EXIST.0, ErrReq::UNIT_NOT_EXIST.1, None)
-                    .error_response()
+                    .into_response()
             }
             Some(unit) => unit,
         },
@@ -159,21 +167,35 @@ async fn post_application(
         return ErrResp::ErrParam(Some(
             "`code` must be [A-Za-z0-9]{1}[A-Za-z0-9-_]*".to_string(),
         ))
-        .error_response();
+        .into_response();
+    }
+    match check_application_code_inner(FN_NAME, &client, broker_base, unit_id, code, &token).await {
+        Err(e) => return e,
+        Ok(count) => match count {
+            0 => (),
+            _ => {
+                return ErrResp::Custom(
+                    ErrReq::APPLICATION_EXIST.0,
+                    ErrReq::APPLICATION_EXIST.1,
+                    None,
+                )
+                .into_response()
+            }
+        },
     }
     let q_type = QueueType::Application;
     let username = mq::to_username(q_type, unit_code, code);
     let password = strings::randomstring(8);
     let uri = match Url::parse(body.data.host_uri.as_str()) {
         Err(e) => {
-            return ErrResp::ErrParam(Some(format!("invalid `hostUri`: {}", e))).error_response();
+            return ErrResp::ErrParam(Some(format!("invalid `hostUri`: {}", e))).into_response();
         }
         Ok(uri) => uri,
     };
     let host = match uri.host() {
         None => {
             let e = "invalid `hostUri`".to_string();
-            return ErrResp::ErrParam(Some(e)).error_response();
+            return ErrResp::ErrParam(Some(e)).into_response();
         }
         Some(host) => host.to_string(),
     };
@@ -205,19 +227,16 @@ async fn post_application(
     let mut body_uri = uri.clone();
     transfer_host_uri(&state, &mut body_uri, username);
     body.data.host_uri = body_uri.to_string();
-    let mut builder = client
+    let builder = client
         .request(reqwest::Method::POST, api_path)
-        .header(reqwest::header::AUTHORIZATION, token)
+        .headers(headers)
         .json(&body);
-    if let Some(content_type) = req.headers().get(header::CONTENT_TYPE) {
-        builder = builder.header(reqwest::header::CONTENT_TYPE, content_type);
-    }
     let api_req = match builder.build() {
         Err(e) => {
             let _ = clear_queue_rsc(FN_NAME, &state, &clear_rsc);
             let e = format!("generate request error: {}", e);
             error!("[{}] {}", FN_NAME, e);
-            return ErrResp::ErrRsc(Some(e)).error_response();
+            return ErrResp::ErrRsc(Some(e)).into_response();
         }
         Ok(req) => req,
     };
@@ -226,48 +245,61 @@ async fn post_application(
             let _ = clear_queue_rsc(FN_NAME, &state, &clear_rsc);
             let e = format!("execute request error: {}", e);
             error!("[{}] {}", FN_NAME, e);
-            return ErrResp::ErrIntMsg(Some(e)).error_response();
+            return ErrResp::ErrIntMsg(Some(e)).into_response();
         }
         Ok(resp) => match resp.status() {
-            StatusCode::OK => resp,
-            _ => return HttpResponseBuilder::new(resp.status()).streaming(resp.bytes_stream()),
+            reqwest::StatusCode::OK => resp,
+            _ => {
+                let mut resp_builder = Response::builder().status(resp.status());
+                for (k, v) in resp.headers() {
+                    resp_builder = resp_builder.header(k, v);
+                }
+                match resp_builder.body(Body::from_stream(resp.bytes_stream())) {
+                    Err(e) => {
+                        let e = format!("wrap response body error: {}", e);
+                        error!("[{}] {}", FN_NAME, e);
+                        return ErrResp::ErrIntMsg(Some(e)).into_response();
+                    }
+                    Ok(resp) => return resp,
+                }
+            }
         },
     };
     let mut body = match api_resp.json::<response::PostApplication>().await {
         Err(e) => {
             let _ = clear_queue_rsc(FN_NAME, &state, &clear_rsc);
             let e = format!("unexpected response: {}", e);
-            return ErrResp::ErrUnknown(Some(e)).error_response();
+            return ErrResp::ErrUnknown(Some(e)).into_response();
         }
         Ok(body) => body,
     };
     body.data.password = Some(password.to_string());
 
-    HttpResponse::Ok().json(&body)
+    Json(&body).into_response()
 }
 
 /// `GET /{base}/api/v1/application/count`
-async fn get_application_count(mut req: HttpRequest, state: web::Data<State>) -> impl Responder {
+async fn get_application_count(state: State<AppState>, req: Request) -> impl IntoResponse {
     const FN_NAME: &'static str = "get_application_count";
     let api_path = format!("{}/api/v1/application/count", state.broker_base.as_str());
     let client = state.client.clone();
 
-    api_bridge(FN_NAME, &client, &mut req, api_path.as_str(), None).await
+    api_bridge(FN_NAME, &client, req, api_path.as_str()).await
 }
 
 /// `GET /{base}/api/v1/application/list`
-async fn get_application_list(mut req: HttpRequest, state: web::Data<State>) -> impl Responder {
+async fn get_application_list(state: State<AppState>, req: Request) -> impl IntoResponse {
     const FN_NAME: &'static str = "get_application_list";
     let api_path = format!("{}/api/v1/application/list", state.broker_base.as_str());
     let api_path = api_path.as_str();
     let client = state.client.clone();
 
     let mut list_format = ListFormat::Data;
-    if req.query_string().len() > 0 {
-        let query = match serde_urlencoded::from_str::<Vec<(String, String)>>(req.query_string()) {
+    if let Some(query_str) = req.uri().query() {
+        let query = match serde_urlencoded::from_str::<Vec<(String, String)>>(query_str) {
             Err(e) => {
                 let e = format!("parse query error: {}", e);
-                return ErrResp::ErrParam(Some(e)).error_response();
+                return ErrResp::ErrParam(Some(e)).into_response();
             }
             Ok(query) => query,
         };
@@ -282,14 +314,14 @@ async fn get_application_list(mut req: HttpRequest, state: web::Data<State>) -> 
         }
     }
 
-    let (api_resp, mut resp) =
-        match list_api_bridge(FN_NAME, &client, &mut req, api_path, true, "application").await {
-            ListResp::ActixWeb(resp) => return resp,
-            ListResp::ArrayStream(api_resp, resp) => (api_resp, resp),
+    let (api_resp, resp_builder) =
+        match list_api_bridge(FN_NAME, &client, req, api_path, true, "application").await {
+            ListResp::Axum(resp) => return resp,
+            ListResp::ArrayStream(api_resp, resp_builder) => (api_resp, resp_builder),
         };
 
     let mut resp_stream = api_resp.bytes_stream();
-    let stream = async_stream::stream! {
+    let body = Body::from_stream(async_stream::stream! {
         match list_format {
             ListFormat::Array => yield Ok(Bytes::from("[")),
             ListFormat::Csv => yield Ok(Bytes::from(CSV_FIELDS)),
@@ -302,7 +334,7 @@ async fn get_application_list(mut req: HttpRequest, state: web::Data<State>) -> 
             match body {
                 Err(e) => {
                     error!("[{}] get body error: {}", FN_NAME, e);
-                    let err: Box<dyn StdError> = Box::new(e);
+                    let err: Box<dyn StdError + Send + Sync> = Box::new(e);
                     yield Err(err);
                     break;
                 }
@@ -317,7 +349,8 @@ async fn get_application_list(mut req: HttpRequest, state: web::Data<State>) -> 
                     v.host_uri = match Url::parse(v.host_uri.as_str()) {
                         Err(e) => {
                             error!("[{}] parse body hostUri error: {}", FN_NAME, e);
-                            yield Err(Box::new(e));
+                            let err: Box<dyn StdError + Send + Sync> = Box::new(e);
+                            yield Err(err);
                             finish = true;
                             break;
                         }
@@ -327,7 +360,7 @@ async fn get_application_list(mut req: HttpRequest, state: web::Data<State>) -> 
                         ListFormat::Array | ListFormat::Data => match serde_json::to_string(&v) {
                             Err(e) =>{
                                 error!("[{}] serialize JSON error: {}", FN_NAME, e);
-                                let err: Box<dyn StdError> = Box::new(e);
+                                let err: Box<dyn StdError + Send + Sync> = Box::new(e);
                                 yield Err(err);
                                 finish = true;
                                 break;
@@ -359,7 +392,7 @@ async fn get_application_list(mut req: HttpRequest, state: web::Data<State>) -> 
                                 WriterBuilder::new().has_headers(false).from_writer(vec![]);
                             if let Err(e) = writer.serialize(item) {
                                 error!("[{}] serialize CSV error: {}", FN_NAME, e);
-                                let err: Box<dyn StdError> = Box::new(e);
+                                let err: Box<dyn StdError + Send + Sync> = Box::new(e);
                                 yield Err(err);
                                 finish = true;
                                 break;
@@ -367,7 +400,7 @@ async fn get_application_list(mut req: HttpRequest, state: web::Data<State>) -> 
                             match writer.into_inner() {
                                 Err(e) => {
                                     error!("[{}] serialize bytes error: {}", FN_NAME, e);
-                                    let err: Box<dyn StdError> = Box::new(e);
+                                    let err: Box<dyn StdError + Send + Sync> = Box::new(e);
                                     yield Err(err);
                                     finish = true;
                                     break;
@@ -409,23 +442,26 @@ async fn get_application_list(mut req: HttpRequest, state: web::Data<State>) -> 
             }
             buffer = buffer.split_off(index);
         }
-    };
-    resp.streaming(stream)
+    });
+    match resp_builder.body(body) {
+        Err(e) => ErrResp::ErrRsc(Some(e.to_string())).into_response(),
+        Ok(resp) => resp,
+    }
 }
 
 /// `GET /{base}/api/v1/application/{applicationId}`
 async fn get_application(
-    req: HttpRequest,
-    param: web::Path<ApplicationIdPath>,
-    state: web::Data<State>,
-) -> impl Responder {
+    state: State<AppState>,
+    Path(param): Path<ApplicationIdPath>,
+    req: Request,
+) -> impl IntoResponse {
     const FN_NAME: &'static str = "get_application";
     let broker_base = state.broker_base.as_str();
     let client = state.client.clone();
     let token = match req.headers().get(header::AUTHORIZATION) {
         None => {
             let e = "missing Authorization".to_string();
-            return ErrResp::ErrParam(Some(e)).error_response();
+            return ErrResp::ErrParam(Some(e)).into_response();
         }
         Some(value) => value.clone(),
     };
@@ -456,7 +492,7 @@ async fn get_application(
         match rabbitmq::get_policies(&client, opts, host, username).await {
             Err(e) => {
                 error!("[{}] get {} policies error: {}", FN_NAME, username, e);
-                return e.error_response();
+                return e.into_response();
             }
             Ok(policies) => {
                 application.ttl = policies.ttl;
@@ -465,23 +501,23 @@ async fn get_application(
         }
     }
     application.host_uri = trunc_host_uri(&uri);
-    HttpResponse::Ok().json(&response::GetApplication { data: application })
+    Json(&response::GetApplication { data: application }).into_response()
 }
 
 /// `PATCH /{base}/api/v1/application/{applicationId}`
 async fn patch_application(
-    req: HttpRequest,
-    param: web::Path<ApplicationIdPath>,
-    body: web::Json<request::PatchApplicationBody>,
-    state: web::Data<State>,
-) -> impl Responder {
+    state: State<AppState>,
+    headers: HeaderMap,
+    Path(param): Path<ApplicationIdPath>,
+    Json(body): Json<request::PatchApplicationBody>,
+) -> impl IntoResponse {
     const FN_NAME: &'static str = "patch_application";
     let broker_base = state.broker_base.as_str();
     let client = state.client.clone();
-    let token = match req.headers().get(header::AUTHORIZATION) {
+    let token = match headers.get(header::AUTHORIZATION) {
         None => {
             let e = "missing Authorization".to_string();
-            return ErrResp::ErrParam(Some(e)).error_response();
+            return ErrResp::ErrParam(Some(e)).into_response();
         }
         Some(value) => value.clone(),
     };
@@ -494,7 +530,7 @@ async fn patch_application(
         && data.length.is_none()
         && data.password.is_none()
     {
-        return ErrResp::ErrParam(Some("at least one parameter".to_string())).error_response();
+        return ErrResp::ErrParam(Some("at least one parameter".to_string())).into_response();
     }
 
     let (application, uri, hostname) = match get_application_inner(
@@ -518,19 +554,19 @@ async fn patch_application(
     let mut patch_host: Option<PatchHost> = None;
     if let Some(host) = data.host_uri.as_ref() {
         if !strings::is_uri(host) {
-            return ErrResp::ErrParam(Some("invalid `hostUri`".to_string())).error_response();
+            return ErrResp::ErrParam(Some("invalid `hostUri`".to_string())).into_response();
         }
         // Change to the new broker host.
         if !cmp_host_uri(application.host_uri.as_str(), host.as_str()) {
             let password = match data.password.as_ref() {
                 None => {
                     let e = "missing `password`".to_string();
-                    return ErrResp::ErrParam(Some(e)).error_response();
+                    return ErrResp::ErrParam(Some(e)).into_response();
                 }
                 Some(password) => match password.len() {
                     0 => {
                         let e = "missing `password`".to_string();
-                        return ErrResp::ErrParam(Some(e)).error_response();
+                        return ErrResp::ErrParam(Some(e)).into_response();
                     }
                     _ => password,
                 },
@@ -538,12 +574,12 @@ async fn patch_application(
             let mut new_host_uri = match Url::parse(host.as_str()) {
                 Err(e) => {
                     let e = format!("invalid `hostUri`: {}", e);
-                    return ErrResp::ErrParam(Some(e)).error_response();
+                    return ErrResp::ErrParam(Some(e)).into_response();
                 }
                 Ok(uri) => match uri.host_str() {
                     None => {
                         let e = "invalid `hostUri`".to_string();
-                        return ErrResp::ErrParam(Some(e)).error_response();
+                        return ErrResp::ErrParam(Some(e)).into_response();
                     }
                     Some(_) => uri,
                 },
@@ -582,7 +618,7 @@ async fn patch_application(
             .request(reqwest::Method::PATCH, uri)
             .header(reqwest::header::AUTHORIZATION, &token)
             .json(&request::PatchApplicationBody { data: patch_data });
-        if let Some(content_type) = req.headers().get(header::CONTENT_TYPE) {
+        if let Some(content_type) = headers.get(header::CONTENT_TYPE) {
             builder = builder.header(reqwest::header::CONTENT_TYPE, content_type);
         }
         let api_req = match builder.build() {
@@ -590,7 +626,7 @@ async fn patch_application(
                 clear_patch_host(FN_NAME, &state, &patch_host).await;
                 let e = format!("generate request error: {}", e);
                 error!("[{}] {}", FN_NAME, e);
-                return ErrResp::ErrRsc(Some(e)).error_response();
+                return ErrResp::ErrRsc(Some(e)).into_response();
             }
             Ok(req) => req,
         };
@@ -599,7 +635,7 @@ async fn patch_application(
                 clear_patch_host(FN_NAME, &state, &patch_host).await;
                 let e = format!("execute request error: {}", e);
                 error!("[{}] {}", FN_NAME, e);
-                return ErrResp::ErrIntMsg(Some(e)).error_response();
+                return ErrResp::ErrIntMsg(Some(e)).into_response();
             }
             Ok(resp) => resp,
         };
@@ -607,14 +643,18 @@ async fn patch_application(
         let status_code = api_resp.status();
         if status_code != StatusCode::NO_CONTENT {
             clear_patch_host(FN_NAME, &state, &patch_host).await;
-            let mut resp = HttpResponseBuilder::new(status_code);
-            if let Some(content_type) = api_resp.headers().get(header::CONTENT_TYPE) {
-                resp.insert_header((header::CONTENT_TYPE, content_type.clone()));
+            let mut resp_builder = Response::builder().status(status_code);
+            for (k, v) in api_resp.headers() {
+                resp_builder = resp_builder.header(k, v);
             }
-            if let Some(auth) = api_resp.headers().get(header::WWW_AUTHENTICATE) {
-                resp.insert_header((header::WWW_AUTHENTICATE, auth.clone()));
+            match resp_builder.body(Body::from_stream(api_resp.bytes_stream())) {
+                Err(e) => {
+                    let e = format!("wrap response body error: {}", e);
+                    error!("[{}] {}", FN_NAME, e);
+                    return ErrResp::ErrIntMsg(Some(e)).into_response();
+                }
+                Ok(resp) => return resp,
             }
-            return resp.streaming(api_resp.bytes_stream());
         }
     }
 
@@ -625,16 +665,16 @@ async fn patch_application(
             username: host.username.as_str(),
         };
         let _ = clear_queue_rsc(FN_NAME, &state, &resource).await;
-        return HttpResponse::NoContent().finish();
+        return StatusCode::NO_CONTENT.into_response();
     } else if data.ttl.is_none() && data.length.is_none() && data.password.is_none() {
-        return HttpResponse::NoContent().finish();
+        return StatusCode::NO_CONTENT.into_response();
     }
 
     // Update broker information without changing hostUri.
     if let Some(password) = data.password.as_ref() {
         if password.len() == 0 {
             let e = "missing `password`".to_string();
-            return ErrResp::ErrParam(Some(e)).error_response();
+            return ErrResp::ErrParam(Some(e)).into_response();
         }
     }
     let unit_code = application.unit_code.as_str();
@@ -655,7 +695,7 @@ async fn patch_application(
                     {
                         let e = format!("patch RabbitMQ error: {}", e);
                         error!("[{}] {}", FN_NAME, e);
-                        return ErrResp::ErrIntMsg(Some(e)).error_response();
+                        return ErrResp::ErrIntMsg(Some(e)).into_response();
                     }
                 }
                 if let Some(password) = data.password.as_ref() {
@@ -665,7 +705,7 @@ async fn patch_application(
                     {
                         let e = format!("patch RabbitMQ password error: {}", e);
                         error!("[{}] {}", FN_NAME, e);
-                        return ErrResp::ErrIntMsg(Some(e)).error_response();
+                        return ErrResp::ErrIntMsg(Some(e)).into_response();
                     }
                 }
             }
@@ -679,7 +719,7 @@ async fn patch_application(
                     {
                         let e = format!("patch EMQX password error: {}", e);
                         error!("[{}] {}", FN_NAME, e);
-                        return ErrResp::ErrIntMsg(Some(e)).error_response();
+                        return ErrResp::ErrIntMsg(Some(e)).into_response();
                     }
                 }
             }
@@ -688,15 +728,15 @@ async fn patch_application(
         _ => {}
     }
 
-    HttpResponse::NoContent().finish()
+    StatusCode::NO_CONTENT.into_response()
 }
 
 /// `DELETE /{base}/api/v1/application/{applicationId}`
 async fn delete_application(
-    mut req: HttpRequest,
-    param: web::Path<ApplicationIdPath>,
-    state: web::Data<State>,
-) -> impl Responder {
+    state: State<AppState>,
+    Path(param): Path<ApplicationIdPath>,
+    req: Request,
+) -> impl IntoResponse {
     const FN_NAME: &'static str = "delete_application";
     let broker_base = state.broker_base.as_str();
     let application_id = param.application_id.as_str();
@@ -705,7 +745,7 @@ async fn delete_application(
     let token = match req.headers().get(header::AUTHORIZATION) {
         None => {
             let e = "missing Authorization".to_string();
-            return ErrResp::ErrParam(Some(e)).error_response();
+            return ErrResp::ErrParam(Some(e)).into_response();
         }
         Some(value) => value.clone(),
     };
@@ -716,7 +756,7 @@ async fn delete_application(
             Ok((application, uri, host)) => (application, uri, host),
         };
 
-    let resp = api_bridge(FN_NAME, &client, &mut req, api_path.as_str(), None).await;
+    let resp = api_bridge(FN_NAME, &client, req, api_path.as_str()).await;
     if !resp.status().is_success() {
         return resp;
     }
@@ -733,22 +773,22 @@ async fn delete_application(
         return e;
     }
 
-    HttpResponse::NoContent().finish()
+    StatusCode::NO_CONTENT.into_response()
 }
 
 /// `GET /{base}/api/v1/application/{applicationId}/stats`
 async fn get_application_stats(
-    req: HttpRequest,
-    param: web::Path<ApplicationIdPath>,
-    state: web::Data<State>,
-) -> impl Responder {
+    state: State<AppState>,
+    Path(param): Path<ApplicationIdPath>,
+    req: Request,
+) -> impl IntoResponse {
     const FN_NAME: &'static str = "get_application";
     let broker_base = state.broker_base.as_str();
     let client = state.client.clone();
     let token = match req.headers().get(header::AUTHORIZATION) {
         None => {
             let e = "missing Authorization".to_string();
-            return ErrResp::ErrParam(Some(e)).error_response();
+            return ErrResp::ErrParam(Some(e)).into_response();
         }
         Some(value) => value.clone(),
     };
@@ -787,7 +827,7 @@ async fn get_application_stats(
                     },
                     Err(e) => {
                         error!("[{}] get uldata stats error: {}", FN_NAME, e);
-                        return e.error_response();
+                        return e.into_response();
                     }
                     Ok(stats) => response::Stats {
                         consumers: stats.consumers,
@@ -807,7 +847,7 @@ async fn get_application_stats(
                     },
                     Err(e) => {
                         error!("[{}] get dldata-resp stats error: {}", FN_NAME, e);
-                        return e.error_response();
+                        return e.into_response();
                     }
                     Ok(stats) => response::Stats {
                         consumers: stats.consumers,
@@ -827,7 +867,7 @@ async fn get_application_stats(
                     },
                     Err(e) => {
                         error!("[{}] get dldata-result stats error: {}", FN_NAME, e);
-                        return e.error_response();
+                        return e.into_response();
                     }
                     Ok(stats) => response::Stats {
                         consumers: stats.consumers,
@@ -850,7 +890,7 @@ async fn get_application_stats(
                     uldata: match emqx::stats(&client, opts, host, username, "uldata").await {
                         Err(e) => {
                             error!("[{}] get uldata stats error: {}", FN_NAME, e);
-                            return e.error_response();
+                            return e.into_response();
                         }
                         Ok(stats) => response::Stats {
                             consumers: stats.consumers,
@@ -864,7 +904,7 @@ async fn get_application_stats(
                     {
                         Err(e) => {
                             error!("[{}] get dldata-resp stats error: {}", FN_NAME, e);
-                            return e.error_response();
+                            return e.into_response();
                         }
                         Ok(stats) => response::Stats {
                             consumers: stats.consumers,
@@ -878,7 +918,7 @@ async fn get_application_stats(
                     {
                         Err(e) => {
                             error!("[{}] get dldata-result stats error: {}", FN_NAME, e);
-                            return e.error_response();
+                            return e.into_response();
                         }
                         Ok(stats) => response::Stats {
                             consumers: stats.consumers,
@@ -904,37 +944,37 @@ async fn get_application_stats(
         _ => {
             let e = format!("unsupport scheme {}", scheme);
             error!("[{}] {}", FN_NAME, e);
-            return ErrResp::ErrUnknown(Some(e)).error_response();
+            return ErrResp::ErrUnknown(Some(e)).into_response();
         }
     };
-    HttpResponse::Ok().json(&response::GetApplicationStats { data })
+    Json(&response::GetApplicationStats { data }).into_response()
 }
 
 /// `POST /{base}/api/v1/application/{applicationId}/dldata`
 async fn post_application_dldata(
-    req: HttpRequest,
-    param: web::Path<ApplicationIdPath>,
-    body: web::Json<request::PostApplicationDlDataBody>,
-    state: web::Data<State>,
-) -> impl Responder {
+    state: State<AppState>,
+    headers: HeaderMap,
+    Path(param): Path<ApplicationIdPath>,
+    Json(body): Json<request::PostApplicationDlDataBody>,
+) -> impl IntoResponse {
     const FN_NAME: &'static str = "post_application_dldata";
     let broker_base = state.broker_base.as_str();
     let client = state.client.clone();
-    let token = match req.headers().get(header::AUTHORIZATION) {
+    let token = match headers.get(header::AUTHORIZATION) {
         None => {
             let e = "missing Authorization".to_string();
-            return ErrResp::ErrParam(Some(e)).error_response();
+            return ErrResp::ErrParam(Some(e)).into_response();
         }
         Some(value) => value.clone(),
     };
 
     if body.data.device_id.len() == 0 {
         let e = "empty `deviceId` is invalid".to_string();
-        return ErrResp::ErrParam(Some(e)).error_response();
+        return ErrResp::ErrParam(Some(e)).into_response();
     }
     if let Err(e) = hex::decode(body.data.payload.as_str()) {
         let e = format!("`payload` is not hexadecimal string: {}", e);
-        return ErrResp::ErrParam(Some(e)).error_response();
+        return ErrResp::ErrParam(Some(e)).into_response();
     }
 
     let (application, uri, hostname) = match get_application_inner(
@@ -966,7 +1006,7 @@ async fn post_application_dldata(
                     ErrReq::DEVICE_NOT_EXIST.1,
                     None,
                 )
-                .error_response()
+                .into_response()
             }
             Some(_) => (),
         },
@@ -983,7 +1023,7 @@ async fn post_application_dldata(
         Err(e) => {
             let e = format!("encode JSON error: {}", e);
             error!("[{}] {}", FN_NAME, e);
-            return ErrResp::ErrRsc(Some(e)).error_response();
+            return ErrResp::ErrRsc(Some(e)).into_response();
         }
         Ok(payload) => general_purpose::STANDARD.encode(payload),
     };
@@ -1000,7 +1040,7 @@ async fn post_application_dldata(
                 rabbitmq::publish_message(&client, opts, hostname, username, "dldata", payload)
                     .await
             {
-                return e.error_response();
+                return e.into_response();
             }
         }
         "mqtt" | "mqtts" => match &state.mqtt {
@@ -1015,21 +1055,21 @@ async fn post_application_dldata(
                     emqx::publish_message(&client, opts, hostname, username, "dldata", payload)
                         .await
                 {
-                    return e.error_response();
+                    return e.into_response();
                 }
             }
             MqttState::Rumqttd => {
                 let e = "not support now".to_string();
-                return ErrResp::ErrParam(Some(e)).error_response();
+                return ErrResp::ErrParam(Some(e)).into_response();
             }
         },
         _ => {
             let e = format!("unsupport scheme {}", scheme);
             error!("[{}] {}", FN_NAME, e);
-            return ErrResp::ErrUnknown(Some(e)).error_response();
+            return ErrResp::ErrUnknown(Some(e)).into_response();
         }
     }
-    HttpResponse::NoContent().finish()
+    StatusCode::NO_CONTENT.into_response()
 }
 
 async fn get_application_inner(
@@ -1038,7 +1078,7 @@ async fn get_application_inner(
     broker_base: &str,
     application_id: &str,
     token: &HeaderValue,
-) -> Result<(response::GetApplicationData, Url, String), HttpResponse> {
+) -> Result<(response::GetApplicationData, Url, String), Response> {
     let uri = format!("{}/api/v1/application/{}", broker_base, application_id);
     let resp = get_stream_resp(fn_name, token, &client, uri.as_str()).await?;
 
@@ -1046,7 +1086,7 @@ async fn get_application_inner(
         Err(e) => {
             let e = format!("wrong response of application: {}", e);
             error!("[{}] {}", fn_name, e);
-            return Err(ErrResp::ErrIntMsg(Some(e)).error_response());
+            return Err(ErrResp::ErrIntMsg(Some(e)).into_response());
         }
         Ok(application) => application.data,
     };
@@ -1054,7 +1094,7 @@ async fn get_application_inner(
         Err(e) => {
             let e = format!("unexpected hostUri: {}", e);
             error!("[{}] {}", fn_name, e);
-            return Err(ErrResp::ErrUnknown(Some(e)).error_response());
+            return Err(ErrResp::ErrUnknown(Some(e)).into_response());
         }
         Ok(uri) => uri,
     };
@@ -1062,9 +1102,50 @@ async fn get_application_inner(
         None => {
             let e = "unexpected hostUri".to_string();
             error!("[{}] {}", fn_name, e);
-            return Err(ErrResp::ErrUnknown(Some(e)).error_response());
+            return Err(ErrResp::ErrUnknown(Some(e)).into_response());
         }
         Some(host) => host.to_string(),
     };
     Ok((application, uri, host))
+}
+
+async fn check_application_code_inner(
+    fn_name: &str,
+    client: &reqwest::Client,
+    broker_base: &str,
+    unit_id: &str,
+    code: &str,
+    token: &HeaderValue,
+) -> Result<u64, Response> {
+    let uri = format!("{}/api/v1/application/count", broker_base);
+    let req = match client
+        .request(reqwest::Method::GET, uri)
+        .header(reqwest::header::AUTHORIZATION, token)
+        .query(&[("unit", unit_id), ("code", code)])
+        .build()
+    {
+        Err(e) => {
+            let e = format!("generate request error: {}", e);
+            error!("[{}] {}", fn_name, e);
+            return Err(ErrResp::ErrRsc(Some(e)).into_response());
+        }
+        Ok(req) => req,
+    };
+    let resp = match client.execute(req).await {
+        Err(e) => {
+            let e = format!("execute request error: {}", e);
+            error!("[{}] {}", fn_name, e);
+            return Err(ErrResp::ErrIntMsg(Some(e)).into_response());
+        }
+        Ok(resp) => resp,
+    };
+
+    match resp.json::<response::GetCount>().await {
+        Err(e) => {
+            let e = format!("wrong response of application: {}", e);
+            error!("[{}] {}", fn_name, e);
+            Err(ErrResp::ErrIntMsg(Some(e)).into_response())
+        }
+        Ok(data) => Ok(data.data.count),
+    }
 }

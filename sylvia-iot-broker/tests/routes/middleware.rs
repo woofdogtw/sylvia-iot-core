@@ -1,11 +1,11 @@
 use std::{cmp::Ordering, collections::HashMap, error::Error as StdError};
 
-use actix_web::{
-    http::{header, Method, StatusCode},
-    middleware::NormalizePath,
-    test::{self, TestRequest},
-    web, App, HttpMessage, HttpRequest, HttpResponse, Responder,
+use axum::{
+    http::{header, HeaderValue, Method, StatusCode},
+    response::IntoResponse,
+    routing, Extension, Router,
 };
+use axum_test::TestServer;
 use chrono::Utc;
 use laboratory::{describe, expect, SpecContext, Suite};
 
@@ -84,24 +84,22 @@ fn test_200(context: &mut SpecContext<TestState>) -> Result<(), String> {
     expect(result.is_ok()).to_equal(true)?;
 
     let role_scopes_root: HashMap<Method, RoleScopeType> = HashMap::new();
-    let mut app = runtime.block_on(async {
-        test::init_service(
-            App::new()
-                .wrap(NormalizePath::trim())
-                .wrap(AuthService::new(auth_uri.clone(), role_scopes_root))
-                .route("/", web::get().to(dummy_handler)),
-        )
-        .await
-    });
+    let app = Router::new()
+        .route("/", routing::get(test_200_handler))
+        .layer(AuthService::new(auth_uri.clone(), role_scopes_root));
+    let server = match TestServer::new(app) {
+        Err(e) => return Err(format!("new server error: {}", e)),
+        Ok(server) => server,
+    };
 
-    let req = TestRequest::get()
-        .uri("/")
-        .insert_header((header::AUTHORIZATION, format!("Bearer token")))
-        .to_request();
-    let resp = runtime.block_on(async { test::call_service(&mut app, req).await });
-    let status = resp.status();
+    let req = server.get("/").add_header(
+        header::AUTHORIZATION,
+        HeaderValue::from_str("Bearer token").unwrap(),
+    );
+    let resp = runtime.block_on(async { req.await });
+    let status = resp.status_code();
     if status != StatusCode::NO_CONTENT {
-        let body = runtime.block_on(async { test::read_body(resp).await });
+        let body = resp.text();
         return Err(format!("status {}, body: {:?}", status, body));
     }
     Ok(())
@@ -114,19 +112,30 @@ fn test_400(context: &mut SpecContext<TestState>) -> Result<(), String> {
     let auth_uri = state.auth_uri.as_ref().unwrap();
 
     let role_scopes_root: HashMap<Method, RoleScopeType> = HashMap::new();
-    let mut app = runtime.block_on(async {
-        test::init_service(
-            App::new()
-                .wrap(NormalizePath::trim())
-                .wrap(AuthService::new(auth_uri.clone(), role_scopes_root))
-                .route("/", web::get().to(dummy_handler)),
-        )
-        .await
-    });
+    let app = Router::new()
+        .route("/", routing::get(dummy_handler))
+        .layer(AuthService::new(auth_uri.clone(), role_scopes_root));
+    let server = match TestServer::new(app) {
+        Err(e) => return Err(format!("new server error: {}", e)),
+        Ok(server) => server,
+    };
 
-    let req = TestRequest::get().uri("/").to_request();
-    let resp = runtime.block_on(async { test::call_service(&mut app, req).await });
-    expect(resp.status()).to_equal(StatusCode::BAD_REQUEST)
+    let req = server.get("/");
+    let resp = runtime.block_on(async { req.await });
+    expect(resp.status_code()).to_equal(StatusCode::BAD_REQUEST)?;
+
+    let req = server
+        .get("/")
+        .add_header(
+            header::AUTHORIZATION,
+            HeaderValue::from_str("Bearer test").unwrap(),
+        )
+        .add_header(
+            header::AUTHORIZATION,
+            HeaderValue::from_str("Bearer test").unwrap(),
+        );
+    let resp = runtime.block_on(async { req.await });
+    expect(resp.status_code()).to_equal(StatusCode::BAD_REQUEST)
 }
 
 fn test_401(context: &mut SpecContext<TestState>) -> Result<(), String> {
@@ -136,22 +145,20 @@ fn test_401(context: &mut SpecContext<TestState>) -> Result<(), String> {
     let auth_uri = state.auth_uri.as_ref().unwrap();
 
     let role_scopes_root: HashMap<Method, RoleScopeType> = HashMap::new();
-    let mut app = runtime.block_on(async {
-        test::init_service(
-            App::new()
-                .wrap(NormalizePath::trim())
-                .wrap(AuthService::new(auth_uri.clone(), role_scopes_root))
-                .route("/", web::get().to(dummy_handler)),
-        )
-        .await
-    });
+    let app = Router::new()
+        .route("/", routing::get(dummy_handler))
+        .layer(AuthService::new(auth_uri.clone(), role_scopes_root));
+    let server = match TestServer::new(app) {
+        Err(e) => return Err(format!("new server error: {}", e)),
+        Ok(server) => server,
+    };
 
-    let req = TestRequest::get()
-        .uri("/")
-        .insert_header((header::AUTHORIZATION, format!("Bearer test")))
-        .to_request();
-    let resp = runtime.block_on(async { test::call_service(&mut app, req).await });
-    expect(resp.status()).to_equal(StatusCode::UNAUTHORIZED)
+    let req = server.get("/").add_header(
+        header::AUTHORIZATION,
+        HeaderValue::from_str("Bearer test").unwrap(),
+    );
+    let resp = runtime.block_on(async { req.await });
+    expect(resp.status_code()).to_equal(StatusCode::UNAUTHORIZED)
 }
 
 fn test_403(context: &mut SpecContext<TestState>) -> Result<(), String> {
@@ -185,81 +192,79 @@ fn test_403(context: &mut SpecContext<TestState>) -> Result<(), String> {
     role_scopes_root.insert(Method::GET, (vec![], vec![]));
     role_scopes_root.insert(Method::POST, (vec![Role::MANAGER], vec![]));
     role_scopes_root.insert(Method::PATCH, (vec![], vec!["scope1".to_string()]));
-    let mut app = runtime.block_on(async {
-        test::init_service(
-            App::new()
-                .wrap(NormalizePath::trim())
-                .wrap(AuthService::new(auth_uri.clone(), role_scopes_root))
-                .service(
-                    web::resource("/")
-                        .route(web::get().to(dummy_handler))
-                        .route(web::post().to(dummy_handler))
-                        .route(web::patch().to(dummy_handler)),
-                ),
+    let app = Router::new()
+        .route(
+            "/",
+            routing::get(dummy_handler)
+                .post(dummy_handler)
+                .patch(dummy_handler),
         )
-        .await
-    });
+        .layer(AuthService::new(auth_uri.clone(), role_scopes_root));
+    let server = match TestServer::new(app) {
+        Err(e) => return Err(format!("new server error: {}", e)),
+        Ok(server) => server,
+    };
 
-    let req = TestRequest::get()
-        .uri("/")
-        .insert_header((header::AUTHORIZATION, format!("Bearer token1")))
-        .to_request();
-    let resp = runtime.block_on(async { test::call_service(&mut app, req).await });
-    let status = resp.status();
+    let req = server.get("/").add_header(
+        header::AUTHORIZATION,
+        HeaderValue::from_str("Bearer token1").unwrap(),
+    );
+    let resp = runtime.block_on(async { req.await });
+    let status = resp.status_code();
     if status != StatusCode::NO_CONTENT {
-        let body = runtime.block_on(async { test::read_body(resp).await });
+        let body = resp.text();
         return Err(format!("status1-1 {}, body: {:?}", status, body));
     }
-    let req = TestRequest::get()
-        .uri("/")
-        .insert_header((header::AUTHORIZATION, format!("Bearer token2")))
-        .to_request();
-    let resp = runtime.block_on(async { test::call_service(&mut app, req).await });
-    let status = resp.status();
+    let req = server.get("/").add_header(
+        header::AUTHORIZATION,
+        HeaderValue::from_str("Bearer token2").unwrap(),
+    );
+    let resp = runtime.block_on(async { req.await });
+    let status = resp.status_code();
     if status != StatusCode::NO_CONTENT {
-        let body = runtime.block_on(async { test::read_body(resp).await });
+        let body = resp.text();
         return Err(format!("status1-2 {}, body: {:?}", status, body));
     }
 
-    let req = TestRequest::post()
-        .uri("/")
-        .insert_header((header::AUTHORIZATION, format!("Bearer token1")))
-        .to_request();
-    let resp = runtime.block_on(async { test::call_service(&mut app, req).await });
-    let status = resp.status();
+    let req = server.post("/").add_header(
+        header::AUTHORIZATION,
+        HeaderValue::from_str("Bearer token1").unwrap(),
+    );
+    let resp = runtime.block_on(async { req.await });
+    let status = resp.status_code();
     if status != StatusCode::NO_CONTENT {
-        let body = runtime.block_on(async { test::read_body(resp).await });
+        let body = resp.text();
         return Err(format!("status2-1 {}, body: {:?}", status, body));
     }
-    let req = TestRequest::post()
-        .uri("/")
-        .insert_header((header::AUTHORIZATION, format!("Bearer token2")))
-        .to_request();
-    let resp = runtime.block_on(async { test::call_service(&mut app, req).await });
-    let status = resp.status();
+    let req = server.post("/").add_header(
+        header::AUTHORIZATION,
+        HeaderValue::from_str("Bearer token2").unwrap(),
+    );
+    let resp = runtime.block_on(async { req.await });
+    let status = resp.status_code();
     if status != StatusCode::FORBIDDEN {
-        let body = runtime.block_on(async { test::read_body(resp).await });
+        let body = resp.text();
         return Err(format!("status2-2 {}, body: {:?}", status, body));
     }
 
-    let req = TestRequest::patch()
-        .uri("/")
-        .insert_header((header::AUTHORIZATION, format!("Bearer token1")))
-        .to_request();
-    let resp = runtime.block_on(async { test::call_service(&mut app, req).await });
-    let status = resp.status();
+    let req = server.patch("/").add_header(
+        header::AUTHORIZATION,
+        HeaderValue::from_str("Bearer token1").unwrap(),
+    );
+    let resp = runtime.block_on(async { req.await });
+    let status = resp.status_code();
     if status != StatusCode::NO_CONTENT {
-        let body = runtime.block_on(async { test::read_body(resp).await });
+        let body = resp.text();
         return Err(format!("status3-1 {}, body: {:?}", status, body));
     }
-    let req = TestRequest::patch()
-        .uri("/")
-        .insert_header((header::AUTHORIZATION, format!("Bearer token2")))
-        .to_request();
-    let resp = runtime.block_on(async { test::call_service(&mut app, req).await });
-    let status = resp.status();
+    let req = server.patch("/").add_header(
+        header::AUTHORIZATION,
+        HeaderValue::from_str("Bearer token2").unwrap(),
+    );
+    let resp = runtime.block_on(async { req.await });
+    let status = resp.status_code();
     if status != StatusCode::FORBIDDEN {
-        let body = runtime.block_on(async { test::read_body(resp).await });
+        let body = resp.text();
         return Err(format!("status3-2 {}, body: {:?}", status, body));
     }
     Ok(())
@@ -272,52 +277,63 @@ fn test_503(context: &mut SpecContext<TestState>) -> Result<(), String> {
     let auth_uri = "http://localhost:65535";
 
     let role_scopes_root: HashMap<Method, RoleScopeType> = HashMap::new();
-    let mut app = runtime.block_on(async {
-        test::init_service(
-            App::new()
-                .wrap(NormalizePath::trim())
-                .wrap(AuthService::new(auth_uri.to_string(), role_scopes_root))
-                .route("/", web::get().to(dummy_handler)),
-        )
-        .await
-    });
+    let app = Router::new()
+        .route("/", routing::get(dummy_handler))
+        .layer(AuthService::new(auth_uri.to_string(), role_scopes_root));
+    let server = match TestServer::new(app) {
+        Err(e) => return Err(format!("new server error: {}", e)),
+        Ok(server) => server,
+    };
 
-    let req = TestRequest::get()
-        .uri("/")
-        .insert_header((header::AUTHORIZATION, format!("Bearer test")))
-        .to_request();
-    let resp = runtime.block_on(async { test::call_service(&mut app, req).await });
-    expect(resp.status()).to_equal(StatusCode::SERVICE_UNAVAILABLE)
+    let req = server.get("/").add_header(
+        header::AUTHORIZATION,
+        HeaderValue::from_str("Bearer test").unwrap(),
+    );
+    let resp = runtime.block_on(async { req.await });
+    expect(resp.status_code()).to_equal(StatusCode::SERVICE_UNAVAILABLE)
 }
 
-async fn dummy_handler(req: HttpRequest) -> impl Responder {
-    match req.extensions_mut().get::<GetTokenInfoData>() {
-        None => {
-            return Err(ErrResp::Custom(450, "", None));
-        }
-        Some(data) => {
-            if data.user_id.as_str() != "user"
-                && data.user_id.as_str() != "user1"
-                && data.user_id.as_str() != "user2"
-            {
-                return Err(ErrResp::Custom(451, "", Some(data.user_id.clone())));
-            } else if data.client_id.as_str() != "client"
-                && data.client_id.as_str() != "client1"
-                && data.client_id.as_str() != "client2"
-            {
-                return Err(ErrResp::Custom(452, "", Some(data.client_id.clone())));
-            }
-            let mut found = false;
-            for (k, v) in data.roles.iter() {
-                if k.as_str().cmp(Role::MANAGER) == Ordering::Equal && *v {
-                    found = true;
-                    break;
-                }
-            }
-            if data.user_id.as_str() != "user2" && !found {
-                return Err(ErrResp::Custom(453, "", None));
-            }
+async fn dummy_handler(Extension(token_info): Extension<GetTokenInfoData>) -> impl IntoResponse {
+    if token_info.user_id.as_str() != "user"
+        && token_info.user_id.as_str() != "user1"
+        && token_info.user_id.as_str() != "user2"
+    {
+        return Err(ErrResp::Custom(451, "", Some(token_info.user_id.clone())));
+    } else if token_info.client_id.as_str() != "client"
+        && token_info.client_id.as_str() != "client1"
+        && token_info.client_id.as_str() != "client2"
+    {
+        return Err(ErrResp::Custom(452, "", Some(token_info.client_id.clone())));
+    }
+    let mut found = false;
+    for (k, v) in token_info.roles.iter() {
+        if k.as_str().cmp(Role::MANAGER) == Ordering::Equal && *v {
+            found = true;
+            break;
         }
     }
-    Ok(HttpResponse::NoContent().finish())
+    if token_info.user_id.as_str() != "user2" && !found {
+        return Err(ErrResp::Custom(453, "", None));
+    }
+    Ok(StatusCode::NO_CONTENT)
+}
+
+async fn test_200_handler(Extension(token_info): Extension<GetTokenInfoData>) -> impl IntoResponse {
+    if token_info.user_id.as_str() != "user" {
+        return Err(ErrResp::ErrUnknown(Some(format!(
+            "wrong user: {}",
+            token_info.user_id
+        ))));
+    } else if token_info.client_id.as_str() != "client" {
+        return Err(ErrResp::ErrUnknown(Some(format!(
+            "wrong client: {}",
+            token_info.client_id
+        ))));
+    } else if token_info.token.as_str() != "token" {
+        return Err(ErrResp::ErrUnknown(Some(format!(
+            "wrong token: {}",
+            token_info.token
+        ))));
+    }
+    Ok(StatusCode::NO_CONTENT)
 }

@@ -191,7 +191,7 @@ impl GmqQueue for AmqpQueue {
         Ok(())
     }
 
-    async fn close(&mut self) -> Result<(), Box<dyn StdError>> {
+    async fn close(&mut self) -> Result<(), Box<dyn StdError + Send + Sync>> {
         match { self.ev_loop.lock().unwrap().take() } {
             None => return Ok(()),
             Some(handle) => handle.abort(),
@@ -221,7 +221,7 @@ impl GmqQueue for AmqpQueue {
         Ok(())
     }
 
-    async fn send_msg(&self, payload: Vec<u8>) -> Result<(), Box<dyn StdError>> {
+    async fn send_msg(&self, payload: Vec<u8>) -> Result<(), Box<dyn StdError + Send + Sync>> {
         if self.opts.is_recv {
             return Err(Box::new(Error::QueueIsReceiver));
         }
@@ -275,7 +275,7 @@ impl Message for AmqpMessage {
         &self.content
     }
 
-    async fn ack(&self) -> Result<(), Box<dyn StdError>> {
+    async fn ack(&self) -> Result<(), Box<dyn StdError + Send + Sync>> {
         let args = BasicAckArguments {
             delivery_tag: self.delivery_tag,
             ..Default::default()
@@ -284,7 +284,7 @@ impl Message for AmqpMessage {
         Ok(())
     }
 
-    async fn nack(&self) -> Result<(), Box<dyn StdError>> {
+    async fn nack(&self) -> Result<(), Box<dyn StdError + Send + Sync>> {
         let args = BasicNackArguments {
             delivery_tag: self.delivery_tag,
             requeue: true,

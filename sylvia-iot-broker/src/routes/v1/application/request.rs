@@ -25,12 +25,14 @@ pub struct PostApplicationData {
 #[derive(Deserialize)]
 pub struct GetApplicationCountQuery {
     pub unit: Option<String>,
+    pub code: Option<String>,
     pub contains: Option<String>,
 }
 
 #[derive(Clone, Deserialize)]
 pub struct GetApplicationListQuery {
     pub unit: Option<String>,
+    pub code: Option<String>,
     pub contains: Option<String>,
     pub offset: Option<u64>,
     pub limit: Option<u64>,

@@ -1,14 +1,14 @@
 use std::path::Path;
 
-use actix_web::{web, HttpResponse, Responder};
+use axum::{extract::State, response::IntoResponse};
 use chrono::Utc;
-use sylvia_iot_sdk::util::{err::ErrResp, strings};
+use sylvia_iot_sdk::util::{err::ErrResp, http::Json, strings};
 use tokio::task;
 
-use super::{super::super::State, response};
+use super::{super::super::State as AppState, response};
 
 /// `GET /{base}/api/v1/sys/usage`
-pub async fn get_usage(state: web::Data<State>) -> impl Responder {
+pub async fn get_usage(State(state): State<AppState>) -> impl IntoResponse {
     let sys_info = state.sys_info.clone();
     let disk_info = state.disk_info.clone();
 
@@ -52,13 +52,13 @@ pub async fn get_usage(state: web::Data<State>) -> impl Responder {
     .await;
     match result {
         Err(e) => Err(ErrResp::ErrRsc(Some(format!("get resource error: {}", e)))),
-        Ok(result) => Ok(HttpResponse::Ok().json(&result)),
+        Ok(result) => Ok(Json(result)),
     }
 }
 
 /// `GET /{base}/api/v1/sys/time`
-pub async fn get_time() -> impl Responder {
-    HttpResponse::Ok().json(response::GetTime {
+pub async fn get_time() -> impl IntoResponse {
+    Json(response::GetTime {
         data: response::GetTimeData {
             time: strings::time_str(&Utc::now()),
         },
