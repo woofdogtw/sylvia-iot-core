@@ -1,93 +1,52 @@
-use actix_web::{web, HttpMessage, HttpRequest, HttpResponse, Responder};
+use axum::{
+    extract::{Request, State},
+    http::{header, StatusCode},
+    response::IntoResponse,
+    Extension,
+};
+use axum_extra::headers::authorization::{Bearer, Credentials};
 use log::error;
 
-use sylvia_iot_corelib::err::ErrResp;
+use sylvia_iot_corelib::{err::ErrResp, http::Json};
 
-use super::{super::super::State, response};
-use crate::models::{
-    access_token::QueryCond as AccessTokenQueryCond,
-    authorization_code::QueryCond as AuthCodeQueryCond, client::Client,
-    refresh_token::QueryCond as RefreshTokenQueryCond, user::User,
-};
+use super::{super::super::State as AppState, response};
+use crate::models::{access_token::QueryCond as AccessTokenQueryCond, client::Client, user::User};
 
 /// `GET /{base}/api/v1/auth/tokeninfo`
-pub async fn get_tokeninfo(req: HttpRequest) -> impl Responder {
-    const FN_NAME: &'static str = "get_tokeninfo";
-
-    let user_id;
-    let account;
-    let name;
-    let roles;
-    let client_id;
-    let scopes;
-
-    match req.extensions_mut().get::<User>() {
-        None => {
-            error!("[{}] user not found", FN_NAME);
-            return Err(ErrResp::ErrUnknown(Some("user not found".to_string())));
-        }
-        Some(user) => {
-            user_id = user.user_id.clone();
-            account = user.account.clone();
-            name = user.name.clone();
-            roles = user.roles.clone();
-        }
-    }
-    match req.extensions_mut().get::<Client>() {
-        None => {
-            error!("[{}] client not found", FN_NAME);
-            return Err(ErrResp::ErrUnknown(Some("client not found".to_string())));
-        }
-        Some(client) => {
-            client_id = client.client_id.clone();
-            scopes = client.scopes.clone();
-        }
-    }
-
-    Ok(HttpResponse::Ok().json(response::GetTokenInfo {
+pub async fn get_tokeninfo(
+    Extension(user): Extension<User>,
+    Extension(client): Extension<Client>,
+) -> impl IntoResponse {
+    Json(response::GetTokenInfo {
         data: response::GetTokenInfoData {
-            user_id,
-            account,
-            name,
-            roles,
-            client_id,
-            scopes,
+            user_id: user.user_id,
+            account: user.account,
+            name: user.name,
+            roles: user.roles,
+            client_id: client.client_id,
+            scopes: client.scopes,
         },
-    }))
+    })
 }
 
 /// `POST /{base}/api/v1/auth/logout`
-pub async fn post_logout(req: HttpRequest, state: web::Data<State>) -> impl Responder {
+pub async fn post_logout(state: State<AppState>, req: Request) -> impl IntoResponse {
     const FN_NAME: &'static str = "post_logout";
 
-    let user_id = match req.extensions_mut().get::<User>() {
+    let token = match req.headers().get(header::AUTHORIZATION) {
         None => {
-            error!("[{}] user not found", FN_NAME);
-            return Err(ErrResp::ErrUnknown(Some("user not found".to_string())));
+            return Err(ErrResp::ErrUnknown(Some(
+                "no Authorization header".to_string(),
+            )))
         }
-        Some(user) => user.user_id.clone(),
+        Some(auth) => match Bearer::decode(auth) {
+            None => return Err(ErrResp::ErrUnknown(Some("no Bearer token".to_string()))),
+            Some(token) => token.token().to_string(),
+        },
     };
 
-    let cond = AuthCodeQueryCond {
-        user_id: Some(user_id.as_str()),
-        ..Default::default()
-    };
-    if let Err(e) = state.model.authorization_code().del(&cond).await {
-        error!("[{}] clear authorization code error: {}", FN_NAME, e);
-        let e = ErrResp::ErrDb(Some(format!("clear authorization code error: {}", e)));
-        return Err(e);
-    }
-    let cond = RefreshTokenQueryCond {
-        user_id: Some(user_id.as_str()),
-        ..Default::default()
-    };
-    if let Err(e) = state.model.refresh_token().del(&cond).await {
-        error!("[{}] clear refresh token error: {}", FN_NAME, e);
-        let e = ErrResp::ErrDb(Some(format!("clear refresh token error: {}", e)));
-        return Err(e);
-    }
     let cond = AccessTokenQueryCond {
-        user_id: Some(user_id.as_str()),
+        access_token: Some(token.as_str()),
         ..Default::default()
     };
     if let Err(e) = state.model.access_token().del(&cond).await {
@@ -96,5 +55,5 @@ pub async fn post_logout(req: HttpRequest, state: web::Data<State>) -> impl Resp
         return Err(e);
     }
 
-    Ok(HttpResponse::NoContent().finish())
+    Ok(StatusCode::NO_CONTENT)
 }

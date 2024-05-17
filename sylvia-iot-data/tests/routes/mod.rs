@@ -1,10 +1,7 @@
 use std::collections::HashMap;
 
-use actix_web::{
-    http::StatusCode,
-    test::{self, TestRequest},
-    web, App,
-};
+use axum::{http::StatusCode, routing, Router};
+use axum_test::TestServer;
 use laboratory::{describe, expect, SpecContext, Suite};
 use reqwest;
 
@@ -75,9 +72,8 @@ fn remove_sqlite(path: &str) {
 }
 
 fn stop_auth_broker_svc(state: &TestState) {
-    let runtime = state.runtime.as_ref().unwrap();
     if let Some(svc) = state.auth_broker_svc.as_ref() {
-        runtime.block_on(async { svc.stop(false).await });
+        svc.abort();
     }
     let mut path = std::env::temp_dir();
     path.push(sylvia_iot_auth_config::DEF_SQLITE_PATH);
@@ -165,7 +161,7 @@ fn fn_new_service(context: &mut SpecContext<TestState>) -> Result<(), String> {
     let _ = routes::new_service(&routes::State {
         auth_base: config::DEF_AUTH.to_string(),
         broker_base: config::DEF_BROKER.to_string(),
-        scope_path: "test",
+        scope_path: "/test",
         client: reqwest::Client::new(),
         model,
         mq_conns: HashMap::<String, Connection>::new(),
@@ -182,15 +178,17 @@ fn api_get_version(context: &mut SpecContext<TestState>) -> Result<(), String> {
     const SERV_NAME: &'static str = env!("CARGO_PKG_NAME");
     const SERV_VER: &'static str = env!("CARGO_PKG_VERSION");
 
-    let mut app = runtime.block_on(async {
-        test::init_service(App::new().route("/version", web::get().to(routes::get_version))).await
-    });
+    let app = Router::new().route("/version", routing::get(routes::get_version));
+    let server = match TestServer::new(app) {
+        Err(e) => return Err(format!("new server error: {}", e)),
+        Ok(server) => server,
+    };
 
     // Default.
-    let req = TestRequest::get().uri("/version").to_request();
-    let resp = runtime.block_on(async { test::call_service(&mut app, req).await });
-    expect(resp.status()).to_equal(StatusCode::OK)?;
-    let body = runtime.block_on(async { test::read_body(resp).await });
+    let req = server.get("/version");
+    let resp = runtime.block_on(async { req.await });
+    expect(resp.status_code()).to_equal(StatusCode::OK)?;
+    let body = resp.text();
     let expect_body = format!(
         "{{\"data\":{{\"name\":\"{}\",\"version\":\"{}\"}}}}",
         SERV_NAME, SERV_VER
@@ -198,10 +196,10 @@ fn api_get_version(context: &mut SpecContext<TestState>) -> Result<(), String> {
     expect(body.as_ref()).to_equal(expect_body.as_str().as_bytes())?;
 
     // Invalid query.
-    let req = TestRequest::get().uri("/version?q=test").to_request();
-    let resp = runtime.block_on(async { test::call_service(&mut app, req).await });
-    expect(resp.status()).to_equal(StatusCode::OK)?;
-    let body = runtime.block_on(async { test::read_body(resp).await });
+    let req = server.get("/version").add_query_param("q", "test");
+    let resp = runtime.block_on(async { req.await });
+    expect(resp.status_code()).to_equal(StatusCode::OK)?;
+    let body = resp.text();
     let expect_body = format!(
         "{{\"data\":{{\"name\":\"{}\",\"version\":\"{}\"}}}}",
         SERV_NAME, SERV_VER
@@ -209,17 +207,17 @@ fn api_get_version(context: &mut SpecContext<TestState>) -> Result<(), String> {
     expect(body.as_ref()).to_equal(expect_body.as_str().as_bytes())?;
 
     // Query service name.
-    let req = TestRequest::get().uri("/version?q=name").to_request();
-    let resp = runtime.block_on(async { test::call_service(&mut app, req).await });
-    expect(resp.status()).to_equal(StatusCode::OK)?;
-    let body = runtime.block_on(async { test::read_body(resp).await });
+    let req = server.get("/version").add_query_param("q", "name");
+    let resp = runtime.block_on(async { req.await });
+    expect(resp.status_code()).to_equal(StatusCode::OK)?;
+    let body = resp.text();
     expect(body.as_ref()).to_equal(SERV_NAME.as_bytes())?;
 
     // Query service version.
-    let req = TestRequest::get().uri("/version?q=version").to_request();
-    let resp = runtime.block_on(async { test::call_service(&mut app, req).await });
-    expect(resp.status()).to_equal(StatusCode::OK)?;
-    let body = runtime.block_on(async { test::read_body(resp).await });
+    let req = server.get("/version").add_query_param("q", "version");
+    let resp = runtime.block_on(async { req.await });
+    expect(resp.status_code()).to_equal(StatusCode::OK)?;
+    let body = resp.text();
     expect(body.as_ref()).to_equal(SERV_VER.as_bytes())
 }
 

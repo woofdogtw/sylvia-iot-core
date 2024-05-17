@@ -504,9 +504,11 @@ Get application list count.
 
     GET /broker/api/v1/application/count?
         unit={specifiedUnitId}&
+        code={specifiedCode}&
         contains={word}
 
 - *string* `unit`: (**required for normal user**) To search applications of the specified unit ID.
+- *string* `code`: (**optional**) To search the specified code. This is case insensitive and excludes **contains**.
 - *string* `contains`: (**optional**) To search codes which contain the specified word. This is case insensitive.
 
 #### Response
@@ -536,6 +538,7 @@ Get application list.
 
     GET /broker/api/v1/application/list?
         unit={specifiedUnitId}&
+        code={specifiedCode}&
         contains={word}&
         offset={offset}&
         limit={limit}&
@@ -543,6 +546,7 @@ Get application list.
         format={responseFormat}
 
 - *string* `unit`: (**required for normal user**) To search applications of the specified unit ID.
+- *string* `code`: (**optional**) To search the specified code. This is case insensitive and excludes **contains**.
 - *string* `contains`: (**optional**) To search codes which contain the specified word. This is case insensitive.
 - *number* `offset`: (**optional**) Data offset. Default is **0**.
 - *number* `limit`: (**optional**) Number of items to list. **0** to list all data. Default is **100**.
@@ -775,10 +779,12 @@ Get network list count.
 
     GET /broker/api/v1/network/count?
         unit={specifiedUnitId}&
+        code={specifiedCode}&
         contains={word}
 
 - *string* `unit`: (**required for normal user**) To search networks of the specified unit ID.
     - (**for admin or manager only**) Empty string for get public network only.
+- *string* `code`: (**optional**) To search the specified code. This is case insensitive and excludes **contains**.
 - *string* `contains`: (**optional**) To search codes which contain the specified word. This is case insensitive.
 
 #### Response
@@ -806,6 +812,7 @@ Get network list.
 
     GET /broker/api/v1/network/list?
         unit={specifiedUnitId}&
+        code={specifiedCode}&
         contains={word}&
         offset={offset}&
         limit={limit}&
@@ -814,6 +821,7 @@ Get network list.
 
 - *string* `unit`: (**required for normal user**) To search networks of the specified unit ID.
     - (**for admin or manager only**) Empty string for get public network only.
+- *string* `code`: (**optional**) To search the specified code. This is case insensitive and excludes **contains**.
 - *string* `contains`: (**optional**) To search codes which contain the specified word. This is case insensitive.
 - *number* `offset`: (**optional**) Data offset. Default is **0**.
 - *number* `limit`: (**optional**) Number of items to list. **0** to list all data. Default is **100**.

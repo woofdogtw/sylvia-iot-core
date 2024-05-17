@@ -1,15 +1,13 @@
 use std::cmp::Ordering;
 
-use actix_web::{
-    http::{header, StatusCode},
-    middleware::NormalizePath,
-    test::{self, TestRequest},
-    App,
+use axum::{
+    http::{header, HeaderValue, Method, StatusCode},
+    Router,
 };
+use axum_test::TestServer;
 use chrono::{DateTime, TimeDelta, TimeZone, Utc};
 use laboratory::{expect, SpecContext};
 use serde_json::{Map, Value};
-use serde_urlencoded;
 use tokio::runtime::Runtime;
 
 use sylvia_iot_broker::routes;
@@ -223,8 +221,12 @@ pub fn get_count_invalid_token(context: &mut SpecContext<TestState>) -> Result<(
     let runtime = state.runtime.as_ref().unwrap();
     let routes_state = state.routes_state.as_ref().unwrap();
 
-    let req = TestRequest::get().uri("/broker/api/v1/dldata-buffer/count");
-    test_invalid_token(runtime, &routes_state, req)
+    test_invalid_token(
+        runtime,
+        &routes_state,
+        Method::GET,
+        "/broker/api/v1/dldata-buffer/count",
+    )
 }
 
 pub fn get_list(context: &mut SpecContext<TestState>) -> Result<(), String> {
@@ -876,8 +878,12 @@ pub fn get_list_invalid_token(context: &mut SpecContext<TestState>) -> Result<()
     let runtime = state.runtime.as_ref().unwrap();
     let routes_state = state.routes_state.as_ref().unwrap();
 
-    let req = TestRequest::get().uri("/broker/api/v1/dldata-buffer/list");
-    test_invalid_token(runtime, &routes_state, req)
+    test_invalid_token(
+        runtime,
+        &routes_state,
+        Method::GET,
+        "/broker/api/v1/dldata-buffer/list",
+    )
 }
 
 pub fn delete(context: &mut SpecContext<TestState>) -> Result<(), String> {
@@ -917,39 +923,40 @@ pub fn delete(context: &mut SpecContext<TestState>) -> Result<(), String> {
         "addr",
     )?;
 
-    let mut app = runtime.block_on(async {
-        test::init_service(
-            App::new()
-                .wrap(NormalizePath::trim())
-                .service(routes::new_service(&routes_state)),
-        )
-        .await
-    });
+    let app = Router::new().merge(routes::new_service(routes_state));
+    let server = match TestServer::new(app) {
+        Err(e) => return Err(format!("new server error: {}", e)),
+        Ok(server) => server,
+    };
 
-    let req = TestRequest::delete()
-        .uri("/broker/api/v1/dldata-buffer/id")
-        .insert_header((header::AUTHORIZATION, format!("Bearer {}", TOKEN_MANAGER)))
-        .to_request();
-    let resp = runtime.block_on(async { test::call_service(&mut app, req).await });
-    expect(resp.status()).to_equal(StatusCode::NO_CONTENT)?;
+    let req = server.delete("/broker/api/v1/dldata-buffer/id").add_header(
+        header::AUTHORIZATION,
+        HeaderValue::from_str(format!("Bearer {}", TOKEN_MANAGER).as_str()).unwrap(),
+    );
+    let resp = runtime.block_on(async { req.await });
+    expect(resp.status_code()).to_equal(StatusCode::NO_CONTENT)?;
     let _ = get_dldata_buffer_model(runtime, &routes_state, "data1", true)?;
     let _ = get_dldata_buffer_model(runtime, &routes_state, "data2", true)?;
 
-    let req = TestRequest::delete()
-        .uri("/broker/api/v1/dldata-buffer/data1")
-        .insert_header((header::AUTHORIZATION, format!("Bearer {}", TOKEN_OWNER)))
-        .to_request();
-    let resp = runtime.block_on(async { test::call_service(&mut app, req).await });
-    expect(resp.status()).to_equal(StatusCode::NO_CONTENT)?;
+    let req = server
+        .delete("/broker/api/v1/dldata-buffer/data1")
+        .add_header(
+            header::AUTHORIZATION,
+            HeaderValue::from_str(format!("Bearer {}", TOKEN_OWNER).as_str()).unwrap(),
+        );
+    let resp = runtime.block_on(async { req.await });
+    expect(resp.status_code()).to_equal(StatusCode::NO_CONTENT)?;
     let _ = get_dldata_buffer_model(runtime, &routes_state, "data1", true)?;
     let _ = get_dldata_buffer_model(runtime, &routes_state, "data2", true)?;
 
-    let req = TestRequest::delete()
-        .uri("/broker/api/v1/dldata-buffer/data1")
-        .insert_header((header::AUTHORIZATION, format!("Bearer {}", TOKEN_MANAGER)))
-        .to_request();
-    let resp = runtime.block_on(async { test::call_service(&mut app, req).await });
-    expect(resp.status()).to_equal(StatusCode::NO_CONTENT)?;
+    let req = server
+        .delete("/broker/api/v1/dldata-buffer/data1")
+        .add_header(
+            header::AUTHORIZATION,
+            HeaderValue::from_str(format!("Bearer {}", TOKEN_MANAGER).as_str()).unwrap(),
+        );
+    let resp = runtime.block_on(async { req.await });
+    expect(resp.status_code()).to_equal(StatusCode::NO_CONTENT)?;
     let _ = get_dldata_buffer_model(runtime, &routes_state, "data1", false)?;
     let _ = get_dldata_buffer_model(runtime, &routes_state, "data2", true)?;
 
@@ -962,8 +969,12 @@ pub fn delete_invalid_token(context: &mut SpecContext<TestState>) -> Result<(), 
     let runtime = state.runtime.as_ref().unwrap();
     let routes_state = state.routes_state.as_ref().unwrap();
 
-    let req = TestRequest::delete().uri("/broker/api/v1/dldata-buffer/id");
-    test_invalid_token(runtime, &routes_state, req)
+    test_invalid_token(
+        runtime,
+        &routes_state,
+        Method::DELETE,
+        "/broker/api/v1/dldata-buffer/id",
+    )
 }
 
 fn test_get_count(
@@ -973,30 +984,22 @@ fn test_get_count(
     param: Option<&request::GetDlDataBufferCount>,
     expect_count: usize,
 ) -> Result<(), String> {
-    let mut app = runtime.block_on(async {
-        test::init_service(
-            App::new()
-                .wrap(NormalizePath::trim())
-                .service(routes::new_service(state)),
-        )
-        .await
-    });
-
-    let uri = match param {
-        None => "/broker/api/v1/dldata-buffer/count".to_string(),
-        Some(param) => format!(
-            "/broker/api/v1/dldata-buffer/count?{}",
-            serde_urlencoded::to_string(&param).unwrap()
-        ),
+    let app = Router::new().merge(routes::new_service(state));
+    let server = match TestServer::new(app) {
+        Err(e) => return Err(format!("new server error: {}", e)),
+        Ok(server) => server,
     };
-    let req = TestRequest::get()
-        .uri(uri.as_str())
-        .insert_header((header::AUTHORIZATION, format!("Bearer {}", token)))
-        .to_request();
-    let resp = runtime.block_on(async { test::call_service(&mut app, req).await });
-    expect(resp.status()).to_equal(StatusCode::OK)?;
-    let body: response::GetDlDataBufferCount =
-        runtime.block_on(async { test::read_body_json(resp).await });
+
+    let req = server
+        .get("/broker/api/v1/dldata-buffer/count")
+        .add_query_params(&param)
+        .add_header(
+            header::AUTHORIZATION,
+            HeaderValue::from_str(format!("Bearer {}", token).as_str()).unwrap(),
+        );
+    let resp = runtime.block_on(async { req.await });
+    expect(resp.status_code()).to_equal(StatusCode::OK)?;
+    let body: response::GetDlDataBufferCount = resp.json();
     expect(body.data.count).to_equal(expect_count)
 }
 
@@ -1007,30 +1010,22 @@ fn test_get_list(
     param: Option<&request::GetDlDataBufferList>,
     expect_count: usize,
 ) -> Result<(), String> {
-    let mut app = runtime.block_on(async {
-        test::init_service(
-            App::new()
-                .wrap(NormalizePath::trim())
-                .service(routes::new_service(state)),
-        )
-        .await
-    });
-
-    let uri = match param {
-        None => "/broker/api/v1/dldata-buffer/list".to_string(),
-        Some(param) => format!(
-            "/broker/api/v1/dldata-buffer/list?{}",
-            serde_urlencoded::to_string(&param).unwrap()
-        ),
+    let app = Router::new().merge(routes::new_service(state));
+    let server = match TestServer::new(app) {
+        Err(e) => return Err(format!("new server error: {}", e)),
+        Ok(server) => server,
     };
-    let req = TestRequest::get()
-        .uri(uri.as_str())
-        .insert_header((header::AUTHORIZATION, format!("Bearer {}", token)))
-        .to_request();
-    let resp = runtime.block_on(async { test::call_service(&mut app, req).await });
-    expect(resp.status()).to_equal(StatusCode::OK)?;
-    let body: response::GetDlDataBufferList =
-        runtime.block_on(async { test::read_body_json(resp).await });
+
+    let req = server
+        .get("/broker/api/v1/dldata-buffer/list")
+        .add_query_params(&param)
+        .add_header(
+            header::AUTHORIZATION,
+            HeaderValue::from_str(format!("Bearer {}", token).as_str()).unwrap(),
+        );
+    let resp = runtime.block_on(async { req.await });
+    expect(resp.status_code()).to_equal(StatusCode::OK)?;
+    let body: response::GetDlDataBufferList = resp.json();
     expect(body.data.len()).to_equal(expect_count)?;
 
     let now = Utc::now();
@@ -1075,14 +1070,11 @@ fn test_get_list_sort(
     param: &mut request::GetDlDataBufferList,
     expect_ids: &[&str],
 ) -> Result<(), String> {
-    let mut app = runtime.block_on(async {
-        test::init_service(
-            App::new()
-                .wrap(NormalizePath::trim())
-                .service(routes::new_service(state)),
-        )
-        .await
-    });
+    let app = Router::new().merge(routes::new_service(state));
+    let server = match TestServer::new(app) {
+        Err(e) => return Err(format!("new server error: {}", e)),
+        Ok(server) => server,
+    };
 
     if let Some(sorts) = param.sort_vec.as_ref() {
         let sorts: Vec<String> = sorts
@@ -1103,30 +1095,26 @@ fn test_get_list_sort(
         }
     }
 
-    let uri = format!(
-        "/broker/api/v1/dldata-buffer/list?{}",
-        serde_urlencoded::to_string(&param).unwrap()
-    );
-    let req = TestRequest::get()
-        .uri(uri.as_str())
-        .insert_header((header::AUTHORIZATION, format!("Bearer {}", token)))
-        .to_request();
-    let resp = runtime.block_on(async { test::call_service(&mut app, req).await });
-    if let Err(_) = expect(resp.status()).to_equal(StatusCode::OK) {
-        let body: ApiError = runtime.block_on(async { test::read_body_json(resp).await });
+    let req = server
+        .get("/broker/api/v1/dldata-buffer/list")
+        .add_query_params(&param)
+        .add_header(
+            header::AUTHORIZATION,
+            HeaderValue::from_str(format!("Bearer {}", token).as_str()).unwrap(),
+        );
+    let resp = runtime.block_on(async { req.await });
+    if let Err(_) = expect(resp.status_code()).to_equal(StatusCode::OK) {
+        let body: ApiError = resp.json();
         let message = match body.message.as_ref() {
             None => "",
             Some(message) => message.as_str(),
         };
         return Err(format!(
-            "response not 200: {}, {}, {}",
-            uri.as_str(),
-            body.code,
-            message
+            "response not 200: /broker/api/v1/dldata-buffer/list, {}, {}",
+            body.code, message
         ));
     }
-    let body: response::GetDlDataBufferList =
-        runtime.block_on(async { test::read_body_json(resp).await });
+    let body: response::GetDlDataBufferList = resp.json();
     expect(body.data.len()).to_equal(expect_ids.len())?;
 
     let mut index = 0;
@@ -1144,27 +1132,22 @@ fn test_get_list_offset_limit(
     param: &request::GetDlDataBufferList,
     expect_ids: Vec<i32>,
 ) -> Result<(), String> {
-    let mut app = runtime.block_on(async {
-        test::init_service(
-            App::new()
-                .wrap(NormalizePath::trim())
-                .service(routes::new_service(state)),
-        )
-        .await
-    });
+    let app = Router::new().merge(routes::new_service(state));
+    let server = match TestServer::new(app) {
+        Err(e) => return Err(format!("new server error: {}", e)),
+        Ok(server) => server,
+    };
 
-    let uri = format!(
-        "/broker/api/v1/dldata-buffer/list?{}",
-        serde_urlencoded::to_string(&param).unwrap()
-    );
-    let req = TestRequest::get()
-        .uri(uri.as_str())
-        .insert_header((header::AUTHORIZATION, format!("Bearer {}", token)))
-        .to_request();
-    let resp = runtime.block_on(async { test::call_service(&mut app, req).await });
-    expect(resp.status()).to_equal(StatusCode::OK)?;
-    let body: response::GetDlDataBufferList =
-        runtime.block_on(async { test::read_body_json(resp).await });
+    let req = server
+        .get("/broker/api/v1/dldata-buffer/list")
+        .add_query_params(&param)
+        .add_header(
+            header::AUTHORIZATION,
+            HeaderValue::from_str(format!("Bearer {}", token).as_str()).unwrap(),
+        );
+    let resp = runtime.block_on(async { req.await });
+    expect(resp.status_code()).to_equal(StatusCode::OK)?;
+    let body: response::GetDlDataBufferList = resp.json();
     expect(body.data.len()).to_equal(expect_ids.len())?;
 
     let mut index = 0;
@@ -1182,27 +1165,22 @@ fn test_get_list_format_array(
     param: &request::GetDlDataBufferList,
     expect_ids: Vec<i32>,
 ) -> Result<(), String> {
-    let mut app = runtime.block_on(async {
-        test::init_service(
-            App::new()
-                .wrap(NormalizePath::trim())
-                .service(routes::new_service(state)),
-        )
-        .await
-    });
+    let app = Router::new().merge(routes::new_service(state));
+    let server = match TestServer::new(app) {
+        Err(e) => return Err(format!("new server error: {}", e)),
+        Ok(server) => server,
+    };
 
-    let uri = format!(
-        "/broker/api/v1/dldata-buffer/list?{}",
-        serde_urlencoded::to_string(&param).unwrap()
-    );
-    let req = TestRequest::get()
-        .uri(uri.as_str())
-        .insert_header((header::AUTHORIZATION, format!("Bearer {}", token)))
-        .to_request();
-    let resp = runtime.block_on(async { test::call_service(&mut app, req).await });
-    expect(resp.status()).to_equal(StatusCode::OK)?;
-    let body: Vec<response::GetDlDataBufferListData> =
-        runtime.block_on(async { test::read_body_json(resp).await });
+    let req = server
+        .get("/broker/api/v1/dldata-buffer/list")
+        .add_query_params(&param)
+        .add_header(
+            header::AUTHORIZATION,
+            HeaderValue::from_str(format!("Bearer {}", token).as_str()).unwrap(),
+        );
+    let resp = runtime.block_on(async { req.await });
+    expect(resp.status_code()).to_equal(StatusCode::OK)?;
+    let body: Vec<response::GetDlDataBufferListData> = resp.json();
     expect(body.len()).to_equal(expect_ids.len())?;
 
     let mut index = 0;

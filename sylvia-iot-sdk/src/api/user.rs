@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use actix_web::web::Bytes;
+use bytes::Bytes;
 use chrono::{DateTime, Utc};
 use reqwest::{Method, StatusCode};
 use serde::{Deserialize, Serialize};

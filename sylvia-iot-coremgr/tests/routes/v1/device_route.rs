@@ -1,4 +1,4 @@
-use actix_web::test::TestRequest;
+use axum::http::Method;
 use laboratory::SpecContext;
 
 use super::{
@@ -13,8 +13,12 @@ pub fn post(context: &mut SpecContext<TestState>) -> Result<(), String> {
     let runtime = state.runtime.as_ref().unwrap();
     let routes_state = state.routes_state.as_ref().unwrap();
 
-    let req = TestRequest::post().uri("/coremgr/api/v1/device-route");
-    test_invalid_token(runtime, &routes_state, req)
+    test_invalid_token(
+        runtime,
+        &routes_state,
+        Method::POST,
+        "/coremgr/api/v1/device-route",
+    )
 }
 
 pub fn post_bulk(context: &mut SpecContext<TestState>) -> Result<(), String> {
@@ -23,8 +27,12 @@ pub fn post_bulk(context: &mut SpecContext<TestState>) -> Result<(), String> {
     let runtime = state.runtime.as_ref().unwrap();
     let routes_state = state.routes_state.as_ref().unwrap();
 
-    let req = TestRequest::post().uri("/coremgr/api/v1/device-route/bulk");
-    test_invalid_token(runtime, &routes_state, req)
+    test_invalid_token(
+        runtime,
+        &routes_state,
+        Method::POST,
+        "/coremgr/api/v1/device-route/bulk",
+    )
 }
 
 pub fn post_bulk_del(context: &mut SpecContext<TestState>) -> Result<(), String> {
@@ -33,8 +41,12 @@ pub fn post_bulk_del(context: &mut SpecContext<TestState>) -> Result<(), String>
     let runtime = state.runtime.as_ref().unwrap();
     let routes_state = state.routes_state.as_ref().unwrap();
 
-    let req = TestRequest::post().uri("/coremgr/api/v1/device-route/bulk-delete");
-    test_invalid_token(runtime, &routes_state, req)
+    test_invalid_token(
+        runtime,
+        &routes_state,
+        Method::POST,
+        "/coremgr/api/v1/device-route/bulk-delete",
+    )
 }
 
 pub fn post_range(context: &mut SpecContext<TestState>) -> Result<(), String> {
@@ -43,8 +55,12 @@ pub fn post_range(context: &mut SpecContext<TestState>) -> Result<(), String> {
     let runtime = state.runtime.as_ref().unwrap();
     let routes_state = state.routes_state.as_ref().unwrap();
 
-    let req = TestRequest::post().uri("/coremgr/api/v1/device-route/range");
-    test_invalid_token(runtime, &routes_state, req)
+    test_invalid_token(
+        runtime,
+        &routes_state,
+        Method::POST,
+        "/coremgr/api/v1/device-route/range",
+    )
 }
 
 pub fn post_range_del(context: &mut SpecContext<TestState>) -> Result<(), String> {
@@ -53,8 +69,12 @@ pub fn post_range_del(context: &mut SpecContext<TestState>) -> Result<(), String
     let runtime = state.runtime.as_ref().unwrap();
     let routes_state = state.routes_state.as_ref().unwrap();
 
-    let req = TestRequest::post().uri("/coremgr/api/v1/device-route/range-delete");
-    test_invalid_token(runtime, &routes_state, req)
+    test_invalid_token(
+        runtime,
+        &routes_state,
+        Method::POST,
+        "/coremgr/api/v1/device-route/range-delete",
+    )
 }
 
 pub fn get_count(context: &mut SpecContext<TestState>) -> Result<(), String> {
@@ -63,8 +83,12 @@ pub fn get_count(context: &mut SpecContext<TestState>) -> Result<(), String> {
     let runtime = state.runtime.as_ref().unwrap();
     let routes_state = state.routes_state.as_ref().unwrap();
 
-    let req = TestRequest::get().uri("/coremgr/api/v1/device-route/count");
-    test_invalid_token(runtime, &routes_state, req)
+    test_invalid_token(
+        runtime,
+        &routes_state,
+        Method::GET,
+        "/coremgr/api/v1/device-route/count",
+    )
 }
 
 pub fn get_list(context: &mut SpecContext<TestState>) -> Result<(), String> {
@@ -88,6 +112,10 @@ pub fn delete(context: &mut SpecContext<TestState>) -> Result<(), String> {
     let runtime = state.runtime.as_ref().unwrap();
     let routes_state = state.routes_state.as_ref().unwrap();
 
-    let req = TestRequest::delete().uri("/coremgr/api/v1/device-route/id");
-    test_invalid_token(runtime, &routes_state, req)
+    test_invalid_token(
+        runtime,
+        &routes_state,
+        Method::DELETE,
+        "/coremgr/api/v1/device-route/id",
+    )
 }

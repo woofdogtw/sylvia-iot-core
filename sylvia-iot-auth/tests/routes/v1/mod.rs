@@ -32,6 +32,7 @@ pub fn suite(db_engine: &'static str) -> Suite<TestState> {
             context.it("GET /user", userapi::get);
             context.it("GET /user with invalid token", userapi::get_invalid_token);
             context.it("PATCH /user", userapi::patch);
+            context.it("PATCH /user with password", userapi::patch_password);
             context.it(
                 "PATCH /user with invalid parameters",
                 userapi::patch_invalid_param,
@@ -99,6 +100,10 @@ pub fn suite(db_engine: &'static str) -> Suite<TestState> {
                 userapi::get_admin_invalid_perm,
             );
             context.it("PATCH /user/{userId}", userapi::patch_admin);
+            context.it(
+                "PATCH /user/{userId} with password",
+                userapi::patch_admin_password,
+            );
             context.it(
                 "PATCH /user/{userId} with wrong ID",
                 userapi::patch_admin_wrong_id,

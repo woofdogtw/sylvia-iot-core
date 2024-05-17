@@ -6,11 +6,14 @@ use std::{
     time::Duration,
 };
 
-use actix_web::{
-    web::{self, Bytes},
-    HttpRequest, HttpResponse, Responder,
-};
 use async_trait::async_trait;
+use axum::{
+    body::{Body, Bytes},
+    extract::State,
+    http::{header, StatusCode},
+    response::IntoResponse,
+    Extension,
+};
 use chrono::{DateTime, TimeZone, Utc};
 use log::{error, info, warn};
 use serde::{Deserialize, Serialize};
@@ -23,15 +26,17 @@ use general_mq::{
     Queue,
 };
 use sylvia_iot_corelib::{
+    constants::ContentType,
     err::{self, ErrResp},
+    http::{Json, Path, Query},
     role::Role,
     strings::{self, time_str},
 };
 
 use super::{
     super::{
-        super::{ErrReq, State},
-        lib::{check_application, check_unit, gen_mgr_key, get_token_id_roles},
+        super::{middleware::GetTokenInfoData, ErrReq, State as AppState},
+        lib::{check_application, check_unit, gen_mgr_key},
     },
     request, response,
 };
@@ -194,7 +199,7 @@ const CTRL_QUEUE_NAME: &'static str = "application";
 const DEF_DLDATA_STATUS: i32 = -2;
 
 /// Initialize application managers and channels.
-pub async fn init(state: &State, ctrl_conf: &CfgCtrl) -> Result<(), Box<dyn StdError>> {
+pub async fn init(state: &AppState, ctrl_conf: &CfgCtrl) -> Result<(), Box<dyn StdError>> {
     const FN_NAME: &'static str = "init";
 
     let q = new_ctrl_receiver(state, ctrl_conf)?;
@@ -324,7 +329,7 @@ pub fn new_ctrl_sender(
 }
 
 /// Create control channel receiver queue.
-pub fn new_ctrl_receiver(state: &State, config: &CfgCtrl) -> Result<Queue, Box<dyn StdError>> {
+pub fn new_ctrl_receiver(state: &AppState, config: &CfgCtrl) -> Result<Queue, Box<dyn StdError>> {
     let url = match config.url.as_ref() {
         None => {
             return Err(Box::new(IoError::new(
@@ -361,14 +366,14 @@ pub fn new_ctrl_receiver(state: &State, config: &CfgCtrl) -> Result<Queue, Box<d
 
 /// `POST /{base}/api/v1/application`
 pub async fn post_application(
-    req: HttpRequest,
-    body: web::Json<request::PostApplicationBody>,
-    state: web::Data<State>,
-) -> impl Responder {
+    State(state): State<AppState>,
+    Extension(token_info): Extension<GetTokenInfoData>,
+    Json(body): Json<request::PostApplicationBody>,
+) -> impl IntoResponse {
     const FN_NAME: &'static str = "post_application";
 
-    let (user_id, roles) = get_token_id_roles(FN_NAME, &req)?;
-    let user_id = user_id.as_str();
+    let user_id = token_info.user_id.as_str();
+    let roles = &token_info.roles;
 
     let code = body.data.code.to_lowercase();
     let host_uri = body.data.host_uri.as_str();
@@ -403,7 +408,7 @@ pub async fn post_application(
             "`unitId` must with at least one character".to_string(),
         )));
     }
-    let unit_code = match check_unit(FN_NAME, user_id, &roles, unit_id, true, &state).await? {
+    let unit_code = match check_unit(FN_NAME, user_id, roles, unit_id, true, &state).await? {
         None => {
             return Err(ErrResp::Custom(
                 ErrReq::UNIT_NOT_EXIST.0,
@@ -453,7 +458,7 @@ pub async fn post_application(
         application.code.as_str(),
     )
     .await?;
-    Ok(HttpResponse::Ok().json(response::PostApplication {
+    Ok(Json(response::PostApplication {
         data: response::PostApplicationData {
             application_id: application.application_id,
         },
@@ -462,16 +467,16 @@ pub async fn post_application(
 
 /// `GET /{base}/api/v1/application/count`
 pub async fn get_application_count(
-    req: HttpRequest,
-    query: web::Query<request::GetApplicationCountQuery>,
-    state: web::Data<State>,
-) -> impl Responder {
+    State(state): State<AppState>,
+    Extension(token_info): Extension<GetTokenInfoData>,
+    Query(query): Query<request::GetApplicationCountQuery>,
+) -> impl IntoResponse {
     const FN_NAME: &'static str = "get_application_count";
 
-    let (user_id, roles) = get_token_id_roles(FN_NAME, &req)?;
-    let user_id = user_id.as_str();
+    let user_id = token_info.user_id.as_str();
+    let roles = &token_info.roles;
 
-    if !Role::is_role(&roles, Role::ADMIN) && !Role::is_role(&roles, Role::MANAGER) {
+    if !Role::is_role(roles, Role::ADMIN) && !Role::is_role(roles, Role::MANAGER) {
         match query.unit.as_ref() {
             None => return Err(ErrResp::ErrParam(Some("missing `unit`".to_string()))),
             Some(unit_id) => {
@@ -485,27 +490,37 @@ pub async fn get_application_count(
         None => None,
         Some(unit_id) => match unit_id.len() {
             0 => None,
-            _ => match check_unit(FN_NAME, user_id, &roles, unit_id.as_str(), false, &state).await?
-            {
-                None => {
-                    return Err(ErrResp::Custom(
-                        ErrReq::UNIT_NOT_EXIST.0,
-                        ErrReq::UNIT_NOT_EXIST.1,
-                        None,
-                    ))
+            _ => {
+                match check_unit(FN_NAME, user_id, roles, unit_id.as_str(), false, &state).await? {
+                    None => {
+                        return Err(ErrResp::Custom(
+                            ErrReq::UNIT_NOT_EXIST.0,
+                            ErrReq::UNIT_NOT_EXIST.1,
+                            None,
+                        ))
+                    }
+                    Some(_) => Some(unit_id.as_str()),
                 }
-                Some(_) => Some(unit_id.as_str()),
-            },
+            }
         },
     };
+    let mut code_cond = None;
     let mut code_contains_cond = None;
-    if let Some(contains) = query.contains.as_ref() {
-        if contains.len() > 0 {
-            code_contains_cond = Some(contains.as_str());
+    if let Some(code) = query.code.as_ref() {
+        if code.len() > 0 {
+            code_cond = Some(code.as_str());
+        }
+    }
+    if code_cond.is_none() {
+        if let Some(contains) = query.contains.as_ref() {
+            if contains.len() > 0 {
+                code_contains_cond = Some(contains.as_str());
+            }
         }
     }
     let cond = ListQueryCond {
         unit_id: unit_cond,
+        code: code_cond,
         code_contains: code_contains_cond,
         ..Default::default()
     };
@@ -514,7 +529,7 @@ pub async fn get_application_count(
             error!("[{}] count error: {}", FN_NAME, e);
             Err(ErrResp::ErrDb(Some(e.to_string())))
         }
-        Ok(count) => Ok(HttpResponse::Ok().json(response::GetApplicationCount {
+        Ok(count) => Ok(Json(response::GetApplicationCount {
             data: response::GetCountData { count },
         })),
     }
@@ -522,16 +537,16 @@ pub async fn get_application_count(
 
 /// `GET /{base}/api/v1/application/list`
 pub async fn get_application_list(
-    req: HttpRequest,
-    query: web::Query<request::GetApplicationListQuery>,
-    state: web::Data<State>,
-) -> impl Responder {
+    State(state): State<AppState>,
+    Extension(token_info): Extension<GetTokenInfoData>,
+    Query(query): Query<request::GetApplicationListQuery>,
+) -> impl IntoResponse {
     const FN_NAME: &'static str = "get_application_list";
 
-    let (user_id, roles) = get_token_id_roles(FN_NAME, &req)?;
-    let user_id = user_id.as_str();
+    let user_id = token_info.user_id.as_str();
+    let roles = &token_info.roles;
 
-    if !Role::is_role(&roles, Role::ADMIN) && !Role::is_role(&roles, Role::MANAGER) {
+    if !Role::is_role(roles, Role::ADMIN) && !Role::is_role(roles, Role::MANAGER) {
         match query.unit.as_ref() {
             None => return Err(ErrResp::ErrParam(Some("missing `unit`".to_string()))),
             Some(unit_id) => {
@@ -545,27 +560,37 @@ pub async fn get_application_list(
         None => None,
         Some(unit_id) => match unit_id.len() {
             0 => None,
-            _ => match check_unit(FN_NAME, user_id, &roles, unit_id.as_str(), false, &state).await?
-            {
-                None => {
-                    return Err(ErrResp::Custom(
-                        ErrReq::UNIT_NOT_EXIST.0,
-                        ErrReq::UNIT_NOT_EXIST.1,
-                        None,
-                    ))
+            _ => {
+                match check_unit(FN_NAME, user_id, roles, unit_id.as_str(), false, &state).await? {
+                    None => {
+                        return Err(ErrResp::Custom(
+                            ErrReq::UNIT_NOT_EXIST.0,
+                            ErrReq::UNIT_NOT_EXIST.1,
+                            None,
+                        ))
+                    }
+                    Some(_) => Some(unit_id.as_str()),
                 }
-                Some(_) => Some(unit_id.as_str()),
-            },
+            }
         },
     };
+    let mut code_cond = None;
     let mut code_contains_cond = None;
-    if let Some(contains) = query.contains.as_ref() {
-        if contains.len() > 0 {
-            code_contains_cond = Some(contains.as_str());
+    if let Some(code) = query.code.as_ref() {
+        if code.len() > 0 {
+            code_cond = Some(code.as_str());
+        }
+    }
+    if code_cond.is_none() {
+        if let Some(contains) = query.contains.as_ref() {
+            if contains.len() > 0 {
+                code_contains_cond = Some(contains.as_str());
+            }
         }
     }
     let cond = ListQueryCond {
         unit_id: unit_cond,
+        code: code_cond,
         code_contains: code_contains_cond,
         ..Default::default()
     };
@@ -592,21 +617,20 @@ pub async fn get_application_list(
         Ok((list, cursor)) => match cursor {
             None => match query.format {
                 Some(request::ListFormat::Array) => {
-                    return Ok(HttpResponse::Ok().json(application_list_transform(&list)))
+                    return Ok(Json(application_list_transform(&list)).into_response())
                 }
                 _ => {
-                    return Ok(HttpResponse::Ok().json(response::GetApplicationList {
+                    return Ok(Json(response::GetApplicationList {
                         data: application_list_transform(&list),
-                    }))
+                    })
+                    .into_response())
                 }
             },
             Some(_) => (list, cursor),
         },
     };
 
-    // TODO: detect client disconnect
-    let stream = async_stream::stream! {
-        let query = query.0.clone();
+    let body = Body::from_stream(async_stream::stream! {
         let unit_cond = match query.unit.as_ref() {
             None => None,
             Some(unit_id) => match unit_id.len() {
@@ -655,25 +679,25 @@ pub async fn get_application_list(
             list = _list;
             cursor = _cursor;
         }
-    };
-    Ok(HttpResponse::Ok().streaming(stream))
+    });
+    Ok(([(header::CONTENT_TYPE, ContentType::JSON)], body).into_response())
 }
 
 /// `GET /{base}/api/v1/application/{applicationId}`
 pub async fn get_application(
-    req: HttpRequest,
-    param: web::Path<request::ApplicationIdPath>,
-    state: web::Data<State>,
-) -> impl Responder {
+    State(state): State<AppState>,
+    Extension(token_info): Extension<GetTokenInfoData>,
+    Path(param): Path<request::ApplicationIdPath>,
+) -> impl IntoResponse {
     const FN_NAME: &'static str = "get_application";
 
-    let (user_id, roles) = get_token_id_roles(FN_NAME, &req)?;
-    let user_id = user_id.as_str();
+    let user_id = token_info.user_id.as_str();
+    let roles = &token_info.roles;
     let application_id = param.application_id.as_str();
 
-    match check_application(FN_NAME, application_id, user_id, false, &roles, &state).await? {
+    match check_application(FN_NAME, application_id, user_id, false, roles, &state).await? {
         None => Err(ErrResp::ErrNotFound(None)),
-        Some(application) => Ok(HttpResponse::Ok().json(response::GetApplication {
+        Some(application) => Ok(Json(response::GetApplication {
             data: application_transform(&application),
         })),
     }
@@ -681,20 +705,20 @@ pub async fn get_application(
 
 /// `PATCH /{base}/api/v1/application/{applicationId}`
 pub async fn patch_application(
-    req: HttpRequest,
-    param: web::Path<request::ApplicationIdPath>,
-    mut body: web::Json<request::PatchApplicationBody>,
-    state: web::Data<State>,
-) -> impl Responder {
+    State(state): State<AppState>,
+    Extension(token_info): Extension<GetTokenInfoData>,
+    Path(param): Path<request::ApplicationIdPath>,
+    Json(mut body): Json<request::PatchApplicationBody>,
+) -> impl IntoResponse {
     const FN_NAME: &'static str = "patch_application";
 
-    let (user_id, roles) = get_token_id_roles(FN_NAME, &req)?;
-    let user_id = user_id.as_str();
+    let user_id = token_info.user_id.as_str();
+    let roles = &token_info.roles;
     let application_id = param.application_id.as_str();
 
     // To check if the application is for the user.
     let application =
-        match check_application(FN_NAME, application_id, user_id, true, &roles, &state).await? {
+        match check_application(FN_NAME, application_id, user_id, true, roles, &state).await? {
             None => return Err(ErrResp::ErrNotFound(None)),
             Some(application) => application,
         };
@@ -734,27 +758,27 @@ pub async fn patch_application(
             .await?;
         }
     }
-    Ok(HttpResponse::NoContent().finish())
+    Ok(StatusCode::NO_CONTENT)
 }
 
 /// `DELETE /{base}/api/v1/application/{applicationId}`
 pub async fn delete_application(
-    req: HttpRequest,
-    param: web::Path<request::ApplicationIdPath>,
-    state: web::Data<State>,
-) -> impl Responder {
+    State(state): State<AppState>,
+    Extension(token_info): Extension<GetTokenInfoData>,
+    Path(param): Path<request::ApplicationIdPath>,
+) -> impl IntoResponse {
     const FN_NAME: &'static str = "delete_application";
 
-    let (user_id, roles) = get_token_id_roles(FN_NAME, &req)?;
-    let user_id = user_id.as_str();
+    let user_id = token_info.user_id.as_str();
+    let roles = &token_info.roles;
     let application_id = param.application_id.as_str();
 
     // To check if the application is for the user.
     let application =
-        match check_application(FN_NAME, application_id, user_id, true, &roles, &state).await {
+        match check_application(FN_NAME, application_id, user_id, true, roles, &state).await {
             Err(e) => return Err(e), // XXX: not use "?" to solve E0282 error.
             Ok(application) => match application {
-                None => return Ok(HttpResponse::NoContent().finish()),
+                None => return Ok(StatusCode::NO_CONTENT),
                 Some(application) => application,
             },
         };
@@ -763,7 +787,7 @@ pub async fn delete_application(
     del_application_rsc(FN_NAME, application_id, &state).await?;
     send_del_ctrl_message(FN_NAME, application, &state).await?;
 
-    Ok(HttpResponse::NoContent().finish())
+    Ok(StatusCode::NO_CONTENT)
 }
 
 fn get_sort_cond(sort_args: &Option<String>) -> Result<Vec<SortCond>, ErrResp> {
@@ -875,7 +899,7 @@ async fn check_code(
     fn_name: &str,
     unit_id: &str,
     code: &str,
-    state: &web::Data<State>,
+    state: &AppState,
 ) -> Result<bool, ErrResp> {
     let cond = QueryCond {
         unit_id: Some(unit_id),
@@ -907,7 +931,7 @@ fn application_list_transform_bytes(
     with_start: bool,
     with_end: bool,
     format: Option<&request::ListFormat>,
-) -> Result<Bytes, Box<dyn StdError>> {
+) -> Result<Bytes, Box<dyn StdError + Send + Sync>> {
     let mut build_str = match with_start {
         false => "".to_string(),
         true => match format {
@@ -956,7 +980,7 @@ fn application_transform(application: &Application) -> response::GetApplicationD
 async fn del_application_rsc(
     fn_name: &str,
     application_id: &str,
-    state: &web::Data<State>,
+    state: &AppState,
 ) -> Result<(), ErrResp> {
     let cond = network_route::QueryCond {
         application_id: Some(application_id),
@@ -1001,7 +1025,7 @@ async fn del_application_rsc(
 async fn send_del_ctrl_message(
     fn_name: &str,
     application: Application,
-    state: &web::Data<State>,
+    state: &AppState,
 ) -> Result<(), ErrResp> {
     if state.cache.is_some() {
         let msg = SendCtrlMsg::DelApplication {
@@ -1051,7 +1075,7 @@ async fn send_del_ctrl_message(
 /// - register manager handlers.
 async fn add_manager(
     fn_name: &str,
-    state: &State,
+    state: &AppState,
     host_uri: &Url,
     unit_id: &str,
     unit_code: &str,
@@ -1095,7 +1119,7 @@ async fn add_manager(
 /// To delete an application manager.
 async fn delete_manager(
     fn_name: &str,
-    state: &State,
+    state: &AppState,
     application: &Application,
 ) -> Result<(), ErrResp> {
     let key = gen_mgr_key(application.unit_code.as_str(), application.code.as_str());

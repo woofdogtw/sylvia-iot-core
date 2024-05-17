@@ -25,12 +25,14 @@ pub struct PostNetworkData {
 #[derive(Deserialize)]
 pub struct GetNetworkCountQuery {
     pub unit: Option<String>,
+    pub code: Option<String>,
     pub contains: Option<String>,
 }
 
 #[derive(Clone, Deserialize)]
 pub struct GetNetworkListQuery {
     pub unit: Option<String>,
+    pub code: Option<String>,
     pub contains: Option<String>,
     pub offset: Option<u64>,
     pub limit: Option<u64>,

@@ -1,8 +1,8 @@
 # Quick Start
 
-This chapter describes the quick installation steps in the Ubuntu 20.04 environment.
+This chapter describes the quick installation steps in the Ubuntu 22.04 environment.
 
-> The current executable is compiled using GLIBC 2.31 and can be executed on Ubuntu 20.04 or later
+> The current executable is compiled using GLIBC 2.31 and can be executed on Ubuntu 22.04 or later
   OS versions.
 > Older OS versions can use the [**Docker image**](https://hub.docker.com/r/woofdogtw/sylvia-iot-core).
 > Related configurations and environment variables will be explained in the
@@ -34,9 +34,9 @@ sudo usermod -aG docker $USER
 Start the services (versions and data storage folders can be adjusted as needed):
 
 ```shell
-export MONGODB_VER=6.0.8
-export RABBITMQ_VER=3.12.1
-export EMQX_VER=5.1.1
+export MONGODB_VER=7.0.9
+export RABBITMQ_VER=3.13.2
+export EMQX_VER=5.6.1
 
 export MONGODB_DIR=$HOME/db/mongodb
 export RABBITMQ_DIR=$HOME/db/rabbitmq

@@ -300,7 +300,7 @@ impl NetworkMgr {
 
     /// To close the manager queues.
     /// The underlying connection will be closed when there are no queues use it.
-    pub async fn close(&self) -> Result<(), Box<dyn StdError>> {
+    pub async fn close(&self) -> Result<(), Box<dyn StdError + Send + Sync>> {
         let mut q = { self.uldata.lock().unwrap().clone() };
         q.close().await?;
         let mut q = { self.dldata.lock().unwrap().clone() };

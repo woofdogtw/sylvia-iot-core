@@ -1,13 +1,13 @@
 use std::{borrow::Cow, str};
 
-use actix_web::{
-    dev::Payload,
+use async_trait::async_trait;
+use axum::{
+    body::Bytes,
+    extract::{Form, FromRequest, Query, Request},
     http::{header, Method},
-    web::{Form, Query},
-    FromRequest, HttpRequest,
+    response::{IntoResponse, Response},
 };
 use base64::{engine::general_purpose, Engine};
-use futures::future::{FutureExt, LocalBoxFuture};
 use oxide_auth::code_grant::{
     accesstoken::Request as OxideAccessTokenRequest,
     authorization::Request as OxideAuthorizationRequest,
@@ -72,84 +72,53 @@ pub struct RefreshTokenRequest {
 
 pub const ALLOW_VALUE: &'static str = "yes";
 
-impl GetAuthRequest {
-    pub async fn new(req: HttpRequest) -> Result<Self, OAuth2Error> {
-        match Query::<GetAuthRequest>::from_query(req.query_string()) {
-            Err(e) => Err(OAuth2Error::new_request(Some(e.to_string()))),
-            Ok(request) => Ok(request.into_inner()),
+#[async_trait]
+impl<S> FromRequest<S> for GetAuthRequest
+where
+    S: Send + Sync,
+{
+    type Rejection = Response;
+
+    async fn from_request(req: Request, state: &S) -> Result<Self, Self::Rejection> {
+        match Query::<GetAuthRequest>::from_request(req, state).await {
+            Err(e) => Err(OAuth2Error::new_request(Some(e.to_string())).into_response()),
+            Ok(request) => Ok(request.0),
         }
     }
 }
 
-impl FromRequest for GetAuthRequest {
-    type Error = OAuth2Error;
-    type Future = LocalBoxFuture<'static, Result<Self, Self::Error>>;
+#[async_trait]
+impl<S> FromRequest<S> for GetLoginRequest
+where
+    S: Send + Sync,
+{
+    type Rejection = Response;
 
-    fn from_request(req: &HttpRequest, _: &mut Payload) -> Self::Future {
-        Self::new(req.clone()).boxed_local()
-    }
-}
-
-impl GetLoginRequest {
-    pub async fn new(req: HttpRequest) -> Result<Self, OAuth2Error> {
-        match Query::<GetLoginRequest>::from_query(req.query_string()) {
-            Err(e) => Err(OAuth2Error::new_request(Some(e.to_string()))),
-            Ok(request) => Ok(request.into_inner()),
+    async fn from_request(req: Request, state: &S) -> Result<Self, Self::Rejection> {
+        match Query::<GetLoginRequest>::from_request(req, state).await {
+            Err(e) => Err(OAuth2Error::new_request(Some(e.to_string())).into_response()),
+            Ok(request) => Ok(request.0),
         }
     }
 }
 
-impl FromRequest for GetLoginRequest {
-    type Error = OAuth2Error;
-    type Future = LocalBoxFuture<'static, Result<Self, Self::Error>>;
+#[async_trait]
+impl<S> FromRequest<S> for PostLoginRequest
+where
+    Bytes: FromRequest<S>,
+    S: Send + Sync,
+{
+    type Rejection = Response;
 
-    fn from_request(req: &HttpRequest, _: &mut Payload) -> Self::Future {
-        Self::new(req.clone()).boxed_local()
-    }
-}
-
-impl PostLoginRequest {
-    pub async fn new(req: HttpRequest, mut payload: Payload) -> Result<Self, OAuth2Error> {
-        match Form::<PostLoginRequest>::from_request(&req, &mut payload).await {
-            Err(e) => Err(OAuth2Error::new_request(Some(e.to_string()))),
-            Ok(request) => Ok(request.into_inner()),
+    async fn from_request(req: Request, state: &S) -> Result<Self, Self::Rejection> {
+        match Form::<PostLoginRequest>::from_request(req, state).await {
+            Err(e) => Err(OAuth2Error::new_request(Some(e.to_string())).into_response()),
+            Ok(body) => Ok(body.0),
         }
-    }
-}
-
-impl FromRequest for PostLoginRequest {
-    type Error = OAuth2Error;
-    type Future = LocalBoxFuture<'static, Result<Self, Self::Error>>;
-
-    fn from_request(req: &HttpRequest, payload: &mut Payload) -> Self::Future {
-        Self::new(req.clone(), payload.take()).boxed_local()
     }
 }
 
 impl AuthorizationRequest {
-    pub async fn new(req: HttpRequest, mut payload: Payload) -> Result<Self, OAuth2Error> {
-        let request = match *req.method() {
-            Method::GET => {
-                match Query::<AuthorizationRequest>::from_request(&req, &mut payload).await {
-                    Err(e) => {
-                        return Err(OAuth2Error::new_request(Some(e.to_string())));
-                    }
-                    Ok(request) => request.into_inner(),
-                }
-            }
-            Method::POST => {
-                match Form::<AuthorizationRequest>::from_request(&req, &mut payload).await {
-                    Err(e) => {
-                        return Err(OAuth2Error::new_request(Some(e.to_string())));
-                    }
-                    Ok(request) => request.into_inner(),
-                }
-            }
-            _ => return Err(OAuth2Error::new_request(Some("invalid method".to_string()))),
-        };
-        Ok(request)
-    }
-
     pub fn session_id(&self) -> &str {
         self.session_id.as_str()
     }
@@ -162,12 +131,26 @@ impl AuthorizationRequest {
     }
 }
 
-impl FromRequest for AuthorizationRequest {
-    type Error = OAuth2Error;
-    type Future = LocalBoxFuture<'static, Result<Self, Self::Error>>;
+#[async_trait]
+impl<S> FromRequest<S> for AuthorizationRequest
+where
+    Bytes: FromRequest<S>,
+    S: Send + Sync,
+{
+    type Rejection = Response;
 
-    fn from_request(req: &HttpRequest, payload: &mut Payload) -> Self::Future {
-        Self::new(req.clone(), payload.take()).boxed_local()
+    async fn from_request(req: Request, state: &S) -> Result<Self, Self::Rejection> {
+        match *req.method() {
+            Method::GET => match Query::<AuthorizationRequest>::from_request(req, state).await {
+                Err(e) => Err(OAuth2Error::new_request(Some(e.to_string())).into_response()),
+                Ok(request) => Ok(request.0),
+            },
+            Method::POST => match Form::<AuthorizationRequest>::from_request(req, state).await {
+                Err(e) => Err(OAuth2Error::new_request(Some(e.to_string())).into_response()),
+                Ok(request) => Ok(request.0),
+            },
+            _ => Err(OAuth2Error::new_request(Some("invalid method".to_string())).into_response()),
+        }
     }
 }
 
@@ -207,28 +190,25 @@ impl OxideAuthorizationRequest for AuthorizationRequest {
     }
 }
 
-impl AccessTokenRequest {
-    pub async fn new(req: HttpRequest, mut payload: Payload) -> Result<Self, OAuth2Error> {
-        let mut request = match Form::<AccessTokenRequest>::from_request(&req, &mut payload).await {
-            Err(e) => {
-                return Err(OAuth2Error::new_request(Some(e.to_string())));
-            }
-            Ok(request) => request.into_inner(),
-        };
-        request.authorization = match parse_basic_auth(&req) {
-            Err(e) => return Err(e),
+#[async_trait]
+impl<S> FromRequest<S> for AccessTokenRequest
+where
+    Bytes: FromRequest<S>,
+    S: Send + Sync,
+{
+    type Rejection = Response;
+
+    async fn from_request(req: Request, state: &S) -> Result<Self, Self::Rejection> {
+        let authorization = match parse_basic_auth(&req) {
+            Err(e) => return Err(e.into_response()),
             Ok(auth) => auth,
         };
+        let mut request = match Form::<AccessTokenRequest>::from_request(req, state).await {
+            Err(e) => return Err(OAuth2Error::new_request(Some(e.to_string())).into_response()),
+            Ok(request) => request.0,
+        };
+        request.authorization = authorization;
         Ok(request)
-    }
-}
-
-impl FromRequest for AccessTokenRequest {
-    type Error = OAuth2Error;
-    type Future = LocalBoxFuture<'static, Result<Self, Self::Error>>;
-
-    fn from_request(req: &HttpRequest, payload: &mut Payload) -> Self::Future {
-        Self::new(req.clone(), payload.take()).boxed_local()
     }
 }
 
@@ -278,29 +258,27 @@ impl OxideAccessTokenRequest for AccessTokenRequest {
     }
 }
 
-impl RefreshTokenRequest {
-    pub async fn new(req: HttpRequest, mut payload: Payload) -> Result<Self, OAuth2Error> {
-        let mut request = match Form::<RefreshTokenRequest>::from_request(&req, &mut payload).await
-        {
-            Err(e) => {
-                return Err(OAuth2Error::new_request(Some(e.to_string())));
-            }
-            Ok(request) => request.into_inner(),
-        };
-        request.authorization = match parse_basic_auth(&req) {
-            Err(e) => return Err(e),
+#[async_trait]
+impl<S> FromRequest<S> for RefreshTokenRequest
+where
+    Bytes: FromRequest<S>,
+    S: Send + Sync,
+{
+    type Rejection = Response;
+
+    async fn from_request(req: Request, state: &S) -> Result<Self, Self::Rejection> {
+        let authorization = match parse_basic_auth(&req) {
+            Err(e) => return Err(e.into_response()),
             Ok(auth) => auth,
         };
+        let mut request = match Form::<RefreshTokenRequest>::from_request(req, state).await {
+            Err(e) => {
+                return Err(OAuth2Error::new_request(Some(e.to_string())).into_response());
+            }
+            Ok(request) => request.0,
+        };
+        request.authorization = authorization;
         Ok(request)
-    }
-}
-
-impl FromRequest for RefreshTokenRequest {
-    type Error = OAuth2Error;
-    type Future = LocalBoxFuture<'static, Result<Self, Self::Error>>;
-
-    fn from_request(req: &HttpRequest, payload: &mut Payload) -> Self::Future {
-        Self::new(req.clone(), payload.take()).boxed_local()
     }
 }
 
@@ -336,8 +314,8 @@ impl OxideRefreshTokenRequest for RefreshTokenRequest {
     }
 }
 
-fn parse_basic_auth(req: &HttpRequest) -> Result<Option<(String, Vec<u8>)>, OAuth2Error> {
-    let mut auth_all = req.headers().get_all(header::AUTHORIZATION);
+fn parse_basic_auth(req: &Request) -> Result<Option<(String, Vec<u8>)>, OAuth2Error> {
+    let mut auth_all = req.headers().get_all(header::AUTHORIZATION).iter();
     let auth = match auth_all.next() {
         None => return Ok(None),
         Some(auth) => match auth.to_str() {

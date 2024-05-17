@@ -8,7 +8,7 @@ has tested.
 The compiled executable should be able to run on compatible environments. For example, a Windows 10
 executable should also be executable on Windows 7 or Windows 11.
 
-> The compilation environment is based on Ubuntu-20.04.
+> The compilation environment is based on Ubuntu-22.04.
 
 ## Windows 10 64-bit
 

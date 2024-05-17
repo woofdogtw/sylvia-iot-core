@@ -29,14 +29,16 @@ This project only support a JSON5 configuration file without parsing other comma
 
 - [HTTP APIs](doc/api.md)
 
-# Mount sylvia-router in your Actix-Web App
+# Mount sylvia-router in your axum App
 
-You can simply mount sylvia-router into your Actix-Web App:
+You can simply mount sylvia-router into your axum App:
 
 ```rust
-use actix_web::{self, App, HttpServer};
+use axum::Router;
 use clap::App as ClapApp;
+use std::net::SocketAddr;
 use sylvia_router::{libs, routes};
+use tokio::{self, net::TcpListener};
 
 #[tokio::main]
 async fn main() -> std::io::Result<()> {
@@ -50,10 +52,9 @@ async fn main() -> std::io::Result<()> {
         },
         Ok(state) => state,
     };
-    HttpServer::new(move || App::new().service(routes::new_service(&router_state)))
-        .bind("0.0.0.0:1080")?
-        .run()
-        .await
+    let app = Router::new().merge(routes::new_service(&router_state));
+    let listener = match TcpListener::bind("0.0.0.0:1080").await.unwrap();
+    axum::serve(listener, app.into_make_service_with_connect_info::<SocketAddr>()).await
 }
 ```
 

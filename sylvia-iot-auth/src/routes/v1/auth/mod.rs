@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use actix_web::{dev::HttpServiceFactory, http::Method, web};
+use axum::{http::Method, routing, Router};
 
 use super::super::{
     oauth2::middleware::{AuthService, RoleScopeType},
@@ -10,7 +10,7 @@ use super::super::{
 mod api;
 mod response;
 
-pub fn new_service(scope_path: &str, state: &State) -> impl HttpServiceFactory {
+pub fn new_service(scope_path: &str, state: &State) -> Router {
     let mut role_scopes_tokeninfo: HashMap<Method, RoleScopeType> = HashMap::new();
     let mut role_scopes_logout: HashMap<Method, RoleScopeType> = HashMap::new();
 
@@ -31,15 +31,19 @@ pub fn new_service(scope_path: &str, state: &State) -> impl HttpServiceFactory {
         }
     }
 
-    web::scope(scope_path)
-        .service(
-            web::resource("/tokeninfo")
-                .wrap(AuthService::new(&state.model, role_scopes_tokeninfo))
-                .route(web::get().to(api::get_tokeninfo)),
-        )
-        .service(
-            web::resource("/logout")
-                .wrap(AuthService::new(&state.model, role_scopes_logout))
-                .route(web::post().to(api::post_logout)),
-        )
+    Router::new().nest(
+        scope_path,
+        Router::new()
+            .route(
+                "/tokeninfo",
+                routing::get(api::get_tokeninfo)
+                    .layer(AuthService::new(&state.model, role_scopes_tokeninfo)),
+            )
+            .route(
+                "/logout",
+                routing::post(api::post_logout)
+                    .layer(AuthService::new(&state.model, role_scopes_logout)),
+            )
+            .with_state(state.clone()),
+    )
 }

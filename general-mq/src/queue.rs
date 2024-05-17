@@ -51,10 +51,10 @@ pub trait GmqQueue: Send + Sync {
     fn connect(&mut self) -> Result<(), Box<dyn StdError>>;
 
     /// To close the queue.
-    async fn close(&mut self) -> Result<(), Box<dyn StdError>>;
+    async fn close(&mut self) -> Result<(), Box<dyn StdError + Send + Sync>>;
 
     /// To send a message (for **senders** only).
-    async fn send_msg(&self, payload: Vec<u8>) -> Result<(), Box<dyn StdError>>;
+    async fn send_msg(&self, payload: Vec<u8>) -> Result<(), Box<dyn StdError + Send + Sync>>;
 }
 
 /// The operations for incoming messages.
@@ -64,12 +64,12 @@ pub trait Message: Send + Sync {
     fn payload(&self) -> &[u8];
 
     /// Use this if the message is processed successfully.
-    async fn ack(&self) -> Result<(), Box<dyn StdError>>;
+    async fn ack(&self) -> Result<(), Box<dyn StdError + Send + Sync>>;
 
     /// To requeue the message and the broker will send the message in the future.
     ///
     /// **Note**: only AMQP or protocols that support requeuing are effective.
-    async fn nack(&self) -> Result<(), Box<dyn StdError>>;
+    async fn nack(&self) -> Result<(), Box<dyn StdError + Send + Sync>>;
 }
 
 /// The event handler for queues.

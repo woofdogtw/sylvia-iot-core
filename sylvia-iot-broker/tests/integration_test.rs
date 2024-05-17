@@ -1,8 +1,10 @@
 use std::{collections::HashMap, sync::Arc};
 
-use actix_web::dev::ServerHandle;
 use laboratory::{describe, LabResult};
-use tokio::{runtime::Runtime, task};
+use tokio::{
+    runtime::Runtime,
+    task::{self, JoinHandle},
+};
 
 use general_mq::{connection::GmqConnection, queue::GmqQueue, Queue};
 use sylvia_iot_auth::models::SqliteModel as AuthDbModel;
@@ -21,7 +23,7 @@ mod routes;
 pub struct TestState {
     pub runtime: Option<Runtime>, // use Option for Default. Always Some().
     pub auth_db: Option<AuthDbModel>, // sylvia-iot-auth relative databases.
-    pub auth_svc: Option<ServerHandle>, // sylvia-iot-auth service.
+    pub auth_svc: Option<JoinHandle<()>>, // sylvia-iot-auth service.
     pub auth_uri: Option<String>, // the /tokeninfo URI.
     pub mongodb: Option<MongoDbModel>,
     pub sqlite: Option<SqliteModel>,

@@ -1,13 +1,11 @@
-use actix_web::{
-    http::{header, StatusCode},
-    middleware::NormalizePath,
-    test::{self, TestRequest},
-    App,
+use axum::{
+    http::{header, HeaderValue, Method, StatusCode},
+    Router,
 };
+use axum_test::TestServer;
 use chrono::{DateTime, SubsecRound, TimeDelta, Utc};
 use laboratory::{expect, SpecContext};
 use serde_json::{Map, Value};
-use serde_urlencoded;
 use tokio::runtime::Runtime;
 
 use sylvia_iot_broker::{models::network::QueryCond, routes};
@@ -265,8 +263,12 @@ pub fn post_invalid_token(context: &mut SpecContext<TestState>) -> Result<(), St
     let runtime = state.runtime.as_ref().unwrap();
     let routes_state = state.routes_state.as_ref().unwrap();
 
-    let req = TestRequest::post().uri("/broker/api/v1/network");
-    test_invalid_token(runtime, &routes_state, req)
+    test_invalid_token(
+        runtime,
+        &routes_state,
+        Method::POST,
+        "/broker/api/v1/network",
+    )
 }
 
 pub fn get_count(context: &mut SpecContext<TestState>) -> Result<(), String> {
@@ -338,6 +340,27 @@ pub fn get_count(context: &mut SpecContext<TestState>) -> Result<(), String> {
     )?;
 
     let param = request::GetNetworkCount {
+        code: Some("owner2-1".to_string()),
+        ..Default::default()
+    };
+    test_get_count(runtime, &routes_state, TOKEN_MANAGER, Some(&param), 1)?;
+
+    let param = request::GetNetworkCount {
+        unit: Some("owner1".to_string()),
+        code: Some("owner2-1".to_string()),
+        ..Default::default()
+    };
+    test_get_count(runtime, &routes_state, TOKEN_MANAGER, Some(&param), 0)?;
+    test_get_count(runtime, &routes_state, TOKEN_OWNER, Some(&param), 0)?;
+
+    let param = request::GetNetworkCount {
+        unit: Some("owner2".to_string()),
+        code: Some("owner2-1".to_string()),
+        ..Default::default()
+    };
+    test_get_count(runtime, &routes_state, TOKEN_OWNER, Some(&param), 1)?;
+
+    let param = request::GetNetworkCount {
         contains: Some("2".to_string()),
         ..Default::default()
     };
@@ -400,8 +423,12 @@ pub fn get_count_invalid_token(context: &mut SpecContext<TestState>) -> Result<(
     let runtime = state.runtime.as_ref().unwrap();
     let routes_state = state.routes_state.as_ref().unwrap();
 
-    let req = TestRequest::get().uri("/broker/api/v1/network/count");
-    test_invalid_token(runtime, &routes_state, req)
+    test_invalid_token(
+        runtime,
+        &routes_state,
+        Method::GET,
+        "/broker/api/v1/network/count",
+    )
 }
 
 pub fn get_list(context: &mut SpecContext<TestState>) -> Result<(), String> {
@@ -471,6 +498,27 @@ pub fn get_list(context: &mut SpecContext<TestState>) -> Result<(), String> {
         Some(&param),
         data_size.2,
     )?;
+
+    let param = request::GetNetworkList {
+        code: Some("owner2-1".to_string()),
+        ..Default::default()
+    };
+    test_get_list(runtime, &routes_state, TOKEN_MANAGER, Some(&param), 1)?;
+
+    let param = request::GetNetworkList {
+        unit: Some("owner1".to_string()),
+        code: Some("owner2-1".to_string()),
+        ..Default::default()
+    };
+    test_get_list(runtime, &routes_state, TOKEN_MANAGER, Some(&param), 0)?;
+    test_get_list(runtime, &routes_state, TOKEN_OWNER, Some(&param), 0)?;
+
+    let param = request::GetNetworkList {
+        unit: Some("owner2".to_string()),
+        code: Some("owner2-1".to_string()),
+        ..Default::default()
+    };
+    test_get_list(runtime, &routes_state, TOKEN_OWNER, Some(&param), 1)?;
 
     let param = request::GetNetworkList {
         contains: Some("2".to_string()),
@@ -855,8 +903,12 @@ pub fn get_list_invalid_token(context: &mut SpecContext<TestState>) -> Result<()
     let runtime = state.runtime.as_ref().unwrap();
     let routes_state = state.routes_state.as_ref().unwrap();
 
-    let req = TestRequest::get().uri("/broker/api/v1/network/list");
-    test_invalid_token(runtime, &routes_state, req)
+    test_invalid_token(
+        runtime,
+        &routes_state,
+        Method::GET,
+        "/broker/api/v1/network/list",
+    )
 }
 
 pub fn get(context: &mut SpecContext<TestState>) -> Result<(), String> {
@@ -909,8 +961,12 @@ pub fn get_invalid_token(context: &mut SpecContext<TestState>) -> Result<(), Str
     let runtime = state.runtime.as_ref().unwrap();
     let routes_state = state.routes_state.as_ref().unwrap();
 
-    let req = TestRequest::get().uri("/broker/api/v1/network/id");
-    test_invalid_token(runtime, &routes_state, req)
+    test_invalid_token(
+        runtime,
+        &routes_state,
+        Method::GET,
+        "/broker/api/v1/network/id",
+    )
 }
 
 pub fn patch(context: &mut SpecContext<TestState>) -> Result<(), String> {
@@ -1043,8 +1099,12 @@ pub fn patch_invalid_token(context: &mut SpecContext<TestState>) -> Result<(), S
     let runtime = state.runtime.as_ref().unwrap();
     let routes_state = state.routes_state.as_ref().unwrap();
 
-    let req = TestRequest::patch().uri("/broker/api/v1/network/id");
-    test_invalid_token(runtime, &routes_state, req)
+    test_invalid_token(
+        runtime,
+        &routes_state,
+        Method::PATCH,
+        "/broker/api/v1/network/id",
+    )
 }
 
 pub fn delete(context: &mut SpecContext<TestState>) -> Result<(), String> {
@@ -1060,87 +1120,84 @@ pub fn delete(context: &mut SpecContext<TestState>) -> Result<(), String> {
     add_network_model(runtime, routes_state, "owner", "owner", "amqp://host")?;
     add_network_model(runtime, routes_state, "owner", "owner2", "amqp://host")?;
 
-    let mut app = runtime.block_on(async {
-        test::init_service(
-            App::new()
-                .wrap(NormalizePath::trim())
-                .service(routes::new_service(&routes_state)),
-        )
-        .await
-    });
+    let app = Router::new().merge(routes::new_service(routes_state));
+    let server = match TestServer::new(app) {
+        Err(e) => return Err(format!("new server error: {}", e)),
+        Ok(server) => server,
+    };
 
-    let req = TestRequest::delete()
-        .uri("/broker/api/v1/network/id")
-        .insert_header((header::AUTHORIZATION, format!("Bearer {}", TOKEN_MANAGER)))
-        .to_request();
-    let resp = runtime.block_on(async { test::call_service(&mut app, req).await });
-    expect(resp.status()).to_equal(StatusCode::NO_CONTENT)?;
+    let req = server.delete("/broker/api/v1/network/id").add_header(
+        header::AUTHORIZATION,
+        HeaderValue::from_str(format!("Bearer {}", TOKEN_MANAGER).as_str()).unwrap(),
+    );
+    let resp = runtime.block_on(async { req.await });
+    expect(resp.status_code()).to_equal(StatusCode::NO_CONTENT)?;
     let _ = get_network_model(runtime, &routes_state, "manager", true)?;
 
-    let req = TestRequest::delete()
-        .uri("/broker/api/v1/network/manager")
-        .insert_header((header::AUTHORIZATION, format!("Bearer {}", TOKEN_OWNER)))
-        .to_request();
-    let resp = runtime.block_on(async { test::call_service(&mut app, req).await });
-    expect(resp.status()).to_equal(StatusCode::NO_CONTENT)?;
+    let req = server.delete("/broker/api/v1/network/manager").add_header(
+        header::AUTHORIZATION,
+        HeaderValue::from_str(format!("Bearer {}", TOKEN_OWNER).as_str()).unwrap(),
+    );
+    let resp = runtime.block_on(async { req.await });
+    expect(resp.status_code()).to_equal(StatusCode::NO_CONTENT)?;
     let _ = get_network_model(runtime, &routes_state, "manager", true)?;
 
-    let req = TestRequest::delete()
-        .uri("/broker/api/v1/network/manager")
-        .insert_header((header::AUTHORIZATION, format!("Bearer {}", TOKEN_MEMBER)))
-        .to_request();
-    let resp = runtime.block_on(async { test::call_service(&mut app, req).await });
-    expect(resp.status()).to_equal(StatusCode::NO_CONTENT)?;
+    let req = server.delete("/broker/api/v1/network/manager").add_header(
+        header::AUTHORIZATION,
+        HeaderValue::from_str(format!("Bearer {}", TOKEN_MEMBER).as_str()).unwrap(),
+    );
+    let resp = runtime.block_on(async { req.await });
+    expect(resp.status_code()).to_equal(StatusCode::NO_CONTENT)?;
     let _ = get_network_model(runtime, &routes_state, "manager", true)?;
 
-    let req = TestRequest::delete()
-        .uri("/broker/api/v1/network/public")
-        .insert_header((header::AUTHORIZATION, format!("Bearer {}", TOKEN_MEMBER)))
-        .to_request();
-    let resp = runtime.block_on(async { test::call_service(&mut app, req).await });
-    expect(resp.status()).to_equal(StatusCode::NO_CONTENT)?;
+    let req = server.delete("/broker/api/v1/network/public").add_header(
+        header::AUTHORIZATION,
+        HeaderValue::from_str(format!("Bearer {}", TOKEN_MEMBER).as_str()).unwrap(),
+    );
+    let resp = runtime.block_on(async { req.await });
+    expect(resp.status_code()).to_equal(StatusCode::NO_CONTENT)?;
     let _ = get_network_model(runtime, &routes_state, "public", true)?;
 
-    let req = TestRequest::delete()
-        .uri("/broker/api/v1/network/owner")
-        .insert_header((header::AUTHORIZATION, format!("Bearer {}", TOKEN_MEMBER)))
-        .to_request();
-    let resp = runtime.block_on(async { test::call_service(&mut app, req).await });
-    expect(resp.status()).to_equal(StatusCode::NO_CONTENT)?;
+    let req = server.delete("/broker/api/v1/network/owner").add_header(
+        header::AUTHORIZATION,
+        HeaderValue::from_str(format!("Bearer {}", TOKEN_MEMBER).as_str()).unwrap(),
+    );
+    let resp = runtime.block_on(async { req.await });
+    expect(resp.status_code()).to_equal(StatusCode::NO_CONTENT)?;
     let _ = get_network_model(runtime, &routes_state, "owner", true)?;
 
-    let req = TestRequest::delete()
-        .uri("/broker/api/v1/network/manager")
-        .insert_header((header::AUTHORIZATION, format!("Bearer {}", TOKEN_MANAGER)))
-        .to_request();
-    let resp = runtime.block_on(async { test::call_service(&mut app, req).await });
-    expect(resp.status()).to_equal(StatusCode::NO_CONTENT)?;
+    let req = server.delete("/broker/api/v1/network/manager").add_header(
+        header::AUTHORIZATION,
+        HeaderValue::from_str(format!("Bearer {}", TOKEN_MANAGER).as_str()).unwrap(),
+    );
+    let resp = runtime.block_on(async { req.await });
+    expect(resp.status_code()).to_equal(StatusCode::NO_CONTENT)?;
     let _ = get_network_model(runtime, &routes_state, "manager", false)?;
 
-    let req = TestRequest::delete()
-        .uri("/broker/api/v1/network/owner")
-        .insert_header((header::AUTHORIZATION, format!("Bearer {}", TOKEN_OWNER)))
-        .to_request();
-    let resp = runtime.block_on(async { test::call_service(&mut app, req).await });
-    expect(resp.status()).to_equal(StatusCode::NO_CONTENT)?;
+    let req = server.delete("/broker/api/v1/network/owner").add_header(
+        header::AUTHORIZATION,
+        HeaderValue::from_str(format!("Bearer {}", TOKEN_OWNER).as_str()).unwrap(),
+    );
+    let resp = runtime.block_on(async { req.await });
+    expect(resp.status_code()).to_equal(StatusCode::NO_CONTENT)?;
     let _ = get_network_model(runtime, &routes_state, "owner", false)?;
 
-    let req = TestRequest::delete()
-        .uri("/broker/api/v1/network/owner2")
-        .insert_header((header::AUTHORIZATION, format!("Bearer {}", TOKEN_MANAGER)))
-        .to_request();
-    let resp = runtime.block_on(async { test::call_service(&mut app, req).await });
-    expect(resp.status()).to_equal(StatusCode::NO_CONTENT)?;
+    let req = server.delete("/broker/api/v1/network/owner2").add_header(
+        header::AUTHORIZATION,
+        HeaderValue::from_str(format!("Bearer {}", TOKEN_MANAGER).as_str()).unwrap(),
+    );
+    let resp = runtime.block_on(async { req.await });
+    expect(resp.status_code()).to_equal(StatusCode::NO_CONTENT)?;
     let _ = get_network_model(runtime, &routes_state, "owner2", false)?;
 
     libs::clear_all_data(runtime, state);
     add_delete_rsc(runtime, routes_state)?;
-    let req = TestRequest::delete()
-        .uri("/broker/api/v1/network/public")
-        .insert_header((header::AUTHORIZATION, format!("Bearer {}", TOKEN_MANAGER)))
-        .to_request();
-    let resp = runtime.block_on(async { test::call_service(&mut app, req).await });
-    expect(resp.status()).to_equal(StatusCode::NO_CONTENT)?;
+    let req = server.delete("/broker/api/v1/network/public").add_header(
+        header::AUTHORIZATION,
+        HeaderValue::from_str(format!("Bearer {}", TOKEN_MANAGER).as_str()).unwrap(),
+    );
+    let resp = runtime.block_on(async { req.await });
+    expect(resp.status_code()).to_equal(StatusCode::NO_CONTENT)?;
     let _ = get_unit_model(runtime, routes_state, "manager", true)?;
     let _ = get_unit_model(runtime, routes_state, "owner", true)?;
     let _ = get_application_model(runtime, routes_state, "manager", true)?;
@@ -1169,12 +1226,12 @@ pub fn delete(context: &mut SpecContext<TestState>) -> Result<(), String> {
 
     libs::clear_all_data(runtime, state);
     add_delete_rsc(runtime, routes_state)?;
-    let req = TestRequest::delete()
-        .uri("/broker/api/v1/network/manager")
-        .insert_header((header::AUTHORIZATION, format!("Bearer {}", TOKEN_MANAGER)))
-        .to_request();
-    let resp = runtime.block_on(async { test::call_service(&mut app, req).await });
-    expect(resp.status()).to_equal(StatusCode::NO_CONTENT)?;
+    let req = server.delete("/broker/api/v1/network/manager").add_header(
+        header::AUTHORIZATION,
+        HeaderValue::from_str(format!("Bearer {}", TOKEN_MANAGER).as_str()).unwrap(),
+    );
+    let resp = runtime.block_on(async { req.await });
+    expect(resp.status_code()).to_equal(StatusCode::NO_CONTENT)?;
     let _ = get_unit_model(runtime, routes_state, "manager", true)?;
     let _ = get_unit_model(runtime, routes_state, "owner", true)?;
     let _ = get_application_model(runtime, routes_state, "manager", true)?;
@@ -1203,12 +1260,12 @@ pub fn delete(context: &mut SpecContext<TestState>) -> Result<(), String> {
 
     libs::clear_all_data(runtime, state);
     add_delete_rsc(runtime, routes_state)?;
-    let req = TestRequest::delete()
-        .uri("/broker/api/v1/network/owner")
-        .insert_header((header::AUTHORIZATION, format!("Bearer {}", TOKEN_OWNER)))
-        .to_request();
-    let resp = runtime.block_on(async { test::call_service(&mut app, req).await });
-    expect(resp.status()).to_equal(StatusCode::NO_CONTENT)?;
+    let req = server.delete("/broker/api/v1/network/owner").add_header(
+        header::AUTHORIZATION,
+        HeaderValue::from_str(format!("Bearer {}", TOKEN_OWNER).as_str()).unwrap(),
+    );
+    let resp = runtime.block_on(async { req.await });
+    expect(resp.status_code()).to_equal(StatusCode::NO_CONTENT)?;
     let _ = get_unit_model(runtime, routes_state, "manager", true)?;
     let _ = get_unit_model(runtime, routes_state, "owner", true)?;
     let _ = get_application_model(runtime, routes_state, "manager", true)?;
@@ -1244,8 +1301,12 @@ pub fn delete_invalid_token(context: &mut SpecContext<TestState>) -> Result<(), 
     let runtime = state.runtime.as_ref().unwrap();
     let routes_state = state.routes_state.as_ref().unwrap();
 
-    let req = TestRequest::delete().uri("/broker/api/v1/network/id");
-    test_invalid_token(runtime, &routes_state, req)
+    test_invalid_token(
+        runtime,
+        &routes_state,
+        Method::DELETE,
+        "/broker/api/v1/network/id",
+    )
 }
 
 fn test_post(
@@ -1255,26 +1316,25 @@ fn test_post(
     param: &request::PostNetwork,
     expect_code: &str,
 ) -> Result<(), String> {
-    let mut app = runtime.block_on(async {
-        test::init_service(
-            App::new()
-                .wrap(NormalizePath::trim())
-                .service(routes::new_service(state)),
-        )
-        .await
-    });
+    let app = Router::new().merge(routes::new_service(state));
+    let server = match TestServer::new(app) {
+        Err(e) => return Err(format!("new server error: {}", e)),
+        Ok(server) => server,
+    };
 
     let time_before = Utc::now().trunc_subsecs(3);
-    let req = TestRequest::post()
-        .uri("/broker/api/v1/network")
-        .insert_header((header::AUTHORIZATION, format!("Bearer {}", token)))
-        .set_json(param)
-        .to_request();
-    let resp = runtime.block_on(async { test::call_service(&mut app, req).await });
+    let req = server
+        .post("/broker/api/v1/network")
+        .add_header(
+            header::AUTHORIZATION,
+            HeaderValue::from_str(format!("Bearer {}", token).as_str()).unwrap(),
+        )
+        .json(param);
+    let resp = runtime.block_on(async { req.await });
     let time_after = Utc::now().trunc_subsecs(3);
-    if resp.status() != StatusCode::OK {
-        let status = resp.status();
-        let body: ApiError = runtime.block_on(async { test::read_body_json(resp).await });
+    let status = resp.status_code();
+    if status != StatusCode::OK {
+        let body: ApiError = resp.json();
         let message = match body.message.as_ref() {
             None => "",
             Some(message) => message.as_str(),
@@ -1289,7 +1349,7 @@ fn test_post(
             message
         ));
     }
-    let body: response::PostNetwork = runtime.block_on(async { test::read_body_json(resp).await });
+    let body: response::PostNetwork = resp.json();
     expect(body.data.network_id.len() > 0).to_equal(true)?;
 
     let network_info = match runtime.block_on(async {
@@ -1329,25 +1389,22 @@ fn test_post_invalid_param(
     token: &str,
     param: Option<&request::PostNetwork>,
 ) -> Result<(), String> {
-    let mut app = runtime.block_on(async {
-        test::init_service(
-            App::new()
-                .wrap(NormalizePath::trim())
-                .service(routes::new_service(state)),
-        )
-        .await
-    });
-
-    let req = TestRequest::post()
-        .uri("/broker/api/v1/network")
-        .insert_header((header::AUTHORIZATION, format!("Bearer {}", token)));
-    let req = match param {
-        None => req.to_request(),
-        Some(param) => req.set_json(&param).to_request(),
+    let app = Router::new().merge(routes::new_service(state));
+    let server = match TestServer::new(app) {
+        Err(e) => return Err(format!("new server error: {}", e)),
+        Ok(server) => server,
     };
-    let resp = runtime.block_on(async { test::call_service(&mut app, req).await });
-    expect(resp.status()).to_equal(StatusCode::BAD_REQUEST)?;
-    let body: ApiError = runtime.block_on(async { test::read_body_json(resp).await });
+
+    let req = server
+        .post("/broker/api/v1/network")
+        .add_header(
+            header::AUTHORIZATION,
+            HeaderValue::from_str(format!("Bearer {}", token).as_str()).unwrap(),
+        )
+        .json(&param);
+    let resp = runtime.block_on(async { req.await });
+    expect(resp.status_code()).to_equal(StatusCode::BAD_REQUEST)?;
+    let body: ApiError = resp.json();
     if body.code.as_str() != err::E_PARAM {
         return Err(format!("unexpected 400 error: {}", body.code.as_str()));
     }
@@ -1361,30 +1418,22 @@ fn test_get_count(
     param: Option<&request::GetNetworkCount>,
     expect_count: usize,
 ) -> Result<(), String> {
-    let mut app = runtime.block_on(async {
-        test::init_service(
-            App::new()
-                .wrap(NormalizePath::trim())
-                .service(routes::new_service(state)),
-        )
-        .await
-    });
-
-    let uri = match param {
-        None => "/broker/api/v1/network/count".to_string(),
-        Some(param) => format!(
-            "/broker/api/v1/network/count?{}",
-            serde_urlencoded::to_string(&param).unwrap()
-        ),
+    let app = Router::new().merge(routes::new_service(state));
+    let server = match TestServer::new(app) {
+        Err(e) => return Err(format!("new server error: {}", e)),
+        Ok(server) => server,
     };
-    let req = TestRequest::get()
-        .uri(uri.as_str())
-        .insert_header((header::AUTHORIZATION, format!("Bearer {}", token)))
-        .to_request();
-    let resp = runtime.block_on(async { test::call_service(&mut app, req).await });
-    expect(resp.status()).to_equal(StatusCode::OK)?;
-    let body: response::GetNetworkCount =
-        runtime.block_on(async { test::read_body_json(resp).await });
+
+    let req = server
+        .get("/broker/api/v1/network/count")
+        .add_query_params(&param)
+        .add_header(
+            header::AUTHORIZATION,
+            HeaderValue::from_str(format!("Bearer {}", token).as_str()).unwrap(),
+        );
+    let resp = runtime.block_on(async { req.await });
+    expect(resp.status_code()).to_equal(StatusCode::OK)?;
+    let body: response::GetNetworkCount = resp.json();
     expect(body.data.count).to_equal(expect_count)
 }
 
@@ -1395,30 +1444,22 @@ fn test_get_list(
     param: Option<&request::GetNetworkList>,
     expect_count: usize,
 ) -> Result<(), String> {
-    let mut app = runtime.block_on(async {
-        test::init_service(
-            App::new()
-                .wrap(NormalizePath::trim())
-                .service(routes::new_service(state)),
-        )
-        .await
-    });
-
-    let uri = match param {
-        None => "/broker/api/v1/network/list".to_string(),
-        Some(param) => format!(
-            "/broker/api/v1/network/list?{}",
-            serde_urlencoded::to_string(&param).unwrap()
-        ),
+    let app = Router::new().merge(routes::new_service(state));
+    let server = match TestServer::new(app) {
+        Err(e) => return Err(format!("new server error: {}", e)),
+        Ok(server) => server,
     };
-    let req = TestRequest::get()
-        .uri(uri.as_str())
-        .insert_header((header::AUTHORIZATION, format!("Bearer {}", token)))
-        .to_request();
-    let resp = runtime.block_on(async { test::call_service(&mut app, req).await });
-    expect(resp.status()).to_equal(StatusCode::OK)?;
-    let body: response::GetNetworkList =
-        runtime.block_on(async { test::read_body_json(resp).await });
+
+    let req = server
+        .get("/broker/api/v1/network/list")
+        .add_query_params(&param)
+        .add_header(
+            header::AUTHORIZATION,
+            HeaderValue::from_str(format!("Bearer {}", token).as_str()).unwrap(),
+        );
+    let resp = runtime.block_on(async { req.await });
+    expect(resp.status_code()).to_equal(StatusCode::OK)?;
+    let body: response::GetNetworkList = resp.json();
     expect(body.data.len()).to_equal(expect_count)?;
 
     let mut code_min = "";
@@ -1442,14 +1483,11 @@ fn test_get_list_sort(
     param: &mut request::GetNetworkList,
     expect_ids: &[&str],
 ) -> Result<(), String> {
-    let mut app = runtime.block_on(async {
-        test::init_service(
-            App::new()
-                .wrap(NormalizePath::trim())
-                .service(routes::new_service(state)),
-        )
-        .await
-    });
+    let app = Router::new().merge(routes::new_service(state));
+    let server = match TestServer::new(app) {
+        Err(e) => return Err(format!("new server error: {}", e)),
+        Ok(server) => server,
+    };
 
     if let Some(sorts) = param.sort_vec.as_ref() {
         let sorts: Vec<String> = sorts
@@ -1470,30 +1508,26 @@ fn test_get_list_sort(
         }
     }
 
-    let uri = format!(
-        "/broker/api/v1/network/list?{}",
-        serde_urlencoded::to_string(&param).unwrap()
-    );
-    let req = TestRequest::get()
-        .uri(uri.as_str())
-        .insert_header((header::AUTHORIZATION, format!("Bearer {}", token)))
-        .to_request();
-    let resp = runtime.block_on(async { test::call_service(&mut app, req).await });
-    if let Err(_) = expect(resp.status()).to_equal(StatusCode::OK) {
-        let body: ApiError = runtime.block_on(async { test::read_body_json(resp).await });
+    let req = server
+        .get("/broker/api/v1/network/list")
+        .add_query_params(&param)
+        .add_header(
+            header::AUTHORIZATION,
+            HeaderValue::from_str(format!("Bearer {}", token).as_str()).unwrap(),
+        );
+    let resp = runtime.block_on(async { req.await });
+    if let Err(_) = expect(resp.status_code()).to_equal(StatusCode::OK) {
+        let body: ApiError = resp.json();
         let message = match body.message.as_ref() {
             None => "",
             Some(message) => message.as_str(),
         };
         return Err(format!(
-            "response not 200: {}, {}, {}",
-            uri.as_str(),
-            body.code,
-            message
+            "response not 200: /broker/api/v1/network/list, {}, {}",
+            body.code, message
         ));
     }
-    let body: response::GetNetworkList =
-        runtime.block_on(async { test::read_body_json(resp).await });
+    let body: response::GetNetworkList = resp.json();
     expect(body.data.len()).to_equal(expect_ids.len())?;
 
     let mut index = 0;
@@ -1511,27 +1545,22 @@ fn test_get_list_offset_limit(
     param: &request::GetNetworkList,
     expect_ids: Vec<i32>,
 ) -> Result<(), String> {
-    let mut app = runtime.block_on(async {
-        test::init_service(
-            App::new()
-                .wrap(NormalizePath::trim())
-                .service(routes::new_service(state)),
-        )
-        .await
-    });
+    let app = Router::new().merge(routes::new_service(state));
+    let server = match TestServer::new(app) {
+        Err(e) => return Err(format!("new server error: {}", e)),
+        Ok(server) => server,
+    };
 
-    let uri = format!(
-        "/broker/api/v1/network/list?{}",
-        serde_urlencoded::to_string(&param).unwrap()
-    );
-    let req = TestRequest::get()
-        .uri(uri.as_str())
-        .insert_header((header::AUTHORIZATION, format!("Bearer {}", token)))
-        .to_request();
-    let resp = runtime.block_on(async { test::call_service(&mut app, req).await });
-    expect(resp.status()).to_equal(StatusCode::OK)?;
-    let body: response::GetNetworkList =
-        runtime.block_on(async { test::read_body_json(resp).await });
+    let req = server
+        .get("/broker/api/v1/network/list")
+        .add_query_params(&param)
+        .add_header(
+            header::AUTHORIZATION,
+            HeaderValue::from_str(format!("Bearer {}", token).as_str()).unwrap(),
+        );
+    let resp = runtime.block_on(async { req.await });
+    expect(resp.status_code()).to_equal(StatusCode::OK)?;
+    let body: response::GetNetworkList = resp.json();
     expect(body.data.len()).to_equal(expect_ids.len())?;
 
     let mut index = 0;
@@ -1550,27 +1579,22 @@ fn test_get_list_format_array(
     param: &request::GetNetworkList,
     expect_ids: Vec<i32>,
 ) -> Result<(), String> {
-    let mut app = runtime.block_on(async {
-        test::init_service(
-            App::new()
-                .wrap(NormalizePath::trim())
-                .service(routes::new_service(state)),
-        )
-        .await
-    });
+    let app = Router::new().merge(routes::new_service(state));
+    let server = match TestServer::new(app) {
+        Err(e) => return Err(format!("new server error: {}", e)),
+        Ok(server) => server,
+    };
 
-    let uri = format!(
-        "/broker/api/v1/network/list?{}",
-        serde_urlencoded::to_string(&param).unwrap()
-    );
-    let req = TestRequest::get()
-        .uri(uri.as_str())
-        .insert_header((header::AUTHORIZATION, format!("Bearer {}", token)))
-        .to_request();
-    let resp = runtime.block_on(async { test::call_service(&mut app, req).await });
-    expect(resp.status()).to_equal(StatusCode::OK)?;
-    let body: Vec<response::GetNetworkListData> =
-        runtime.block_on(async { test::read_body_json(resp).await });
+    let req = server
+        .get("/broker/api/v1/network/list")
+        .add_query_params(&param)
+        .add_header(
+            header::AUTHORIZATION,
+            HeaderValue::from_str(format!("Bearer {}", token).as_str()).unwrap(),
+        );
+    let resp = runtime.block_on(async { req.await });
+    expect(resp.status_code()).to_equal(StatusCode::OK)?;
+    let body: Vec<response::GetNetworkListData> = resp.json();
     expect(body.len()).to_equal(expect_ids.len())?;
 
     let mut index = 0;
@@ -1588,27 +1612,25 @@ fn test_get(
     token: &str,
     network_id: &str,
 ) -> Result<(), String> {
-    let mut app = runtime.block_on(async {
-        test::init_service(
-            App::new()
-                .wrap(NormalizePath::trim())
-                .service(routes::new_service(state)),
-        )
-        .await
-    });
+    let app = Router::new().merge(routes::new_service(state));
+    let server = match TestServer::new(app) {
+        Err(e) => return Err(format!("new server error: {}", e)),
+        Ok(server) => server,
+    };
 
     let network_info = get_network_model(runtime, state, network_id, true)?.unwrap();
 
-    let uri = format!("/broker/api/v1/network/{}", network_id);
-    let req = TestRequest::get()
-        .uri(uri.as_str())
-        .insert_header((header::AUTHORIZATION, format!("Bearer {}", token)))
-        .to_request();
-    let resp = runtime.block_on(async { test::call_service(&mut app, req).await });
-    if let Err(_) = expect(resp.status()).to_equal(StatusCode::OK) {
+    let req = server
+        .get(format!("/broker/api/v1/network/{}", network_id).as_str())
+        .add_header(
+            header::AUTHORIZATION,
+            HeaderValue::from_str(format!("Bearer {}", token).as_str()).unwrap(),
+        );
+    let resp = runtime.block_on(async { req.await });
+    if let Err(_) = expect(resp.status_code()).to_equal(StatusCode::OK) {
         return Err(format!("token:{}, app: {}", token, network_id));
     }
-    let body: response::GetNetwork = runtime.block_on(async { test::read_body_json(resp).await });
+    let body: response::GetNetwork = resp.json();
     expect(body.data.network_id.as_str()).to_equal(network_info.network_id.as_str())?;
     expect(body.data.code.as_str()).to_equal(network_info.code.as_str())?;
     expect(body.data.unit_id.as_ref()).to_equal(network_info.unit_id.as_ref())?;
@@ -1636,22 +1658,21 @@ fn test_get_wrong_id(
     token: &str,
     network_id: &str,
 ) -> Result<(), String> {
-    let mut app = runtime.block_on(async {
-        test::init_service(
-            App::new()
-                .wrap(NormalizePath::trim())
-                .service(routes::new_service(state)),
-        )
-        .await
-    });
+    let app = Router::new().merge(routes::new_service(state));
+    let server = match TestServer::new(app) {
+        Err(e) => return Err(format!("new server error: {}", e)),
+        Ok(server) => server,
+    };
 
-    let req = TestRequest::get()
-        .uri(format!("/broker/api/v1/network/{}", network_id).as_str())
-        .insert_header((header::AUTHORIZATION, format!("Bearer {}", token)))
-        .to_request();
-    let resp = runtime.block_on(async { test::call_service(&mut app, req).await });
-    expect(resp.status()).to_equal(StatusCode::NOT_FOUND)?;
-    let body: ApiError = runtime.block_on(async { test::read_body_json(resp).await });
+    let req = server
+        .get(format!("/broker/api/v1/network/{}", network_id).as_str())
+        .add_header(
+            header::AUTHORIZATION,
+            HeaderValue::from_str(format!("Bearer {}", token).as_str()).unwrap(),
+        );
+    let resp = runtime.block_on(async { req.await });
+    expect(resp.status_code()).to_equal(StatusCode::NOT_FOUND)?;
+    let body: ApiError = resp.json();
     expect(body.code.as_str()).to_equal(err::E_NOT_FOUND)
 }
 
@@ -1664,14 +1685,11 @@ fn test_patch(
 ) -> Result<(), String> {
     add_network_model(runtime, state, unit_id, network_id, "amqp://host")?;
 
-    let mut app = runtime.block_on(async {
-        test::init_service(
-            App::new()
-                .wrap(NormalizePath::trim())
-                .service(routes::new_service(state)),
-        )
-        .await
-    });
+    let app = Router::new().merge(routes::new_service(state));
+    let server = match TestServer::new(app) {
+        Err(e) => return Err(format!("new server error: {}", e)),
+        Ok(server) => server,
+    };
 
     let time_before = Utc::now().trunc_subsecs(3);
     let mut info = Map::<String, Value>::new();
@@ -1686,13 +1704,15 @@ fn test_patch(
             info: Some(info.clone()),
         },
     };
-    let req = TestRequest::patch()
-        .uri(format!("/broker/api/v1/network/{}", network_id).as_str())
-        .insert_header((header::AUTHORIZATION, format!("Bearer {}", token)))
-        .set_json(&body)
-        .to_request();
-    let resp = runtime.block_on(async { test::call_service(&mut app, req).await });
-    expect(resp.status()).to_equal(StatusCode::NO_CONTENT)?;
+    let req = server
+        .patch(format!("/broker/api/v1/network/{}", network_id).as_str())
+        .add_header(
+            header::AUTHORIZATION,
+            HeaderValue::from_str(format!("Bearer {}", token).as_str()).unwrap(),
+        )
+        .json(&body);
+    let resp = runtime.block_on(async { req.await });
+    expect(resp.status_code()).to_equal(StatusCode::NO_CONTENT)?;
 
     let time_after = Utc::now().trunc_subsecs(3);
     let network_info = get_network_model(runtime, state, network_id, true)?.unwrap();
@@ -1709,13 +1729,15 @@ fn test_patch(
             ..Default::default()
         },
     };
-    let req = TestRequest::patch()
-        .uri(format!("/broker/api/v1/network/{}", network_id).as_str())
-        .insert_header((header::AUTHORIZATION, format!("Bearer {}", token)))
-        .set_json(&body)
-        .to_request();
-    let resp = runtime.block_on(async { test::call_service(&mut app, req).await });
-    expect(resp.status()).to_equal(StatusCode::NO_CONTENT)?;
+    let req = server
+        .patch(format!("/broker/api/v1/network/{}", network_id).as_str())
+        .add_header(
+            header::AUTHORIZATION,
+            HeaderValue::from_str(format!("Bearer {}", token).as_str()).unwrap(),
+        )
+        .json(&body);
+    let resp = runtime.block_on(async { req.await });
+    expect(resp.status_code()).to_equal(StatusCode::NO_CONTENT)?;
 
     let network_info = get_network_model(runtime, state, network_id, true)?.unwrap();
     expect(network_info.host_uri.as_str()).to_equal("amqp://newhost")?;
@@ -1729,14 +1751,11 @@ fn test_patch_wrong_id(
     token: &str,
     network_id: &str,
 ) -> Result<(), String> {
-    let mut app = runtime.block_on(async {
-        test::init_service(
-            App::new()
-                .wrap(NormalizePath::trim())
-                .service(routes::new_service(state)),
-        )
-        .await
-    });
+    let app = Router::new().merge(routes::new_service(state));
+    let server = match TestServer::new(app) {
+        Err(e) => return Err(format!("new server error: {}", e)),
+        Ok(server) => server,
+    };
 
     let body = request::PatchNetwork {
         data: request::PatchNetworkData {
@@ -1745,14 +1764,16 @@ fn test_patch_wrong_id(
             ..Default::default()
         },
     };
-    let req = TestRequest::patch()
-        .uri(format!("/broker/api/v1/network/{}", network_id).as_str())
-        .insert_header((header::AUTHORIZATION, format!("Bearer {}", token)))
-        .set_json(&body)
-        .to_request();
-    let resp = runtime.block_on(async { test::call_service(&mut app, req).await });
-    expect(resp.status()).to_equal(StatusCode::NOT_FOUND)?;
-    let body: ApiError = runtime.block_on(async { test::read_body_json(resp).await });
+    let req = server
+        .patch(format!("/broker/api/v1/network/{}", network_id).as_str())
+        .add_header(
+            header::AUTHORIZATION,
+            HeaderValue::from_str(format!("Bearer {}", token).as_str()).unwrap(),
+        )
+        .json(&body);
+    let resp = runtime.block_on(async { req.await });
+    expect(resp.status_code()).to_equal(StatusCode::NOT_FOUND)?;
+    let body: ApiError = resp.json();
     expect(body.code.as_str()).to_equal(err::E_NOT_FOUND)
 }
 
@@ -1763,25 +1784,22 @@ fn test_patch_invalid_param(
     network_id: &str,
     param: Option<&request::PatchNetwork>,
 ) -> Result<(), String> {
-    let mut app = runtime.block_on(async {
-        test::init_service(
-            App::new()
-                .wrap(NormalizePath::trim())
-                .service(routes::new_service(state)),
-        )
-        .await
-    });
-
-    let req = TestRequest::patch()
-        .uri(format!("/broker/api/v1/network/{}", network_id).as_str())
-        .insert_header((header::AUTHORIZATION, format!("Bearer {}", token)));
-    let req = match param {
-        None => req.to_request(),
-        Some(param) => req.set_json(&param).to_request(),
+    let app = Router::new().merge(routes::new_service(state));
+    let server = match TestServer::new(app) {
+        Err(e) => return Err(format!("new server error: {}", e)),
+        Ok(server) => server,
     };
-    let resp = runtime.block_on(async { test::call_service(&mut app, req).await });
-    expect(resp.status()).to_equal(StatusCode::BAD_REQUEST)?;
-    let body: ApiError = runtime.block_on(async { test::read_body_json(resp).await });
+
+    let req = server
+        .patch(format!("/broker/api/v1/network/{}", network_id).as_str())
+        .add_header(
+            header::AUTHORIZATION,
+            HeaderValue::from_str(format!("Bearer {}", token).as_str()).unwrap(),
+        )
+        .json(&param);
+    let resp = runtime.block_on(async { req.await });
+    expect(resp.status_code()).to_equal(StatusCode::BAD_REQUEST)?;
+    let body: ApiError = resp.json();
     if body.code.as_str() != err::E_PARAM {
         return Err(format!("unexpected 400 error: {}", body.code.as_str()));
     }

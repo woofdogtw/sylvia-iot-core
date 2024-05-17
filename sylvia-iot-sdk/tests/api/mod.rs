@@ -1,11 +1,10 @@
-use std::{collections::HashMap, error::Error as StdError, sync::mpsc, thread, time::Duration};
+use std::{collections::HashMap, error::Error as StdError, net::SocketAddr, time::Duration};
 
-use actix_http::KeepAlive;
-use actix_web::{middleware::NormalizePath, App, HttpServer};
+use axum::Router;
 use chrono::{DateTime, Utc};
 use laboratory::{describe, Suite};
 use serde_json::{Map, Value};
-use tokio::{runtime::Runtime, time};
+use tokio::{net::TcpListener, runtime::Runtime, time};
 
 use sylvia_iot_auth::{
     libs::config as sylvia_iot_broker_config,
@@ -44,82 +43,70 @@ fn before_all_fn(state: &mut HashMap<&'static str, TestState>) -> () {
         Ok(runtime) => runtime,
     };
 
-    let (tx, rx) = mpsc::channel();
-    {
-        let auth_state = match runtime.block_on(async {
-            let mut path = std::env::temp_dir();
-            path.push(sylvia_iot_auth_config::DEF_SQLITE_PATH);
-            let conf = sylvia_iot_auth_config::Config {
-                db: Some(sylvia_iot_auth_config::Db {
-                    engine: Some("sqlite".to_string()),
-                    sqlite: Some(sylvia_iot_auth_config::Sqlite {
-                        path: Some(path.to_str().unwrap().to_string()),
-                    }),
-                    ..Default::default()
+    let auth_state = match runtime.block_on(async {
+        let mut path = std::env::temp_dir();
+        path.push(sylvia_iot_auth_config::DEF_SQLITE_PATH);
+        let conf = sylvia_iot_auth_config::Config {
+            db: Some(sylvia_iot_auth_config::Db {
+                engine: Some("sqlite".to_string()),
+                sqlite: Some(sylvia_iot_auth_config::Sqlite {
+                    path: Some(path.to_str().unwrap().to_string()),
                 }),
                 ..Default::default()
-            };
-            sylvia_iot_auth_routes::new_state("/auth", &conf).await
-        }) {
-            Err(e) => panic!("create auth state error: {}", e),
-            Ok(state) => state,
+            }),
+            ..Default::default()
         };
-        let broker_state = match runtime.block_on(async {
-            let mut path = std::env::temp_dir();
-            path.push(sylvia_iot_broker_config::DEF_SQLITE_PATH);
-            let conf = sylvia_iot_broker_config::Config {
-                db: Some(sylvia_iot_auth_config::Db {
-                    engine: Some("sqlite".to_string()),
-                    sqlite: Some(sylvia_iot_auth_config::Sqlite {
-                        path: Some(path.to_str().unwrap().to_string()),
-                    }),
-                    ..Default::default()
-                }),
-                ..Default::default()
-            };
-            sylvia_iot_broker_routes::new_state("/broker", &conf).await
-        }) {
-            Err(e) => panic!("create auth state error: {}", e),
-            Ok(state) => state,
-        };
-        let coremgr_state = match runtime.block_on(async {
-            let conf = sylvia_iot_coremgr_config::Config {
-                auth: Some(crate::TEST_AUTH_BASE.to_string()),
-                broker: Some(crate::TEST_BROKER_BASE.to_string()),
-                ..Default::default()
-            };
-            sylvia_iot_coremgr_routes::new_state("/coremgr", &conf).await
-        }) {
-            Err(e) => panic!("create auth state error: {}", e),
-            Ok(state) => state,
-        };
-
-        thread::spawn(move || {
-            let srv = match HttpServer::new(move || {
-                App::new()
-                    .wrap(NormalizePath::trim())
-                    .service(sylvia_iot_auth_routes::new_service(&auth_state))
-                    .service(sylvia_iot_broker_routes::new_service(&broker_state))
-                    .service(sylvia_iot_coremgr_routes::new_service(&coremgr_state))
-            })
-            .keep_alive(KeepAlive::Timeout(Duration::from_secs(60)))
-            .shutdown_timeout(1)
-            .bind("0.0.0.0:1080")
-            {
-                Err(e) => panic!("bind test server error: {}", e),
-                Ok(server) => server,
-            }
-            .run();
-
-            let _ = tx.send(srv.handle());
-            let runtime = match Runtime::new() {
-                Err(e) => panic!("create test server runtime error: {}", e),
-                Ok(runtime) => runtime,
-            };
-            runtime.block_on(async { srv.await })
-        });
+        sylvia_iot_auth_routes::new_state("/auth", &conf).await
+    }) {
+        Err(e) => panic!("create auth state error: {}", e),
+        Ok(state) => state,
     };
-    let core_svc = rx.recv().unwrap();
+    let broker_state = match runtime.block_on(async {
+        let mut path = std::env::temp_dir();
+        path.push(sylvia_iot_broker_config::DEF_SQLITE_PATH);
+        let conf = sylvia_iot_broker_config::Config {
+            db: Some(sylvia_iot_auth_config::Db {
+                engine: Some("sqlite".to_string()),
+                sqlite: Some(sylvia_iot_auth_config::Sqlite {
+                    path: Some(path.to_str().unwrap().to_string()),
+                }),
+                ..Default::default()
+            }),
+            ..Default::default()
+        };
+        sylvia_iot_broker_routes::new_state("/broker", &conf).await
+    }) {
+        Err(e) => panic!("create auth state error: {}", e),
+        Ok(state) => state,
+    };
+    let coremgr_state = match runtime.block_on(async {
+        let conf = sylvia_iot_coremgr_config::Config {
+            auth: Some(crate::TEST_AUTH_BASE.to_string()),
+            broker: Some(crate::TEST_BROKER_BASE.to_string()),
+            ..Default::default()
+        };
+        sylvia_iot_coremgr_routes::new_state("/coremgr", &conf).await
+    }) {
+        Err(e) => panic!("create auth state error: {}", e),
+        Ok(state) => state,
+    };
+
+    let core_svc = runtime.spawn(async move {
+        let app = Router::new()
+            .merge(sylvia_iot_auth_routes::new_service(&auth_state))
+            .merge(sylvia_iot_broker_routes::new_service(&broker_state))
+            .merge(sylvia_iot_coremgr_routes::new_service(&coremgr_state));
+        let listener = match TcpListener::bind("0.0.0.0:1080").await {
+            Err(e) => panic!("bind auth/broker server error: {}", e),
+            Ok(listener) => listener,
+        };
+        axum::serve(
+            listener,
+            app.into_make_service_with_connect_info::<SocketAddr>(),
+        )
+        .await
+        .unwrap()
+    });
 
     if let Err(e) = runtime.block_on(async {
         for _ in 0..WAIT_COUNT {
@@ -205,9 +192,8 @@ fn remove_sqlite(path: &str) {
 }
 
 fn stop_core_svc(state: &TestState) {
-    let runtime = state.runtime.as_ref().unwrap();
     if let Some(svc) = state.core_svc.as_ref() {
-        runtime.block_on(async { svc.stop(false).await });
+        svc.abort();
     }
     let mut path = std::env::temp_dir();
     path.push(sylvia_iot_auth_config::DEF_SQLITE_PATH);

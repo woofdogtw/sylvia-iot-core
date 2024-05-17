@@ -68,6 +68,7 @@ pub fn suite(mqtt_engine: &'static str) -> Suite<TestState> {
                 context.it("GET /client/{clientId}", client::get);
                 context.it("PATCH /client/{clientId}", client::patch);
                 context.it("DELETE /client/{clientId}", client::delete);
+                context.it("DELETE /client/user/{userId}", client::delete_user);
             });
 
             context.describe("application", |context| {

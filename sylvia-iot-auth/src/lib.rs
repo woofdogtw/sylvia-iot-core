@@ -9,16 +9,18 @@
 //! - Client management.
 //!
 //!
-//! # Mount sylvia-iot-auth in your Actix-Web App
+//! # Mount sylvia-iot-auth in your axum App
 //!
-//! You can simply mount sylvia-iot-auth into your Actix-Web App:
+//! You can simply mount sylvia-iot-auth into your axum App:
 //!
 //! ```
-//! use actix_web::{self, App, HttpServer};
+//! use axum::Router;
 //! use clap::App as ClapApp;
+//! use std::net::SocketAddr;
 //! use sylvia_iot_auth::{libs, routes};
+//! use tokio::{self, net::TcpListener};
 //!
-//! #[actix_web::main]
+//! #[tokio::main]
 //! async fn main() -> std::io::Result<()> {
 //!     let args = ClapApp::new("your-project-name").get_matches();
 //!
@@ -30,10 +32,9 @@
 //!         },
 //!         Ok(state) => state,
 //!     };
-//!     HttpServer::new(move || App::new().service(routes::new_service(&auth_state)))
-//!         .bind("0.0.0.0:1080")?
-//!         .run()
-//!         .await
+//!     let app = Router::new().merge(routes::new_service(&auth_state));
+//!     let listener = match TcpListener::bind(http_addr).await.unwrap();
+//!     axum::serve(listener, app.into_make_service_with_connect_info::<SocketAddr>()).await
 //! }
 //! ```
 //!

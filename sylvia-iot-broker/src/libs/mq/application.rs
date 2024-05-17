@@ -222,7 +222,7 @@ impl ApplicationMgr {
     }
 
     /// To close the manager queues.
-    pub async fn close(&self) -> Result<(), Box<dyn StdError>> {
+    pub async fn close(&self) -> Result<(), Box<dyn StdError + Send + Sync>> {
         let mut q = { self.uldata.lock().unwrap().clone() };
         q.close().await?;
         let mut q = { self.dldata.lock().unwrap().clone() };
@@ -246,14 +246,20 @@ impl ApplicationMgr {
     }
 
     /// Send downlink response for a downlink data to the application.
-    pub async fn send_dldata_resp(&self, data: &DlDataResp) -> Result<(), Box<dyn StdError>> {
+    pub async fn send_dldata_resp(
+        &self,
+        data: &DlDataResp,
+    ) -> Result<(), Box<dyn StdError + Send + Sync>> {
         let payload = serde_json::to_vec(data)?;
         let queue = { (*self.dldata_resp.lock().unwrap()).clone() };
         queue.send_msg(payload).await
     }
 
     /// Send the downlink data process result to the application.
-    pub async fn send_dldata_result(&self, data: &DlDataResult) -> Result<(), Box<dyn StdError>> {
+    pub async fn send_dldata_result(
+        &self,
+        data: &DlDataResult,
+    ) -> Result<(), Box<dyn StdError + Send + Sync>> {
         let payload = serde_json::to_vec(data)?;
         let queue = { (*self.dldata_result.lock().unwrap()).clone() };
         queue.send_msg(payload).await

@@ -7,7 +7,7 @@ use chrono::{DateTime, Utc};
 use serde_json::{Map, Value};
 
 /// The item content.
-#[derive(Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct User {
     pub user_id: String,
     pub account: String,

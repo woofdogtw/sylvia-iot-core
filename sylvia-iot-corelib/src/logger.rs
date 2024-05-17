@@ -1,11 +1,20 @@
 //! To configure the logger.
 
-use std::env;
+use std::{
+    env,
+    net::SocketAddr,
+    task::{Context, Poll},
+};
 
 use anyhow::Result;
+use axum::{
+    extract::{ConnectInfo, Request},
+    response::Response,
+};
 use chrono::{SecondsFormat, Utc};
 use clap::{Arg, ArgMatches, Command};
-use log::{Level, LevelFilter, Record};
+use futures::future::BoxFuture;
+use log::{info, Level, LevelFilter, Record};
 use log4rs::{
     self,
     append::console::ConsoleAppender,
@@ -13,6 +22,7 @@ use log4rs::{
     encode::{Encode, Write},
 };
 use serde::{Deserialize, Serialize};
+use tower::{Layer, Service};
 
 /// Logger configuration object.
 #[derive(Default, Deserialize)]
@@ -25,6 +35,14 @@ pub struct Config {
     ///
     /// Default is `json`.
     pub style: Option<String>,
+}
+
+#[derive(Clone)]
+pub struct LoggerLayer;
+
+#[derive(Clone)]
+pub struct LoggerMiddleware<S> {
+    service: S,
 }
 
 /// The log4rs encoder for JSON format.
@@ -64,6 +82,7 @@ struct JsonEncoderHttpMsg {
 // remote address, status code, processing milliseconds, request URL, request line (method, resource, version)
 pub const ACTIX_LOGGER_FORMAT: &'static str = "%a %s %D %U %r";
 pub const ACTIX_LOGGER_NAME: &'static str = "actix_web::middleware::logger";
+pub const SYLVIA_IOT_LOGGER_NAME: &'static str = module_path!();
 
 pub const LEVEL_OFF: &'static str = "off";
 pub const LEVEL_ERROR: &'static str = "error";
@@ -78,6 +97,60 @@ pub const DEF_LEVEL: &'static str = LEVEL_INFO;
 pub const DEF_STYLE: &'static str = STYLE_JSON;
 
 pub const FILTER_ONLY: [&'static str; 2] = ["/auth/oauth2/", "/api/"];
+
+impl LoggerLayer {
+    pub fn new() -> Self {
+        LoggerLayer {}
+    }
+}
+
+impl<S> Layer<S> for LoggerLayer {
+    type Service = LoggerMiddleware<S>;
+
+    fn layer(&self, inner: S) -> Self::Service {
+        LoggerMiddleware { service: inner }
+    }
+}
+
+impl<S> Service<Request> for LoggerMiddleware<S>
+where
+    S: Service<Request, Response = Response> + Clone + Send + 'static,
+    S::Future: Send + 'static,
+{
+    type Response = S::Response;
+    type Error = S::Error;
+    type Future = BoxFuture<'static, Result<Self::Response, Self::Error>>;
+
+    fn poll_ready(&mut self, cx: &mut Context<'_>) -> Poll<Result<(), Self::Error>> {
+        self.service.poll_ready(cx)
+    }
+
+    fn call(&mut self, req: Request) -> Self::Future {
+        let mut svc = self.service.clone();
+
+        Box::pin(async move {
+            let start_time = Utc::now().timestamp_millis();
+            let remote = match req.extensions().get::<ConnectInfo<SocketAddr>>() {
+                None => "".to_string(),
+                Some(info) => info.0.to_string(),
+            };
+            let method = req.method().clone();
+            let uri = req.uri().clone();
+
+            let res = svc.call(req).await?;
+
+            let latency = Utc::now().timestamp_millis() - start_time;
+            let status = res.status().as_u16();
+
+            info!(
+                target: SYLVIA_IOT_LOGGER_NAME,
+                "{} {} {} {} {}", remote, status, latency, uri, method
+            );
+
+            Ok(res)
+        })
+    }
+}
 
 impl JsonEncoder {
     pub fn new(proj_name: &str) -> Self {
@@ -102,44 +175,43 @@ impl Encode for Log4jEncoder {
             Some(module) => module,
         };
 
-        let str = match module.eq(ACTIX_LOGGER_NAME) {
-            false => format!(
+        let str = if module.eq(SYLVIA_IOT_LOGGER_NAME) || module.eq(ACTIX_LOGGER_NAME) {
+            let msg = match get_http_msg(record) {
+                None => return Ok(()),
+                Some(msg) => msg,
+            };
+            let mut found = false;
+            for filter in FILTER_ONLY {
+                if msg.url.contains(filter) {
+                    found = true;
+                    break;
+                }
+            }
+            if !found {
+                return Ok(());
+            }
+            format!(
+                "{} {} [{}] {} {} {} ({} ms)\n",
+                Utc::now().to_rfc3339_opts(SecondsFormat::Millis, true),
+                match &msg.status.chars().next() {
+                    Some('4') => Level::Warn.as_str(),
+                    Some('5') => Level::Error.as_str(),
+                    _ => Level::Info.as_str(),
+                },
+                msg.remote,
+                msg.status,
+                msg.method,
+                msg.url,
+                msg.latency_ms,
+            )
+        } else {
+            format!(
                 "{} {} [{}] {}\n",
                 Utc::now().to_rfc3339_opts(SecondsFormat::Millis, true),
                 record.level(),
                 module,
                 record.args().to_string().replace("\n", "\\n")
-            ),
-            true => {
-                let msg = match get_http_msg(record) {
-                    None => return Ok(()),
-                    Some(msg) => msg,
-                };
-                let mut found = false;
-                for filter in FILTER_ONLY {
-                    if msg.url.contains(filter) {
-                        found = true;
-                        break;
-                    }
-                }
-                if !found {
-                    return Ok(());
-                }
-                format!(
-                    "{} {} [{}] {} {} {} ({} ms)\n",
-                    Utc::now().to_rfc3339_opts(SecondsFormat::Millis, true),
-                    match &msg.status.chars().next() {
-                        Some('4') => Level::Warn.as_str(),
-                        Some('5') => Level::Error.as_str(),
-                        _ => Level::Info.as_str(),
-                    },
-                    msg.remote,
-                    msg.status,
-                    msg.method,
-                    msg.url,
-                    msg.latency_ms,
-                )
-            }
+            )
         };
         w.write_all(str.as_bytes())?;
         Ok(())
@@ -153,38 +225,35 @@ impl Encode for JsonEncoder {
             Some(module) => module,
         };
 
-        let str = match module.eq(ACTIX_LOGGER_NAME) {
-            false => {
-                let msg = JsonEncoderMsg {
-                    ts: Utc::now().to_rfc3339_opts(SecondsFormat::Millis, true),
-                    level: record.level().to_string().to_lowercase(),
-                    module,
-                    msg: record.args().to_string(),
-                };
-                serde_json::to_string(&msg)? + "\n"
-            }
-            true => {
-                let mut msg = match get_http_msg(record) {
-                    None => return Ok(()),
-                    Some(msg) => msg,
-                };
-                let mut found = false;
-                for filter in FILTER_ONLY {
-                    if msg.url.contains(filter) {
-                        found = true;
-                        break;
-                    }
+        let str = if module.eq(SYLVIA_IOT_LOGGER_NAME) || module.eq(ACTIX_LOGGER_NAME) {
+            let mut msg = match get_http_msg(record) {
+                None => return Ok(()),
+                Some(msg) => msg,
+            };
+            let mut found = false;
+            for filter in FILTER_ONLY {
+                if msg.url.contains(filter) {
+                    found = true;
+                    break;
                 }
-                if !found {
-                    return Ok(());
-                }
-                msg.level = match &msg.status.chars().next() {
-                    Some('4') => Level::Warn.as_str().to_lowercase(),
-                    Some('5') => Level::Error.as_str().to_lowercase(),
-                    _ => Level::Info.as_str().to_lowercase(),
-                };
-                serde_json::to_string(&msg)? + "\n"
             }
+            if !found {
+                return Ok(());
+            }
+            msg.level = match &msg.status.chars().next() {
+                Some('4') => Level::Warn.as_str().to_lowercase(),
+                Some('5') => Level::Error.as_str().to_lowercase(),
+                _ => Level::Info.as_str().to_lowercase(),
+            };
+            serde_json::to_string(&msg)? + "\n"
+        } else {
+            let msg = JsonEncoderMsg {
+                ts: Utc::now().to_rfc3339_opts(SecondsFormat::Millis, true),
+                level: record.level().to_string().to_lowercase(),
+                module,
+                msg: record.args().to_string(),
+            };
+            serde_json::to_string(&msg)? + "\n"
         };
         w.write_all(str.as_bytes())?;
         Ok(())
@@ -315,12 +384,15 @@ pub fn apply_default(config: &Config) -> Config {
     }
 }
 
-/// To filter `actix_` prefix and try to get the module name for printing logs.
+/// To filter framework module and try to get the module name for printing logs.
 fn get_module_name(record: &Record<'_>) -> Option<String> {
     match record.module_path() {
         None => None,
-        Some(module) => match module.starts_with("actix_") {
-            false => match record.file() {
+        Some(module) => {
+            if module.eq(SYLVIA_IOT_LOGGER_NAME) || module.eq(ACTIX_LOGGER_NAME) {
+                return Some(module.to_string());
+            }
+            match record.file() {
                 None => Some(module.to_string()),
                 Some(file) => match file.contains("/.cargo/") {
                     false => match record.line() {
@@ -329,13 +401,12 @@ fn get_module_name(record: &Record<'_>) -> Option<String> {
                     },
                     true => None,
                 },
-            },
-            true => Some(module.to_string()),
-        },
+            }
+        }
     }
 }
 
-/// Parse Actix-Web HTTP log for generating logs.
+/// Parse HTTP log for generating logs.
 fn get_http_msg(record: &Record<'_>) -> Option<JsonEncoderHttpMsg> {
     let msg = record.args().to_string();
     let mut split = msg.split(' ');

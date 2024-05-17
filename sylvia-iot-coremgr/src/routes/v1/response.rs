@@ -21,6 +21,16 @@ pub struct TokenInfo {
 }
 
 #[derive(Deserialize)]
+pub struct GetCount {
+    pub data: GetCountData,
+}
+
+#[derive(Deserialize)]
+pub struct GetCountData {
+    pub count: u64,
+}
+
+#[derive(Deserialize)]
 pub struct GetUnit {
     pub data: Unit,
 }

@@ -10,7 +10,11 @@
 
 use std::{error::Error, fmt};
 
-use actix_web::{http::StatusCode, HttpResponse, HttpResponseBuilder, ResponseError};
+use axum::{
+    http::StatusCode,
+    response::{IntoResponse, Response},
+    Json,
+};
 use serde::Serialize;
 use serde_json;
 
@@ -133,22 +137,21 @@ impl fmt::Display for ErrResp {
 
 impl Error for ErrResp {}
 
-impl ResponseError for ErrResp {
-    fn status_code(&self) -> StatusCode {
-        match *self {
-            ErrResp::ErrAuth(_) => StatusCode::UNAUTHORIZED,
-            ErrResp::ErrDb(_) => StatusCode::SERVICE_UNAVAILABLE,
-            ErrResp::ErrIntMsg(_) => StatusCode::SERVICE_UNAVAILABLE,
-            ErrResp::ErrNotFound(_) => StatusCode::NOT_FOUND,
-            ErrResp::ErrParam(_) => StatusCode::BAD_REQUEST,
-            ErrResp::ErrPerm(_) => StatusCode::FORBIDDEN,
-            ErrResp::ErrRsc(_) => StatusCode::SERVICE_UNAVAILABLE,
-            ErrResp::ErrUnknown(_) => StatusCode::INTERNAL_SERVER_ERROR,
-            ErrResp::Custom(code, _, _) => StatusCode::from_u16(code).unwrap(),
+impl IntoResponse for ErrResp {
+    fn into_response(self) -> Response {
+        match self {
+            ErrResp::ErrAuth(_) => (StatusCode::UNAUTHORIZED, Json(self.resp_json())),
+            ErrResp::ErrDb(_) => (StatusCode::SERVICE_UNAVAILABLE, Json(self.resp_json())),
+            ErrResp::ErrIntMsg(_) => (StatusCode::SERVICE_UNAVAILABLE, Json(self.resp_json())),
+            ErrResp::ErrNotFound(_) => (StatusCode::NOT_FOUND, Json(self.resp_json())),
+            ErrResp::ErrParam(_) => (StatusCode::BAD_REQUEST, Json(self.resp_json())),
+            ErrResp::ErrPerm(_) => (StatusCode::FORBIDDEN, Json(self.resp_json())),
+            ErrResp::ErrRsc(_) => (StatusCode::SERVICE_UNAVAILABLE, Json(self.resp_json())),
+            ErrResp::ErrUnknown(_) => (StatusCode::INTERNAL_SERVER_ERROR, Json(self.resp_json())),
+            ErrResp::Custom(code, _, _) => {
+                (StatusCode::from_u16(code).unwrap(), Json(self.resp_json()))
+            }
         }
-    }
-
-    fn error_response(&self) -> HttpResponse {
-        HttpResponseBuilder::new(self.status_code()).json(self.resp_json())
+        .into_response()
     }
 }

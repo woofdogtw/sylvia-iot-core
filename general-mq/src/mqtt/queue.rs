@@ -183,7 +183,7 @@ impl GmqQueue for MqttQueue {
         Ok(())
     }
 
-    async fn close(&mut self) -> Result<(), Box<dyn StdError>> {
+    async fn close(&mut self) -> Result<(), Box<dyn StdError + Send + Sync>> {
         match { self.ev_loop.lock().unwrap().take() } {
             None => return Ok(()),
             Some(handle) => handle.abort(),
@@ -218,7 +218,7 @@ impl GmqQueue for MqttQueue {
         Ok(())
     }
 
-    async fn send_msg(&self, payload: Vec<u8>) -> Result<(), Box<dyn StdError>> {
+    async fn send_msg(&self, payload: Vec<u8>) -> Result<(), Box<dyn StdError + Send + Sync>> {
         if self.opts.is_recv {
             return Err(Box::new(Error::QueueIsReceiver));
         } else if self.status() != Status::Connected {
@@ -278,11 +278,11 @@ impl Message for MqttMessage {
         self.packet.payload.as_ref()
     }
 
-    async fn ack(&self) -> Result<(), Box<dyn StdError>> {
+    async fn ack(&self) -> Result<(), Box<dyn StdError + Send + Sync>> {
         Ok(())
     }
 
-    async fn nack(&self) -> Result<(), Box<dyn StdError>> {
+    async fn nack(&self) -> Result<(), Box<dyn StdError + Send + Sync>> {
         Ok(())
     }
 }

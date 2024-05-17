@@ -1,4 +1,4 @@
-use actix_web::{http::StatusCode, ResponseError};
+use axum::{http::StatusCode, response::IntoResponse};
 use laboratory::{expect, SpecContext};
 
 use sylvia_iot_corelib::err::{self, ErrResp};
@@ -66,34 +66,20 @@ pub fn fmt(_context: &mut SpecContext<TestState>) -> Result<(), String> {
     .to_equal("{\"code\":\"error_custom_code\",\"message\":\"custom_code\"}".to_string())
 }
 
-/// Test `err::ErrResp::status_code` implementations.
-pub fn status_code(_context: &mut SpecContext<TestState>) -> Result<(), String> {
-    expect(ErrResp::ErrAuth(None).status_code()).to_equal(StatusCode::UNAUTHORIZED)?;
-    expect(ErrResp::ErrDb(None).status_code()).to_equal(StatusCode::SERVICE_UNAVAILABLE)?;
-    expect(ErrResp::ErrIntMsg(None).status_code()).to_equal(StatusCode::SERVICE_UNAVAILABLE)?;
-    expect(ErrResp::ErrNotFound(None).status_code()).to_equal(StatusCode::NOT_FOUND)?;
-    expect(ErrResp::ErrParam(None).status_code()).to_equal(StatusCode::BAD_REQUEST)?;
-    expect(ErrResp::ErrPerm(None).status_code()).to_equal(StatusCode::FORBIDDEN)?;
-    expect(ErrResp::ErrRsc(None).status_code()).to_equal(StatusCode::SERVICE_UNAVAILABLE)?;
-    expect(ErrResp::ErrUnknown(None).status_code()).to_equal(StatusCode::INTERNAL_SERVER_ERROR)?;
-    expect(ErrResp::Custom(123, "", None).status_code())
-        .to_equal(StatusCode::from_u16(123).unwrap())
-}
-
-/// Test [`ErrResp`] status code.
-pub fn error_response(_context: &mut SpecContext<TestState>) -> Result<(), String> {
-    expect(ErrResp::ErrAuth(None).error_response().status()).to_equal(StatusCode::UNAUTHORIZED)?;
-    expect(ErrResp::ErrDb(None).error_response().status())
+/// Test `err::ErrResp::into_response` implementations.
+pub fn into_response(_context: &mut SpecContext<TestState>) -> Result<(), String> {
+    expect(ErrResp::ErrAuth(None).into_response().status()).to_equal(StatusCode::UNAUTHORIZED)?;
+    expect(ErrResp::ErrDb(None).into_response().status())
         .to_equal(StatusCode::SERVICE_UNAVAILABLE)?;
-    expect(ErrResp::ErrIntMsg(None).error_response().status())
+    expect(ErrResp::ErrIntMsg(None).into_response().status())
         .to_equal(StatusCode::SERVICE_UNAVAILABLE)?;
-    expect(ErrResp::ErrNotFound(None).error_response().status()).to_equal(StatusCode::NOT_FOUND)?;
-    expect(ErrResp::ErrParam(None).error_response().status()).to_equal(StatusCode::BAD_REQUEST)?;
-    expect(ErrResp::ErrPerm(None).error_response().status()).to_equal(StatusCode::FORBIDDEN)?;
-    expect(ErrResp::ErrRsc(None).error_response().status())
+    expect(ErrResp::ErrNotFound(None).into_response().status()).to_equal(StatusCode::NOT_FOUND)?;
+    expect(ErrResp::ErrParam(None).into_response().status()).to_equal(StatusCode::BAD_REQUEST)?;
+    expect(ErrResp::ErrPerm(None).into_response().status()).to_equal(StatusCode::FORBIDDEN)?;
+    expect(ErrResp::ErrRsc(None).into_response().status())
         .to_equal(StatusCode::SERVICE_UNAVAILABLE)?;
-    expect(ErrResp::ErrUnknown(None).error_response().status())
+    expect(ErrResp::ErrUnknown(None).into_response().status())
         .to_equal(StatusCode::INTERNAL_SERVER_ERROR)?;
-    expect(ErrResp::Custom(123, "", None).error_response().status())
+    expect(ErrResp::Custom(123, "", None).into_response().status())
         .to_equal(StatusCode::from_u16(123).unwrap())
 }

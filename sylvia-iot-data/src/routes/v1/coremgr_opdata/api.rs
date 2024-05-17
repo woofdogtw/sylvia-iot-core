@@ -1,20 +1,28 @@
 use std::error::Error as StdError;
 
-use actix_web::{
-    http::header::{self, HeaderValue},
-    web::{self, Bytes},
-    HttpMessage, HttpRequest, HttpResponse, Responder, ResponseError,
+use axum::{
+    body::{Body, Bytes},
+    extract::State,
+    http::{header, HeaderValue},
+    response::{IntoResponse, Response},
+    Extension,
 };
 use chrono::{TimeZone, Utc};
 use csv::WriterBuilder;
 use log::error;
 use serde_json;
 
-use sylvia_iot_corelib::{err::ErrResp, role::Role, strings};
+use sylvia_iot_corelib::{
+    constants::ContentType,
+    err::ErrResp,
+    http::{Json, Query},
+    role::Role,
+    strings,
+};
 
 use super::{
     super::{
-        super::{middleware::FullTokenInfo, ErrReq, State},
+        super::{middleware::GetTokenInfoData, ErrReq, State as AppState},
         get_user_inner,
     },
     request, response,
@@ -28,37 +36,34 @@ const CSV_FIELDS: &'static str =
 
 /// `GET /{base}/api/v1/coremgr-opdata/count`
 pub async fn get_count(
-    req: HttpRequest,
-    query: web::Query<request::GetCountQuery>,
-    state: web::Data<State>,
-) -> impl Responder {
+    State(state): State<AppState>,
+    Extension(token_info): Extension<GetTokenInfoData>,
+    Query(query): Query<request::GetCountQuery>,
+) -> impl IntoResponse {
     const FN_NAME: &'static str = "get_count";
 
-    let user_cond = match get_user_cond(FN_NAME, &req, query.user.as_ref(), &state).await {
-        Err(e) => return e,
-        Ok(cond) => cond,
-    };
+    let user_cond = get_user_cond(FN_NAME, &token_info, query.user.as_ref(), &state).await?;
     let cond = match get_list_cond(&query, &user_cond).await {
-        Err(e) => return e.error_response(),
+        Err(e) => return Err(e.into_response()),
         Ok(cond) => cond,
     };
     match state.model.coremgr_opdata().count(&cond).await {
         Err(e) => {
             error!("[{}] count error: {}", FN_NAME, e);
-            ErrResp::ErrDb(Some(e.to_string())).error_response()
+            Err(ErrResp::ErrDb(Some(e.to_string())).into_response())
         }
-        Ok(count) => HttpResponse::Ok().json(response::GetCount {
+        Ok(count) => Ok(Json(response::GetCount {
             data: response::GetCountData { count },
-        }),
+        })),
     }
 }
 
 /// `GET /{base}/api/v1/coremgr-opdata/list`
 pub async fn get_list(
-    req: HttpRequest,
-    query: web::Query<request::GetListQuery>,
-    state: web::Data<State>,
-) -> impl Responder {
+    State(state): State<AppState>,
+    Extension(token_info): Extension<GetTokenInfoData>,
+    Query(query): Query<request::GetListQuery>,
+) -> impl IntoResponse {
     const FN_NAME: &'static str = "get_list";
 
     let cond_query = request::GetCountQuery {
@@ -67,7 +72,7 @@ pub async fn get_list(
         tstart: query.tstart,
         tend: query.tend,
     };
-    let user_cond = match get_user_cond(FN_NAME, &req, query.user.as_ref(), &state).await {
+    let user_cond = match get_user_cond(FN_NAME, &token_info, query.user.as_ref(), &state).await {
         Err(e) => return Ok(e),
         Ok(cond) => cond,
     };
@@ -98,41 +103,42 @@ pub async fn get_list(
         Ok((list, cursor)) => match cursor {
             None => match query.format.as_ref() {
                 Some(request::ListFormat::Array) => {
-                    return Ok(HttpResponse::Ok().json(list_transform(&list)))
+                    return Ok(Json(list_transform(&list)).into_response())
                 }
                 Some(request::ListFormat::Csv) => {
                     let bytes = match list_transform_bytes(&list, true, true, query.format.as_ref())
                     {
                         Err(e) => {
-                            return Err(ErrResp::ErrUnknown(Some(format!(
-                                "transform CSV error: {}",
-                                e
-                            ))))
+                            let e = format!("transform CSV error: {}", e);
+                            return Err(ErrResp::ErrUnknown(Some(e)));
                         }
                         Ok(bytes) => bytes,
                     };
-                    return Ok(HttpResponse::Ok()
-                        .insert_header((header::CONTENT_TYPE, "text/csv"))
-                        .insert_header((
-                            header::CONTENT_DISPOSITION,
-                            "attachment;filename=coremgr-opdata.csv",
-                        ))
-                        .body(bytes));
+                    return Ok((
+                        [
+                            (header::CONTENT_TYPE, ContentType::CSV),
+                            (
+                                header::CONTENT_DISPOSITION,
+                                "attachment;filename=coremgr-opdata.csv",
+                            ),
+                        ],
+                        bytes,
+                    )
+                        .into_response());
                 }
                 _ => {
-                    return Ok(HttpResponse::Ok().json(response::GetList {
+                    return Ok(Json(response::GetList {
                         data: list_transform(&list),
-                    }))
+                    })
+                    .into_response())
                 }
             },
             Some(_) => (list, cursor),
         },
     };
 
-    // TODO: detect client disconnect
     let query_format = query.format.clone();
-    let stream = async_stream::stream! {
-        let query = query.0.clone();
+    let body = Body::from_stream(async_stream::stream! {
         let cond_query = request::GetCountQuery {
             user: query.user.clone(),
             tfield: query.tfield.clone(),
@@ -170,16 +176,20 @@ pub async fn get_list(
             list = _list;
             cursor = _cursor;
         }
-    };
+    });
     match query_format {
-        Some(request::ListFormat::Csv) => Ok(HttpResponse::Ok()
-            .insert_header((header::CONTENT_TYPE, "text/csv"))
-            .insert_header((
-                header::CONTENT_DISPOSITION,
-                "attachment;filename=coremgr-opdata.csv",
-            ))
-            .streaming(stream)),
-        _ => Ok(HttpResponse::Ok().streaming(stream)),
+        Some(request::ListFormat::Csv) => Ok((
+            [
+                (header::CONTENT_TYPE, ContentType::CSV),
+                (
+                    header::CONTENT_DISPOSITION,
+                    "attachment;filename=coremgr-opdata.csv",
+                ),
+            ],
+            body,
+        )
+            .into_response()),
+        _ => Ok(([(header::CONTENT_TYPE, ContentType::JSON)], body).into_response()),
     }
 }
 
@@ -220,26 +230,15 @@ async fn get_list_cond<'a>(
 
 async fn get_user_cond(
     fn_name: &str,
-    req: &HttpRequest,
+    token_info: &GetTokenInfoData,
     query_user: Option<&String>,
-    state: &web::Data<State>,
-) -> Result<Option<String>, HttpResponse> {
-    let token_info = match req.extensions_mut().get::<FullTokenInfo>() {
-        None => {
-            error!("[{}] token not found", fn_name);
-            return Err(
-                ErrResp::ErrUnknown(Some("token info not found".to_string())).error_response(),
-            );
-        }
-        Some(token_info) => {
-            if !Role::is_role(&token_info.info.roles, Role::ADMIN)
-                && !Role::is_role(&token_info.info.roles, Role::MANAGER)
-            {
-                return Ok(Some(token_info.info.user_id.clone()));
-            }
-            token_info.clone()
-        }
-    };
+    state: &AppState,
+) -> Result<Option<String>, Response> {
+    if !Role::is_role(&token_info.roles, Role::ADMIN)
+        && !Role::is_role(&token_info.roles, Role::MANAGER)
+    {
+        return Ok(Some(token_info.user_id.clone()));
+    }
     let auth_base = state.auth_base.as_str();
     let client = state.client.clone();
 
@@ -248,14 +247,15 @@ async fn get_user_cond(
         Some(user_id) => match user_id.len() {
             0 => Ok(None),
             _ => {
-                let token = match HeaderValue::from_str(token_info.token.as_str()) {
-                    Err(e) => {
-                        error!("[{}] get token error: {}", fn_name, e);
-                        return Err(ErrResp::ErrUnknown(Some(format!("get token error: {}", e)))
-                            .error_response());
-                    }
-                    Ok(value) => value,
-                };
+                let token =
+                    match HeaderValue::from_str(format!("Bearer {}", token_info.token).as_str()) {
+                        Err(e) => {
+                            error!("[{}] get token error: {}", fn_name, e);
+                            return Err(ErrResp::ErrRsc(Some(format!("get token error: {}", e)))
+                                .into_response());
+                        }
+                        Ok(value) => value,
+                    };
                 match get_user_inner(fn_name, &client, auth_base, user_id, &token).await {
                     Err(e) => {
                         error!("[{}] get unit error", fn_name);
@@ -268,7 +268,7 @@ async fn get_user_cond(
                                 ErrReq::USER_NOT_EXIST.1,
                                 None,
                             )
-                            .error_response())
+                            .into_response())
                         }
                         Some(_) => Ok(Some(user_id.clone())),
                     },
@@ -341,7 +341,7 @@ fn list_transform_bytes(
     with_start: bool,
     with_end: bool,
     format: Option<&request::ListFormat>,
-) -> Result<Bytes, Box<dyn StdError>> {
+) -> Result<Bytes, Box<dyn StdError + Send + Sync>> {
     let mut build_str = match with_start {
         false => "".to_string(),
         true => match format {

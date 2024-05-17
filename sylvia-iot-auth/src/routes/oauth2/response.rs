@@ -1,8 +1,13 @@
 use std::fmt;
 
-use actix_web::{http::StatusCode, ResponseError};
+use axum::{
+    http::StatusCode,
+    response::{IntoResponse, Response},
+};
 use serde::{Deserialize, Serialize};
 use serde_json;
+
+use sylvia_iot_corelib::http::Json;
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct OAuth2Error {
@@ -35,8 +40,8 @@ impl fmt::Display for OAuth2Error {
     }
 }
 
-impl ResponseError for OAuth2Error {
-    fn status_code(&self) -> StatusCode {
-        StatusCode::BAD_REQUEST
+impl IntoResponse for OAuth2Error {
+    fn into_response(self) -> Response {
+        (StatusCode::BAD_REQUEST, Json(self)).into_response()
     }
 }

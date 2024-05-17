@@ -1,9 +1,9 @@
-use actix_web::{
-    http::{header, StatusCode},
-    middleware::NormalizePath,
-    test::{self, TestRequest},
-    App,
+use axum::{
+    http::{header, HeaderValue, Method, StatusCode},
+    Router,
 };
+use axum_test::TestServer;
+use base64::Engine;
 use laboratory::expect;
 use serde::{Deserialize, Serialize};
 use serde_json::{Map, Value};
@@ -28,10 +28,23 @@ struct PostLoginRequest<'a> {
 }
 
 #[derive(Debug, Serialize)]
+struct PostLoginStateParam<'a> {
+    response_type: &'a str,
+    redirect_uri: &'a str,
+    client_id: &'a str,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    scope: Option<&'a str>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    state: Option<&'a str>,
+}
+
+#[derive(Debug, Serialize)]
 struct PostAuthorizeRequest<'a> {
     response_type: &'a str,
     redirect_uri: &'a str,
     client_id: &'a str,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    scope: Option<&'a str>,
     session_id: &'a str,
     allow: &'a str,
 }
@@ -51,7 +64,8 @@ struct PostTokenRequest<'a> {
     grant_type: &'a str,
     code: &'a str,
     redirect_uri: &'a str,
-    client_id: &'a str,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    client_id: Option<&'a str>,
 }
 
 #[derive(Deserialize)]
@@ -77,34 +91,43 @@ pub fn get_token(
     state: &routes::State,
     user_id: &str,
 ) -> Result<String, String> {
-    let mut app = runtime.block_on(async {
-        test::init_service(
-            App::new()
-                .wrap(NormalizePath::trim())
-                .service(routes::new_service(&state)),
-        )
-        .await
-    });
+    get_token_client_id(runtime, state, user_id, "public", None, None)
+}
+
+pub fn get_token_client_id(
+    runtime: &Runtime,
+    state: &routes::State,
+    user_id: &str,
+    client_id: &str,
+    client_secret: Option<&str>,
+    scope: Option<&str>,
+) -> Result<String, String> {
+    let app = Router::new().merge(routes::new_service(&state));
+    let server = match TestServer::new(app) {
+        Err(e) => return Err(format!("new server error: {}", e)),
+        Ok(server) => server,
+    };
 
     // Login to get session ID.
-    let state = format!(
-        "response_type=code&client_id=public&redirect_uri={}&state=/",
-        crate::TEST_REDIRECT_URI
-    );
+    let state = PostLoginStateParam {
+        response_type: "code",
+        redirect_uri: &crate::TEST_REDIRECT_URI,
+        client_id,
+        scope,
+        state: Some("/"),
+    };
+    let state = serde_urlencoded::to_string(state).unwrap();
     let params = PostLoginRequest {
         account: user_id,
         password: user_id,
         state: state.as_str(),
     };
-    let req = TestRequest::post()
-        .uri("/auth/oauth2/login")
-        .set_form(&params)
-        .to_request();
-    let resp = runtime.block_on(async { test::call_service(&mut app, req).await });
-    if resp.status() != StatusCode::FOUND {
-        let status = resp.status();
-        let body = runtime.block_on(async { test::read_body(resp).await });
-        let body = String::from_utf8(body.to_vec()).unwrap();
+    let req = server.post("/auth/oauth2/login").form(&params);
+    let resp = runtime.block_on(async { req.await });
+    let status = resp.status_code();
+    if status != StatusCode::FOUND {
+        let body = resp.text();
+        let body = String::from_utf8(body.as_bytes().to_vec()).unwrap();
         return Err(format!("post login response not 302, {} {}", status, body));
     }
     let location = read_location(&resp)?;
@@ -115,7 +138,7 @@ pub fn get_token(
                 if !location.as_str().starts_with(crate::TEST_REDIRECT_URI) {
                     return Err(format!("redirect wrong URI: {}", location.as_str()));
                 }
-                return Err(format!("error: {}", resp.error));
+                return Err(format!("login error: {}", resp.error));
             } else if let Ok(resp) = serde_urlencoded::from_str::<PostLoginLocation>(query) {
                 if resp.session_id.len() == 0 {
                     return Err("session_id length zero".to_string());
@@ -130,21 +153,17 @@ pub fn get_token(
     // Get authorization code.
     let params = PostAuthorizeRequest {
         response_type: "code",
-        client_id: "public",
+        client_id,
+        scope,
         redirect_uri: crate::TEST_REDIRECT_URI,
         session_id: session_id.as_str(),
         allow: "yes",
     };
-    let req = TestRequest::post()
-        .uri("/auth/oauth2/authorize")
-        .set_form(&params)
-        .to_request();
-    let resp = runtime.block_on(async { test::call_service(&mut app, req).await });
-    if resp.status() != StatusCode::FOUND {
-        return Err(format!(
-            "post authorize response not 302, {}",
-            resp.status()
-        ));
+    let req = server.post("/auth/oauth2/authorize").form(&params);
+    let resp = runtime.block_on(async { req.await });
+    let status = resp.status_code();
+    if status != StatusCode::FOUND {
+        return Err(format!("post authorize response not 302, {}", status));
     }
     let location = read_location(&resp)?;
     let code = match location.query() {
@@ -154,7 +173,7 @@ pub fn get_token(
                 if !location.as_str().starts_with(crate::TEST_REDIRECT_URI) {
                     return Err(format!("redirect wrong URI: {}", location.as_str()));
                 }
-                return Err(format!("error: {}", resp.error));
+                return Err(format!("authorize error: {}", resp.error));
             } else if let Ok(resp) = serde_urlencoded::from_str::<PostAuthorizeLocation>(query) {
                 if !location.as_str().starts_with(crate::TEST_REDIRECT_URI) {
                     return Err(format!("redirect wrong URI: {}", location.as_str()));
@@ -173,22 +192,35 @@ pub fn get_token(
         grant_type: "authorization_code",
         code: code.as_str(),
         redirect_uri: crate::TEST_REDIRECT_URI,
-        client_id: "public",
+        client_id: match client_secret {
+            None => Some(client_id),
+            Some(_) => None,
+        },
     };
-    let req = TestRequest::post()
-        .uri("/auth/oauth2/token")
-        .set_form(&params)
-        .to_request();
-    let resp = runtime.block_on(async { test::call_service(&mut app, req).await });
-    let status = resp.status();
+    let mut req = server.post("/auth/oauth2/token").form(&params);
+    if let Some(secret) = client_secret {
+        let auth = base64::engine::general_purpose::STANDARD
+            .encode(format!("{}:{}", client_id, secret).as_str());
+        req = req.add_header(
+            header::AUTHORIZATION,
+            HeaderValue::from_str(format!("Basic {}", auth).as_str()).unwrap(),
+        );
+    }
+    let resp = runtime.block_on(async { req.await });
+    let status = resp.status_code();
     if status != StatusCode::OK {
-        let body: OAuth2Error = runtime.block_on(async { test::read_body_json(resp).await });
+        let body: OAuth2Error = resp.json();
         if body.error.len() == 0 {
             return Err(format!("post token response not 200, {}", status));
         }
-        return Err(format!("get token error: {}", body.error));
+        return Err(format!(
+            "client {} secret {} get token error: {}",
+            client_id,
+            client_secret.is_some(),
+            body.error
+        ));
     }
-    let body: AccessToken = runtime.block_on(async { test::read_body_json(resp).await });
+    let body: AccessToken = resp.json();
     if body.access_token.len() == 0 {
         return Err("post token unexpected 200".to_string());
     }
@@ -199,23 +231,22 @@ pub fn test_invalid_perm(
     runtime: &Runtime,
     state: &routes::State,
     token: &str,
-    req: TestRequest,
+    method: Method,
+    uri: &str,
 ) -> Result<(), String> {
-    let mut app = runtime.block_on(async {
-        test::init_service(
-            App::new()
-                .wrap(NormalizePath::trim())
-                .service(routes::new_service(&state)),
-        )
-        .await
-    });
+    let app = Router::new().merge(routes::new_service(&state));
+    let server = match TestServer::new(app) {
+        Err(e) => return Err(format!("new server error: {}", e)),
+        Ok(server) => server,
+    };
 
-    let req = req
-        .insert_header((header::AUTHORIZATION, format!("Bearer {}", token)))
-        .to_request();
-    let resp = runtime.block_on(async { test::call_service(&mut app, req).await });
-    expect(resp.status()).to_equal(StatusCode::FORBIDDEN)?;
-    let body: ApiError = runtime.block_on(async { test::read_body_json(resp).await });
+    let req = server.method(method, uri).add_header(
+        header::AUTHORIZATION,
+        HeaderValue::from_str(format!("Bearer {}", token).as_str()).unwrap(),
+    );
+    let resp = runtime.block_on(async { req.await });
+    expect(resp.status_code()).to_equal(StatusCode::FORBIDDEN)?;
+    let body: ApiError = resp.json();
     if body.code.as_str() != err::E_PERM {
         return Err(format!("unexpected 403 error: {}", body.code.as_str()));
     }
@@ -225,22 +256,21 @@ pub fn test_invalid_perm(
 pub fn test_invalid_token(
     runtime: &Runtime,
     state: &routes::State,
-    req: TestRequest,
+    method: Method,
+    uri: &str,
 ) -> Result<(), String> {
-    let mut app = runtime.block_on(async {
-        test::init_service(
-            App::new()
-                .wrap(NormalizePath::trim())
-                .service(routes::new_service(&state)),
-        )
-        .await
-    });
+    let app = Router::new().merge(routes::new_service(&state));
+    let server = match TestServer::new(app) {
+        Err(e) => return Err(format!("new server error: {}", e)),
+        Ok(server) => server,
+    };
 
-    let req = req
-        .insert_header((header::AUTHORIZATION, "Bearer token"))
-        .to_request();
-    let resp = runtime.block_on(async { test::call_service(&mut app, req).await });
-    expect(resp.status()).to_equal(StatusCode::UNAUTHORIZED)
+    let req = server.method(method, uri).add_header(
+        header::AUTHORIZATION,
+        HeaderValue::from_str("Bearer token").unwrap(),
+    );
+    let resp = runtime.block_on(async { req.await });
+    expect(resp.status_code()).to_equal(StatusCode::UNAUTHORIZED)
 }
 
 pub fn test_get_list_invalid_param(
@@ -250,23 +280,19 @@ pub fn test_get_list_invalid_param(
     uri: &str,
     param: &Map<String, Value>,
 ) -> Result<(), String> {
-    let mut app = runtime.block_on(async {
-        test::init_service(
-            App::new()
-                .wrap(NormalizePath::trim())
-                .service(routes::new_service(state)),
-        )
-        .await
-    });
+    let app = Router::new().merge(routes::new_service(&state));
+    let server = match TestServer::new(app) {
+        Err(e) => return Err(format!("new server error: {}", e)),
+        Ok(server) => server,
+    };
 
-    let uri = format!("{}?{}", uri, serde_urlencoded::to_string(param).unwrap());
-    let req = TestRequest::get()
-        .uri(uri.as_str())
-        .insert_header((header::AUTHORIZATION, format!("Bearer {}", token)))
-        .to_request();
-    let resp = runtime.block_on(async { test::call_service(&mut app, req).await });
-    expect(resp.status()).to_equal(StatusCode::BAD_REQUEST)?;
-    let body: ApiError = runtime.block_on(async { test::read_body_json(resp).await });
+    let req = server.get(uri).add_query_params(param).add_header(
+        header::AUTHORIZATION,
+        HeaderValue::from_str(format!("Bearer {}", token).as_str()).unwrap(),
+    );
+    let resp = runtime.block_on(async { req.await });
+    expect(resp.status_code()).to_equal(StatusCode::BAD_REQUEST)?;
+    let body: ApiError = resp.json();
     if body.code.as_str() != err::E_PARAM {
         return Err(format!("unexpected 400 error: {}", body.code.as_str()));
     }

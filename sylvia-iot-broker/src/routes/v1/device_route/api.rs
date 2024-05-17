@@ -7,11 +7,14 @@ use std::{
     time::Duration,
 };
 
-use actix_web::{
-    web::{self, Bytes},
-    HttpRequest, HttpResponse, Responder,
-};
 use async_trait::async_trait;
+use axum::{
+    body::{Body, Bytes},
+    extract::State,
+    http::{header, StatusCode},
+    response::IntoResponse,
+    Extension,
+};
 use chrono::Utc;
 use log::{error, info, warn};
 use serde::{Deserialize, Serialize};
@@ -24,15 +27,17 @@ use general_mq::{
     Queue,
 };
 use sylvia_iot_corelib::{
+    constants::ContentType,
     err::ErrResp,
+    http::{Json, Path, Query},
     role::Role,
     strings::{self, hex_addr_to_u128, time_str, u128_to_addr},
 };
 
 use super::{
     super::{
-        super::{ErrReq, State},
-        lib::{check_application, check_device, check_network, check_unit, get_token_id_roles},
+        super::{middleware::GetTokenInfoData, ErrReq, State as AppState},
+        lib::{check_application, check_device, check_network, check_unit},
     },
     request, response,
 };
@@ -104,7 +109,7 @@ const ID_RAND_LEN: usize = 12;
 const CTRL_QUEUE_NAME: &'static str = "device-route";
 
 /// Initialize channels.
-pub async fn init(state: &State, ctrl_conf: &CfgCtrl) -> Result<(), Box<dyn StdError>> {
+pub async fn init(state: &AppState, ctrl_conf: &CfgCtrl) -> Result<(), Box<dyn StdError>> {
     const FN_NAME: &'static str = "init";
 
     let q = new_ctrl_receiver(state, ctrl_conf)?;
@@ -184,7 +189,7 @@ pub fn new_ctrl_sender(
 }
 
 /// Create control channel receiver queue.
-pub fn new_ctrl_receiver(state: &State, config: &CfgCtrl) -> Result<Queue, Box<dyn StdError>> {
+pub fn new_ctrl_receiver(state: &AppState, config: &CfgCtrl) -> Result<Queue, Box<dyn StdError>> {
     let url = match config.url.as_ref() {
         None => {
             return Err(Box::new(IoError::new(
@@ -216,14 +221,14 @@ pub fn new_ctrl_receiver(state: &State, config: &CfgCtrl) -> Result<Queue, Box<d
 
 /// `POST /{base}/api/v1/device-route`
 pub async fn post_device_route(
-    req: HttpRequest,
-    body: web::Json<request::PostDeviceRouteBody>,
-    state: web::Data<State>,
-) -> impl Responder {
+    State(state): State<AppState>,
+    Extension(token_info): Extension<GetTokenInfoData>,
+    Json(body): Json<request::PostDeviceRouteBody>,
+) -> impl IntoResponse {
     const FN_NAME: &'static str = "post_device_route";
 
-    let (user_id, roles) = get_token_id_roles(FN_NAME, &req)?;
-    let user_id = user_id.as_str();
+    let user_id = token_info.user_id.as_str();
+    let roles = &token_info.roles;
 
     if body.data.device_id.len() == 0 {
         return Err(ErrResp::ErrParam(Some(
@@ -236,7 +241,7 @@ pub async fn post_device_route(
     }
     let device_id = body.data.device_id.as_str();
     let application_id = body.data.application_id.as_str();
-    let device = match check_device(FN_NAME, device_id, user_id, true, &roles, &state).await? {
+    let device = match check_device(FN_NAME, device_id, user_id, true, roles, &state).await? {
         None => {
             return Err(ErrResp::Custom(
                 ErrReq::DEVICE_NOT_EXIST.0,
@@ -247,7 +252,7 @@ pub async fn post_device_route(
         Some(device) => device,
     };
     let application =
-        match check_application(FN_NAME, application_id, user_id, true, &roles, &state).await? {
+        match check_application(FN_NAME, application_id, user_id, true, roles, &state).await? {
             None => {
                 return Err(ErrResp::Custom(
                     ErrReq::APPLICATION_NOT_EXIST.0,
@@ -325,21 +330,21 @@ pub async fn post_device_route(
         send_del_ctrl_message(FN_NAME, &msg, &state).await?;
     }
 
-    Ok(HttpResponse::Ok().json(response::PostDeviceRoute {
+    Ok(Json(response::PostDeviceRoute {
         data: response::PostDeviceRouteData { route_id },
     }))
 }
 
 /// `POST /{base}/api/v1/device-route/bulk`
 pub async fn post_device_route_bulk(
-    req: HttpRequest,
-    mut body: web::Json<request::PostDeviceRouteBulkBody>,
-    state: web::Data<State>,
-) -> impl Responder {
+    State(state): State<AppState>,
+    Extension(token_info): Extension<GetTokenInfoData>,
+    Json(mut body): Json<request::PostDeviceRouteBulkBody>,
+) -> impl IntoResponse {
     const FN_NAME: &'static str = "post_device_route_bulk";
 
-    let (user_id, roles) = get_token_id_roles(FN_NAME, &req)?;
-    let user_id = user_id.as_str();
+    let user_id = token_info.user_id.as_str();
+    let roles = &token_info.roles;
 
     if body.data.application_id.len() == 0 {
         return Err(ErrResp::ErrParam(Some(
@@ -371,7 +376,7 @@ pub async fn post_device_route_bulk(
     body.data.network_addrs = addrs;
     let application_id = body.data.application_id.as_str();
     let application =
-        match check_application(FN_NAME, application_id, user_id, true, &roles, &state).await? {
+        match check_application(FN_NAME, application_id, user_id, true, roles, &state).await? {
             None => {
                 return Err(ErrResp::Custom(
                     ErrReq::APPLICATION_NOT_EXIST.0,
@@ -382,7 +387,7 @@ pub async fn post_device_route_bulk(
             Some(application) => application,
         };
     let network_id = body.data.network_id.as_str();
-    let network = match check_network(FN_NAME, network_id, user_id, true, &roles, &state).await? {
+    let network = match check_network(FN_NAME, network_id, user_id, true, roles, &state).await? {
         None => {
             return Err(ErrResp::Custom(
                 ErrReq::NETWORK_NOT_EXIST.0,
@@ -459,19 +464,19 @@ pub async fn post_device_route_bulk(
         send_del_ctrl_message(FN_NAME, &msg, &state).await?;
     }
 
-    Ok(HttpResponse::NoContent().finish())
+    Ok(StatusCode::NO_CONTENT)
 }
 
 /// `POST /{base}/api/v1/device-route/bulk-delete`
 pub async fn post_device_route_bulk_del(
-    req: HttpRequest,
-    mut body: web::Json<request::PostDeviceRouteBulkBody>,
-    state: web::Data<State>,
-) -> impl Responder {
+    State(state): State<AppState>,
+    Extension(token_info): Extension<GetTokenInfoData>,
+    Json(mut body): Json<request::PostDeviceRouteBulkBody>,
+) -> impl IntoResponse {
     const FN_NAME: &'static str = "post_device_route_bulk_del";
 
-    let (user_id, roles) = get_token_id_roles(FN_NAME, &req)?;
-    let user_id = user_id.as_str();
+    let user_id = token_info.user_id.as_str();
+    let roles = &token_info.roles;
 
     if body.data.application_id.len() == 0 {
         return Err(ErrResp::ErrParam(Some(
@@ -502,7 +507,7 @@ pub async fn post_device_route_bulk_del(
     }
     body.data.network_addrs = addrs;
     let application_id = body.data.application_id.as_str();
-    if check_application(FN_NAME, application_id, user_id, true, &roles, &state)
+    if check_application(FN_NAME, application_id, user_id, true, roles, &state)
         .await?
         .is_none()
     {
@@ -513,7 +518,7 @@ pub async fn post_device_route_bulk_del(
         ));
     }
     let network_id = body.data.network_id.as_str();
-    let network = match check_network(FN_NAME, network_id, user_id, true, &roles, &state).await? {
+    let network = match check_network(FN_NAME, network_id, user_id, true, roles, &state).await? {
         None => {
             return Err(ErrResp::Custom(
                 ErrReq::NETWORK_NOT_EXIST.0,
@@ -569,19 +574,19 @@ pub async fn post_device_route_bulk_del(
         send_del_ctrl_message(FN_NAME, &msg, &state).await?;
     }
 
-    Ok(HttpResponse::NoContent().finish())
+    Ok(StatusCode::NO_CONTENT)
 }
 
 /// `POST /{base}/api/v1/device-route/range`
 pub async fn post_device_route_range(
-    req: HttpRequest,
-    body: web::Json<request::PostDeviceRouteRangeBody>,
-    state: web::Data<State>,
-) -> impl Responder {
+    State(state): State<AppState>,
+    Extension(token_info): Extension<GetTokenInfoData>,
+    Json(body): Json<request::PostDeviceRouteRangeBody>,
+) -> impl IntoResponse {
     const FN_NAME: &'static str = "post_device_route_range";
 
-    let (user_id, roles) = get_token_id_roles(FN_NAME, &req)?;
-    let user_id = user_id.as_str();
+    let user_id = token_info.user_id.as_str();
+    let roles = &token_info.roles;
 
     if body.data.application_id.len() == 0 {
         return Err(ErrResp::ErrParam(Some(
@@ -617,7 +622,7 @@ pub async fn post_device_route_range(
 
     let application_id = body.data.application_id.as_str();
     let application =
-        match check_application(FN_NAME, application_id, user_id, true, &roles, &state).await? {
+        match check_application(FN_NAME, application_id, user_id, true, roles, &state).await? {
             None => {
                 return Err(ErrResp::Custom(
                     ErrReq::APPLICATION_NOT_EXIST.0,
@@ -628,7 +633,7 @@ pub async fn post_device_route_range(
             Some(application) => application,
         };
     let network_id = body.data.network_id.as_str();
-    let network = match check_network(FN_NAME, network_id, user_id, true, &roles, &state).await? {
+    let network = match check_network(FN_NAME, network_id, user_id, true, roles, &state).await? {
         None => {
             return Err(ErrResp::Custom(
                 ErrReq::NETWORK_NOT_EXIST.0,
@@ -711,19 +716,19 @@ pub async fn post_device_route_range(
         send_del_ctrl_message(FN_NAME, &msg, &state).await?;
     }
 
-    Ok(HttpResponse::NoContent().finish())
+    Ok(StatusCode::NO_CONTENT)
 }
 
 /// `POST /{base}/api/v1/device-route/range-delete`
 pub async fn post_device_route_range_del(
-    req: HttpRequest,
-    body: web::Json<request::PostDeviceRouteRangeBody>,
-    state: web::Data<State>,
-) -> impl Responder {
+    State(state): State<AppState>,
+    Extension(token_info): Extension<GetTokenInfoData>,
+    Json(body): Json<request::PostDeviceRouteRangeBody>,
+) -> impl IntoResponse {
     const FN_NAME: &'static str = "post_device_route_range_del";
 
-    let (user_id, roles) = get_token_id_roles(FN_NAME, &req)?;
-    let user_id = user_id.as_str();
+    let user_id = token_info.user_id.as_str();
+    let roles = &token_info.roles;
 
     if body.data.application_id.len() == 0 {
         return Err(ErrResp::ErrParam(Some(
@@ -758,7 +763,7 @@ pub async fn post_device_route_range_del(
     }
 
     let application_id = body.data.application_id.as_str();
-    if check_application(FN_NAME, application_id, user_id, true, &roles, &state)
+    if check_application(FN_NAME, application_id, user_id, true, roles, &state)
         .await?
         .is_none()
     {
@@ -769,7 +774,7 @@ pub async fn post_device_route_range_del(
         ));
     }
     let network_id = body.data.network_id.as_str();
-    let network = match check_network(FN_NAME, network_id, user_id, true, &roles, &state).await? {
+    let network = match check_network(FN_NAME, network_id, user_id, true, roles, &state).await? {
         None => {
             return Err(ErrResp::Custom(
                 ErrReq::NETWORK_NOT_EXIST.0,
@@ -832,21 +837,21 @@ pub async fn post_device_route_range_del(
         send_del_ctrl_message(FN_NAME, &msg, &state).await?;
     }
 
-    Ok(HttpResponse::NoContent().finish())
+    Ok(StatusCode::NO_CONTENT)
 }
 
 /// `GET /{base}/api/v1/device-route/count`
 pub async fn get_device_route_count(
-    req: HttpRequest,
-    query: web::Query<request::GetDeviceRouteCountQuery>,
-    state: web::Data<State>,
-) -> impl Responder {
+    State(state): State<AppState>,
+    Extension(token_info): Extension<GetTokenInfoData>,
+    Query(query): Query<request::GetDeviceRouteCountQuery>,
+) -> impl IntoResponse {
     const FN_NAME: &'static str = "get_device_route_count";
 
-    let (user_id, roles) = get_token_id_roles(FN_NAME, &req)?;
-    let user_id = user_id.as_str();
+    let user_id = token_info.user_id.as_str();
+    let roles = &token_info.roles;
 
-    if !Role::is_role(&roles, Role::ADMIN) && !Role::is_role(&roles, Role::MANAGER) {
+    if !Role::is_role(roles, Role::ADMIN) && !Role::is_role(roles, Role::MANAGER) {
         match query.unit.as_ref() {
             None => return Err(ErrResp::ErrParam(Some("missing `unit`".to_string()))),
             Some(unit_id) => {
@@ -860,17 +865,18 @@ pub async fn get_device_route_count(
         None => None,
         Some(unit_id) => match unit_id.len() {
             0 => None,
-            _ => match check_unit(FN_NAME, user_id, &roles, unit_id.as_str(), false, &state).await?
-            {
-                None => {
-                    return Err(ErrResp::Custom(
-                        ErrReq::UNIT_NOT_EXIST.0,
-                        ErrReq::UNIT_NOT_EXIST.1,
-                        None,
-                    ))
+            _ => {
+                match check_unit(FN_NAME, user_id, roles, unit_id.as_str(), false, &state).await? {
+                    None => {
+                        return Err(ErrResp::Custom(
+                            ErrReq::UNIT_NOT_EXIST.0,
+                            ErrReq::UNIT_NOT_EXIST.1,
+                            None,
+                        ))
+                    }
+                    Some(_) => Some(unit_id.as_str()),
                 }
-                Some(_) => Some(unit_id.as_str()),
-            },
+            }
         },
     };
     let cond = ListQueryCond {
@@ -903,7 +909,7 @@ pub async fn get_device_route_count(
             error!("[{}] count error: {}", FN_NAME, e);
             Err(ErrResp::ErrDb(Some(e.to_string())))
         }
-        Ok(count) => Ok(HttpResponse::Ok().json(response::GetDeviceRouteCount {
+        Ok(count) => Ok(Json(response::GetDeviceRouteCount {
             data: response::GetCountData { count },
         })),
     }
@@ -911,16 +917,16 @@ pub async fn get_device_route_count(
 
 /// `GET /{base}/api/v1/device-route/list`
 pub async fn get_device_route_list(
-    req: HttpRequest,
-    query: web::Query<request::GetDeviceRouteListQuery>,
-    state: web::Data<State>,
-) -> impl Responder {
+    State(state): State<AppState>,
+    Extension(token_info): Extension<GetTokenInfoData>,
+    Query(query): Query<request::GetDeviceRouteListQuery>,
+) -> impl IntoResponse {
     const FN_NAME: &'static str = "get_device_route_list";
 
-    let (user_id, roles) = get_token_id_roles(FN_NAME, &req)?;
-    let user_id = user_id.as_str();
+    let user_id = token_info.user_id.as_str();
+    let roles = &token_info.roles;
 
-    if !Role::is_role(&roles, Role::ADMIN) && !Role::is_role(&roles, Role::MANAGER) {
+    if !Role::is_role(roles, Role::ADMIN) && !Role::is_role(roles, Role::MANAGER) {
         match query.unit.as_ref() {
             None => return Err(ErrResp::ErrParam(Some("missing `unit`".to_string()))),
             Some(unit_id) => {
@@ -934,17 +940,18 @@ pub async fn get_device_route_list(
         None => None,
         Some(unit_id) => match unit_id.len() {
             0 => None,
-            _ => match check_unit(FN_NAME, user_id, &roles, unit_id.as_str(), false, &state).await?
-            {
-                None => {
-                    return Err(ErrResp::Custom(
-                        ErrReq::UNIT_NOT_EXIST.0,
-                        ErrReq::UNIT_NOT_EXIST.1,
-                        None,
-                    ))
+            _ => {
+                match check_unit(FN_NAME, user_id, roles, unit_id.as_str(), false, &state).await? {
+                    None => {
+                        return Err(ErrResp::Custom(
+                            ErrReq::UNIT_NOT_EXIST.0,
+                            ErrReq::UNIT_NOT_EXIST.1,
+                            None,
+                        ))
+                    }
+                    Some(_) => Some(unit_id.as_str()),
                 }
-                Some(_) => Some(unit_id.as_str()),
-            },
+            }
         },
     };
     let cond = ListQueryCond {
@@ -995,21 +1002,20 @@ pub async fn get_device_route_list(
         Ok((list, cursor)) => match cursor {
             None => match query.format {
                 Some(request::ListFormat::Array) => {
-                    return Ok(HttpResponse::Ok().json(route_list_transform(&list)))
+                    return Ok(Json(route_list_transform(&list)).into_response())
                 }
                 _ => {
-                    return Ok(HttpResponse::Ok().json(response::GetDeviceRouteList {
+                    return Ok(Json(response::GetDeviceRouteList {
                         data: route_list_transform(&list),
-                    }))
+                    })
+                    .into_response())
                 }
             },
             Some(_) => (list, cursor),
         },
     };
 
-    // TODO: detect client disconnect
-    let stream = async_stream::stream! {
-        let query = query.0.clone();
+    let body = Body::from_stream(async_stream::stream! {
         let unit_cond = match query.unit.as_ref() {
             None => None,
             Some(unit_id) => match unit_id.len() {
@@ -1072,27 +1078,27 @@ pub async fn get_device_route_list(
             list = _list;
             cursor = _cursor;
         }
-    };
-    Ok(HttpResponse::Ok().streaming(stream))
+    });
+    Ok(([(header::CONTENT_TYPE, ContentType::JSON)], body).into_response())
 }
 
 /// `DELETE /{base}/api/v1/device-route/{routeId}`
 pub async fn delete_device_route(
-    req: HttpRequest,
-    param: web::Path<request::RouteIdPath>,
-    state: web::Data<State>,
-) -> impl Responder {
+    State(state): State<AppState>,
+    Extension(token_info): Extension<GetTokenInfoData>,
+    Path(param): Path<request::RouteIdPath>,
+) -> impl IntoResponse {
     const FN_NAME: &'static str = "delete_device_route";
 
-    let (user_id, roles) = get_token_id_roles(FN_NAME, &req)?;
-    let user_id = user_id.as_str();
+    let user_id = token_info.user_id.as_str();
+    let roles = &token_info.roles;
     let route_id = param.route_id.as_str();
 
     // To check if the device route is for the user.
-    let route = match check_route(FN_NAME, route_id, user_id, true, &roles, &state).await {
+    let route = match check_route(FN_NAME, route_id, user_id, true, roles, &state).await {
         Err(e) => return Err(e), // XXX: not use "?" to solve E0282 error.
         Ok(route) => match route {
-            None => return Ok(HttpResponse::NoContent().finish()),
+            None => return Ok(StatusCode::NO_CONTENT),
             Some(route) => route,
         },
     };
@@ -1116,7 +1122,7 @@ pub async fn delete_device_route(
         send_del_ctrl_message(FN_NAME, &msg, &state).await?;
     }
 
-    Ok(HttpResponse::NoContent().finish())
+    Ok(StatusCode::NO_CONTENT)
 }
 
 fn get_sort_cond(sort_args: &Option<String>) -> Result<Vec<SortCond>, ErrResp> {
@@ -1193,7 +1199,7 @@ async fn check_route(
     user_id: &str,
     only_owner: bool, // to check if this `user_id` is the owner.
     roles: &HashMap<String, bool>,
-    state: &web::Data<State>,
+    state: &AppState,
 ) -> Result<Option<DeviceRoute>, ErrResp> {
     let route = match state.model.device_route().get(route_id).await {
         Err(e) => {
@@ -1225,7 +1231,7 @@ fn route_list_transform_bytes(
     with_start: bool,
     with_end: bool,
     format: Option<&request::ListFormat>,
-) -> Result<Bytes, Box<dyn StdError>> {
+) -> Result<Bytes, Box<dyn StdError + Send + Sync>> {
     let mut build_str = match with_start {
         false => "".to_string(),
         true => match format {
@@ -1277,7 +1283,7 @@ fn route_transform(route: &DeviceRoute) -> response::GetDeviceRouteData {
 async fn send_del_ctrl_message(
     fn_name: &str,
     msg: &SendCtrlMsg,
-    state: &web::Data<State>,
+    state: &AppState,
 ) -> Result<(), ErrResp> {
     let payload = match serde_json::to_vec(&msg) {
         Err(e) => {

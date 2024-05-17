@@ -1,27 +1,35 @@
-use std::error::Error as StdError;
+use std::{error::Error as StdError, sync::Arc};
 
-use actix_web::{
-    web::{self, Bytes},
-    HttpMessage, HttpRequest, HttpResponse, Responder,
+use axum::{
+    body::{Body, Bytes},
+    extract::State,
+    http::{header, StatusCode},
+    response::IntoResponse,
+    Extension,
 };
 use chrono::Utc;
 use log::{error, warn};
 
 use sylvia_iot_corelib::{
+    constants::ContentType,
     err::ErrResp,
+    http::{Json, Path, Query},
     role::Role,
     strings::{self, time_str},
 };
 
 use super::{
-    super::super::{ErrReq, State},
+    super::super::{ErrReq, State as AppState},
     request, response,
 };
 use crate::models::{
+    access_token, authorization_code,
     client::{
         Client, ListOptions, ListQueryCond, QueryCond, SortCond, SortKey, UpdateQueryCond, Updates,
     },
+    refresh_token,
     user::{QueryCond as UserQueryCond, User},
+    Model,
 };
 
 const LIST_LIMIT_DEFAULT: u64 = 100;
@@ -31,10 +39,10 @@ const SECRET_LEN: usize = 16;
 
 /// `POST /{base}/api/v1/client`
 pub async fn post_client(
-    req: HttpRequest,
-    mut body: web::Json<request::PostClientBody>,
-    state: web::Data<State>,
-) -> impl Responder {
+    State(state): State<AppState>,
+    Extension(user): Extension<User>,
+    Json(mut body): Json<request::PostClientBody>,
+) -> impl IntoResponse {
     const FN_NAME: &'static str = "post_client";
 
     body.data.redirect_uris.sort();
@@ -55,45 +63,36 @@ pub async fn post_client(
             )));
         }
     }
-    let user_id = match req.extensions_mut().get::<User>() {
-        None => {
-            error!("[{}] user not found", FN_NAME);
-            return Err(ErrResp::ErrUnknown(Some("user not found".to_string())));
-        }
-        Some(user) => {
-            if !Role::is_role(&user.roles, Role::ADMIN) {
-                user.user_id.clone()
-            } else {
-                match body.data.user_id.as_ref() {
-                    None => user.user_id.clone(),
-                    Some(user_id) => {
-                        if user_id.len() == 0 {
-                            return Err(ErrResp::ErrParam(Some(
-                                "`userId` must not be empty".to_string(),
-                            )));
-                        }
-                        let cond = UserQueryCond {
-                            user_id: Some(user_id.as_str()),
-                            ..Default::default()
-                        };
-                        match state.model.user().get(&cond).await {
-                            Err(e) => {
-                                error!("[{}] get error: {}", FN_NAME, e);
-                                return Err(ErrResp::ErrDb(Some(e.to_string())));
-                            }
-                            Ok(None) => {
-                                return Err(ErrResp::Custom(
-                                    ErrReq::USER_NOT_EXIST.0,
-                                    ErrReq::USER_NOT_EXIST.1,
-                                    None,
-                                ))
-                            }
-                            Ok(_) => user_id.clone(),
-                        }
+    let user_id = match Role::is_role(&user.roles, Role::ADMIN) {
+        false => user.user_id,
+        true => match body.data.user_id {
+            None => user.user_id,
+            Some(user_id) => {
+                if user_id.len() == 0 {
+                    return Err(ErrResp::ErrParam(Some(
+                        "`userId` must not be empty".to_string(),
+                    )));
+                }
+                let cond = UserQueryCond {
+                    user_id: Some(user_id.as_str()),
+                    ..Default::default()
+                };
+                match state.model.user().get(&cond).await {
+                    Err(e) => {
+                        error!("[{}] get error: {}", FN_NAME, e);
+                        return Err(ErrResp::ErrDb(Some(e.to_string())));
                     }
+                    Ok(None) => {
+                        return Err(ErrResp::Custom(
+                            ErrReq::USER_NOT_EXIST.0,
+                            ErrReq::USER_NOT_EXIST.1,
+                            None,
+                        ))
+                    }
+                    Ok(_) => user_id,
                 }
             }
-        }
+        },
     };
 
     let now = Utc::now();
@@ -121,34 +120,22 @@ pub async fn post_client(
         error!("[{}] add error: {}", FN_NAME, e);
         return Err(ErrResp::ErrDb(Some(e.to_string())));
     }
-    Ok(HttpResponse::Ok().json(response::PostClient {
+    Ok(Json(response::PostClient {
         data: response::PostClientData { client_id },
     }))
 }
 
 /// `GET /{base}/api/v1/client/count`
 pub async fn get_client_count(
-    req: HttpRequest,
-    query: web::Query<request::GetClientCountQuery>,
-    state: web::Data<State>,
-) -> impl Responder {
+    State(state): State<AppState>,
+    Extension(user): Extension<User>,
+    Query(query): Query<request::GetClientCountQuery>,
+) -> impl IntoResponse {
     const FN_NAME: &'static str = "get_client_count";
 
-    let user_id = match req.extensions_mut().get::<User>() {
-        None => {
-            error!("[{}] user not found", FN_NAME);
-            return Err(ErrResp::ErrUnknown(Some("user not found".to_string())));
-        }
-        Some(user) => {
-            if Role::is_role(&user.roles, Role::ADMIN) {
-                match query.user.as_ref() {
-                    None => None,
-                    Some(user_id) => Some(user_id.clone()),
-                }
-            } else {
-                Some(user.user_id.clone())
-            }
-        }
+    let user_id = match Role::is_role(&user.roles, Role::ADMIN) {
+        false => Some(user.user_id),
+        true => query.user,
     };
     let cond = ListQueryCond {
         user_id: match user_id.as_ref() {
@@ -162,7 +149,7 @@ pub async fn get_client_count(
             error!("[{}] count error: {}", FN_NAME, e);
             Err(ErrResp::ErrDb(Some(e.to_string())))
         }
-        Ok(count) => Ok(HttpResponse::Ok().json(response::GetClientCount {
+        Ok(count) => Ok(Json(response::GetClientCount {
             data: response::GetCountData { count },
         })),
     }
@@ -170,28 +157,18 @@ pub async fn get_client_count(
 
 /// `GET /{base}/api/v1/client/list`
 pub async fn get_client_list(
-    req: HttpRequest,
-    query: web::Query<request::GetClientListQuery>,
-    state: web::Data<State>,
-) -> impl Responder {
+    State(state): State<AppState>,
+    Extension(user): Extension<User>,
+    Query(query): Query<request::GetClientListQuery>,
+) -> impl IntoResponse {
     const FN_NAME: &'static str = "get_client_list";
 
     let mut is_admin = false;
-    let user_id = match req.extensions_mut().get::<User>() {
-        None => {
-            error!("[{}] user not found", FN_NAME);
-            return Err(ErrResp::ErrUnknown(Some("user not found".to_string())));
-        }
-        Some(user) => {
-            if Role::is_role(&user.roles, Role::ADMIN) {
-                is_admin = true;
-                match query.user.as_ref() {
-                    None => None,
-                    Some(user_id) => Some(user_id.clone()),
-                }
-            } else {
-                Some(user.user_id.clone())
-            }
+    let user_id = match Role::is_role(&user.roles, Role::ADMIN) {
+        false => Some(user.user_id),
+        true => {
+            is_admin = true;
+            query.user.clone()
         }
     };
     let cond = ListQueryCond {
@@ -227,20 +204,20 @@ pub async fn get_client_list(
         Ok((list, cursor)) => match cursor {
             None => match query.format {
                 Some(request::ListFormat::Array) => {
-                    return Ok(HttpResponse::Ok().json(client_list_transform(&list, is_admin)))
+                    return Ok(Json(client_list_transform(&list, is_admin)).into_response())
                 }
                 _ => {
-                    return Ok(HttpResponse::Ok().json(response::GetClientList {
+                    return Ok(Json(response::GetClientList {
                         data: client_list_transform(&list, is_admin),
-                    }))
+                    })
+                    .into_response())
                 }
             },
             Some(_) => (list, cursor),
         },
     };
 
-    // TODO: detect client disconnect
-    let stream = async_stream::stream! {
+    let body = Body::from_stream(async_stream::stream! {
         let user_id = user_id;
         let cond = ListQueryCond {
             user_id: match user_id.as_ref() {
@@ -279,31 +256,24 @@ pub async fn get_client_list(
             list = _list;
             cursor = _cursor;
         }
-    };
-    Ok(HttpResponse::Ok().streaming(stream))
+    });
+    Ok(([(header::CONTENT_TYPE, ContentType::JSON)], body).into_response())
 }
 
 /// `GET /{base}/api/v1/client/{clientId}`
 pub async fn get_client(
-    req: HttpRequest,
-    param: web::Path<request::ClientIdPath>,
-    state: web::Data<State>,
-) -> impl Responder {
+    State(state): State<AppState>,
+    Extension(user): Extension<User>,
+    Path(param): Path<request::ClientIdPath>,
+) -> impl IntoResponse {
     const FN_NAME: &'static str = "get_client";
 
     let mut is_admin = false;
-    let user_id = match req.extensions_mut().get::<User>() {
-        None => {
-            error!("[{}] user not found", FN_NAME);
-            return Err(ErrResp::ErrUnknown(Some("user not found".to_string())));
-        }
-        Some(user) => {
-            if Role::is_role(&user.roles, Role::ADMIN) {
-                is_admin = true;
-                None
-            } else {
-                Some(user.user_id.clone())
-            }
+    let user_id = match Role::is_role(&user.roles, Role::ADMIN) {
+        false => Some(user.user_id),
+        true => {
+            is_admin = true;
+            None
         }
     };
     let cond = QueryCond {
@@ -320,7 +290,7 @@ pub async fn get_client(
         }
         Ok(client) => match client {
             None => return Err(ErrResp::ErrNotFound(None)),
-            Some(client) => Ok(HttpResponse::Ok().json(response::GetClient {
+            Some(client) => Ok(Json(response::GetClient {
                 data: client_transform(&client, is_admin),
             })),
         },
@@ -329,11 +299,11 @@ pub async fn get_client(
 
 /// `PATCH /{base}/api/v1/client/{clientId}`
 pub async fn patch_client(
-    req: HttpRequest,
-    param: web::Path<request::ClientIdPath>,
-    mut body: web::Json<request::PatchClientBody>,
-    state: web::Data<State>,
-) -> impl Responder {
+    State(state): State<AppState>,
+    Extension(user): Extension<User>,
+    Path(param): Path<request::ClientIdPath>,
+    Json(mut body): Json<request::PatchClientBody>,
+) -> impl IntoResponse {
     const FN_NAME: &'static str = "patch_client";
 
     if let Some(data) = body.data.as_mut() {
@@ -362,18 +332,10 @@ pub async fn patch_client(
     }
 
     let mut is_admin = false;
-    let user_id = match req.extensions_mut().get::<User>() {
-        None => {
-            error!("[{}] user not found", FN_NAME);
-            return Err(ErrResp::ErrUnknown(Some("user not found".to_string())));
-        }
-        Some(user) => {
-            if Role::is_role(&user.roles, Role::ADMIN) {
-                is_admin = true;
-            }
-            user.user_id.clone()
-        }
-    };
+    if Role::is_role(&user.roles, Role::ADMIN) {
+        is_admin = true;
+    }
+    let user_id = user.user_id;
 
     let cond = QueryCond {
         client_id: Some(param.client_id.as_str()),
@@ -409,42 +371,29 @@ pub async fn patch_client(
         error!("[{}] update error: {}", FN_NAME, e);
         return Err(ErrResp::ErrDb(Some(e.to_string())));
     }
-    Ok(HttpResponse::NoContent().finish())
+    if updates.client_secret.is_some() {
+        remove_tokens(&FN_NAME, &state.model, cond.client_id).await;
+    }
+    Ok(StatusCode::NO_CONTENT)
 }
 
 /// `DELETE /{base}/api/v1/client/{clientId}`
 pub async fn delete_client(
-    req: HttpRequest,
-    param: web::Path<request::ClientIdPath>,
-    state: web::Data<State>,
-) -> impl Responder {
+    State(state): State<AppState>,
+    Extension(user): Extension<User>,
+    Extension(client): Extension<Client>,
+    Path(param): Path<request::ClientIdPath>,
+) -> impl IntoResponse {
     const FN_NAME: &'static str = "delete_client";
 
-    let user_id = match req.extensions_mut().get::<User>() {
-        None => {
-            error!("[{}] user not found", FN_NAME);
-            return Err(ErrResp::ErrUnknown(Some("user not found".to_string())));
-        }
-        Some(user) => {
-            if Role::is_role(&user.roles, Role::ADMIN) {
-                None
-            } else {
-                Some(user.user_id.clone())
-            }
-        }
+    let user_id = match Role::is_role(&user.roles, Role::ADMIN) {
+        false => Some(user.user_id),
+        true => None,
     };
-    match req.extensions_mut().get::<Client>() {
-        None => {
-            error!("[{}] client not found", FN_NAME);
-            return Err(ErrResp::ErrUnknown(Some("client not found".to_string())));
-        }
-        Some(client) => {
-            if client.client_id.as_str().eq(param.client_id.as_str()) {
-                return Err(ErrResp::ErrPerm(Some(
-                    "cannot delete the client itself".to_string(),
-                )));
-            }
-        }
+    if client.client_id.as_str().eq(param.client_id.as_str()) {
+        return Err(ErrResp::ErrPerm(Some(
+            "cannot delete the client itself".to_string(),
+        )));
     }
 
     let cond = QueryCond {
@@ -459,15 +408,15 @@ pub async fn delete_client(
             error!("[{}] del error: {}", FN_NAME, e);
             return Err(ErrResp::ErrDb(Some(e.to_string())));
         }
-        Ok(_) => Ok(HttpResponse::NoContent().finish()),
+        Ok(_) => Ok(StatusCode::NO_CONTENT),
     }
 }
 
 /// `DELETE /{base}/api/v1/client/user/{userId}`
 pub async fn delete_client_user(
-    param: web::Path<request::UserIdPath>,
-    state: web::Data<State>,
-) -> impl Responder {
+    State(state): State<AppState>,
+    Path(param): Path<request::UserIdPath>,
+) -> impl IntoResponse {
     const FN_NAME: &'static str = "delete_client_user";
 
     let cond = QueryCond {
@@ -479,7 +428,7 @@ pub async fn delete_client_user(
             error!("[{}] del error: {}", FN_NAME, e);
             return Err(ErrResp::ErrDb(Some(e.to_string())));
         }
-        Ok(_) => Ok(HttpResponse::NoContent().finish()),
+        Ok(_) => Ok(StatusCode::NO_CONTENT),
     }
 }
 
@@ -593,7 +542,7 @@ fn client_list_transform_bytes(
     with_start: bool,
     with_end: bool,
     format: Option<&request::ListFormat>,
-) -> Result<Bytes, Box<dyn StdError>> {
+) -> Result<Bytes, Box<dyn StdError + Send + Sync>> {
     let mut build_str = match with_start {
         false => "".to_string(),
         true => match format {
@@ -645,5 +594,29 @@ fn client_transform(client: &Client, is_admin: bool) -> response::GetClientData 
             None => None,
             Some(image) => Some(image.clone()),
         },
+    }
+}
+
+async fn remove_tokens(fn_name: &str, model: &Arc<dyn Model>, client_id: &str) {
+    let cond = authorization_code::QueryCond {
+        client_id: Some(client_id),
+        ..Default::default()
+    };
+    if let Err(e) = model.authorization_code().del(&cond).await {
+        error!("[{}] delete access token error: {}", fn_name, e);
+    }
+    let cond = access_token::QueryCond {
+        client_id: Some(client_id),
+        ..Default::default()
+    };
+    if let Err(e) = model.access_token().del(&cond).await {
+        error!("[{}] delete access token error: {}", fn_name, e);
+    }
+    let cond = refresh_token::QueryCond {
+        client_id: Some(client_id),
+        ..Default::default()
+    };
+    if let Err(e) = model.refresh_token().del(&cond).await {
+        error!("[{}] delete refresh token error: {}", fn_name, e);
     }
 }

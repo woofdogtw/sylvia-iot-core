@@ -1,16 +1,14 @@
 use std::collections::HashMap;
 
-use actix_web::{
-    http::{header, StatusCode},
-    middleware::NormalizePath,
-    test::{self, TestRequest},
-    App,
+use axum::{
+    http::{header, HeaderValue, Method, StatusCode},
+    Router,
 };
+use axum_test::TestServer;
 use chrono::{DateTime, SecondsFormat, SubsecRound, TimeDelta, Utc};
 use laboratory::{expect, SpecContext};
 use mongodb::bson::Document;
 use serde_json::{Map, Value};
-use serde_urlencoded;
 use sql_builder::SqlBuilder;
 use sqlx;
 use tokio::runtime::Runtime;
@@ -107,21 +105,18 @@ pub fn get_invalid_token(context: &mut SpecContext<TestState>) -> Result<(), Str
     let runtime = state.runtime.as_ref().unwrap();
     let routes_state = state.routes_state.as_ref().unwrap();
 
-    let mut app = runtime.block_on(async {
-        test::init_service(
-            App::new()
-                .wrap(NormalizePath::trim())
-                .service(routes::new_service(&routes_state)),
-        )
-        .await
-    });
+    let app = Router::new().merge(routes::new_service(routes_state));
+    let server = match TestServer::new(app) {
+        Err(e) => return Err(format!("new server error: {}", e)),
+        Ok(server) => server,
+    };
 
-    let req = TestRequest::get()
-        .uri("/auth/api/v1/user")
-        .insert_header((header::AUTHORIZATION, "Bearer token"))
-        .to_request();
-    let resp = runtime.block_on(async { test::call_service(&mut app, req).await });
-    expect(resp.status()).to_equal(StatusCode::UNAUTHORIZED)
+    let req = server.get("/auth/api/v1/user").add_header(
+        header::AUTHORIZATION,
+        HeaderValue::from_str("Bearer token").unwrap(),
+    );
+    let resp = runtime.block_on(async { req.await });
+    expect(resp.status_code()).to_equal(StatusCode::UNAUTHORIZED)
 }
 
 pub fn patch(context: &mut SpecContext<TestState>) -> Result<(), String> {
@@ -130,10 +125,22 @@ pub fn patch(context: &mut SpecContext<TestState>) -> Result<(), String> {
     let runtime = state.runtime.as_ref().unwrap();
     let routes_state = state.routes_state.as_ref().unwrap();
 
-    test_patch(runtime, routes_state, "admin")?;
-    test_patch(runtime, routes_state, "manager")?;
-    test_patch(runtime, routes_state, "dev")?;
-    test_patch(runtime, routes_state, "user")
+    test_patch(runtime, routes_state, "admin", false)?;
+    test_patch(runtime, routes_state, "manager", false)?;
+    test_patch(runtime, routes_state, "dev", false)?;
+    test_patch(runtime, routes_state, "user", false)
+}
+
+pub fn patch_password(context: &mut SpecContext<TestState>) -> Result<(), String> {
+    let state = context.state.borrow();
+    let state = state.get(STATE).unwrap();
+    let runtime = state.runtime.as_ref().unwrap();
+    let routes_state = state.routes_state.as_ref().unwrap();
+
+    test_patch(runtime, routes_state, "admin", true)?;
+    test_patch(runtime, routes_state, "manager", true)?;
+    test_patch(runtime, routes_state, "dev", true)?;
+    test_patch(runtime, routes_state, "user", true)
 }
 
 pub fn patch_invalid_param(context: &mut SpecContext<TestState>) -> Result<(), String> {
@@ -172,8 +179,7 @@ pub fn patch_invalid_token(context: &mut SpecContext<TestState>) -> Result<(), S
     let runtime = state.runtime.as_ref().unwrap();
     let routes_state = state.routes_state.as_ref().unwrap();
 
-    let req = TestRequest::patch().uri("/auth/api/v1/user");
-    test_invalid_token(runtime, &routes_state, req)
+    test_invalid_token(runtime, &routes_state, Method::PATCH, "/auth/api/v1/user")
 }
 
 pub fn post_admin(context: &mut SpecContext<TestState>) -> Result<(), String> {
@@ -285,8 +291,7 @@ pub fn post_admin_invalid_token(context: &mut SpecContext<TestState>) -> Result<
     let runtime = state.runtime.as_ref().unwrap();
     let routes_state = state.routes_state.as_ref().unwrap();
 
-    let req = TestRequest::post().uri("/auth/api/v1/user");
-    test_invalid_token(runtime, &routes_state, req)
+    test_invalid_token(runtime, &routes_state, Method::POST, "/auth/api/v1/user")
 }
 
 pub fn post_admin_invalid_perm(context: &mut SpecContext<TestState>) -> Result<(), String> {
@@ -295,23 +300,23 @@ pub fn post_admin_invalid_perm(context: &mut SpecContext<TestState>) -> Result<(
     let runtime = state.runtime.as_ref().unwrap();
     let routes_state = state.routes_state.as_ref().unwrap();
 
+    let method = Method::POST;
+    let uri = "/auth/api/v1/user";
+
     let user_id = "manager";
     add_user_model(runtime, &routes_state, user_id)?;
     let token = get_token(runtime, routes_state, user_id)?;
-    let req = TestRequest::post().uri("/auth/api/v1/user");
-    test_invalid_perm(runtime, &routes_state, token.as_str(), req)?;
+    test_invalid_perm(runtime, &routes_state, token.as_str(), method.clone(), uri)?;
 
     let user_id = "service";
     add_user_model(runtime, &routes_state, user_id)?;
     let token = get_token(runtime, routes_state, user_id)?;
-    let req = TestRequest::post().uri("/auth/api/v1/user");
-    test_invalid_perm(runtime, &routes_state, token.as_str(), req)?;
+    test_invalid_perm(runtime, &routes_state, token.as_str(), method.clone(), uri)?;
 
     let user_id = "user";
     add_user_model(runtime, &routes_state, user_id)?;
     let token = get_token(runtime, routes_state, user_id)?;
-    let req = TestRequest::post().uri("/auth/api/v1/user");
-    test_invalid_perm(runtime, &routes_state, token.as_str(), req)
+    test_invalid_perm(runtime, &routes_state, token.as_str(), method, uri)
 }
 
 pub fn get_admin_count(context: &mut SpecContext<TestState>) -> Result<(), String> {
@@ -446,8 +451,12 @@ pub fn get_admin_count_invalid_token(context: &mut SpecContext<TestState>) -> Re
     let runtime = state.runtime.as_ref().unwrap();
     let routes_state = state.routes_state.as_ref().unwrap();
 
-    let req = TestRequest::get().uri("/auth/api/v1/user/count");
-    test_invalid_token(runtime, &routes_state, req)
+    test_invalid_token(
+        runtime,
+        &routes_state,
+        Method::GET,
+        "/auth/api/v1/user/count",
+    )
 }
 
 pub fn get_admin_count_invalid_perm(context: &mut SpecContext<TestState>) -> Result<(), String> {
@@ -456,17 +465,18 @@ pub fn get_admin_count_invalid_perm(context: &mut SpecContext<TestState>) -> Res
     let runtime = state.runtime.as_ref().unwrap();
     let routes_state = state.routes_state.as_ref().unwrap();
 
+    let method = Method::GET;
+    let uri = "/auth/api/v1/user/count";
+
     let user_id = "service";
     add_user_model(runtime, &routes_state, user_id)?;
     let token = get_token(runtime, routes_state, user_id)?;
-    let req = TestRequest::get().uri("/auth/api/v1/user/count");
-    test_invalid_perm(runtime, &routes_state, token.as_str(), req)?;
+    test_invalid_perm(runtime, &routes_state, token.as_str(), method.clone(), uri)?;
 
     let user_id = "user";
     add_user_model(runtime, &routes_state, user_id)?;
     let token = get_token(runtime, routes_state, user_id)?;
-    let req = TestRequest::get().uri("/auth/api/v1/user/count");
-    test_invalid_perm(runtime, &routes_state, token.as_str(), req)
+    test_invalid_perm(runtime, &routes_state, token.as_str(), method, uri)
 }
 
 pub fn get_admin_list(context: &mut SpecContext<TestState>) -> Result<(), String> {
@@ -989,8 +999,12 @@ pub fn get_admin_list_invalid_token(context: &mut SpecContext<TestState>) -> Res
     let runtime = state.runtime.as_ref().unwrap();
     let routes_state = state.routes_state.as_ref().unwrap();
 
-    let req = TestRequest::get().uri("/auth/api/v1/user/list");
-    test_invalid_token(runtime, &routes_state, req)
+    test_invalid_token(
+        runtime,
+        &routes_state,
+        Method::GET,
+        "/auth/api/v1/user/list",
+    )
 }
 
 pub fn get_admin_list_invalid_perm(context: &mut SpecContext<TestState>) -> Result<(), String> {
@@ -999,19 +1013,18 @@ pub fn get_admin_list_invalid_perm(context: &mut SpecContext<TestState>) -> Resu
     let runtime = state.runtime.as_ref().unwrap();
     let routes_state = state.routes_state.as_ref().unwrap();
 
+    let method = Method::GET;
     let uri = "/auth/api/v1/user/list";
 
     let user_id = "service";
     add_user_model(runtime, &routes_state, user_id)?;
     let token = get_token(runtime, routes_state, user_id)?;
-    let req = TestRequest::get().uri(uri);
-    test_invalid_perm(runtime, &routes_state, token.as_str(), req)?;
+    test_invalid_perm(runtime, &routes_state, token.as_str(), method.clone(), uri)?;
 
     let user_id = "user";
     add_user_model(runtime, &routes_state, user_id)?;
     let token = get_token(runtime, routes_state, user_id)?;
-    let req = TestRequest::get().uri(uri);
-    test_invalid_perm(runtime, &routes_state, token.as_str(), req)
+    test_invalid_perm(runtime, &routes_state, token.as_str(), method, uri)
 }
 
 pub fn get_admin(context: &mut SpecContext<TestState>) -> Result<(), String> {
@@ -1041,22 +1054,19 @@ pub fn get_admin_wrong_id(context: &mut SpecContext<TestState>) -> Result<(), St
     add_user_model(runtime, &routes_state, user_id)?;
     let admin_token = get_token(runtime, routes_state, user_id)?;
 
-    let mut app = runtime.block_on(async {
-        test::init_service(
-            App::new()
-                .wrap(NormalizePath::trim())
-                .service(routes::new_service(&routes_state)),
-        )
-        .await
-    });
+    let app = Router::new().merge(routes::new_service(routes_state));
+    let server = match TestServer::new(app) {
+        Err(e) => return Err(format!("new server error: {}", e)),
+        Ok(server) => server,
+    };
 
-    let req = TestRequest::get()
-        .uri("/auth/api/v1/user/id")
-        .insert_header((header::AUTHORIZATION, format!("Bearer {}", admin_token)))
-        .to_request();
-    let resp = runtime.block_on(async { test::call_service(&mut app, req).await });
-    expect(resp.status()).to_equal(StatusCode::NOT_FOUND)?;
-    let body: ApiError = runtime.block_on(async { test::read_body_json(resp).await });
+    let req = server.get("/auth/api/v1/user/id").add_header(
+        header::AUTHORIZATION,
+        HeaderValue::from_str(format!("Bearer {}", admin_token).as_str()).unwrap(),
+    );
+    let resp = runtime.block_on(async { req.await });
+    expect(resp.status_code()).to_equal(StatusCode::NOT_FOUND)?;
+    let body: ApiError = resp.json();
     if body.code.as_str() != err::E_NOT_FOUND {
         return Err(format!("unexpected 404 error: {}", body.code.as_str()));
     }
@@ -1069,8 +1079,7 @@ pub fn get_admin_invalid_token(context: &mut SpecContext<TestState>) -> Result<(
     let runtime = state.runtime.as_ref().unwrap();
     let routes_state = state.routes_state.as_ref().unwrap();
 
-    let req = TestRequest::get().uri("/auth/api/v1/user/id");
-    test_invalid_token(runtime, &routes_state, req)
+    test_invalid_token(runtime, &routes_state, Method::GET, "/auth/api/v1/user/id")
 }
 
 pub fn get_admin_invalid_perm(context: &mut SpecContext<TestState>) -> Result<(), String> {
@@ -1079,17 +1088,18 @@ pub fn get_admin_invalid_perm(context: &mut SpecContext<TestState>) -> Result<()
     let runtime = state.runtime.as_ref().unwrap();
     let routes_state = state.routes_state.as_ref().unwrap();
 
+    let method = Method::GET;
+    let uri = "/auth/api/v1/user/id";
+
     let user_id = "service";
     add_user_model(runtime, &routes_state, user_id)?;
     let token = get_token(runtime, routes_state, user_id)?;
-    let req = TestRequest::get().uri("/auth/api/v1/user/id");
-    test_invalid_perm(runtime, &routes_state, token.as_str(), req)?;
+    test_invalid_perm(runtime, &routes_state, token.as_str(), method.clone(), uri)?;
 
     let user_id = "user";
     add_user_model(runtime, &routes_state, user_id)?;
     let token = get_token(runtime, routes_state, user_id)?;
-    let req = TestRequest::get().uri("/auth/api/v1/user/id");
-    test_invalid_perm(runtime, &routes_state, token.as_str(), req)
+    test_invalid_perm(runtime, &routes_state, token.as_str(), method, uri)
 }
 
 pub fn patch_admin(context: &mut SpecContext<TestState>) -> Result<(), String> {
@@ -1106,8 +1116,21 @@ pub fn patch_admin(context: &mut SpecContext<TestState>) -> Result<(), String> {
     add_user_model(runtime, &routes_state, user_id)?;
     let manager_token = get_token(runtime, routes_state, user_id)?;
 
-    test_patch_admin_admin(runtime, &routes_state, admin_token.as_str())?;
+    test_patch_admin_admin(runtime, &routes_state, admin_token.as_str(), false)?;
     test_patch_admin_manager(runtime, &routes_state, manager_token.as_str())
+}
+
+pub fn patch_admin_password(context: &mut SpecContext<TestState>) -> Result<(), String> {
+    let state = context.state.borrow();
+    let state = state.get(STATE).unwrap();
+    let runtime = state.runtime.as_ref().unwrap();
+    let routes_state = state.routes_state.as_ref().unwrap();
+
+    let user_id = "admin";
+    add_user_model(runtime, &routes_state, user_id)?;
+    let admin_token = get_token(runtime, routes_state, user_id)?;
+
+    test_patch_admin_admin(runtime, &routes_state, admin_token.as_str(), true)
 }
 
 pub fn patch_admin_invalid_param(context: &mut SpecContext<TestState>) -> Result<(), String> {
@@ -1155,14 +1178,11 @@ pub fn patch_admin_wrong_id(context: &mut SpecContext<TestState>) -> Result<(), 
     add_user_model(runtime, &routes_state, user_id)?;
     let admin_token = get_token(runtime, routes_state, user_id)?;
 
-    let mut app = runtime.block_on(async {
-        test::init_service(
-            App::new()
-                .wrap(NormalizePath::trim())
-                .service(routes::new_service(&routes_state)),
-        )
-        .await
-    });
+    let app = Router::new().merge(routes::new_service(routes_state));
+    let server = match TestServer::new(app) {
+        Err(e) => return Err(format!("new server error: {}", e)),
+        Ok(server) => server,
+    };
 
     let param = request::PatchAdminUser {
         data: Some(request::PatchAdminUserData {
@@ -1172,14 +1192,16 @@ pub fn patch_admin_wrong_id(context: &mut SpecContext<TestState>) -> Result<(), 
         ..Default::default()
     };
 
-    let req = TestRequest::patch()
-        .uri("/auth/api/v1/user/id")
-        .insert_header((header::AUTHORIZATION, format!("Bearer {}", admin_token)))
-        .set_json(&param)
-        .to_request();
-    let resp = runtime.block_on(async { test::call_service(&mut app, req).await });
-    expect(resp.status()).to_equal(StatusCode::NOT_FOUND)?;
-    let body: ApiError = runtime.block_on(async { test::read_body_json(resp).await });
+    let req = server
+        .patch("/auth/api/v1/user/id")
+        .add_header(
+            header::AUTHORIZATION,
+            HeaderValue::from_str(format!("Bearer {}", admin_token).as_str()).unwrap(),
+        )
+        .json(&param);
+    let resp = runtime.block_on(async { req.await });
+    expect(resp.status_code()).to_equal(StatusCode::NOT_FOUND)?;
+    let body: ApiError = resp.json();
     if body.code.as_str() != err::E_NOT_FOUND {
         return Err(format!("unexpected 404 error: {}", body.code.as_str()));
     }
@@ -1192,8 +1214,12 @@ pub fn patch_admin_invalid_token(context: &mut SpecContext<TestState>) -> Result
     let runtime = state.runtime.as_ref().unwrap();
     let routes_state = state.routes_state.as_ref().unwrap();
 
-    let req = TestRequest::patch().uri("/auth/api/v1/user/id");
-    test_invalid_token(runtime, &routes_state, req)
+    test_invalid_token(
+        runtime,
+        &routes_state,
+        Method::PATCH,
+        "/auth/api/v1/user/id",
+    )
 }
 
 pub fn patch_admin_invalid_perm(context: &mut SpecContext<TestState>) -> Result<(), String> {
@@ -1201,6 +1227,9 @@ pub fn patch_admin_invalid_perm(context: &mut SpecContext<TestState>) -> Result<
     let state = state.get(STATE).unwrap();
     let runtime = state.runtime.as_ref().unwrap();
     let routes_state = state.routes_state.as_ref().unwrap();
+
+    let method = Method::PATCH;
+    let uri = "/auth/api/v1/user/id";
 
     add_user_model(runtime, &routes_state, "admin")?;
 
@@ -1211,14 +1240,12 @@ pub fn patch_admin_invalid_perm(context: &mut SpecContext<TestState>) -> Result<
     let user_id = "service";
     add_user_model(runtime, &routes_state, user_id)?;
     let token = get_token(runtime, routes_state, user_id)?;
-    let req = TestRequest::patch().uri("/auth/api/v1/user/id");
-    test_invalid_perm(runtime, &routes_state, token.as_str(), req)?;
+    test_invalid_perm(runtime, &routes_state, token.as_str(), method.clone(), uri)?;
 
     let user_id = "user";
     add_user_model(runtime, &routes_state, user_id)?;
     let token = get_token(runtime, routes_state, user_id)?;
-    let req = TestRequest::patch().uri("/auth/api/v1/user/id");
-    test_invalid_perm(runtime, &routes_state, token.as_str(), req)?;
+    test_invalid_perm(runtime, &routes_state, token.as_str(), method, uri)?;
 
     test_patch_admin_manager_invalid_perm(runtime, &routes_state, manager_token.as_str())
 }
@@ -1236,21 +1263,18 @@ pub fn delete_admin(context: &mut SpecContext<TestState>) -> Result<(), String> 
     let user_id = "user";
     add_user_model(runtime, &routes_state, user_id)?;
 
-    let mut app = runtime.block_on(async {
-        test::init_service(
-            App::new()
-                .wrap(NormalizePath::trim())
-                .service(routes::new_service(&routes_state)),
-        )
-        .await
-    });
+    let app = Router::new().merge(routes::new_service(routes_state));
+    let server = match TestServer::new(app) {
+        Err(e) => return Err(format!("new server error: {}", e)),
+        Ok(server) => server,
+    };
 
-    let req = TestRequest::delete()
-        .uri("/auth/api/v1/user/id")
-        .insert_header((header::AUTHORIZATION, format!("Bearer {}", token)))
-        .to_request();
-    let resp = runtime.block_on(async { test::call_service(&mut app, req).await });
-    expect(resp.status()).to_equal(StatusCode::NO_CONTENT)?;
+    let req = server.delete("/auth/api/v1/user/id").add_header(
+        header::AUTHORIZATION,
+        HeaderValue::from_str(format!("Bearer {}", token).as_str()).unwrap(),
+    );
+    let resp = runtime.block_on(async { req.await });
+    expect(resp.status_code()).to_equal(StatusCode::NO_CONTENT)?;
 
     let cond = QueryCond {
         user_id: Some("user"),
@@ -1264,12 +1288,12 @@ pub fn delete_admin(context: &mut SpecContext<TestState>) -> Result<(), String> 
         },
     }
 
-    let req = TestRequest::delete()
-        .uri("/auth/api/v1/user/user")
-        .insert_header((header::AUTHORIZATION, format!("Bearer {}", token)))
-        .to_request();
-    let resp = runtime.block_on(async { test::call_service(&mut app, req).await });
-    expect(resp.status()).to_equal(StatusCode::NO_CONTENT)?;
+    let req = server.delete("/auth/api/v1/user/user").add_header(
+        header::AUTHORIZATION,
+        HeaderValue::from_str(format!("Bearer {}", token).as_str()).unwrap(),
+    );
+    let resp = runtime.block_on(async { req.await });
+    expect(resp.status_code()).to_equal(StatusCode::NO_CONTENT)?;
 
     let cond = QueryCond {
         user_id: Some("user"),
@@ -1283,13 +1307,13 @@ pub fn delete_admin(context: &mut SpecContext<TestState>) -> Result<(), String> 
         },
     }
 
-    let req = TestRequest::delete()
-        .uri("/auth/api/v1/user/admin")
-        .insert_header((header::AUTHORIZATION, format!("Bearer {}", token)))
-        .to_request();
-    let resp = runtime.block_on(async { test::call_service(&mut app, req).await });
-    expect(resp.status()).to_equal(StatusCode::FORBIDDEN)?;
-    let body: ApiError = runtime.block_on(async { test::read_body_json(resp).await });
+    let req = server.delete("/auth/api/v1/user/admin").add_header(
+        header::AUTHORIZATION,
+        HeaderValue::from_str(format!("Bearer {}", token).as_str()).unwrap(),
+    );
+    let resp = runtime.block_on(async { req.await });
+    expect(resp.status_code()).to_equal(StatusCode::FORBIDDEN)?;
+    let body: ApiError = resp.json();
     if body.code.as_str() != err::E_PERM {
         return Err(format!("unexpected 403 error: {}", body.code.as_str()));
     }
@@ -1302,8 +1326,12 @@ pub fn delete_admin_invalid_token(context: &mut SpecContext<TestState>) -> Resul
     let runtime = state.runtime.as_ref().unwrap();
     let routes_state = state.routes_state.as_ref().unwrap();
 
-    let req = TestRequest::delete().uri("/auth/api/v1/user/id");
-    test_invalid_token(runtime, &routes_state, req)
+    test_invalid_token(
+        runtime,
+        &routes_state,
+        Method::DELETE,
+        "/auth/api/v1/user/id",
+    )
 }
 
 pub fn delete_admin_invalid_perm(context: &mut SpecContext<TestState>) -> Result<(), String> {
@@ -1312,46 +1340,43 @@ pub fn delete_admin_invalid_perm(context: &mut SpecContext<TestState>) -> Result
     let runtime = state.runtime.as_ref().unwrap();
     let routes_state = state.routes_state.as_ref().unwrap();
 
+    let method = Method::DELETE;
+    let uri = "/auth/api/v1/user/id";
+
     let user_id = "manager";
     add_user_model(runtime, &routes_state, user_id)?;
     let token = get_token(runtime, routes_state, user_id)?;
-    let req = TestRequest::delete().uri("/auth/api/v1/user/id");
-    test_invalid_perm(runtime, &routes_state, token.as_str(), req)?;
+    test_invalid_perm(runtime, &routes_state, token.as_str(), method.clone(), uri)?;
 
     let user_id = "service";
     add_user_model(runtime, &routes_state, user_id)?;
     let token = get_token(runtime, routes_state, user_id)?;
-    let req = TestRequest::delete().uri("/auth/api/v1/user/id");
-    test_invalid_perm(runtime, &routes_state, token.as_str(), req)?;
+    test_invalid_perm(runtime, &routes_state, token.as_str(), method.clone(), uri)?;
 
     let user_id = "user";
     add_user_model(runtime, &routes_state, user_id)?;
     let token = get_token(runtime, routes_state, user_id)?;
-    let req = TestRequest::delete().uri("/auth/api/v1/user/id");
-    test_invalid_perm(runtime, &routes_state, token.as_str(), req)
+    test_invalid_perm(runtime, &routes_state, token.as_str(), method, uri)
 }
 
 fn test_get(runtime: &Runtime, state: &routes::State, user_id: &str) -> Result<(), String> {
     add_user_model(runtime, state, user_id)?;
     let user_info = get_user_model(runtime, state, user_id)?;
 
-    let mut app = runtime.block_on(async {
-        test::init_service(
-            App::new()
-                .wrap(NormalizePath::trim())
-                .service(routes::new_service(state)),
-        )
-        .await
-    });
+    let app = Router::new().merge(routes::new_service(&state));
+    let server = match TestServer::new(app) {
+        Err(e) => return Err(format!("new server error: {}", e)),
+        Ok(server) => server,
+    };
 
     let token = get_token(runtime, state, user_id)?;
-    let req = TestRequest::get()
-        .uri("/auth/api/v1/user")
-        .insert_header((header::AUTHORIZATION, format!("Bearer {}", token)))
-        .to_request();
-    let resp = runtime.block_on(async { test::call_service(&mut app, req).await });
-    expect(resp.status()).to_equal(StatusCode::OK)?;
-    let body: response::GetUser = runtime.block_on(async { test::read_body_json(resp).await });
+    let req = server.get("/auth/api/v1/user").add_header(
+        header::AUTHORIZATION,
+        HeaderValue::from_str(format!("Bearer {}", token).as_str()).unwrap(),
+    );
+    let resp = runtime.block_on(async { req.await });
+    expect(resp.status_code()).to_equal(StatusCode::OK)?;
+    let body: response::GetUser = resp.json();
     expect(body.data.account.as_str()).to_equal(user_info.account.as_str())?;
     expect(body.data.created_at.as_str()).to_equal(time_str(&user_info.created_at).as_str())?;
     expect(body.data.modified_at.as_str()).to_equal(time_str(&user_info.modified_at).as_str())?;
@@ -1368,18 +1393,20 @@ fn test_get(runtime: &Runtime, state: &routes::State, user_id: &str) -> Result<(
     expect(body.data.info).to_equal(user_info.info)
 }
 
-fn test_patch(runtime: &Runtime, state: &routes::State, user_id: &str) -> Result<(), String> {
+fn test_patch(
+    runtime: &Runtime,
+    state: &routes::State,
+    user_id: &str,
+    patch_password: bool,
+) -> Result<(), String> {
     add_user_model(runtime, state, user_id)?;
     let user_old = get_user_model(runtime, state, user_id)?;
 
-    let mut app = runtime.block_on(async {
-        test::init_service(
-            App::new()
-                .wrap(NormalizePath::trim())
-                .service(routes::new_service(state)),
-        )
-        .await
-    });
+    let app = Router::new().merge(routes::new_service(&state));
+    let server = match TestServer::new(app) {
+        Err(e) => return Err(format!("new server error: {}", e)),
+        Ok(server) => server,
+    };
 
     let mut info = Map::<String, Value>::new();
     info.insert(
@@ -1388,27 +1415,55 @@ fn test_patch(runtime: &Runtime, state: &routes::State, user_id: &str) -> Result
     );
     let body = request::PatchUser {
         data: request::PatchUserData {
-            password: Some("password_update".to_string()),
+            password: match patch_password {
+                false => None,
+                true => Some("password_update".to_string()),
+            },
             name: Some("name_update".to_string()),
             info: Some(info.clone()),
         },
     };
     let token = get_token(runtime, state, user_id)?;
-    let req = TestRequest::patch()
-        .uri("/auth/api/v1/user")
-        .insert_header((header::AUTHORIZATION, format!("Bearer {}", token)))
-        .set_json(&body)
-        .to_request();
-    let resp = runtime.block_on(async { test::call_service(&mut app, req).await });
-    expect(resp.status()).to_equal(StatusCode::NO_CONTENT)?;
+    let req = server
+        .patch("/auth/api/v1/user")
+        .add_header(
+            header::AUTHORIZATION,
+            HeaderValue::from_str(format!("Bearer {}", token).as_str()).unwrap(),
+        )
+        .json(&body);
+    let resp = runtime.block_on(async { req.await });
+    expect(resp.status_code()).to_equal(StatusCode::NO_CONTENT)?;
 
     let user_info = get_user_model(runtime, state, user_id)?;
     expect(user_info.modified_at.ge(&user_old.modified_at)).to_equal(true)?;
-    expect(user_info.salt.as_str()).to_not_equal(user_old.salt.as_str())?;
-    expect(user_info.password.as_str())
-        .to_equal(password_hash("password_update", user_info.salt.as_str()).as_str())?;
+    match patch_password {
+        false => {
+            expect(user_info.salt.as_str()).to_equal(user_old.salt.as_str())?;
+            expect(user_info.password.as_str())
+                .to_equal(password_hash(user_id, user_info.salt.as_str()).as_str())?;
+        }
+        true => {
+            expect(user_info.salt.as_str()).to_not_equal(user_old.salt.as_str())?;
+            expect(user_info.password.as_str())
+                .to_equal(password_hash("password_update", user_info.salt.as_str()).as_str())?;
+        }
+    }
     expect(user_info.name.as_str()).to_equal("name_update")?;
-    expect(user_info.info).to_equal(info)
+    expect(user_info.info).to_equal(info)?;
+
+    // The token is valid if password is not patched.
+    let req = server
+        .patch("/auth/api/v1/user")
+        .add_header(
+            header::AUTHORIZATION,
+            HeaderValue::from_str(format!("Bearer {}", token).as_str()).unwrap(),
+        )
+        .json(&body);
+    let resp = runtime.block_on(async { req.await });
+    match patch_password {
+        false => expect(resp.status_code()).to_equal(StatusCode::NO_CONTENT),
+        true => expect(resp.status_code()).to_equal(StatusCode::UNAUTHORIZED),
+    }
 }
 
 fn test_patch_invalid_param(
@@ -1417,29 +1472,24 @@ fn test_patch_invalid_param(
     token: &str,
     param: Option<&Map<String, Value>>,
 ) -> Result<(), String> {
-    let mut app = runtime.block_on(async {
-        test::init_service(
-            App::new()
-                .wrap(NormalizePath::trim())
-                .service(routes::new_service(state)),
-        )
-        .await
-    });
-
-    let req = TestRequest::patch()
-        .uri("/auth/api/v1/user")
-        .insert_header((header::AUTHORIZATION, format!("Bearer {}", token)));
-    let req = match param {
-        None => req.to_request(),
-        Some(param) => {
-            let mut data = Map::<String, Value>::new();
-            data.insert("data".to_string(), Value::Object(param.clone()));
-            req.set_json(&data).to_request()
-        }
+    let app = Router::new().merge(routes::new_service(&state));
+    let server = match TestServer::new(app) {
+        Err(e) => return Err(format!("new server error: {}", e)),
+        Ok(server) => server,
     };
-    let resp = runtime.block_on(async { test::call_service(&mut app, req).await });
-    expect(resp.status()).to_equal(StatusCode::BAD_REQUEST)?;
-    let body: ApiError = runtime.block_on(async { test::read_body_json(resp).await });
+
+    let mut req = server.patch("/auth/api/v1/user").add_header(
+        header::AUTHORIZATION,
+        HeaderValue::from_str(format!("Bearer {}", token).as_str()).unwrap(),
+    );
+    if let Some(param) = param {
+        let mut data = Map::<String, Value>::new();
+        data.insert("data".to_string(), Value::Object(param.clone()));
+        req = req.json(&data)
+    }
+    let resp = runtime.block_on(async { req.await });
+    expect(resp.status_code()).to_equal(StatusCode::BAD_REQUEST)?;
+    let body: ApiError = resp.json();
     if body.code.as_str() != err::E_PARAM {
         return Err(format!("unexpected 400 error: {}", body.code.as_str()));
     }
@@ -1453,26 +1503,25 @@ fn test_post_admin(
     param: &request::PostAdminUser,
     expect_code: &str,
 ) -> Result<(), String> {
-    let mut app = runtime.block_on(async {
-        test::init_service(
-            App::new()
-                .wrap(NormalizePath::trim())
-                .service(routes::new_service(state)),
-        )
-        .await
-    });
+    let app = Router::new().merge(routes::new_service(&state));
+    let server = match TestServer::new(app) {
+        Err(e) => return Err(format!("new server error: {}", e)),
+        Ok(server) => server,
+    };
 
     let time_before = Utc::now();
-    let req = TestRequest::post()
-        .uri("/auth/api/v1/user")
-        .insert_header((header::AUTHORIZATION, format!("Bearer {}", token)))
-        .set_json(param)
-        .to_request();
-    let resp = runtime.block_on(async { test::call_service(&mut app, req).await });
+    let req = server
+        .post("/auth/api/v1/user")
+        .add_header(
+            header::AUTHORIZATION,
+            HeaderValue::from_str(format!("Bearer {}", token).as_str()).unwrap(),
+        )
+        .json(param);
+    let resp = runtime.block_on(async { req.await });
     let time_after = Utc::now();
-    if resp.status() != StatusCode::OK {
-        let status = resp.status();
-        let body: ApiError = runtime.block_on(async { test::read_body_json(resp).await });
+    let status = resp.status_code();
+    if status != StatusCode::OK {
+        let body: ApiError = resp.json();
         let message = match body.message.as_ref() {
             None => "",
             Some(message) => message.as_str(),
@@ -1487,8 +1536,7 @@ fn test_post_admin(
             message
         ));
     }
-    let body: response::PostAdminUser =
-        runtime.block_on(async { test::read_body_json(resp).await });
+    let body: response::PostAdminUser = resp.json();
     expect(body.data.user_id.len() > 0).to_equal(true)?;
 
     let user_info = match runtime.block_on(async {
@@ -1545,29 +1593,24 @@ fn test_post_admin_invalid_param(
     token: &str,
     param: Option<&Map<String, Value>>,
 ) -> Result<(), String> {
-    let mut app = runtime.block_on(async {
-        test::init_service(
-            App::new()
-                .wrap(NormalizePath::trim())
-                .service(routes::new_service(state)),
-        )
-        .await
-    });
-
-    let req = TestRequest::post()
-        .uri("/auth/api/v1/user")
-        .insert_header((header::AUTHORIZATION, format!("Bearer {}", token)));
-    let req = match param {
-        None => req.to_request(),
-        Some(param) => {
-            let mut data = Map::<String, Value>::new();
-            data.insert("data".to_string(), Value::Object(param.clone()));
-            req.set_json(&data).to_request()
-        }
+    let app = Router::new().merge(routes::new_service(&state));
+    let server = match TestServer::new(app) {
+        Err(e) => return Err(format!("new server error: {}", e)),
+        Ok(server) => server,
     };
-    let resp = runtime.block_on(async { test::call_service(&mut app, req).await });
-    expect(resp.status()).to_equal(StatusCode::BAD_REQUEST)?;
-    let body: ApiError = runtime.block_on(async { test::read_body_json(resp).await });
+
+    let mut req = server.post("/auth/api/v1/user").add_header(
+        header::AUTHORIZATION,
+        HeaderValue::from_str(format!("Bearer {}", token).as_str()).unwrap(),
+    );
+    if let Some(param) = param {
+        let mut data = Map::<String, Value>::new();
+        data.insert("data".to_string(), Value::Object(param.clone()));
+        req = req.json(&data)
+    }
+    let resp = runtime.block_on(async { req.await });
+    expect(resp.status_code()).to_equal(StatusCode::BAD_REQUEST)?;
+    let body: ApiError = resp.json();
     if body.code.as_str() != err::E_PARAM {
         return Err(format!("unexpected 400 error: {}", body.code.as_str()));
     }
@@ -1581,30 +1624,22 @@ fn test_get_admin_count(
     param: Option<&request::GetAdminUserCount>,
     expect_count: usize,
 ) -> Result<(), String> {
-    let mut app = runtime.block_on(async {
-        test::init_service(
-            App::new()
-                .wrap(NormalizePath::trim())
-                .service(routes::new_service(state)),
-        )
-        .await
-    });
-
-    let uri = match param {
-        None => "/auth/api/v1/user/count".to_string(),
-        Some(param) => format!(
-            "/auth/api/v1/user/count?{}",
-            serde_urlencoded::to_string(&param).unwrap()
-        ),
+    let app = Router::new().merge(routes::new_service(&state));
+    let server = match TestServer::new(app) {
+        Err(e) => return Err(format!("new server error: {}", e)),
+        Ok(server) => server,
     };
-    let req = TestRequest::get()
-        .uri(uri.as_str())
-        .insert_header((header::AUTHORIZATION, format!("Bearer {}", token)))
-        .to_request();
-    let resp = runtime.block_on(async { test::call_service(&mut app, req).await });
-    expect(resp.status()).to_equal(StatusCode::OK)?;
-    let body: response::GetAdminUserCount =
-        runtime.block_on(async { test::read_body_json(resp).await });
+
+    let req = server
+        .get("/auth/api/v1/user/count")
+        .add_query_params(&param)
+        .add_header(
+            header::AUTHORIZATION,
+            HeaderValue::from_str(format!("Bearer {}", token).as_str()).unwrap(),
+        );
+    let resp = runtime.block_on(async { req.await });
+    expect(resp.status_code()).to_equal(StatusCode::OK)?;
+    let body: response::GetAdminUserCount = resp.json();
     expect(body.data.count).to_equal(expect_count)
 }
 
@@ -1617,14 +1652,11 @@ fn test_get_admin_list(
     expect_expired: usize,
     expect_disabled: usize,
 ) -> Result<(), String> {
-    let mut app = runtime.block_on(async {
-        test::init_service(
-            App::new()
-                .wrap(NormalizePath::trim())
-                .service(routes::new_service(state)),
-        )
-        .await
-    });
+    let app = Router::new().merge(routes::new_service(&state));
+    let server = match TestServer::new(app) {
+        Err(e) => return Err(format!("new server error: {}", e)),
+        Ok(server) => server,
+    };
 
     if let Some(fields) = param.fields_vec.as_ref() {
         if fields.len() > 0 {
@@ -1632,18 +1664,17 @@ fn test_get_admin_list(
         }
     }
 
-    let uri = format!(
-        "/auth/api/v1/user/list?{}",
-        serde_urlencoded::to_string(&param).unwrap()
-    );
-    let req = TestRequest::get()
-        .uri(uri.as_str())
-        .insert_header((header::AUTHORIZATION, format!("Bearer {}", token)))
-        .to_request();
-    let resp = runtime.block_on(async { test::call_service(&mut app, req).await });
-    expect(resp.status()).to_equal(StatusCode::OK)?;
-    let body: response::GetAdminUserList =
-        runtime.block_on(async { test::read_body_json(resp).await });
+    let fields_vec = param.fields_vec.clone();
+    let req = server
+        .get("/auth/api/v1/user/list")
+        .add_query_params(param)
+        .add_header(
+            header::AUTHORIZATION,
+            HeaderValue::from_str(format!("Bearer {}", token).as_str()).unwrap(),
+        );
+    let resp = runtime.block_on(async { req.await });
+    expect(resp.status_code()).to_equal(StatusCode::OK)?;
+    let body: response::GetAdminUserList = resp.json();
     expect(body.data.len()).to_equal(expect_count)?;
 
     let mut account_min = "";
@@ -1658,7 +1689,7 @@ fn test_get_admin_list(
             ));
         }
         account_min = info.account.as_str();
-        if let Some(fields) = param.fields_vec.as_ref() {
+        if let Some(fields) = fields_vec.as_ref() {
             if fields.contains(&"expired") {
                 expect(info.expired_at.is_some()).to_equal(true)?;
                 if info.expired_at.as_ref().unwrap().is_some() {
@@ -1691,14 +1722,11 @@ fn test_get_admin_list_sort(
     param: &mut request::GetAdminUserList,
     expect_accounts: &[&str],
 ) -> Result<(), String> {
-    let mut app = runtime.block_on(async {
-        test::init_service(
-            App::new()
-                .wrap(NormalizePath::trim())
-                .service(routes::new_service(state)),
-        )
-        .await
-    });
+    let app = Router::new().merge(routes::new_service(&state));
+    let server = match TestServer::new(app) {
+        Err(e) => return Err(format!("new server error: {}", e)),
+        Ok(server) => server,
+    };
 
     if let Some(sorts) = param.sort_vec.as_ref() {
         let sorts: Vec<String> = sorts
@@ -1719,30 +1747,26 @@ fn test_get_admin_list_sort(
         }
     }
 
-    let uri = format!(
-        "/auth/api/v1/user/list?{}",
-        serde_urlencoded::to_string(&param).unwrap()
-    );
-    let req = TestRequest::get()
-        .uri(uri.as_str())
-        .insert_header((header::AUTHORIZATION, format!("Bearer {}", token)))
-        .to_request();
-    let resp = runtime.block_on(async { test::call_service(&mut app, req).await });
-    if let Err(_) = expect(resp.status()).to_equal(StatusCode::OK) {
-        let body: ApiError = runtime.block_on(async { test::read_body_json(resp).await });
+    let req = server
+        .get("/auth/api/v1/user/list")
+        .add_query_params(&param)
+        .add_header(
+            header::AUTHORIZATION,
+            HeaderValue::from_str(format!("Bearer {}", token).as_str()).unwrap(),
+        );
+    let resp = runtime.block_on(async { req.await });
+    if let Err(_) = expect(resp.status_code()).to_equal(StatusCode::OK) {
+        let body: ApiError = resp.json();
         let message = match body.message.as_ref() {
             None => "",
             Some(message) => message.as_str(),
         };
         return Err(format!(
-            "response not 200: {}, {}, {}",
-            uri.as_str(),
-            body.code,
-            message
+            "response not 200: /auth/api/v1/user/list, {}, {}",
+            body.code, message
         ));
     }
-    let body: response::GetAdminUserList =
-        runtime.block_on(async { test::read_body_json(resp).await });
+    let body: response::GetAdminUserList = resp.json();
     expect(body.data.len()).to_equal(expect_accounts.len())?;
 
     let mut index = 0;
@@ -1760,27 +1784,22 @@ fn test_get_admin_list_offset_limit(
     param: &request::GetAdminUserList,
     expect_ids: Vec<i32>,
 ) -> Result<(), String> {
-    let mut app = runtime.block_on(async {
-        test::init_service(
-            App::new()
-                .wrap(NormalizePath::trim())
-                .service(routes::new_service(state)),
-        )
-        .await
-    });
+    let app = Router::new().merge(routes::new_service(&state));
+    let server = match TestServer::new(app) {
+        Err(e) => return Err(format!("new server error: {}", e)),
+        Ok(server) => server,
+    };
 
-    let uri = format!(
-        "/auth/api/v1/user/list?{}",
-        serde_urlencoded::to_string(&param).unwrap()
-    );
-    let req = TestRequest::get()
-        .uri(uri.as_str())
-        .insert_header((header::AUTHORIZATION, format!("Bearer {}", token)))
-        .to_request();
-    let resp = runtime.block_on(async { test::call_service(&mut app, req).await });
-    expect(resp.status()).to_equal(StatusCode::OK)?;
-    let body: response::GetAdminUserList =
-        runtime.block_on(async { test::read_body_json(resp).await });
+    let req = server
+        .get("/auth/api/v1/user/list")
+        .add_query_params(param)
+        .add_header(
+            header::AUTHORIZATION,
+            HeaderValue::from_str(format!("Bearer {}", token).as_str()).unwrap(),
+        );
+    let resp = runtime.block_on(async { req.await });
+    expect(resp.status_code()).to_equal(StatusCode::OK)?;
+    let body: response::GetAdminUserList = resp.json();
     expect(body.data.len()).to_equal(expect_ids.len())?;
 
     let mut index = 0;
@@ -1799,27 +1818,22 @@ fn test_get_admin_list_format_array(
     param: &request::GetAdminUserList,
     expect_ids: Vec<i32>,
 ) -> Result<(), String> {
-    let mut app = runtime.block_on(async {
-        test::init_service(
-            App::new()
-                .wrap(NormalizePath::trim())
-                .service(routes::new_service(state)),
-        )
-        .await
-    });
+    let app = Router::new().merge(routes::new_service(&state));
+    let server = match TestServer::new(app) {
+        Err(e) => return Err(format!("new server error: {}", e)),
+        Ok(server) => server,
+    };
 
-    let uri = format!(
-        "/auth/api/v1/user/list?{}",
-        serde_urlencoded::to_string(&param).unwrap()
-    );
-    let req = TestRequest::get()
-        .uri(uri.as_str())
-        .insert_header((header::AUTHORIZATION, format!("Bearer {}", token)))
-        .to_request();
-    let resp = runtime.block_on(async { test::call_service(&mut app, req).await });
-    expect(resp.status()).to_equal(StatusCode::OK)?;
-    let body: Vec<response::GetAdminUserListData> =
-        runtime.block_on(async { test::read_body_json(resp).await });
+    let req = server
+        .get("/auth/api/v1/user/list")
+        .add_query_params(param)
+        .add_header(
+            header::AUTHORIZATION,
+            HeaderValue::from_str(format!("Bearer {}", token).as_str()).unwrap(),
+        );
+    let resp = runtime.block_on(async { req.await });
+    expect(resp.status_code()).to_equal(StatusCode::OK)?;
+    let body: Vec<response::GetAdminUserListData> = resp.json();
     expect(body.len()).to_equal(expect_ids.len())?;
 
     let mut index = 0;
@@ -1837,25 +1851,22 @@ fn test_get_admin(
     token: &str,
     user_id: &str,
 ) -> Result<(), String> {
-    let mut app = runtime.block_on(async {
-        test::init_service(
-            App::new()
-                .wrap(NormalizePath::trim())
-                .service(routes::new_service(state)),
-        )
-        .await
-    });
+    let app = Router::new().merge(routes::new_service(&state));
+    let server = match TestServer::new(app) {
+        Err(e) => return Err(format!("new server error: {}", e)),
+        Ok(server) => server,
+    };
 
     let user_info = get_user_model(runtime, state, user_id)?;
 
     let uri = format!("/auth/api/v1/user/{}", user_id);
-    let req = TestRequest::get()
-        .uri(uri.as_str())
-        .insert_header((header::AUTHORIZATION, format!("Bearer {}", token)))
-        .to_request();
-    let resp = runtime.block_on(async { test::call_service(&mut app, req).await });
-    expect(resp.status()).to_equal(StatusCode::OK)?;
-    let body: response::GetAdminUser = runtime.block_on(async { test::read_body_json(resp).await });
+    let req = server.get(uri.as_str()).add_header(
+        header::AUTHORIZATION,
+        HeaderValue::from_str(format!("Bearer {}", token).as_str()).unwrap(),
+    );
+    let resp = runtime.block_on(async { req.await });
+    expect(resp.status_code()).to_equal(StatusCode::OK)?;
+    let body: response::GetAdminUser = resp.json();
     expect(body.data.user_id.as_str()).to_equal(user_info.user_id.as_str())?;
     expect(body.data.account.as_str()).to_equal(user_info.account.as_str())?;
     expect(
@@ -1892,6 +1903,7 @@ fn test_patch_admin_admin(
     runtime: &Runtime,
     state: &routes::State,
     token: &str,
+    patch_password: bool,
 ) -> Result<(), String> {
     let user_id = "user_patch_admin";
     let mut user = create_user(user_id, Utc::now(), HashMap::<String, bool>::new());
@@ -1901,15 +1913,13 @@ fn test_patch_admin_admin(
         return Err(format!("add user {} error: {}", user_id, e));
     }
     let user_old = get_user_model(runtime, state, user_id)?;
+    let user_token = get_token(runtime, state, user_id)?;
 
-    let mut app = runtime.block_on(async {
-        test::init_service(
-            App::new()
-                .wrap(NormalizePath::trim())
-                .service(routes::new_service(state)),
-        )
-        .await
-    });
+    let app = Router::new().merge(routes::new_service(&state));
+    let server = match TestServer::new(app) {
+        Err(e) => return Err(format!("new server error: {}", e)),
+        Ok(server) => server,
+    };
 
     let time_before = Utc::now().trunc_subsecs(3);
     let mut info = Map::<String, Value>::new();
@@ -1926,19 +1936,24 @@ fn test_patch_admin_admin(
         data: Some(request::PatchAdminUserData {
             verified_at: Some(time_before.to_rfc3339_opts(SecondsFormat::Millis, true)),
             roles: Some(roles),
-            password: Some("password_update".to_string()),
+            password: match patch_password {
+                false => None,
+                true => Some("password_update".to_string()),
+            },
             name: Some("name_update".to_string()),
             info: Some(info.clone()),
         }),
         disable: Some(true),
     };
-    let req = TestRequest::patch()
-        .uri(format!("/auth/api/v1/user/{}", user_id).as_str())
-        .insert_header((header::AUTHORIZATION, format!("Bearer {}", token)))
-        .set_json(&body)
-        .to_request();
-    let resp = runtime.block_on(async { test::call_service(&mut app, req).await });
-    expect(resp.status()).to_equal(StatusCode::NO_CONTENT)?;
+    let req = server
+        .patch(format!("/auth/api/v1/user/{}", user_id).as_str())
+        .add_header(
+            header::AUTHORIZATION,
+            HeaderValue::from_str(format!("Bearer {}", token).as_str()).unwrap(),
+        )
+        .json(&body);
+    let resp = runtime.block_on(async { req.await });
+    expect(resp.status_code()).to_equal(StatusCode::NO_CONTENT)?;
 
     let time_after = Utc::now().trunc_subsecs(3);
     let user_info = get_user_model(runtime, state, user_id)?;
@@ -1951,23 +1966,44 @@ fn test_patch_admin_admin(
     expect(user_info.disabled_at.is_some()).to_equal(true)?;
     expect(user_info.disabled_at.as_ref().unwrap().ge(&time_before)).to_equal(true)?;
     expect(user_info.disabled_at.as_ref().unwrap().le(&time_after)).to_equal(true)?;
-    expect(user_info.salt.as_str()).to_not_equal(user_old.salt.as_str())?;
-    expect(user_info.password.as_str())
-        .to_equal(password_hash("password_update", user_info.salt.as_str()).as_str())?;
+    match patch_password {
+        false => {
+            expect(user_info.salt.as_str()).to_equal(user_old.salt.as_str())?;
+            expect(user_info.password.as_str())
+                .to_equal(password_hash(user_id, user_info.salt.as_str()).as_str())?;
+        }
+        true => {
+            expect(user_info.salt.as_str()).to_not_equal(user_old.salt.as_str())?;
+            expect(user_info.password.as_str())
+                .to_equal(password_hash("password_update", user_info.salt.as_str()).as_str())?;
+        }
+    }
     expect(user_info.name.as_str()).to_equal("name_update")?;
     expect(user_info.info).to_equal(info)?;
+
+    let req = server.get("/auth/api/v1/user").add_header(
+        header::AUTHORIZATION,
+        HeaderValue::from_str(format!("Bearer {}", user_token).as_str()).unwrap(),
+    );
+    let resp = runtime.block_on(async { req.await });
+    match patch_password {
+        false => expect(resp.status_code()).to_equal(StatusCode::OK)?,
+        true => expect(resp.status_code()).to_equal(StatusCode::UNAUTHORIZED)?,
+    }
 
     let body = request::PatchAdminUser {
         disable: Some(false),
         ..Default::default()
     };
-    let req = TestRequest::patch()
-        .uri(format!("/auth/api/v1/user/{}", user_id).as_str())
-        .insert_header((header::AUTHORIZATION, format!("Bearer {}", token)))
-        .set_json(&body)
-        .to_request();
-    let resp = runtime.block_on(async { test::call_service(&mut app, req).await });
-    expect(resp.status()).to_equal(StatusCode::NO_CONTENT)?;
+    let req = server
+        .patch(format!("/auth/api/v1/user/{}", user_id).as_str())
+        .add_header(
+            header::AUTHORIZATION,
+            HeaderValue::from_str(format!("Bearer {}", token).as_str()).unwrap(),
+        )
+        .json(&body);
+    let resp = runtime.block_on(async { req.await });
+    expect(resp.status_code()).to_equal(StatusCode::NO_CONTENT)?;
 
     let user_info = get_user_model(runtime, state, user_id)?;
     expect(user_info.disabled_at.is_none()).to_equal(true)
@@ -1981,14 +2017,11 @@ fn test_patch_admin_manager(
     let user_id = "user_patch_manager";
     add_user_model(runtime, state, user_id)?;
 
-    let mut app = runtime.block_on(async {
-        test::init_service(
-            App::new()
-                .wrap(NormalizePath::trim())
-                .service(routes::new_service(state)),
-        )
-        .await
-    });
+    let app = Router::new().merge(routes::new_service(&state));
+    let server = match TestServer::new(app) {
+        Err(e) => return Err(format!("new server error: {}", e)),
+        Ok(server) => server,
+    };
 
     let time_before = Utc::now().trunc_subsecs(3);
     let mut roles = HashMap::<String, bool>::new();
@@ -2001,13 +2034,15 @@ fn test_patch_admin_manager(
         }),
         disable: Some(true),
     };
-    let req = TestRequest::patch()
-        .uri(format!("/auth/api/v1/user/{}", user_id).as_str())
-        .insert_header((header::AUTHORIZATION, format!("Bearer {}", token)))
-        .set_json(&body)
-        .to_request();
-    let resp = runtime.block_on(async { test::call_service(&mut app, req).await });
-    expect(resp.status()).to_equal(StatusCode::NO_CONTENT)?;
+    let req = server
+        .patch(format!("/auth/api/v1/user/{}", user_id).as_str())
+        .add_header(
+            header::AUTHORIZATION,
+            HeaderValue::from_str(format!("Bearer {}", token).as_str()).unwrap(),
+        )
+        .json(&body);
+    let resp = runtime.block_on(async { req.await });
+    expect(resp.status_code()).to_equal(StatusCode::NO_CONTENT)?;
 
     let time_after = Utc::now().trunc_subsecs(3);
     let user_info = get_user_model(runtime, state, user_id)?;
@@ -2024,25 +2059,29 @@ fn test_patch_admin_manager(
         }),
         ..Default::default()
     };
-    let req = TestRequest::patch()
-        .uri(format!("/auth/api/v1/user/{}", user_id).as_str())
-        .insert_header((header::AUTHORIZATION, format!("Bearer {}", token)))
-        .set_json(&body)
-        .to_request();
-    let resp = runtime.block_on(async { test::call_service(&mut app, req).await });
-    expect(resp.status()).to_equal(StatusCode::NO_CONTENT)?;
+    let req = server
+        .patch(format!("/auth/api/v1/user/{}", user_id).as_str())
+        .add_header(
+            header::AUTHORIZATION,
+            HeaderValue::from_str(format!("Bearer {}", token).as_str()).unwrap(),
+        )
+        .json(&body);
+    let resp = runtime.block_on(async { req.await });
+    expect(resp.status_code()).to_equal(StatusCode::NO_CONTENT)?;
 
     let body = request::PatchAdminUser {
         disable: Some(false),
         ..Default::default()
     };
-    let req = TestRequest::patch()
-        .uri(format!("/auth/api/v1/user/{}", user_id).as_str())
-        .insert_header((header::AUTHORIZATION, format!("Bearer {}", token)))
-        .set_json(&body)
-        .to_request();
-    let resp = runtime.block_on(async { test::call_service(&mut app, req).await });
-    expect(resp.status()).to_equal(StatusCode::NO_CONTENT)?;
+    let req = server
+        .patch(format!("/auth/api/v1/user/{}", user_id).as_str())
+        .add_header(
+            header::AUTHORIZATION,
+            HeaderValue::from_str(format!("Bearer {}", token).as_str()).unwrap(),
+        )
+        .json(&body);
+    let resp = runtime.block_on(async { req.await });
+    expect(resp.status_code()).to_equal(StatusCode::NO_CONTENT)?;
 
     let user_info = get_user_model(runtime, state, user_id)?;
     expect(user_info.disabled_at.is_none()).to_equal(true)
@@ -2054,29 +2093,24 @@ fn test_patch_admin_invalid_param(
     token: &str,
     param: Option<&Map<String, Value>>,
 ) -> Result<(), String> {
-    let mut app = runtime.block_on(async {
-        test::init_service(
-            App::new()
-                .wrap(NormalizePath::trim())
-                .service(routes::new_service(state)),
-        )
-        .await
-    });
-
-    let req = TestRequest::patch()
-        .uri("/auth/api/v1/user/user")
-        .insert_header((header::AUTHORIZATION, format!("Bearer {}", token)));
-    let req = match param {
-        None => req.to_request(),
-        Some(param) => {
-            let mut data = Map::<String, Value>::new();
-            data.insert("data".to_string(), Value::Object(param.clone()));
-            req.set_json(&data).to_request()
-        }
+    let app = Router::new().merge(routes::new_service(&state));
+    let server = match TestServer::new(app) {
+        Err(e) => return Err(format!("new server error: {}", e)),
+        Ok(server) => server,
     };
-    let resp = runtime.block_on(async { test::call_service(&mut app, req).await });
-    expect(resp.status()).to_equal(StatusCode::BAD_REQUEST)?;
-    let body: ApiError = runtime.block_on(async { test::read_body_json(resp).await });
+
+    let mut req = server.patch("/auth/api/v1/user/user").add_header(
+        header::AUTHORIZATION,
+        HeaderValue::from_str(format!("Bearer {}", token).as_str()).unwrap(),
+    );
+    if let Some(param) = param {
+        let mut data = Map::<String, Value>::new();
+        data.insert("data".to_string(), Value::Object(param.clone()));
+        req = req.json(&data)
+    }
+    let resp = runtime.block_on(async { req.await });
+    expect(resp.status_code()).to_equal(StatusCode::BAD_REQUEST)?;
+    let body: ApiError = resp.json();
     if body.code.as_str() != err::E_PARAM {
         return Err(format!("unexpected 400 error: {}", body.code.as_str()));
     }
@@ -2088,33 +2122,32 @@ fn test_patch_admin_manager_invalid_perm(
     state: &routes::State,
     token: &str,
 ) -> Result<(), String> {
-    let mut app = runtime.block_on(async {
-        test::init_service(
-            App::new()
-                .wrap(NormalizePath::trim())
-                .service(routes::new_service(state)),
-        )
-        .await
-    });
+    let app = Router::new().merge(routes::new_service(&state));
+    let server = match TestServer::new(app) {
+        Err(e) => return Err(format!("new server error: {}", e)),
+        Ok(server) => server,
+    };
 
     let body = request::PatchAdminUser {
         ..Default::default()
     };
-    let req = TestRequest::patch()
-        .uri("/auth/api/v1/user/admin")
-        .insert_header((header::AUTHORIZATION, format!("Bearer {}", token)))
-        .set_json(&body)
-        .to_request();
-    let resp = runtime.block_on(async { test::call_service(&mut app, req).await });
-    if let Err(e) = expect(resp.status()).to_equal(StatusCode::FORBIDDEN) {
-        let body: ApiError = runtime.block_on(async { test::read_body_json(resp).await });
+    let req = server
+        .patch("/auth/api/v1/user/admin")
+        .add_header(
+            header::AUTHORIZATION,
+            HeaderValue::from_str(format!("Bearer {}", token).as_str()).unwrap(),
+        )
+        .json(&body);
+    let resp = runtime.block_on(async { req.await });
+    if let Err(e) = expect(resp.status_code()).to_equal(StatusCode::FORBIDDEN) {
+        let body: ApiError = resp.json();
         let message = match body.message.as_ref() {
             None => "",
             Some(message) => message.as_str(),
         };
         return Err(format!("1 {}, {}, {}", e, body.code.as_str(), message));
     }
-    let body: ApiError = runtime.block_on(async { test::read_body_json(resp).await });
+    let body: ApiError = resp.json();
     if body.code.as_str() != err::E_PERM {
         return Err(format!("unexpected 403 error: {}", body.code.as_str()));
     }
@@ -2128,21 +2161,23 @@ fn test_patch_admin_manager_invalid_perm(
         }),
         ..Default::default()
     };
-    let req = TestRequest::patch()
-        .uri("/auth/api/v1/user/user")
-        .insert_header((header::AUTHORIZATION, format!("Bearer {}", token)))
-        .set_json(&body)
-        .to_request();
-    let resp = runtime.block_on(async { test::call_service(&mut app, req).await });
-    if let Err(e) = expect(resp.status()).to_equal(StatusCode::FORBIDDEN) {
-        let body: ApiError = runtime.block_on(async { test::read_body_json(resp).await });
+    let req = server
+        .patch("/auth/api/v1/user/user")
+        .add_header(
+            header::AUTHORIZATION,
+            HeaderValue::from_str(format!("Bearer {}", token).as_str()).unwrap(),
+        )
+        .json(&body);
+    let resp = runtime.block_on(async { req.await });
+    if let Err(e) = expect(resp.status_code()).to_equal(StatusCode::FORBIDDEN) {
+        let body: ApiError = resp.json();
         let message = match body.message.as_ref() {
             None => "",
             Some(message) => message.as_str(),
         };
         return Err(format!("2 {}, {}, {}", e, body.code.as_str(), message));
     }
-    let body: ApiError = runtime.block_on(async { test::read_body_json(resp).await });
+    let body: ApiError = resp.json();
     if body.code.as_str() != err::E_PERM {
         return Err(format!("unexpected 403 error: {}", body.code.as_str()));
     }
@@ -2156,21 +2191,23 @@ fn test_patch_admin_manager_invalid_perm(
         }),
         ..Default::default()
     };
-    let req = TestRequest::patch()
-        .uri("/auth/api/v1/user/user")
-        .insert_header((header::AUTHORIZATION, format!("Bearer {}", token)))
-        .set_json(&body)
-        .to_request();
-    let resp = runtime.block_on(async { test::call_service(&mut app, req).await });
-    if let Err(e) = expect(resp.status()).to_equal(StatusCode::FORBIDDEN) {
-        let body: ApiError = runtime.block_on(async { test::read_body_json(resp).await });
+    let req = server
+        .patch("/auth/api/v1/user/user")
+        .add_header(
+            header::AUTHORIZATION,
+            HeaderValue::from_str(format!("Bearer {}", token).as_str()).unwrap(),
+        )
+        .json(&body);
+    let resp = runtime.block_on(async { req.await });
+    if let Err(e) = expect(resp.status_code()).to_equal(StatusCode::FORBIDDEN) {
+        let body: ApiError = resp.json();
         let message = match body.message.as_ref() {
             None => "",
             Some(message) => message.as_str(),
         };
         return Err(format!("3 {}, {}, {}", e, body.code.as_str(), message));
     }
-    let body: ApiError = runtime.block_on(async { test::read_body_json(resp).await });
+    let body: ApiError = resp.json();
     if body.code.as_str() != err::E_PERM {
         return Err(format!("unexpected 403 error: {}", body.code.as_str()));
     }
@@ -2179,21 +2216,23 @@ fn test_patch_admin_manager_invalid_perm(
         disable: Some(true),
         ..Default::default()
     };
-    let req = TestRequest::patch()
-        .uri("/auth/api/v1/user/admin")
-        .insert_header((header::AUTHORIZATION, format!("Bearer {}", token)))
-        .set_json(&body)
-        .to_request();
-    let resp = runtime.block_on(async { test::call_service(&mut app, req).await });
-    if let Err(e) = expect(resp.status()).to_equal(StatusCode::FORBIDDEN) {
-        let body: ApiError = runtime.block_on(async { test::read_body_json(resp).await });
+    let req = server
+        .patch("/auth/api/v1/user/admin")
+        .add_header(
+            header::AUTHORIZATION,
+            HeaderValue::from_str(format!("Bearer {}", token).as_str()).unwrap(),
+        )
+        .json(&body);
+    let resp = runtime.block_on(async { req.await });
+    if let Err(e) = expect(resp.status_code()).to_equal(StatusCode::FORBIDDEN) {
+        let body: ApiError = resp.json();
         let message = match body.message.as_ref() {
             None => "",
             Some(message) => message.as_str(),
         };
         return Err(format!("4 {}, {}, {}", e, body.code.as_str(), message));
     }
-    let body: ApiError = runtime.block_on(async { test::read_body_json(resp).await });
+    let body: ApiError = resp.json();
     if body.code.as_str() != err::E_PERM {
         return Err(format!("unexpected 403 error: {}", body.code.as_str()));
     }
@@ -2202,21 +2241,23 @@ fn test_patch_admin_manager_invalid_perm(
         disable: Some(true),
         ..Default::default()
     };
-    let req = TestRequest::patch()
-        .uri("/auth/api/v1/user/manager")
-        .insert_header((header::AUTHORIZATION, format!("Bearer {}", token)))
-        .set_json(&body)
-        .to_request();
-    let resp = runtime.block_on(async { test::call_service(&mut app, req).await });
-    if let Err(e) = expect(resp.status()).to_equal(StatusCode::FORBIDDEN) {
-        let body: ApiError = runtime.block_on(async { test::read_body_json(resp).await });
+    let req = server
+        .patch("/auth/api/v1/user/manager")
+        .add_header(
+            header::AUTHORIZATION,
+            HeaderValue::from_str(format!("Bearer {}", token).as_str()).unwrap(),
+        )
+        .json(&body);
+    let resp = runtime.block_on(async { req.await });
+    if let Err(e) = expect(resp.status_code()).to_equal(StatusCode::FORBIDDEN) {
+        let body: ApiError = resp.json();
         let message = match body.message.as_ref() {
             None => "",
             Some(message) => message.as_str(),
         };
         return Err(format!("5 {}, {}, {}", e, body.code.as_str(), message));
     }
-    let body: ApiError = runtime.block_on(async { test::read_body_json(resp).await });
+    let body: ApiError = resp.json();
     if body.code.as_str() != err::E_PERM {
         return Err(format!("unexpected 403 error: {}", body.code.as_str()));
     }

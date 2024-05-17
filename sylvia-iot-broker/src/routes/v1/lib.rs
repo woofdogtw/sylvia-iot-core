@@ -1,33 +1,16 @@
 use std::collections::HashMap;
 
-use actix_web::{web, HttpMessage, HttpRequest};
 use log::error;
 
 use sylvia_iot_corelib::{err::ErrResp, role::Role};
 
-use super::super::{middleware::GetTokenInfoData, State};
+use super::super::State as AppState;
 use crate::models::{
     application::{Application, QueryCond as ApplicationQueryCond},
     device::{Device, QueryCond as DeviceQueryCond},
     network::{Network, QueryCond as NetworkQueryCond},
     unit::{QueryCond as UnitQueryCond, Unit},
 };
-
-/// To get user ID and roles from the access token.
-pub fn get_token_id_roles(
-    fn_name: &str,
-    req: &HttpRequest,
-) -> Result<(String, HashMap<String, bool>), ErrResp> {
-    match req.extensions_mut().get::<GetTokenInfoData>() {
-        None => {
-            error!("[{}] token not found", fn_name);
-            return Err(ErrResp::ErrUnknown(Some(
-                "token info not found".to_string(),
-            )));
-        }
-        Some(token_info) => Ok((token_info.user_id.clone(), token_info.roles.clone())),
-    }
-}
 
 /// To check if the user ID can access the unit. Choose `only_owner` to check if the user is the
 /// owner or one of members.
@@ -41,7 +24,7 @@ pub async fn check_unit(
     roles: &HashMap<String, bool>,
     unit_id: &str,
     only_owner: bool,
-    state: &web::Data<State>,
+    state: &AppState,
 ) -> Result<Option<Unit>, ErrResp> {
     let mut cond = UnitQueryCond {
         unit_id: Some(unit_id),
@@ -75,7 +58,7 @@ pub async fn check_application(
     user_id: &str,
     only_owner: bool, // to check if this `user_id` is the owner.
     roles: &HashMap<String, bool>,
-    state: &web::Data<State>,
+    state: &AppState,
 ) -> Result<Option<Application>, ErrResp> {
     let cond = ApplicationQueryCond {
         application_id: Some(application_id),
@@ -113,7 +96,7 @@ pub async fn check_network(
     user_id: &str,
     only_owner: bool, // to check if this `user_id` is the owner.
     roles: &HashMap<String, bool>,
-    state: &web::Data<State>,
+    state: &AppState,
 ) -> Result<Option<Network>, ErrResp> {
     let cond = NetworkQueryCond {
         network_id: Some(network_id),
@@ -154,7 +137,7 @@ pub async fn check_device(
     user_id: &str,
     only_owner: bool, // to check if this `user_id` is the owner.
     roles: &HashMap<String, bool>,
-    state: &web::Data<State>,
+    state: &AppState,
 ) -> Result<Option<Device>, ErrResp> {
     let cond = DeviceQueryCond {
         device_id: Some(device_id),

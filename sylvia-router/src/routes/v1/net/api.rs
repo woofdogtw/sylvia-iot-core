@@ -1,12 +1,15 @@
 use std::{cmp::Ordering, net::Ipv4Addr};
 
-use actix_web::{web, HttpResponse, Responder};
+use axum::{extract::State, http::StatusCode, response::IntoResponse};
 use ipnet::Ipv4Net;
 use log::error;
-use sylvia_iot_sdk::util::err::ErrResp;
+use sylvia_iot_sdk::util::{
+    err::ErrResp,
+    http::{Json, Path, Query},
+};
 use tokio::task;
 
-use super::{super::super::State, request, response};
+use super::{super::super::State as AppState, request, response};
 use crate::libs::network::{self, ConnType, LanConf4, Pppoe, Type4, WanConf, WlanConf, WwanConf};
 
 const INVALID_ADDR_MSG: &'static str =
@@ -15,7 +18,7 @@ const LEASE_TIME_SEC_MAX: usize = 604800;
 const LEASE_TIME_SEC_MIN: usize = 60;
 
 /// `GET /{base}/api/v1/net/wan`
-pub async fn get_wan(state: web::Data<State>) -> impl Responder {
+pub async fn get_wan(State(state): State<AppState>) -> impl IntoResponse {
     const FN_NAME: &'static str = "get_wan";
 
     match task::spawn_blocking(move || {
@@ -52,17 +55,17 @@ pub async fn get_wan(state: web::Data<State>) -> impl Responder {
         }
         Ok(res) => match res {
             Err(e) => Err(e),
-            Ok(res) => Ok(HttpResponse::Ok().json(&res)),
+            Ok(res) => Ok(Json(res)),
         },
     }
 }
 
 /// `PUT /{base}/api/v1/net/wan/{wanId}`
 pub async fn put_wan(
-    param: web::Path<request::WanIdPath>,
-    mut body: web::Json<request::PutWanBody>,
-    state: web::Data<State>,
-) -> impl Responder {
+    State(state): State<AppState>,
+    Path(param): Path<request::WanIdPath>,
+    Json(mut body): Json<request::PutWanBody>,
+) -> impl IntoResponse {
     const FN_NAME: &'static str = "put_wan";
 
     if let Err(e) = parse_put_wan(&mut body.data) {
@@ -104,11 +107,11 @@ pub async fn put_wan(
         },
     }
 
-    Ok(HttpResponse::NoContent().finish())
+    Ok(StatusCode::NO_CONTENT)
 }
 
 /// `GET /{base}/api/v1/net/lan`
-pub async fn get_lan(state: web::Data<State>) -> impl Responder {
+pub async fn get_lan(State(state): State<AppState>) -> impl IntoResponse {
     const FN_NAME: &'static str = "get_lan";
 
     match task::spawn_blocking(move || {
@@ -143,16 +146,16 @@ pub async fn get_lan(state: web::Data<State>) -> impl Responder {
         }
         Ok(res) => match res {
             Err(e) => Err(e),
-            Ok(res) => Ok(HttpResponse::Ok().json(&res)),
+            Ok(res) => Ok(Json(res)),
         },
     }
 }
 
 /// `PUT /{base}/api/v1/net/lan`
 pub async fn put_lan(
-    body: web::Json<request::PutLanBody>,
-    state: web::Data<State>,
-) -> impl Responder {
+    State(state): State<AppState>,
+    Json(body): Json<request::PutLanBody>,
+) -> impl IntoResponse {
     const FN_NAME: &'static str = "put_lan";
 
     if let Err(e) = parse_put_lan(&body.data.conf4) {
@@ -185,11 +188,11 @@ pub async fn put_lan(
         },
     }
 
-    Ok(HttpResponse::NoContent().finish())
+    Ok(StatusCode::NO_CONTENT)
 }
 
 /// `GET /{base}/api/v1/net/lan/leases`
-pub async fn get_lan_leases() -> impl Responder {
+pub async fn get_lan_leases() -> impl IntoResponse {
     const FN_NAME: &'static str = "get_lan_leases";
 
     match task::spawn_blocking(move || {
@@ -211,17 +214,17 @@ pub async fn get_lan_leases() -> impl Responder {
         }
         Ok(res) => match res {
             Err(e) => Err(e),
-            Ok(res) => Ok(HttpResponse::Ok().json(&res)),
+            Ok(res) => Ok(Json(res)),
         },
     }
 }
 
 /// `GET /{base}/api/v1/net/wlan`
-pub async fn get_wlan(state: web::Data<State>) -> impl Responder {
+pub async fn get_wlan(State(state): State<AppState>) -> impl IntoResponse {
     const FN_NAME: &'static str = "get_wlan";
 
     let iface = match state.config.wlan.as_ref() {
-        None => return Ok(HttpResponse::NotFound().finish()),
+        None => return Ok(StatusCode::NOT_FOUND.into_response()),
         Some(conf) => conf.clone(),
     };
 
@@ -255,20 +258,20 @@ pub async fn get_wlan(state: web::Data<State>) -> impl Responder {
         }
         Ok(res) => match res {
             Err(e) => Err(e),
-            Ok(res) => Ok(HttpResponse::Ok().json(&res)),
+            Ok(res) => Ok(Json(res).into_response()),
         },
     }
 }
 
 /// `PUT /{base}/api/v1/net/wlan`
 pub async fn put_wlan(
-    body: web::Json<request::PutWlanBody>,
-    state: web::Data<State>,
-) -> impl Responder {
+    State(state): State<AppState>,
+    Json(body): Json<request::PutWlanBody>,
+) -> impl IntoResponse {
     const FN_NAME: &'static str = "put_wlan";
 
     let iface = match state.config.wlan.as_ref() {
-        None => return Ok(HttpResponse::NotFound().finish()),
+        None => return Ok(StatusCode::NOT_FOUND),
         Some(conf) => conf.clone(),
     };
 
@@ -315,23 +318,23 @@ pub async fn put_wlan(
     {
         Err(e) => {
             error!("[{}] run async error: {}", FN_NAME, e);
-            return Err(ErrResp::ErrRsc(Some(format!("run async error: {} ", e))));
+            return Err(ErrResp::ErrRsc(Some(format!("run async error: {} ", e))).into_response());
         }
         Ok(res) => match res {
-            Err(e) => return Err(e),
+            Err(e) => return Err(e.into_response()),
             Ok(_) => (),
         },
     }
 
-    Ok(HttpResponse::NoContent().finish())
+    Ok(StatusCode::NO_CONTENT)
 }
 
 /// `GET /{base}/api/v1/net/wwan`
-pub async fn get_wwan(state: web::Data<State>) -> impl Responder {
+pub async fn get_wwan(State(state): State<AppState>) -> impl IntoResponse {
     const FN_NAME: &'static str = "get_wwan";
 
     let iface = match state.config.wwan.as_ref() {
-        None => return Ok(HttpResponse::NotFound().finish()),
+        None => return Ok(StatusCode::NOT_FOUND.into_response()),
         Some(conf) => conf.clone(),
     };
 
@@ -368,20 +371,20 @@ pub async fn get_wwan(state: web::Data<State>) -> impl Responder {
         }
         Ok(res) => match res {
             Err(e) => Err(e),
-            Ok(res) => Ok(HttpResponse::Ok().json(&res)),
+            Ok(res) => Ok(Json(res).into_response()),
         },
     }
 }
 
 /// `PUT /{base}/api/v1/net/wwan`
 pub async fn put_wwan(
-    body: web::Json<request::PutWwanBody>,
-    state: web::Data<State>,
-) -> impl Responder {
+    State(state): State<AppState>,
+    Json(body): Json<request::PutWwanBody>,
+) -> impl IntoResponse {
     const FN_NAME: &'static str = "put_wwan";
 
     let iface = match state.config.wwan.as_ref() {
-        None => return Ok(HttpResponse::NotFound().finish()),
+        None => return Ok(StatusCode::NOT_FOUND),
         Some(conf) => conf.clone(),
     };
 
@@ -429,18 +432,18 @@ pub async fn put_wwan(
         },
     }
 
-    Ok(HttpResponse::NoContent().finish())
+    Ok(StatusCode::NO_CONTENT)
 }
 
 /// `GET /{base}/api/v1/net/wwan/list`
 pub async fn get_wwan_list(
-    query: web::Query<request::GetWwanListQuery>,
-    state: web::Data<State>,
-) -> impl Responder {
+    State(state): State<AppState>,
+    Query(query): Query<request::GetWwanListQuery>,
+) -> impl IntoResponse {
     const FN_NAME: &'static str = "get_wwan_list";
 
     let iface = match state.config.wwan.as_ref() {
-        None => return Ok(HttpResponse::NotFound().finish()),
+        None => return Ok(StatusCode::NOT_FOUND.into_response()),
         Some(conf) => conf.clone(),
     };
     let rescan = match query.rescan.as_ref() {
@@ -465,7 +468,7 @@ pub async fn get_wwan_list(
         }
         Ok(res) => match res {
             Err(e) => Err(e),
-            Ok(res) => Ok(HttpResponse::Ok().json(&res)),
+            Ok(res) => Ok(Json(res).into_response()),
         },
     }
 }

@@ -1,15 +1,9 @@
 use std::collections::HashMap;
 
-use actix_web::{
-    http::{header, StatusCode},
-    middleware::NormalizePath,
-    test::{self, TestRequest},
-    App,
-};
+use axum::http::{header, HeaderValue, Method, StatusCode};
 use laboratory::SpecContext;
 
 use sylvia_iot_broker::models::Model;
-use sylvia_iot_coremgr::routes;
 
 use super::{
     super::libs::{
@@ -18,7 +12,7 @@ use super::{
     },
     STATE, TOKEN_MANAGER,
 };
-use crate::TestState;
+use crate::{routes::libs::new_test_server, TestState};
 
 const DELETE_UNIT_ID: &'static str = "unit_delete";
 
@@ -67,8 +61,7 @@ pub fn post(context: &mut SpecContext<TestState>) -> Result<(), String> {
     let runtime = state.runtime.as_ref().unwrap();
     let routes_state = state.routes_state.as_ref().unwrap();
 
-    let req = TestRequest::post().uri("/coremgr/api/v1/unit");
-    test_invalid_token(runtime, &routes_state, req)
+    test_invalid_token(runtime, &routes_state, Method::POST, "/coremgr/api/v1/unit")
 }
 
 pub fn get_count(context: &mut SpecContext<TestState>) -> Result<(), String> {
@@ -77,8 +70,12 @@ pub fn get_count(context: &mut SpecContext<TestState>) -> Result<(), String> {
     let runtime = state.runtime.as_ref().unwrap();
     let routes_state = state.routes_state.as_ref().unwrap();
 
-    let req = TestRequest::get().uri("/coremgr/api/v1/unit/count");
-    test_invalid_token(runtime, &routes_state, req)
+    test_invalid_token(
+        runtime,
+        &routes_state,
+        Method::GET,
+        "/coremgr/api/v1/unit/count",
+    )
 }
 
 pub fn get_list(context: &mut SpecContext<TestState>) -> Result<(), String> {
@@ -102,8 +99,12 @@ pub fn get(context: &mut SpecContext<TestState>) -> Result<(), String> {
     let runtime = state.runtime.as_ref().unwrap();
     let routes_state = state.routes_state.as_ref().unwrap();
 
-    let req = TestRequest::get().uri("/coremgr/api/v1/unit/id");
-    test_invalid_token(runtime, &routes_state, req)
+    test_invalid_token(
+        runtime,
+        &routes_state,
+        Method::GET,
+        "/coremgr/api/v1/unit/id",
+    )
 }
 
 pub fn patch(context: &mut SpecContext<TestState>) -> Result<(), String> {
@@ -112,8 +113,12 @@ pub fn patch(context: &mut SpecContext<TestState>) -> Result<(), String> {
     let runtime = state.runtime.as_ref().unwrap();
     let routes_state = state.routes_state.as_ref().unwrap();
 
-    let req = TestRequest::patch().uri("/coremgr/api/v1/unit/id");
-    test_invalid_token(runtime, &routes_state, req)
+    test_invalid_token(
+        runtime,
+        &routes_state,
+        Method::PATCH,
+        "/coremgr/api/v1/unit/id",
+    )
 }
 
 pub fn delete(context: &mut SpecContext<TestState>) -> Result<(), String> {
@@ -122,28 +127,22 @@ pub fn delete(context: &mut SpecContext<TestState>) -> Result<(), String> {
     let runtime = state.runtime.as_ref().unwrap();
     let routes_state = state.routes_state.as_ref().unwrap();
 
-    let mut app = runtime.block_on(async {
-        test::init_service(
-            App::new()
-                .wrap(NormalizePath::trim())
-                .service(routes::new_service(routes_state)),
-        )
-        .await
-    });
+    let server = new_test_server(routes_state)?;
 
-    let req = TestRequest::delete()
-        .uri(format!("/coremgr/api/v1/unit/{}", DELETE_UNIT_ID).as_str())
-        .insert_header((header::AUTHORIZATION, format!("Bearer {}", TOKEN_MANAGER)))
-        .to_request();
-    let resp = runtime.block_on(async { test::call_service(&mut app, req).await });
-    if resp.status() != StatusCode::NO_CONTENT {
-        let status = resp.status();
-        let body = runtime.block_on(async { test::read_body(resp).await });
-        let body = match String::from_utf8(body.to_vec()) {
-            Err(e) => format!("(no body with error: {})", e),
-            Ok(body) => body,
-        };
-        return Err(format!("API not 204, status: {}, body: {}", status, body));
+    let req = server
+        .delete(format!("/coremgr/api/v1/unit/{}", DELETE_UNIT_ID).as_str())
+        .add_header(
+            header::AUTHORIZATION,
+            HeaderValue::from_str(format!("Bearer {}", TOKEN_MANAGER).as_str()).unwrap(),
+        );
+    let resp = runtime.block_on(async { req.await });
+    let status = resp.status_code();
+    if status != StatusCode::NO_CONTENT {
+        return Err(format!(
+            "API not 204, status: {}, body: {}",
+            status,
+            resp.text()
+        ));
     }
     Ok(())
 }
@@ -154,6 +153,7 @@ pub fn delete_invalid(context: &mut SpecContext<TestState>) -> Result<(), String
     let runtime = state.runtime.as_ref().unwrap();
     let routes_state = state.routes_state.as_ref().unwrap();
 
-    let req = TestRequest::delete().uri("/coremgr/api/v1/unit/test");
-    test_invalid_param(runtime, routes_state, req, "err_param")
+    let server = new_test_server(routes_state)?;
+    let req = server.delete("/coremgr/api/v1/unit/test");
+    test_invalid_param(runtime, req, "err_param")
 }

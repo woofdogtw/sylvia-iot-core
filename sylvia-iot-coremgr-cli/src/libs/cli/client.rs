@@ -299,6 +299,18 @@ pub fn reg_args(cmd: Command) -> Command {
                     .required(true),
             ),
         )
+        .subcommand(
+            Command::new("delete-user")
+                .about("Delete clients of a user")
+                .arg(
+                    Arg::new("userid")
+                        .short('i')
+                        .long("userid")
+                        .help("User ID")
+                        .num_args(1)
+                        .required(true),
+                ),
+        )
 }
 
 pub async fn run(conf: &Config, args: &ArgMatches) -> Result<Option<()>, Box<dyn StdError>> {
@@ -329,6 +341,10 @@ pub async fn run(conf: &Config, args: &ArgMatches) -> Result<Option<()>, Box<dyn
         }
         Some(("delete", args)) => {
             delete(conf, args).await?;
+            Ok(Some(()))
+        }
+        Some(("delete-user", args)) => {
+            delete_user(conf, args).await?;
             Ok(Some(()))
         }
         _ => Ok(None),
@@ -779,6 +795,64 @@ async fn delete(config: &Config, args: &ArgMatches) -> Result<(), ErrResp> {
         "{}/api/v1/client/{}",
         config.coremgr,
         args.get_one::<String>("clientid").unwrap()
+    );
+    let mut token = storage.access_token;
+
+    let mut retry = 0;
+    loop {
+        let req = match client
+            .request(Method::DELETE, uri.as_str())
+            .header(header::AUTHORIZATION, format!("Bearer {}", token))
+            .build()
+        {
+            Err(e) => {
+                let msg = format!("[API] create request error: {}", e);
+                return Err(ErrResp::ErrRsc(Some(msg)));
+            }
+            Ok(req) => req,
+        };
+        let resp = match client.execute(req).await {
+            Err(e) => {
+                let msg = format!("[API] execute request error: {}", e);
+                return Err(ErrResp::ErrRsc(Some(msg)));
+            }
+            Ok(resp) => resp,
+        };
+        let status_code = resp.status();
+        let body = match resp.bytes().await {
+            Err(e) => format!("(wrong body: {})", e),
+            Ok(bytes) => match String::from_utf8(bytes.to_vec()) {
+                Err(e) => format!("(body not UTF-8: {})", e),
+                Ok(body) => body,
+            },
+        };
+        if status_code != StatusCode::NO_CONTENT {
+            retry += 1;
+            if retry <= API_RETRY && status_code == StatusCode::UNAUTHORIZED {
+                token = refresh(config).await?.access_token;
+                continue;
+            }
+            let msg = format!("[API] unexpected status: {}, body: {}", status_code, body);
+            return Err(ErrResp::ErrIntMsg(Some(msg)));
+        }
+        return Ok(());
+    }
+}
+
+async fn delete_user(config: &Config, args: &ArgMatches) -> Result<(), ErrResp> {
+    let storage = match config::read_storage() {
+        Err(e) => {
+            let msg = format!("[storage] read storage error: {}", e);
+            return Err(ErrResp::ErrRsc(Some(msg)));
+        }
+        Ok(storage) => storage,
+    };
+
+    let client = Client::new();
+    let uri = format!(
+        "{}/api/v1/client/user/{}",
+        config.coremgr,
+        args.get_one::<String>("userid").unwrap()
     );
     let mut token = storage.access_token;
 

@@ -1,10 +1,10 @@
 use std::{borrow::Cow, sync::Arc};
 
-use actix_web::{
-    body::BoxBody,
-    http::header,
-    web::{self, Query},
-    HttpResponse, Responder,
+use axum::{
+    extract::State,
+    http::{header, StatusCode},
+    response::{IntoResponse, Response},
+    Extension,
 };
 use chrono::{TimeDelta, Utc};
 use log::{error, warn};
@@ -25,10 +25,10 @@ use serde_urlencoded;
 use tera::{Context, Tera};
 use url::Url;
 
-use sylvia_iot_corelib::{err::E_UNKNOWN, strings};
+use sylvia_iot_corelib::{constants::ContentType, err::E_UNKNOWN, http::Json, strings};
 
 use super::{
-    super::State,
+    super::State as AppState,
     endpoint::Endpoint,
     request::{
         self, AccessTokenRequest, AuthorizationRequest, GetAuthRequest, GetLoginRequest,
@@ -46,12 +46,10 @@ use crate::models::{
 pub const TMPL_LOGIN: &'static str = "login";
 pub const TMPL_GRANT: &'static str = "grant";
 
-const CONTENT_TYPE_JSON: &'static str = "application/json";
-
 /// `GET /{base}/oauth2/auth`
 ///
 /// Authenticate client and redirect to the login page.
-pub async fn get_auth(req: GetAuthRequest, state: web::Data<State>) -> impl Responder {
+pub async fn get_auth(State(state): State<AppState>, req: GetAuthRequest) -> impl IntoResponse {
     const FN_NAME: &'static str = "get_auth";
 
     if let Err(resp) = check_auth_params(FN_NAME, &req, &state.model).await {
@@ -89,24 +87,24 @@ pub async fn get_auth(req: GetAuthRequest, state: web::Data<State>) -> impl Resp
             Ok(str) => str,
         },
     };
-    resp_found(format!("{}/oauth2/login?{}", state.scope_path, login_state).as_str())
+    resp_found(format!("{}/oauth2/login?{}", state.scope_path, login_state))
 }
 
 /// `GET /{base}/oauth2/login`
 ///
 /// To render the login page.
 pub async fn get_login(
+    State(state): State<AppState>,
+    Extension(tera): Extension<Tera>,
     req: GetLoginRequest,
-    state: web::Data<State>,
-    tera: web::Data<Tera>,
-) -> impl Responder {
+) -> impl IntoResponse {
     const FN_NAME: &'static str = "get_login";
 
     if req.state.as_str().len() == 0 {
         warn!("[{}] empty state content", FN_NAME);
         return resp_invalid_request(Some("invalid state content"));
     }
-    match Query::<GetAuthRequest>::from_query(req.state.as_str()) {
+    match serde_urlencoded::from_str::<GetAuthRequest>(req.state.as_str()) {
         Err(e) => {
             warn!(
                 "[{}] parse state error: {}, content: {}",
@@ -139,22 +137,20 @@ pub async fn get_login(
         Ok(page) => page,
     };
 
-    HttpResponse::Ok()
-        .content_type("text/html; charset=utf-8")
-        .body(page)
+    ([(header::CONTENT_TYPE, "text/html; charset=utf-8")], page).into_response()
 }
 
 /// `POST /{base}/oauth2/login`
 ///
 /// Do the login process.
-pub async fn post_login(req: PostLoginRequest, state: web::Data<State>) -> impl Responder {
+pub async fn post_login(State(state): State<AppState>, req: PostLoginRequest) -> impl IntoResponse {
     const FN_NAME: &'static str = "post_login";
 
     if req.state.as_str().len() == 0 {
         warn!("[{}] empty state content", FN_NAME);
         return resp_invalid_request(Some("invalid state content"));
     }
-    match Query::<GetAuthRequest>::from_query(req.state.as_str()) {
+    match serde_urlencoded::from_str::<GetAuthRequest>(req.state.as_str()) {
         Err(e) => {
             warn!(
                 "[{}] parse state error: {}, content: {}",
@@ -208,23 +204,20 @@ pub async fn post_login(req: PostLoginRequest, state: web::Data<State>) -> impl 
         error!("[{}] add login session error: {}", FN_NAME, e);
         return resp_temporary_unavailable(Some(err_str));
     }
-    resp_found(
-        format!(
-            "{}/oauth2/authorize?{}&session_id={}",
-            state.scope_path, req.state, session.session_id
-        )
-        .as_str(),
-    )
+    resp_found(format!(
+        "{}/oauth2/authorize?{}&session_id={}",
+        state.scope_path, req.state, session.session_id
+    ))
 }
 
 /// `GET /{base}/oauth2/authorize` and `POST /{base}/oauth2/authorize`
 ///
 /// To render the OAuth2 grant page or to authorize the client and grant.
 pub async fn authorize(
+    State(state): State<AppState>,
+    Extension(tera): Extension<Tera>,
     req: AuthorizationRequest,
-    state: web::Data<State>,
-    tera: web::Data<Tera>,
-) -> impl Responder {
+) -> impl IntoResponse {
     const FN_NAME: &'static str = "authorize";
 
     let mut endpoint = Endpoint::new(state.model.clone(), None);
@@ -235,7 +228,7 @@ pub async fn authorize(
             }
             AuthorizationError::Redirect(url) => {
                 let url: Url = url.into();
-                return resp_found(url.as_str());
+                return resp_found(url.to_string());
             }
             AuthorizationError::PrimitiveError => {
                 error!("[{}] authorize() with primitive error", FN_NAME);
@@ -252,13 +245,13 @@ pub async fn authorize(
                     match e {
                         AuthorizationError::Redirect(url) => {
                             let url: Url = url.into();
-                            return resp_found(url.as_str());
+                            return resp_found(url.to_string());
                         }
                         _ => (),
                     }
                 }
                 let e = OAuth2Error::new("server_error", Some("deny error".to_string()));
-                return HttpResponse::InternalServerError().json(e);
+                return (StatusCode::INTERNAL_SERVER_ERROR, Json(e)).into_response();
             }
             true => {
                 let session_id = req.session_id();
@@ -289,7 +282,7 @@ pub async fn authorize(
                         return resp_temporary_unavailable(None);
                     }
                     Ok(url) => {
-                        return resp_found(url.as_str());
+                        return resp_found(url.to_string());
                     }
                 }
             }
@@ -339,78 +332,96 @@ pub async fn authorize(
         }
         Ok(page) => page,
     };
-    HttpResponse::Ok()
-        .content_type("text/html; charset=utf-8")
-        .body(page)
+    ([(header::CONTENT_TYPE, "text/html; charset=utf-8")], page).into_response()
 }
 
 /// `POST /{base}/oauth2/token`
 ///
 /// To generate an access token with the authorization code or client credentials.
-pub async fn post_token(req: AccessTokenRequest, state: web::Data<State>) -> impl Responder {
+pub async fn post_token(
+    State(state): State<AppState>,
+    req: AccessTokenRequest,
+) -> impl IntoResponse {
     let mut endpoint = Endpoint::new(state.model.clone(), None);
 
     if let Some(grant_type) = req.grant_type() {
         if grant_type.eq("client_credentials") {
-            return client_credentials_token(&req, state, &mut endpoint).await;
+            return client_credentials_token(&req, &state, &mut endpoint).await;
         }
     }
 
     let token = match code_grant::access_token::access_token(&mut endpoint, &req).await {
         Err(e) => match e {
             AccessTokenError::Invalid(desc) => {
-                return HttpResponse::BadRequest()
-                    .content_type(CONTENT_TYPE_JSON)
-                    .body(desc.to_json())
+                return (
+                    StatusCode::BAD_REQUEST,
+                    [(header::CONTENT_TYPE, ContentType::JSON)],
+                    desc.to_json(),
+                )
+                    .into_response();
             }
             AccessTokenError::Unauthorized(desc, authtype) => {
-                return HttpResponse::Unauthorized()
-                    .content_type(CONTENT_TYPE_JSON)
-                    .insert_header((header::WWW_AUTHENTICATE, authtype))
-                    .body(desc.to_json());
+                return (
+                    StatusCode::UNAUTHORIZED,
+                    [
+                        (header::CONTENT_TYPE, ContentType::JSON),
+                        (header::WWW_AUTHENTICATE, authtype.as_str()),
+                    ],
+                    desc.to_json(),
+                )
+                    .into_response();
             }
             // TODO: handle this
-            AccessTokenError::Primitive(_e) => return HttpResponse::ServiceUnavailable().finish(),
+            AccessTokenError::Primitive(_e) => {
+                return StatusCode::SERVICE_UNAVAILABLE.into_response()
+            }
         },
         Ok(token) => token,
     };
-    HttpResponse::Ok()
-        .content_type(CONTENT_TYPE_JSON)
-        .body(token.to_json())
+    ([(header::CONTENT_TYPE, ContentType::JSON)], token.to_json()).into_response()
 }
 
 /// `POST /{base}/oauth2/refresh`
 ///
 /// To refresh an access token.
-pub async fn post_refresh(req: RefreshTokenRequest, state: web::Data<State>) -> impl Responder {
+pub async fn post_refresh(
+    State(state): State<AppState>,
+    req: RefreshTokenRequest,
+) -> impl IntoResponse {
     let mut endpoint = Endpoint::new(state.model.clone(), None);
     let token = match code_grant::refresh::refresh(&mut endpoint, &req).await {
         Err(e) => match e {
             RefreshTokenError::Invalid(desc) => {
-                return HttpResponse::BadRequest()
-                    .content_type(CONTENT_TYPE_JSON)
-                    .body(desc.to_json())
+                return (
+                    StatusCode::BAD_REQUEST,
+                    [(header::CONTENT_TYPE, ContentType::JSON)],
+                    desc.to_json(),
+                )
+                    .into_response();
             }
             RefreshTokenError::Unauthorized(desc, authtype) => {
-                return HttpResponse::Unauthorized()
-                    .content_type(CONTENT_TYPE_JSON)
-                    .insert_header((header::WWW_AUTHENTICATE, authtype))
-                    .body(desc.to_json());
+                return (
+                    StatusCode::UNAUTHORIZED,
+                    [
+                        (header::CONTENT_TYPE, ContentType::JSON),
+                        (header::WWW_AUTHENTICATE, authtype.as_str()),
+                    ],
+                    desc.to_json(),
+                )
+                    .into_response();
             }
-            RefreshTokenError::Primitive => return HttpResponse::ServiceUnavailable().finish(),
+            RefreshTokenError::Primitive => return StatusCode::SERVICE_UNAVAILABLE.into_response(),
         },
         Ok(token) => token,
     };
-    HttpResponse::Ok()
-        .content_type(CONTENT_TYPE_JSON)
-        .body(token.to_json())
+    ([(header::CONTENT_TYPE, ContentType::JSON)], token.to_json()).into_response()
 }
 
 async fn client_credentials_token(
     req: &AccessTokenRequest,
-    state: web::Data<State>,
+    state: &AppState,
     endpoint: &mut Endpoint,
-) -> HttpResponse<BoxBody> {
+) -> Response {
     // Validate the client.
     let client = match req.authorization() {
         None => return resp_invalid_request(None),
@@ -462,7 +473,7 @@ async fn client_credentials_token(
         Ok(token) => token,
     };
 
-    HttpResponse::Ok().json(&TokenResponse {
+    Json(TokenResponse {
         access_token: Some(token.token),
         refresh_token: token.refresh,
         token_type: Some("bearer".to_string()),
@@ -470,6 +481,7 @@ async fn client_credentials_token(
         scope: Some(client.scopes.as_slice().join(" ")),
         error: None,
     })
+    .into_response()
 }
 
 /// To check the authorization grant flow parameters.
@@ -477,7 +489,7 @@ async fn check_auth_params(
     fn_name: &str,
     req: &GetAuthRequest,
     model: &Arc<dyn Model>,
-) -> Result<(), HttpResponse> {
+) -> Result<(), Response> {
     if req.response_type != "code" {
         return Err(resp_invalid_request(Some("unsupport response_type")));
     }
@@ -527,15 +539,11 @@ async fn check_auth_params(
     Ok(())
 }
 
-fn redirect_invalid_scope(redirect_uri: &str) -> HttpResponse {
-    resp_found(format!("{}?error=invalid_scope", redirect_uri).as_str())
+fn redirect_invalid_scope(redirect_uri: &str) -> Response {
+    resp_found(format!("{}?error=invalid_scope", redirect_uri))
 }
 
-fn redirect_server_error(
-    fn_name: &str,
-    redirect_uri: &str,
-    description: Option<&str>,
-) -> HttpResponse {
+fn redirect_server_error(fn_name: &str, redirect_uri: &str, description: Option<&str>) -> Response {
     let location = match description {
         None => format!("{}?error=server_error", redirect_uri),
         Some(desc) => {
@@ -549,40 +557,53 @@ fn redirect_server_error(
             }
         }
     };
-    resp_found(location.as_str())
+    resp_found(location)
 }
 
-fn resp_found<'a>(location: &'a str) -> HttpResponse {
-    HttpResponse::Found()
-        .insert_header((header::LOCATION, location))
-        .finish()
+fn resp_found(location: String) -> Response {
+    (StatusCode::FOUND, [(header::LOCATION, location)]).into_response()
 }
 
-fn resp_invalid_auth<'a>(description: Option<&'a str>) -> HttpResponse {
+fn resp_invalid_auth<'a>(description: Option<&'a str>) -> Response {
     let description = match description {
         None => None,
         Some(description) => Some(description.to_string()),
     };
-    HttpResponse::BadRequest().json(OAuth2Error::new("invalid_auth", description))
+    (
+        StatusCode::BAD_REQUEST,
+        Json(OAuth2Error::new("invalid_auth", description)),
+    )
+        .into_response()
 }
 
-fn resp_invalid_client<'a>(description: Option<&'a str>) -> HttpResponse {
+fn resp_invalid_client<'a>(description: Option<&'a str>) -> Response {
     let description = match description {
         None => None,
         Some(description) => Some(description.to_string()),
     };
-    HttpResponse::Unauthorized().json(OAuth2Error::new("invalid_client", description))
+    (
+        StatusCode::UNAUTHORIZED,
+        Json(OAuth2Error::new("invalid_client", description)),
+    )
+        .into_response()
 }
 
-fn resp_invalid_request<'a>(description: Option<&'a str>) -> HttpResponse {
+fn resp_invalid_request<'a>(description: Option<&'a str>) -> Response {
     let description = match description {
         None => None,
         Some(description) => Some(description.to_string()),
     };
-    HttpResponse::BadRequest().json(OAuth2Error::new("invalid_request", description))
+    (
+        StatusCode::BAD_REQUEST,
+        Json(OAuth2Error::new("invalid_request", description)),
+    )
+        .into_response()
 }
 
-fn resp_temporary_unavailable(description: Option<String>) -> HttpResponse {
-    HttpResponse::ServiceUnavailable()
-        .json(OAuth2Error::new("temporarily_unavailable", description))
+fn resp_temporary_unavailable(description: Option<String>) -> Response {
+    (
+        StatusCode::SERVICE_UNAVAILABLE,
+        Json(OAuth2Error::new("temporarily_unavailable", description)),
+    )
+        .into_response()
 }

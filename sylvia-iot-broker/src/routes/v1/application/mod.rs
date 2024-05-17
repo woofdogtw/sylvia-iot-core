@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use actix_web::{dev::HttpServiceFactory, http::Method, web};
+use axum::{http::Method, routing, Router};
 
 use super::super::{
     middleware::{AuthService, RoleScopeType},
@@ -12,11 +12,11 @@ mod request;
 mod response;
 pub use api::{init, new_ctrl_receiver, new_ctrl_sender};
 
-pub fn new_service(scope_path: &str, state: &State) -> impl HttpServiceFactory {
+pub fn new_service(scope_path: &str, state: &State) -> Router {
     let mut role_scopes_root: HashMap<Method, RoleScopeType> = HashMap::new();
     let mut role_scopes_count: HashMap<Method, RoleScopeType> = HashMap::new();
     let mut role_scopes_list: HashMap<Method, RoleScopeType> = HashMap::new();
-    let mut role_scopes_params: HashMap<Method, RoleScopeType> = HashMap::new();
+    let mut role_scopes_param: HashMap<Method, RoleScopeType> = HashMap::new();
 
     match state.api_scopes.get("application.post") {
         None => {
@@ -30,53 +30,57 @@ pub fn new_service(scope_path: &str, state: &State) -> impl HttpServiceFactory {
         None => {
             role_scopes_count.insert(Method::GET, (vec![], vec![]));
             role_scopes_list.insert(Method::GET, (vec![], vec![]));
-            role_scopes_params.insert(Method::GET, (vec![], vec![]));
+            role_scopes_param.insert(Method::GET, (vec![], vec![]));
         }
         Some(scopes) => {
             role_scopes_count.insert(Method::GET, (vec![], scopes.clone()));
             role_scopes_list.insert(Method::GET, (vec![], scopes.clone()));
-            role_scopes_params.insert(Method::GET, (vec![], scopes.clone()));
+            role_scopes_param.insert(Method::GET, (vec![], scopes.clone()));
         }
     }
     match state.api_scopes.get("application.patch") {
         None => {
-            role_scopes_params.insert(Method::PATCH, (vec![], vec![]));
+            role_scopes_param.insert(Method::PATCH, (vec![], vec![]));
         }
         Some(scopes) => {
-            role_scopes_params.insert(Method::PATCH, (vec![], scopes.clone()));
+            role_scopes_param.insert(Method::PATCH, (vec![], scopes.clone()));
         }
     }
     match state.api_scopes.get("application.delete") {
         None => {
-            role_scopes_params.insert(Method::DELETE, (vec![], vec![]));
+            role_scopes_param.insert(Method::DELETE, (vec![], vec![]));
         }
         Some(scopes) => {
-            role_scopes_params.insert(Method::DELETE, (vec![], scopes.clone()));
+            role_scopes_param.insert(Method::DELETE, (vec![], scopes.clone()));
         }
     }
 
     let auth_uri = format!("{}/api/v1/auth/tokeninfo", state.auth_base.as_str());
-    web::scope(scope_path)
-        .service(
-            web::resource("")
-                .wrap(AuthService::new(auth_uri.clone(), role_scopes_root))
-                .route(web::post().to(api::post_application)),
-        )
-        .service(
-            web::resource("/count")
-                .wrap(AuthService::new(auth_uri.clone(), role_scopes_count))
-                .route(web::get().to(api::get_application_count)),
-        )
-        .service(
-            web::resource("/list")
-                .wrap(AuthService::new(auth_uri.clone(), role_scopes_list))
-                .route(web::get().to(api::get_application_list)),
-        )
-        .service(
-            web::resource("/{application_id}")
-                .wrap(AuthService::new(auth_uri.clone(), role_scopes_params))
-                .route(web::get().to(api::get_application))
-                .route(web::patch().to(api::patch_application))
-                .route(web::delete().to(api::delete_application)),
-        )
+    Router::new().nest(
+        scope_path,
+        Router::new()
+            .route(
+                "/",
+                routing::post(api::post_application)
+                    .layer(AuthService::new(auth_uri.clone(), role_scopes_root)),
+            )
+            .route(
+                "/count",
+                routing::get(api::get_application_count)
+                    .layer(AuthService::new(auth_uri.clone(), role_scopes_count)),
+            )
+            .route(
+                "/list",
+                routing::get(api::get_application_list)
+                    .layer(AuthService::new(auth_uri.clone(), role_scopes_list)),
+            )
+            .route(
+                "/:application_id",
+                routing::get(api::get_application)
+                    .patch(api::patch_application)
+                    .delete(api::delete_application)
+                    .layer(AuthService::new(auth_uri.clone(), role_scopes_param)),
+            )
+            .with_state(state.clone()),
+    )
 }

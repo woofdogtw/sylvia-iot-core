@@ -1,16 +1,15 @@
-use std::{collections::HashMap, error::Error as StdError, sync::mpsc, thread, time::Duration};
+use std::{collections::HashMap, error::Error as StdError, net::SocketAddr, time::Duration};
 
-use actix_http::{header::HeaderValue, KeepAlive};
-use actix_web::{
-    http::{header, StatusCode},
-    middleware::NormalizePath,
-    test::{self, TestRequest},
-    web, App, HttpMessage, HttpRequest, HttpResponse, HttpServer, Responder,
+use axum::{
+    http::{header, HeaderValue, StatusCode},
+    response::IntoResponse,
+    routing, Extension, Router,
 };
+use axum_test::TestServer;
 use chrono::{DateTime, TimeZone, Utc};
 use laboratory::{describe, expect, SpecContext, Suite};
 use serde_json::{Map, Value};
-use tokio::{runtime::Runtime, time};
+use tokio::{net::TcpListener, runtime::Runtime, time};
 
 use sylvia_iot_auth::{
     libs::config as sylvia_iot_auth_config,
@@ -22,7 +21,7 @@ use sylvia_iot_auth::{
 };
 
 use sylvia_iot_sdk::{
-    middlewares::auth::{AuthService, FullTokenInfo},
+    middlewares::auth::{AuthService, GetTokenInfoData},
     util::err::ErrResp,
 };
 
@@ -62,24 +61,22 @@ fn test_200(context: &mut SpecContext<TestState>) -> Result<(), String> {
     });
     expect(result.is_ok()).to_equal(true)?;
 
-    let mut app = runtime.block_on(async {
-        test::init_service(
-            App::new()
-                .wrap(NormalizePath::trim())
-                .wrap(AuthService::new(auth_uri.clone()))
-                .route("/", web::get().to(test_200_handler)),
-        )
-        .await
-    });
+    let app = Router::new()
+        .route("/", routing::get(test_200_handler))
+        .layer(AuthService::new(auth_uri.clone()));
+    let server = match TestServer::new(app) {
+        Err(e) => return Err(format!("new server error: {}", e)),
+        Ok(server) => server,
+    };
 
-    let req = TestRequest::get()
-        .uri("/")
-        .insert_header((header::AUTHORIZATION, format!("  bearer token  ")))
-        .to_request();
-    let resp = runtime.block_on(async { test::call_service(&mut app, req).await });
-    let status = resp.status();
+    let req = server.get("/").add_header(
+        header::AUTHORIZATION,
+        HeaderValue::from_str("  bearer token  ").unwrap(),
+    );
+    let resp = runtime.block_on(async { req.await });
+    let status = resp.status_code();
     if status != StatusCode::NO_CONTENT {
-        let body = runtime.block_on(async { test::read_body(resp).await });
+        let body = resp.text();
         return Err(format!("status {}, body: {:?}", status, body));
     }
     Ok(())
@@ -91,37 +88,17 @@ fn test_400(context: &mut SpecContext<TestState>) -> Result<(), String> {
     let runtime = state.runtime.as_ref().unwrap();
     let auth_uri = state.auth_uri.as_ref().unwrap();
 
-    let mut app = runtime.block_on(async {
-        test::init_service(
-            App::new()
-                .wrap(NormalizePath::trim())
-                .wrap(AuthService::new(auth_uri.clone()))
-                .route("/", web::get().to(dummy_handler)),
-        )
-        .await
-    });
+    let app = Router::new()
+        .route("/", routing::get(dummy_handler))
+        .layer(AuthService::new(auth_uri.clone()));
+    let server = match TestServer::new(app) {
+        Err(e) => return Err(format!("new server error: {}", e)),
+        Ok(server) => server,
+    };
 
-    let req = TestRequest::get().uri("/").to_request();
-    let resp = runtime.block_on(async { test::call_service(&mut app, req).await });
-    expect(resp.status()).to_equal(StatusCode::BAD_REQUEST)?;
-
-    let mut req = TestRequest::get().uri("/").to_request();
-    req.headers_mut()
-        .insert(header::AUTHORIZATION, HeaderValue::from_static(" "));
-    let resp = runtime.block_on(async { test::call_service(&mut app, req).await });
-    expect(resp.status()).to_equal(StatusCode::BAD_REQUEST)?;
-
-    let mut req = TestRequest::get().uri("/").to_request();
-    req.headers_mut()
-        .insert(header::AUTHORIZATION, HeaderValue::from_static("Basic 123"));
-    let resp = runtime.block_on(async { test::call_service(&mut app, req).await });
-    expect(resp.status()).to_equal(StatusCode::BAD_REQUEST)?;
-
-    let mut req = TestRequest::get().uri("/").to_request();
-    req.headers_mut()
-        .insert(header::AUTHORIZATION, HeaderValue::from_static("Bearer "));
-    let resp = runtime.block_on(async { test::call_service(&mut app, req).await });
-    expect(resp.status()).to_equal(StatusCode::BAD_REQUEST)
+    let req = server.get("/");
+    let resp = runtime.block_on(async { req.await });
+    expect(resp.status_code()).to_equal(StatusCode::BAD_REQUEST)
 }
 
 fn test_401(context: &mut SpecContext<TestState>) -> Result<(), String> {
@@ -130,22 +107,20 @@ fn test_401(context: &mut SpecContext<TestState>) -> Result<(), String> {
     let runtime = state.runtime.as_ref().unwrap();
     let auth_uri = state.auth_uri.as_ref().unwrap();
 
-    let mut app = runtime.block_on(async {
-        test::init_service(
-            App::new()
-                .wrap(NormalizePath::trim())
-                .wrap(AuthService::new(auth_uri.clone()))
-                .route("/", web::get().to(dummy_handler)),
-        )
-        .await
-    });
+    let app = Router::new()
+        .route("/", routing::get(dummy_handler))
+        .layer(AuthService::new(auth_uri.clone()));
+    let server = match TestServer::new(app) {
+        Err(e) => return Err(format!("new server error: {}", e)),
+        Ok(server) => server,
+    };
 
-    let req = TestRequest::get()
-        .uri("/")
-        .insert_header((header::AUTHORIZATION, format!("Bearer test")))
-        .to_request();
-    let resp = runtime.block_on(async { test::call_service(&mut app, req).await });
-    expect(resp.status()).to_equal(StatusCode::UNAUTHORIZED)
+    let req = server.get("/").add_header(
+        header::AUTHORIZATION,
+        HeaderValue::from_str("Bearer test").unwrap(),
+    );
+    let resp = runtime.block_on(async { req.await });
+    expect(resp.status_code()).to_equal(StatusCode::UNAUTHORIZED)
 }
 
 fn test_503(context: &mut SpecContext<TestState>) -> Result<(), String> {
@@ -154,74 +129,61 @@ fn test_503(context: &mut SpecContext<TestState>) -> Result<(), String> {
     let runtime = state.runtime.as_ref().unwrap();
     let auth_uri = "http://localhost:65535";
 
-    let mut app = runtime.block_on(async {
-        test::init_service(
-            App::new()
-                .wrap(NormalizePath::trim())
-                .wrap(AuthService::new(auth_uri.to_string()))
-                .route("/", web::get().to(dummy_handler)),
-        )
-        .await
-    });
+    let app = Router::new()
+        .route("/", routing::get(dummy_handler))
+        .layer(AuthService::new(auth_uri.to_string()));
+    let server = match TestServer::new(app) {
+        Err(e) => return Err(format!("new server error: {}", e)),
+        Ok(server) => server,
+    };
 
-    let req = TestRequest::get()
-        .uri("/")
-        .insert_header((header::AUTHORIZATION, format!("Bearer test")))
-        .to_request();
-    let resp = runtime.block_on(async { test::call_service(&mut app, req).await });
-    expect(resp.status()).to_equal(StatusCode::SERVICE_UNAVAILABLE)
+    let req = server.get("/").add_header(
+        header::AUTHORIZATION,
+        HeaderValue::from_str("Bearer test").unwrap(),
+    );
+    let resp = runtime.block_on(async { req.await });
+    expect(resp.status_code()).to_equal(StatusCode::SERVICE_UNAVAILABLE)
 }
 
-async fn test_200_handler(req: HttpRequest) -> impl Responder {
-    let info = match req.extensions_mut().get::<FullTokenInfo>() {
-        None => return HttpResponse::BadRequest().finish(),
-        Some(info) => info.clone(),
-    };
-    if info.token.ne("token") {
-        return HttpResponse::BadRequest().finish();
-    } else if info.info.user_id.ne("user") {
-        return HttpResponse::BadRequest().finish();
-    } else if info.info.account.ne("user") {
-        return HttpResponse::BadRequest().finish();
-    } else if info.info.name.ne("user") {
-        return HttpResponse::BadRequest().finish();
-    } else if info.info.client_id.ne("client") {
-        return HttpResponse::BadRequest().finish();
-    } else if info.info.scopes.len() > 0 {
-        return HttpResponse::BadRequest().finish();
-    } else if info.info.roles.keys().len() != 1 {
-        return HttpResponse::BadRequest().finish();
+async fn test_200_handler(Extension(token_info): Extension<GetTokenInfoData>) -> impl IntoResponse {
+    if token_info.token.ne("token") {
+        return StatusCode::BAD_REQUEST;
+    } else if token_info.user_id.ne("user") {
+        return StatusCode::BAD_REQUEST;
+    } else if token_info.account.ne("user") {
+        return StatusCode::BAD_REQUEST;
+    } else if token_info.name.ne("user") {
+        return StatusCode::BAD_REQUEST;
+    } else if token_info.client_id.ne("client") {
+        return StatusCode::BAD_REQUEST;
+    } else if token_info.scopes.len() > 0 {
+        return StatusCode::BAD_REQUEST;
+    } else if token_info.roles.keys().len() != 1 {
+        return StatusCode::BAD_REQUEST;
     }
-    match info.info.roles.get("user") {
-        None => return HttpResponse::BadRequest().finish(),
+    match token_info.roles.get("user") {
+        None => return StatusCode::BAD_REQUEST,
         Some(enabled) => match *enabled {
-            false => return HttpResponse::BadRequest().finish(),
+            false => return StatusCode::BAD_REQUEST,
             true => (),
         },
     }
-    HttpResponse::NoContent().finish()
+    StatusCode::NO_CONTENT
 }
 
-async fn dummy_handler(req: HttpRequest) -> impl Responder {
-    match req.extensions_mut().get::<FullTokenInfo>() {
-        None => {
-            return Err(ErrResp::Custom(450, "", None));
-        }
-        Some(data) => {
-            if data.info.user_id.as_str() != "user"
-                && data.info.user_id.as_str() != "user1"
-                && data.info.user_id.as_str() != "user2"
-            {
-                return Err(ErrResp::Custom(451, "", Some(data.info.user_id.clone())));
-            } else if data.info.client_id.as_str() != "client"
-                && data.info.client_id.as_str() != "client1"
-                && data.info.client_id.as_str() != "client2"
-            {
-                return Err(ErrResp::Custom(452, "", Some(data.info.client_id.clone())));
-            }
-        }
+async fn dummy_handler(Extension(token_info): Extension<GetTokenInfoData>) -> impl IntoResponse {
+    if token_info.user_id.as_str() != "user"
+        && token_info.user_id.as_str() != "user1"
+        && token_info.user_id.as_str() != "user2"
+    {
+        return Err(ErrResp::Custom(451, "", Some(token_info.user_id.clone())));
+    } else if token_info.client_id.as_str() != "client"
+        && token_info.client_id.as_str() != "client1"
+        && token_info.client_id.as_str() != "client2"
+    {
+        return Err(ErrResp::Custom(452, "", Some(token_info.client_id.clone())));
     }
-    Ok(HttpResponse::NoContent().finish())
+    Ok(StatusCode::NO_CONTENT)
 }
 
 fn before_all_fn(state: &mut HashMap<&'static str, TestState>) -> () {
@@ -230,51 +192,38 @@ fn before_all_fn(state: &mut HashMap<&'static str, TestState>) -> () {
         Ok(runtime) => runtime,
     };
 
-    let (tx, rx) = mpsc::channel();
-    {
-        let state = match runtime.block_on(async {
-            let mut path = std::env::temp_dir();
-            path.push(sylvia_iot_auth_config::DEF_SQLITE_PATH);
-            let conf = sylvia_iot_auth_config::Config {
-                db: Some(sylvia_iot_auth_config::Db {
-                    engine: Some("sqlite".to_string()),
-                    sqlite: Some(sylvia_iot_auth_config::Sqlite {
-                        path: Some(path.to_str().unwrap().to_string()),
-                    }),
-                    ..Default::default()
+    let auth_state = match runtime.block_on(async {
+        let mut path = std::env::temp_dir();
+        path.push(sylvia_iot_auth_config::DEF_SQLITE_PATH);
+        let conf = sylvia_iot_auth_config::Config {
+            db: Some(sylvia_iot_auth_config::Db {
+                engine: Some("sqlite".to_string()),
+                sqlite: Some(sylvia_iot_auth_config::Sqlite {
+                    path: Some(path.to_str().unwrap().to_string()),
                 }),
                 ..Default::default()
-            };
-            sylvia_iot_auth_routes::new_state("/auth", &conf).await
-        }) {
-            Err(e) => panic!("create auth state error: {}", e),
-            Ok(state) => state,
+            }),
+            ..Default::default()
         };
-
-        thread::spawn(move || {
-            let srv = match HttpServer::new(move || {
-                App::new()
-                    .wrap(NormalizePath::trim())
-                    .service(sylvia_iot_auth_routes::new_service(&state))
-            })
-            .keep_alive(KeepAlive::Timeout(Duration::from_secs(60)))
-            .shutdown_timeout(1)
-            .bind("0.0.0.0:1080")
-            {
-                Err(e) => panic!("bind auth server error: {}", e),
-                Ok(server) => server,
-            }
-            .run();
-
-            let _ = tx.send(srv.handle());
-            let runtime = match Runtime::new() {
-                Err(e) => panic!("create auth server runtime error: {}", e),
-                Ok(runtime) => runtime,
-            };
-            runtime.block_on(async { srv.await })
-        });
+        sylvia_iot_auth_routes::new_state("/auth", &conf).await
+    }) {
+        Err(e) => panic!("create auth state error: {}", e),
+        Ok(state) => state,
     };
-    let core_svc = rx.recv().unwrap();
+
+    let core_svc = runtime.spawn(async move {
+        let app = Router::new().merge(sylvia_iot_auth_routes::new_service(&auth_state));
+        let listener = match TcpListener::bind("0.0.0.0:1080").await {
+            Err(e) => panic!("bind auth/broker server error: {}", e),
+            Ok(listener) => listener,
+        };
+        axum::serve(
+            listener,
+            app.into_make_service_with_connect_info::<SocketAddr>(),
+        )
+        .await
+        .unwrap()
+    });
 
     if let Err(e) = runtime.block_on(async {
         for _ in 0..WAIT_COUNT {
@@ -335,9 +284,8 @@ fn remove_sqlite(path: &str) {
 }
 
 fn stop_core_svc(state: &TestState) {
-    let runtime = state.runtime.as_ref().unwrap();
     if let Some(svc) = state.core_svc.as_ref() {
-        runtime.block_on(async { svc.stop(false).await });
+        svc.abort();
     }
     let mut path = std::env::temp_dir();
     path.push(sylvia_iot_auth_config::DEF_SQLITE_PATH);

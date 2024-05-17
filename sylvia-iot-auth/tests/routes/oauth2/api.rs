@@ -1,11 +1,11 @@
 use std::collections::HashMap;
 
-use actix_web::{
-    http::{header, Method, StatusCode},
-    middleware::NormalizePath,
-    test::{self, TestRequest},
-    web, App, HttpResponse, Responder,
+use axum::{
+    http::{header, HeaderValue, Method, StatusCode},
+    response::IntoResponse,
+    routing, Router,
 };
+use axum_test::TestServer;
 use laboratory::{expect, SpecContext};
 use tokio::runtime::Runtime;
 
@@ -1453,59 +1453,60 @@ pub fn middleware_api_scope(context: &mut SpecContext<TestState>) -> Result<(), 
     let mut role_scopes_root: HashMap<Method, RoleScopeType> = HashMap::new();
     role_scopes_root.insert(Method::GET, (vec![], vec![]));
     role_scopes_root.insert(Method::POST, (vec![], vec!["scope1".to_string()]));
-    let mut app = runtime.block_on(async {
-        test::init_service(
-            App::new()
-                .wrap(NormalizePath::trim())
-                .wrap(AuthService::new(&model, role_scopes_root))
-                .service(
-                    web::resource("/")
-                        .route(web::get().to(dummy_handler))
-                        .route(web::post().to(dummy_handler)),
-                ),
-        )
-        .await
-    });
+    let app = Router::new()
+        .route("/", routing::get(dummy_handler).post(dummy_handler))
+        .layer(AuthService::new(&model, role_scopes_root));
+    let server = match TestServer::new(app) {
+        Err(e) => return Err(format!("new server error: {}", e)),
+        Ok(server) => server,
+    };
 
-    let req = TestRequest::get()
-        .uri("/")
-        .insert_header((header::AUTHORIZATION, format!("Bearer {}", public_token)))
-        .to_request();
-    let resp = runtime.block_on(async { test::call_service(&mut app, req).await });
-    let status = resp.status();
-    if status != StatusCode::NO_CONTENT {
-        let body = runtime.block_on(async { test::read_body(resp).await });
+    let req = server.get("/");
+    let resp = runtime.block_on(async { req.await });
+    let status = resp.status_code();
+    if status != StatusCode::BAD_REQUEST {
+        let body = resp.text();
         return Err(format!("public case status {}, body: {:?}", status, body));
     }
-    let req = TestRequest::post()
-        .uri("/")
-        .insert_header((header::AUTHORIZATION, format!("Bearer {}", public_token)))
-        .to_request();
-    let resp = runtime.block_on(async { test::call_service(&mut app, req).await });
-    let status = resp.status();
+    let req = server.get("/").add_header(
+        header::AUTHORIZATION,
+        HeaderValue::from_str(format!("Bearer {}", public_token).as_str()).unwrap(),
+    );
+    let resp = runtime.block_on(async { req.await });
+    let status = resp.status_code();
+    if status != StatusCode::NO_CONTENT {
+        let body = resp.text();
+        return Err(format!("public case status {}, body: {:?}", status, body));
+    }
+    let req = server.post("/").add_header(
+        header::AUTHORIZATION,
+        HeaderValue::from_str(format!("Bearer {}", public_token).as_str()).unwrap(),
+    );
+    let resp = runtime.block_on(async { req.await });
+    let status = resp.status_code();
     if status != StatusCode::FORBIDDEN {
-        let body = runtime.block_on(async { test::read_body(resp).await });
+        let body = resp.text();
         return Err(format!("public case status {}, body: {:?}", status, body));
     }
 
-    let req = TestRequest::get()
-        .uri("/")
-        .insert_header((header::AUTHORIZATION, format!("Bearer {}", private_token)))
-        .to_request();
-    let resp = runtime.block_on(async { test::call_service(&mut app, req).await });
-    let status = resp.status();
+    let req = server.get("/").add_header(
+        header::AUTHORIZATION,
+        HeaderValue::from_str(format!("Bearer {}", private_token).as_str()).unwrap(),
+    );
+    let resp = runtime.block_on(async { req.await });
+    let status = resp.status_code();
     if status != StatusCode::NO_CONTENT {
-        let body = runtime.block_on(async { test::read_body(resp).await });
+        let body = resp.text();
         return Err(format!("private case status {}, body: {:?}", status, body));
     }
-    let req = TestRequest::post()
-        .uri("/")
-        .insert_header((header::AUTHORIZATION, format!("Bearer {}", private_token)))
-        .to_request();
-    let resp = runtime.block_on(async { test::call_service(&mut app, req).await });
-    let status = resp.status();
+    let req = server.post("/").add_header(
+        header::AUTHORIZATION,
+        HeaderValue::from_str(format!("Bearer {}", private_token).as_str()).unwrap(),
+    );
+    let resp = runtime.block_on(async { req.await });
+    let status = resp.status_code();
     if status != StatusCode::NO_CONTENT {
-        let body = runtime.block_on(async { test::read_body(resp).await });
+        let body = resp.text();
         return Err(format!("private case status {}, body: {:?}", status, body));
     }
 
@@ -1519,32 +1520,22 @@ fn test_get_auth(
     expect_status: StatusCode,
     expect_error: &str,
 ) -> Result<(), String> {
-    let mut app = runtime.block_on(async {
-        test::init_service(
-            App::new()
-                .wrap(NormalizePath::trim())
-                .service(routes::new_service(&state)),
-        )
-        .await
-    });
-
-    let uri = match params {
-        None => "/auth/oauth2/auth".to_string(),
-        Some(params) => format!(
-            "/auth/oauth2/auth?{}",
-            serde_urlencoded::to_string(params).unwrap()
-        ),
+    let app = Router::new().merge(routes::new_service(&state));
+    let server = match TestServer::new(app) {
+        Err(e) => return Err(format!("new server error: {}", e)),
+        Ok(server) => server,
     };
-    let req = TestRequest::get().uri(uri.as_str()).to_request();
-    let resp = runtime.block_on(async { test::call_service(&mut app, req).await });
-    if resp.status() != expect_status {
+
+    let req = server.get("/auth/oauth2/auth").add_query_params(&params);
+    let resp = runtime.block_on(async { req.await });
+    let status = resp.status_code();
+    if status != expect_status {
         return Err(format!(
             "get auth response not {}, {}",
-            expect_status,
-            resp.status()
+            expect_status, status
         ));
     }
-    match resp.status() {
+    match status {
         StatusCode::FOUND => {
             let location = read_location(&resp)?;
             match location.query() {
@@ -1580,13 +1571,13 @@ fn test_get_auth(
             }
         }
         StatusCode::BAD_REQUEST => {
-            let body: OAuth2Error = runtime.block_on(async { test::read_body_json(resp).await });
+            let body: OAuth2Error = resp.json();
             if body.error.as_str() != expect_error {
                 return Err(format!("unexpected 400 error: {}", body.error.as_str()));
             }
             return Ok(());
         }
-        _ => return Err(format!("unexpect status code: {}", resp.status())),
+        _ => return Err(format!("unexpect status code: {}", status)),
     }
 }
 
@@ -1598,38 +1589,34 @@ fn test_get_login(
     expect_status: StatusCode,
     expect_error: &str,
 ) -> Result<(), String> {
-    let mut app = runtime.block_on(async {
-        test::init_service(
-            App::new()
-                .wrap(NormalizePath::trim())
-                .service(routes::new_service(&state)),
-        )
-        .await
-    });
+    let app = Router::new().merge(routes::new_service(&state));
+    let server = match TestServer::new(app) {
+        Err(e) => return Err(format!("new server error: {}", e)),
+        Ok(server) => server,
+    };
 
-    let uri = match params {
-        None => match params_raw {
-            None => "/auth/oauth2/login".to_string(),
-            Some(raw) => format!("/auth/oauth2/login?state={}", raw),
-        },
+    let mut req = server.get("/auth/oauth2/login");
+    match params {
+        None => {
+            if let Some(raw) = params_raw {
+                req = req.add_query_param("state", raw);
+            }
+        }
         Some(params) => {
-            let qs = serde_urlencoded::to_string(&request::GetLoginRequest {
+            req = req.add_query_params(&request::GetLoginRequest {
                 state: serde_urlencoded::to_string(params).unwrap(),
-            })
-            .unwrap();
-            format!("/auth/oauth2/login?{}", qs)
+            });
         }
     };
-    let req = TestRequest::get().uri(uri.as_str()).to_request();
-    let resp = runtime.block_on(async { test::call_service(&mut app, req).await });
-    if resp.status() != expect_status {
+    let resp = runtime.block_on(async { req.await });
+    let status = resp.status_code();
+    if status != expect_status {
         return Err(format!(
             "get login response not {}, {}",
-            expect_status,
-            resp.status()
+            expect_status, status
         ));
     }
-    match resp.status() {
+    match status {
         StatusCode::OK => return Ok(()),
         StatusCode::FOUND => {
             let location = read_location(&resp)?;
@@ -1666,13 +1653,13 @@ fn test_get_login(
             }
         }
         StatusCode::BAD_REQUEST => {
-            let body: OAuth2Error = runtime.block_on(async { test::read_body_json(resp).await });
+            let body: OAuth2Error = resp.json();
             if body.error.as_str() != expect_error {
                 return Err(format!("unexpected 400 error: {}", body.error.as_str()));
             }
             return Ok(());
         }
-        _ => return Err(format!("unexpect status code: {}", resp.status())),
+        _ => return Err(format!("unexpect status code: {}", status)),
     }
 }
 
@@ -1686,46 +1673,37 @@ fn test_post_login(
     expect_status: StatusCode,
     expect_error: &str,
 ) -> Result<Option<String>, String> {
-    let mut app = runtime.block_on(async {
-        test::init_service(
-            App::new()
-                .wrap(NormalizePath::trim())
-                .service(routes::new_service(&state)),
-        )
-        .await
-    });
+    let app = Router::new().merge(routes::new_service(&state));
+    let server = match TestServer::new(app) {
+        Err(e) => return Err(format!("new server error: {}", e)),
+        Ok(server) => server,
+    };
 
     let uri = "/auth/oauth2/login";
     let req = match params {
         None => match params_raw {
-            None => TestRequest::post().uri(uri).to_request(),
-            Some(raw) => TestRequest::post()
-                .uri(uri)
-                .set_form(&request::PostLoginRequest {
-                    account: auth.0.to_string(),
-                    password: auth.1.to_string(),
-                    state: raw.to_string(),
-                })
-                .to_request(),
-        },
-        Some(params) => TestRequest::post()
-            .uri(uri)
-            .set_form(&request::PostLoginRequest {
+            None => server.post(uri),
+            Some(raw) => server.post(uri).form(&request::PostLoginRequest {
                 account: auth.0.to_string(),
                 password: auth.1.to_string(),
-                state: serde_urlencoded::to_string(params).unwrap(),
-            })
-            .to_request(),
+                state: raw.to_string(),
+            }),
+        },
+        Some(params) => server.post(uri).form(&request::PostLoginRequest {
+            account: auth.0.to_string(),
+            password: auth.1.to_string(),
+            state: serde_urlencoded::to_string(params).unwrap(),
+        }),
     };
-    let resp = runtime.block_on(async { test::call_service(&mut app, req).await });
-    if resp.status() != expect_status {
+    let resp = runtime.block_on(async { req.await });
+    let status = resp.status_code();
+    if status != expect_status {
         return Err(format!(
             "post login response not {}, {}",
-            expect_status,
-            resp.status()
+            expect_status, status
         ));
     }
-    match resp.status() {
+    match status {
         StatusCode::FOUND => {
             let location = read_location(&resp)?;
             match location.query() {
@@ -1756,13 +1734,13 @@ fn test_post_login(
             }
         }
         StatusCode::BAD_REQUEST => {
-            let body: OAuth2Error = runtime.block_on(async { test::read_body_json(resp).await });
+            let body: OAuth2Error = resp.json();
             if body.error.as_str() != expect_error {
                 return Err(format!("unexpected 400 error: {}", body.error.as_str()));
             }
             return Ok(None);
         }
-        _ => return Err(format!("unexpect status code: {}", resp.status())),
+        _ => return Err(format!("unexpect status code: {}", status)),
     }
 }
 
@@ -1773,29 +1751,24 @@ fn test_get_authorize(
     expect_status: StatusCode,
     expect_error: &str,
 ) -> Result<(), String> {
-    let mut app = runtime.block_on(async {
-        test::init_service(
-            App::new()
-                .wrap(NormalizePath::trim())
-                .service(routes::new_service(&state)),
-        )
-        .await
-    });
+    let app = Router::new().merge(routes::new_service(&state));
+    let server = match TestServer::new(app) {
+        Err(e) => return Err(format!("new server error: {}", e)),
+        Ok(server) => server,
+    };
 
-    let uri = format!(
-        "/auth/oauth2/authorize?{}",
-        serde_urlencoded::to_string(params).unwrap()
-    );
-    let req = TestRequest::get().uri(uri.as_str()).to_request();
-    let resp = runtime.block_on(async { test::call_service(&mut app, req).await });
-    if resp.status() != expect_status {
+    let req = server
+        .get("/auth/oauth2/authorize")
+        .add_query_params(&params);
+    let resp = runtime.block_on(async { req.await });
+    let status = resp.status_code();
+    if status != expect_status {
         return Err(format!(
             "get authorize response not {}, {}",
-            expect_status,
-            resp.status()
+            expect_status, status
         ));
     }
-    match resp.status() {
+    match status {
         StatusCode::OK => return Ok(()),
         StatusCode::FOUND => {
             let location = read_location(&resp)?;
@@ -1814,13 +1787,13 @@ fn test_get_authorize(
             }
         }
         StatusCode::BAD_REQUEST => {
-            let body: OAuth2Error = runtime.block_on(async { test::read_body_json(resp).await });
+            let body: OAuth2Error = resp.json();
             if body.error.as_str() != expect_error {
                 return Err(format!("unexpected 400 error: {}", body.error.as_str()));
             }
             return Ok(());
         }
-        _ => return Err(format!("unexpect status code: {}", resp.status())),
+        _ => return Err(format!("unexpect status code: {}", status)),
     }
 }
 
@@ -1831,33 +1804,22 @@ fn test_post_authorize(
     expect_status: StatusCode,
     expect_error: &str,
 ) -> Result<Option<String>, String> {
-    let mut app = runtime.block_on(async {
-        test::init_service(
-            App::new()
-                .wrap(NormalizePath::trim())
-                .service(routes::new_service(&state)),
-        )
-        .await
-    });
-
-    let req = match params {
-        None => TestRequest::post()
-            .uri("/auth/oauth2/authorize")
-            .to_request(),
-        Some(params) => TestRequest::post()
-            .uri("/auth/oauth2/authorize")
-            .set_form(params)
-            .to_request(),
+    let app = Router::new().merge(routes::new_service(&state));
+    let server = match TestServer::new(app) {
+        Err(e) => return Err(format!("new server error: {}", e)),
+        Ok(server) => server,
     };
-    let resp = runtime.block_on(async { test::call_service(&mut app, req).await });
-    if resp.status() != expect_status {
+
+    let req = server.post("/auth/oauth2/authorize").form(&params);
+    let resp = runtime.block_on(async { req.await });
+    let status = resp.status_code();
+    if status != expect_status {
         return Err(format!(
             "post authorize response not {}, {}",
-            expect_status,
-            resp.status()
+            expect_status, status
         ));
     }
-    match resp.status() {
+    match status {
         StatusCode::OK => return Ok(None),
         StatusCode::FOUND => {
             let location = read_location(&resp)?;
@@ -1896,13 +1858,13 @@ fn test_post_authorize(
             }
         }
         StatusCode::BAD_REQUEST => {
-            let body: OAuth2Error = runtime.block_on(async { test::read_body_json(resp).await });
+            let body: OAuth2Error = resp.json();
             if body.error.as_str() != expect_error {
                 return Err(format!("unexpected 400 error: {}", body.error.as_str()));
             }
             return Ok(None);
         }
-        _ => return Err(format!("unexpect status code: {}", resp.status())),
+        _ => return Err(format!("unexpect status code: {}", status)),
     }
 }
 
@@ -1914,17 +1876,14 @@ fn test_post_token(
     expect_status: StatusCode,
     expect_error: &str,
 ) -> Result<Option<response::AccessToken>, String> {
-    let mut app = runtime.block_on(async {
-        test::init_service(
-            App::new()
-                .wrap(NormalizePath::trim())
-                .service(routes::new_service(&state)),
-        )
-        .await
-    });
+    let app = Router::new().merge(routes::new_service(&state));
+    let server = match TestServer::new(app) {
+        Err(e) => return Err(format!("new server error: {}", e)),
+        Ok(server) => server,
+    };
 
     let req = match params {
-        None => TestRequest::post().uri("/auth/oauth2/token").to_request(),
+        None => server.post("/auth/oauth2/token"),
         Some(params) => {
             if params.code.as_str() == "public" || params.code.as_str() == "private" {
                 let auth_params = request::GetAuthRequest {
@@ -1965,30 +1924,28 @@ fn test_post_token(
                         .unwrap();
             }
             match auth_header {
-                None => TestRequest::post()
-                    .uri("/auth/oauth2/token")
-                    .set_form(params)
-                    .to_request(),
-                Some(header) => TestRequest::post()
-                    .uri("/auth/oauth2/token")
-                    .insert_header((header::AUTHORIZATION, header))
-                    .set_form(params)
-                    .to_request(),
+                None => server.post("/auth/oauth2/token").form(params),
+                Some(header) => server
+                    .post("/auth/oauth2/token")
+                    .add_header(
+                        header::AUTHORIZATION,
+                        HeaderValue::from_str(header).unwrap(),
+                    )
+                    .form(params),
             }
         }
     };
-    let resp = runtime.block_on(async { test::call_service(&mut app, req).await });
-    if resp.status() != expect_status {
+    let resp = runtime.block_on(async { req.await });
+    let status = resp.status_code();
+    if status != expect_status {
         return Err(format!(
             "post token response not {}, {}",
-            expect_status,
-            resp.status()
+            expect_status, status
         ));
     }
-    match resp.status() {
+    match status {
         StatusCode::OK => {
-            let body: response::AccessToken =
-                runtime.block_on(async { test::read_body_json(resp).await });
+            let body: response::AccessToken = resp.json();
             if body.access_token.len() == 0 {
                 return Err("access token empty".to_string());
             } else if body.refresh_token.len() == 0 {
@@ -2001,20 +1958,20 @@ fn test_post_token(
             return Ok(Some(body));
         }
         StatusCode::BAD_REQUEST => {
-            let body: OAuth2Error = runtime.block_on(async { test::read_body_json(resp).await });
+            let body: OAuth2Error = resp.json();
             if body.error.as_str() != expect_error {
                 return Err(format!("unexpected 400 error: {}", body.error.as_str()));
             }
             return Ok(None);
         }
         StatusCode::UNAUTHORIZED => {
-            let body: OAuth2Error = runtime.block_on(async { test::read_body_json(resp).await });
+            let body: OAuth2Error = resp.json();
             if body.error.as_str() != expect_error {
                 return Err(format!("unexpected 401 error: {}", body.error.as_str()));
             }
             return Ok(None);
         }
-        _ => return Err(format!("unexpect status code: {}", resp.status())),
+        _ => return Err(format!("unexpect status code: {}", status)),
     }
 }
 
@@ -2026,14 +1983,11 @@ fn test_post_token_client(
     expect_status: StatusCode,
     expect_error: &str,
 ) -> Result<Option<response::AccessToken>, String> {
-    let mut app = runtime.block_on(async {
-        test::init_service(
-            App::new()
-                .wrap(NormalizePath::trim())
-                .service(routes::new_service(&state)),
-        )
-        .await
-    });
+    let app = Router::new().merge(routes::new_service(&state));
+    let server = match TestServer::new(app) {
+        Err(e) => return Err(format!("new server error: {}", e)),
+        Ok(server) => server,
+    };
 
     let params = request::PostTokenClientRequest {
         grant_type: "client_credentials".to_string(),
@@ -2043,28 +1997,26 @@ fn test_post_token_client(
         },
     };
     let req = match auth_header {
-        None => TestRequest::post()
-            .uri("/auth/oauth2/token")
-            .set_form(params)
-            .to_request(),
-        Some(header) => TestRequest::post()
-            .uri("/auth/oauth2/token")
-            .insert_header((header::AUTHORIZATION, header))
-            .set_form(params)
-            .to_request(),
+        None => server.post("/auth/oauth2/token").form(&params),
+        Some(header) => server
+            .post("/auth/oauth2/token")
+            .add_header(
+                header::AUTHORIZATION,
+                HeaderValue::from_str(header).unwrap(),
+            )
+            .form(&params),
     };
-    let resp = runtime.block_on(async { test::call_service(&mut app, req).await });
-    if resp.status() != expect_status {
+    let resp = runtime.block_on(async { req.await });
+    let status = resp.status_code();
+    if status != expect_status {
         return Err(format!(
             "post token response not {}, {}",
-            expect_status,
-            resp.status()
+            expect_status, status
         ));
     }
-    match resp.status() {
+    match status {
         StatusCode::OK => {
-            let body: response::AccessToken =
-                runtime.block_on(async { test::read_body_json(resp).await });
+            let body: response::AccessToken = resp.json();
             if body.access_token.len() == 0 {
                 return Err("access token empty".to_string());
             } else if body.refresh_token.len() == 0 {
@@ -2077,20 +2029,20 @@ fn test_post_token_client(
             return Ok(Some(body));
         }
         StatusCode::BAD_REQUEST => {
-            let body: OAuth2Error = runtime.block_on(async { test::read_body_json(resp).await });
+            let body: OAuth2Error = resp.json();
             if body.error.as_str() != expect_error {
                 return Err(format!("unexpected 400 error: {}", body.error.as_str()));
             }
             return Ok(None);
         }
         StatusCode::UNAUTHORIZED => {
-            let body: OAuth2Error = runtime.block_on(async { test::read_body_json(resp).await });
+            let body: OAuth2Error = resp.json();
             if body.error.as_str() != expect_error {
                 return Err(format!("unexpected 401 error: {}", body.error.as_str()));
             }
             return Ok(None);
         }
-        _ => return Err(format!("unexpect status code: {}", resp.status())),
+        _ => return Err(format!("unexpect status code: {}", status)),
     }
 }
 
@@ -2102,17 +2054,14 @@ fn test_post_refresh(
     expect_status: StatusCode,
     expect_error: &str,
 ) -> Result<Option<response::AccessToken>, String> {
-    let mut app = runtime.block_on(async {
-        test::init_service(
-            App::new()
-                .wrap(NormalizePath::trim())
-                .service(routes::new_service(&state)),
-        )
-        .await
-    });
+    let app = Router::new().merge(routes::new_service(&state));
+    let server = match TestServer::new(app) {
+        Err(e) => return Err(format!("new server error: {}", e)),
+        Ok(server) => server,
+    };
 
     let req = match params {
-        None => TestRequest::post().uri("/auth/oauth2/refresh").to_request(),
+        None => server.post("/auth/oauth2/refresh"),
         Some(params) => {
             if params.refresh_token.as_str() == "public"
                 || params.refresh_token.as_str() == "private"
@@ -2145,30 +2094,28 @@ fn test_post_refresh(
                 }
             }
             match auth_header {
-                None => TestRequest::post()
-                    .uri("/auth/oauth2/refresh")
-                    .set_form(params)
-                    .to_request(),
-                Some(header) => TestRequest::post()
-                    .uri("/auth/oauth2/refresh")
-                    .insert_header((header::AUTHORIZATION, header))
-                    .set_form(params)
-                    .to_request(),
+                None => server.post("/auth/oauth2/refresh").form(params),
+                Some(header) => server
+                    .post("/auth/oauth2/refresh")
+                    .add_header(
+                        header::AUTHORIZATION,
+                        HeaderValue::from_str(header).unwrap(),
+                    )
+                    .form(params),
             }
         }
     };
-    let resp = runtime.block_on(async { test::call_service(&mut app, req).await });
-    if resp.status() != expect_status {
+    let resp = runtime.block_on(async { req.await });
+    let status = resp.status_code();
+    if status != expect_status {
         return Err(format!(
             "post refresh response not {}, {}",
-            expect_status,
-            resp.status()
+            expect_status, status
         ));
     }
-    match resp.status() {
+    match status {
         StatusCode::OK => {
-            let body: response::AccessToken =
-                runtime.block_on(async { test::read_body_json(resp).await });
+            let body: response::AccessToken = resp.json();
             if body.access_token.len() == 0 {
                 return Err("access token empty".to_string());
             } else if body.refresh_token.len() == 0 {
@@ -2181,23 +2128,23 @@ fn test_post_refresh(
             return Ok(Some(body));
         }
         StatusCode::BAD_REQUEST => {
-            let body: OAuth2Error = runtime.block_on(async { test::read_body_json(resp).await });
+            let body: OAuth2Error = resp.json();
             if body.error.as_str() != expect_error {
                 return Err(format!("unexpected 400 error: {}", body.error.as_str()));
             }
             return Ok(None);
         }
         StatusCode::UNAUTHORIZED => {
-            let body: OAuth2Error = runtime.block_on(async { test::read_body_json(resp).await });
+            let body: OAuth2Error = resp.json();
             if body.error.as_str() != expect_error {
                 return Err(format!("unexpected 401 error: {}", body.error.as_str()));
             }
             return Ok(None);
         }
-        _ => return Err(format!("unexpect status code: {}", resp.status())),
+        _ => return Err(format!("unexpect status code: {}", status)),
     }
 }
 
-async fn dummy_handler() -> impl Responder {
-    HttpResponse::NoContent().finish()
+async fn dummy_handler() -> impl IntoResponse {
+    StatusCode::NO_CONTENT
 }

@@ -1,9 +1,12 @@
 use std::{collections::HashMap, error::Error as StdError, sync::Arc};
 
-use actix_web::{dev::HttpServiceFactory, error, web, HttpResponse, Responder};
+use axum::{response::IntoResponse, Router};
 use serde::{Deserialize, Serialize};
 
-use sylvia_iot_corelib::{constants::DbEngine, err::ErrResp};
+use sylvia_iot_corelib::{
+    constants::DbEngine,
+    http::{Json, Query},
+};
 
 use crate::{
     libs::config::{self, Config},
@@ -83,7 +86,10 @@ pub async fn new_state(
     };
     let model = models::new(&db_opts).await?;
     Ok(State {
-        scope_path,
+        scope_path: match scope_path.len() {
+            0 => "/",
+            _ => scope_path,
+        },
         api_scopes: conf.api_scopes.as_ref().unwrap().clone(),
         templates: conf.templates.as_ref().unwrap().clone(),
         model,
@@ -91,34 +97,31 @@ pub async fn new_state(
 }
 
 /// To register service URIs in the specified root path.
-pub fn new_service(state: &State) -> impl HttpServiceFactory {
-    web::scope(state.scope_path)
-        .app_data(web::JsonConfig::default().error_handler(|err, _| {
-            error::ErrorBadRequest(ErrResp::ErrParam(Some(err.to_string())))
-        }))
-        .app_data(web::QueryConfig::default().error_handler(|err, _| {
-            error::ErrorBadRequest(ErrResp::ErrParam(Some(err.to_string())))
-        }))
-        .app_data(web::Data::new(state.clone()))
-        .service(web::scope("/oauth2").configure(oauth2::gen_configure(state)))
-        .service(v1::auth::new_service("/api/v1/auth", state))
-        .service(v1::user::new_service("/api/v1/user", state))
-        .service(v1::client::new_service("/api/v1/client", state))
+pub fn new_service(state: &State) -> Router {
+    Router::new().nest(
+        &state.scope_path,
+        Router::new()
+            .nest("/oauth2", oauth2::new_service(state))
+            .merge(v1::auth::new_service("/api/v1/auth", state))
+            .merge(v1::user::new_service("/api/v1/user", state))
+            .merge(v1::client::new_service("/api/v1/client", state)),
+    )
 }
 
-pub async fn get_version(query: web::Query<GetVersionQuery>) -> impl Responder {
+pub async fn get_version(Query(query): Query<GetVersionQuery>) -> impl IntoResponse {
     if let Some(q) = query.q.as_ref() {
         match q.as_str() {
-            "name" => return HttpResponse::Ok().body(SERV_NAME),
-            "version" => return HttpResponse::Ok().body(SERV_VER),
+            "name" => return SERV_NAME.into_response(),
+            "version" => return SERV_VER.into_response(),
             _ => (),
         }
     }
 
-    HttpResponse::Ok().json(GetVersionRes {
+    Json(GetVersionRes {
         data: GetVersionResData {
             name: SERV_NAME,
             version: SERV_VER,
         },
     })
+    .into_response()
 }

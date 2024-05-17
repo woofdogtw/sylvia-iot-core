@@ -1,51 +1,60 @@
 //! Provides the operation log middleware by sending requests to the data channel.
 
 use std::{
-    cell::RefCell,
     collections::HashMap,
-    rc::Rc,
+    net::SocketAddr,
     task::{Context, Poll},
 };
 
-use actix_http::h1::Payload;
-use actix_service::{Service, Transform};
-use actix_web::{
-    body::BoxBody,
-    dev::{ServiceRequest, ServiceResponse},
+use axum::{
+    body::{self, Body},
+    extract::{ConnectInfo, Request},
     http::Method,
-    web::BytesMut,
-    Error, HttpMessage,
+    response::{IntoResponse, Response},
 };
 use chrono::Utc;
-use futures::future::{self, LocalBoxFuture, Ready};
-use futures_util::StreamExt;
+use futures::future::BoxFuture;
 use reqwest;
 use serde::{self, Deserialize, Serialize};
 use serde_json::{Map, Value};
+use tower::{Layer, Service};
 
 use general_mq::{queue::GmqQueue, Queue};
-use sylvia_iot_corelib::{http as sylvia_http, strings};
+use sylvia_iot_corelib::{err::ErrResp, http as sylvia_http, strings};
 
+#[derive(Clone)]
+pub struct GetTokenInfoData {
+    pub token: String,
+    pub user_id: String,
+    pub account: String,
+    pub roles: HashMap<String, bool>,
+    pub name: String,
+    pub client_id: String,
+    pub scopes: Vec<String>,
+}
+
+#[derive(Clone)]
 pub struct LogService {
     auth_uri: String,
     queue: Option<Queue>,
 }
 
+#[derive(Clone)]
 pub struct LogMiddleware<S> {
     client: reqwest::Client,
     auth_uri: String,
     queue: Option<Queue>,
-    service: Rc<RefCell<S>>,
+    service: S,
 }
 
 /// The user/client information of the token.
 #[derive(Deserialize)]
 struct GetTokenInfo {
-    data: GetTokenInfoData,
+    data: GetTokenInfoDataInner,
 }
 
 #[derive(Deserialize)]
-struct GetTokenInfoData {
+struct GetTokenInfoDataInner {
     #[serde(rename = "userId")]
     user_id: String,
     #[serde(rename = "account")]
@@ -110,42 +119,34 @@ impl LogService {
     }
 }
 
-impl<S> Transform<S, ServiceRequest> for LogService
-where
-    S: Service<ServiceRequest, Response = ServiceResponse<BoxBody>, Error = Error> + 'static,
-    S::Future: 'static,
-{
-    type Response = ServiceResponse<BoxBody>;
-    type Error = Error;
-    type Transform = LogMiddleware<S>;
-    type InitError = ();
-    type Future = Ready<Result<Self::Transform, Self::InitError>>;
+impl<S> Layer<S> for LogService {
+    type Service = LogMiddleware<S>;
 
-    fn new_transform(&self, service: S) -> Self::Future {
-        future::ok(LogMiddleware {
+    fn layer(&self, inner: S) -> Self::Service {
+        LogMiddleware {
             client: reqwest::Client::new(),
             auth_uri: self.auth_uri.clone(),
             queue: self.queue.clone(),
-            service: Rc::new(RefCell::new(service)),
-        })
+            service: inner,
+        }
     }
 }
 
-impl<S> Service<ServiceRequest> for LogMiddleware<S>
+impl<S> Service<Request> for LogMiddleware<S>
 where
-    S: Service<ServiceRequest, Response = ServiceResponse<BoxBody>, Error = Error> + 'static,
-    S::Future: 'static,
+    S: Service<Request, Response = Response> + Clone + Send + 'static,
+    S::Future: Send + 'static,
 {
-    type Response = ServiceResponse<BoxBody>;
-    type Error = Error;
-    type Future = LocalBoxFuture<'static, Result<Self::Response, Self::Error>>;
+    type Response = S::Response;
+    type Error = S::Error;
+    type Future = BoxFuture<'static, Result<Self::Response, Self::Error>>;
 
-    fn poll_ready(&self, cx: &mut Context<'_>) -> Poll<Result<(), Self::Error>> {
+    fn poll_ready(&mut self, cx: &mut Context<'_>) -> Poll<Result<(), Self::Error>> {
         self.service.poll_ready(cx)
     }
 
-    fn call(&self, mut req: ServiceRequest) -> Self::Future {
-        let svc = self.service.clone();
+    fn call(&mut self, req: Request) -> Self::Future {
+        let mut svc = self.service.clone();
         let client = self.client.clone();
         let auth_uri = self.auth_uri.clone();
         let method = req.method().clone();
@@ -167,25 +168,27 @@ where
             let req_time = Utc::now();
 
             // Collect body (and generate a new stream) and information for logging the operation.
-            let source_ip = match req.connection_info().realip_remote_addr() {
+            let source_ip = match req.extensions().get::<ConnectInfo<SocketAddr>>() {
                 None => "".to_string(),
-                Some(addr) => addr.to_string(),
+                Some(info) => info.0.to_string(),
             };
             let method = req.method().to_string();
-            let path = req.path().to_string();
-            let (http_req, _) = req.parts();
-            let auth_token = match sylvia_http::parse_header_auth(http_req) {
+            let path = req.uri().to_string();
+            let auth_token = match sylvia_http::parse_header_auth(&req) {
                 Err(_) => None,
                 Ok(token) => match token {
                     None => None,
                     Some(token) => Some(token),
                 },
             };
-            let mut req_body = BytesMut::new();
-            while let Some(chunk) = req.take_payload().next().await {
-                req_body.extend_from_slice(&chunk?);
-            }
-            let body_bytes = req_body.freeze();
+            let (parts, body) = req.into_parts();
+            let body_bytes = match body::to_bytes(body, usize::MAX).await {
+                Err(e) => {
+                    let e = format!("convert body error: {}", e);
+                    return Ok(ErrResp::ErrParam(Some(e)).into_response());
+                }
+                Ok(body_bytes) => body_bytes,
+            };
             let log_body = match serde_json::from_slice::<Map<String, Value>>(&body_bytes.to_vec())
             {
                 Err(_) => None,
@@ -201,9 +204,7 @@ where
                     Some(body)
                 }
             };
-            let (_, mut orig_payload) = Payload::create(true);
-            orig_payload.unread_data(body_bytes);
-            req.set_payload(orig_payload.into());
+            let req = Request::from_parts(parts, Body::from(body_bytes));
 
             // Do the request.
             let res = svc.call(req).await?;

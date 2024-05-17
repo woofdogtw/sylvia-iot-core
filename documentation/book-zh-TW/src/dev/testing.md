@@ -30,6 +30,6 @@ Sylvia-IoT 採用 BDD 模式撰寫整合測試，框架則是選擇仿照 [**Moc
 
 ## routes
 
-- 雖然可以使用 Actix Web 的 `test::init_service()` 作為虛擬服務，但 middleware 或是 API bridge 背後所需要的服務，都需要先用 thread 啟動。
+- 雖然可以使用 axum 的 `TestServer::new()` 作為虛擬服務，但 middleware 或是 API bridge 背後所需要的服務，都需要先用 Tokio Task 啟動。
 - 可以使用 model trait 介面進行測試資料集的初始化，以及作為 API 請求後的資料檢查。
 - 可以使用 model delete 在 `after` 時候刪除測試資料。

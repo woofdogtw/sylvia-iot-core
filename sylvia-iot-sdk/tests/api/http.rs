@@ -1,4 +1,4 @@
-use actix_web::web::Bytes;
+use bytes::Bytes;
 use laboratory::{describe, expect, SpecContext, Suite};
 use reqwest::{Method, StatusCode};
 

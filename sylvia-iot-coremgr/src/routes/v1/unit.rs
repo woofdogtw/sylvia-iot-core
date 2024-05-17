@@ -1,11 +1,13 @@
 use std::error::Error as StdError;
 
-use actix_web::{
-    dev::HttpServiceFactory,
-    http::header::{self, HeaderValue},
-    web::{self, Bytes, BytesMut},
-    HttpRequest, HttpResponse, Responder, ResponseError,
+use axum::{
+    body::Body,
+    extract::{Path, Request, State},
+    http::{header, HeaderValue},
+    response::{IntoResponse, Response},
+    routing, Router,
 };
+use bytes::{Bytes, BytesMut};
 use csv::WriterBuilder;
 use futures_util::StreamExt;
 use log::error;
@@ -16,7 +18,7 @@ use url::Url;
 use sylvia_iot_corelib::err::ErrResp;
 
 use super::{
-    super::{AmqpState, MqttState, State},
+    super::{AmqpState, MqttState, State as AppState},
     api_bridge, get_stream_resp, get_unit_inner, list_api_bridge, response, ListResp,
 };
 use crate::libs::mq::{self, emqx, rabbitmq, QueueType};
@@ -43,52 +45,54 @@ struct Network {
 const CSV_FIELDS: &'static [u8] =
     b"\xEF\xBB\xBFunitId,code,createdAt,modifiedAt,ownerId,memberIds,name,info\n";
 
-pub fn new_service(scope_path: &str) -> impl HttpServiceFactory {
-    web::scope(scope_path)
-        .service(web::resource("").route(web::post().to(post_unit)))
-        .service(web::resource("/count").route(web::get().to(get_unit_count)))
-        .service(web::resource("/list").route(web::get().to(get_unit_list)))
-        .service(
-            web::resource("/{unit_id}")
-                .route(web::get().to(get_unit))
-                .route(web::patch().to(patch_unit))
-                .route(web::delete().to(delete_unit)),
-        )
+pub fn new_service(scope_path: &str, state: &AppState) -> Router {
+    Router::new().nest(
+        scope_path,
+        Router::new()
+            .route("/", routing::post(post_unit))
+            .route("/count", routing::get(get_unit_count))
+            .route("/list", routing::get(get_unit_list))
+            .route(
+                "/:unit_id",
+                routing::get(get_unit).patch(patch_unit).delete(delete_unit),
+            )
+            .with_state(state.clone()),
+    )
 }
 
 /// `POST /{base}/api/v1/unit`
-async fn post_unit(mut req: HttpRequest, body: Bytes, state: web::Data<State>) -> impl Responder {
+async fn post_unit(state: State<AppState>, req: Request) -> impl IntoResponse {
     const FN_NAME: &'static str = "post_unit";
     let api_path = format!("{}/api/v1/unit", state.broker_base);
     let client = state.client.clone();
 
-    api_bridge(FN_NAME, &client, &mut req, api_path.as_str(), Some(body)).await
+    api_bridge(FN_NAME, &client, req, api_path.as_str()).await
 }
 
 /// `GET /{base}/api/v1/unit/count`
-async fn get_unit_count(mut req: HttpRequest, state: web::Data<State>) -> impl Responder {
+async fn get_unit_count(state: State<AppState>, req: Request) -> impl IntoResponse {
     const FN_NAME: &'static str = "get_unit_count";
     let api_path = format!("{}/api/v1/unit/count", state.broker_base.as_str());
     let client = state.client.clone();
 
-    api_bridge(FN_NAME, &client, &mut req, api_path.as_str(), None).await
+    api_bridge(FN_NAME, &client, req, api_path.as_str()).await
 }
 
 /// `GET /{base}/api/v1/unit/list`
-async fn get_unit_list(mut req: HttpRequest, state: web::Data<State>) -> impl Responder {
+async fn get_unit_list(state: State<AppState>, req: Request) -> impl IntoResponse {
     const FN_NAME: &'static str = "get_unit_list";
     let api_path = format!("{}/api/v1/unit/list", state.broker_base.as_str());
     let api_path = api_path.as_str();
     let client = state.client.clone();
 
-    let (api_resp, mut resp) =
-        match list_api_bridge(FN_NAME, &client, &mut req, api_path, false, "unit").await {
-            ListResp::ActixWeb(resp) => return resp,
-            ListResp::ArrayStream(api_resp, resp) => (api_resp, resp),
+    let (api_resp, resp_builder) =
+        match list_api_bridge(FN_NAME, &client, req, api_path, false, "unit").await {
+            ListResp::Axum(resp) => return resp,
+            ListResp::ArrayStream(api_resp, resp_builder) => (api_resp, resp_builder),
         };
 
     let mut resp_stream = api_resp.bytes_stream();
-    let stream = async_stream::stream! {
+    let body = Body::from_stream(async_stream::stream! {
         yield Ok(Bytes::from(CSV_FIELDS));
 
         let mut buffer = BytesMut::new();
@@ -96,7 +100,7 @@ async fn get_unit_list(mut req: HttpRequest, state: web::Data<State>) -> impl Re
             match body {
                 Err(e) => {
                     error!("[{}] get body error: {}", FN_NAME, e);
-                    let err: Box<dyn StdError> = Box::new(e);
+                    let err: Box<dyn StdError + Send + Sync> = Box::new(e);
                     yield Err(err);
                     break;
                 }
@@ -116,14 +120,14 @@ async fn get_unit_list(mut req: HttpRequest, state: web::Data<State>) -> impl Re
                     }
                     let mut writer = WriterBuilder::new().has_headers(false).from_writer(vec![]);
                     if let Err(e) = writer.serialize(v) {
-                        let err: Box<dyn StdError> = Box::new(e);
+                        let err: Box<dyn StdError + Send + Sync> = Box::new(e);
                         yield Err(err);
                         finish = true;
                         break;
                     }
                     match writer.into_inner() {
                         Err(e) => {
-                            let err: Box<dyn StdError> = Box::new(e);
+                            let err: Box<dyn StdError + Send + Sync> = Box::new(e);
                             yield Err(err);
                             finish = true;
                             break;
@@ -159,43 +163,45 @@ async fn get_unit_list(mut req: HttpRequest, state: web::Data<State>) -> impl Re
             }
             buffer = buffer.split_off(index);
         }
-    };
-    resp.streaming(stream)
+    });
+    match resp_builder.body(body) {
+        Err(e) => ErrResp::ErrRsc(Some(e.to_string())).into_response(),
+        Ok(resp) => resp,
+    }
 }
 
 /// `GET /{base}/api/v1/unit/{unitId}`
 async fn get_unit(
-    mut req: HttpRequest,
-    param: web::Path<UnitIdPath>,
-    state: web::Data<State>,
-) -> impl Responder {
+    state: State<AppState>,
+    Path(param): Path<UnitIdPath>,
+    req: Request,
+) -> impl IntoResponse {
     const FN_NAME: &'static str = "get_unit";
     let api_path = format!("{}/api/v1/unit/{}", state.broker_base, param.unit_id);
     let client = state.client.clone();
 
-    api_bridge(FN_NAME, &client, &mut req, api_path.as_str(), None).await
+    api_bridge(FN_NAME, &client, req, api_path.as_str()).await
 }
 
 /// `PATCH /{base}/api/v1/unit/{unitId}`
 async fn patch_unit(
-    mut req: HttpRequest,
-    param: web::Path<UnitIdPath>,
-    body: Bytes,
-    state: web::Data<State>,
-) -> impl Responder {
+    state: State<AppState>,
+    Path(param): Path<UnitIdPath>,
+    req: Request,
+) -> impl IntoResponse {
     const FN_NAME: &'static str = "patch_unit";
     let api_path = format!("{}/api/v1/unit/{}", state.broker_base, param.unit_id);
     let client = state.client.clone();
 
-    api_bridge(FN_NAME, &client, &mut req, api_path.as_str(), Some(body)).await
+    api_bridge(FN_NAME, &client, req, api_path.as_str()).await
 }
 
 /// `DELETE /{base}/api/v1/unit/{unitId}`
 async fn delete_unit(
-    mut req: HttpRequest,
-    param: web::Path<UnitIdPath>,
-    state: web::Data<State>,
-) -> impl Responder {
+    state: State<AppState>,
+    Path(param): Path<UnitIdPath>,
+    req: Request,
+) -> impl IntoResponse {
     const FN_NAME: &'static str = "delete_unit";
     let api_path = format!("{}/api/v1/unit/{}", state.broker_base, param.unit_id);
     let client = state.client.clone();
@@ -204,7 +210,7 @@ async fn delete_unit(
     let token = match req.headers().get(header::AUTHORIZATION) {
         None => {
             let msg = "missing Authorization".to_string();
-            return ErrResp::ErrParam(Some(msg)).error_response();
+            return ErrResp::ErrParam(Some(msg)).into_response();
         }
         Some(value) => value.clone(),
     };
@@ -234,16 +240,16 @@ async fn delete_unit(
         }
     }
 
-    api_bridge(FN_NAME, &client, &mut req, api_path.as_str(), None).await
+    api_bridge(FN_NAME, &client, req, api_path.as_str()).await
 }
 
 async fn delete_application_resources(
     fn_name: &str,
     token: &HeaderValue,
-    state: &web::Data<State>,
+    state: &AppState,
     unit_id: &str,
     unit_code: &str,
-) -> Result<(), HttpResponse> {
+) -> Result<(), Response> {
     // Get application from stream and delete broker resources.
     let client = state.client.clone();
     let uri = format!(
@@ -261,7 +267,7 @@ async fn delete_application_resources(
             Err(e) => {
                 let msg = format!("get application body error: {}", e);
                 error!("[{}] {}", fn_name, msg);
-                return Err(ErrResp::ErrIntMsg(Some(msg)).error_response());
+                return Err(ErrResp::ErrIntMsg(Some(msg)).into_response());
             }
             Ok(body) => buffer.extend_from_slice(&body[..]),
         }
@@ -278,13 +284,13 @@ async fn delete_application_resources(
                                 Err(e) => {
                                     let msg = format!("{} is not valid URI: {}", v.host_uri, e);
                                     error!("[{}] {}", fn_name, msg);
-                                    return Err(ErrResp::ErrUnknown(Some(msg)).error_response());
+                                    return Err(ErrResp::ErrUnknown(Some(msg)).into_response());
                                 }
                                 Ok(url) => match url.host_str() {
                                     None => {
                                         let msg = format!("{} is not valid URI", v.host_uri);
                                         error!("[{}] {}", fn_name, msg);
-                                        return Err(ErrResp::ErrUnknown(Some(msg)).error_response());
+                                        return Err(ErrResp::ErrUnknown(Some(msg)).into_response());
                                     }
                                     Some(host) => host.to_string(),
                                 },
@@ -301,7 +307,7 @@ async fn delete_application_resources(
                             {
                                 let msg = format!("delete RabbitMQ user {} error: {}", username, e);
                                 error!("[{}] {}", fn_name, msg);
-                                return Err(ErrResp::ErrIntMsg(Some(msg)).error_response());
+                                return Err(ErrResp::ErrIntMsg(Some(msg)).into_response());
                             }
                         }
                     }
@@ -312,13 +318,13 @@ async fn delete_application_resources(
                                 Err(e) => {
                                     let msg = format!("{} is not valid URI: {}", v.host_uri, e);
                                     error!("[{}] {}", fn_name, msg);
-                                    return Err(ErrResp::ErrUnknown(Some(msg)).error_response());
+                                    return Err(ErrResp::ErrUnknown(Some(msg)).into_response());
                                 }
                                 Ok(url) => match url.host_str() {
                                     None => {
                                         let msg = format!("{} is not valid URI", v.host_uri);
                                         error!("[{}] {}", fn_name, msg);
-                                        return Err(ErrResp::ErrUnknown(Some(msg)).error_response());
+                                        return Err(ErrResp::ErrUnknown(Some(msg)).into_response());
                                     }
                                     Some(host) => host.to_string(),
                                 },
@@ -331,7 +337,7 @@ async fn delete_application_resources(
                             {
                                 let msg = format!("delete RabbitMQ user {} error: {}", username, e);
                                 error!("[{}] {}", fn_name, msg);
-                                return Err(ErrResp::ErrIntMsg(Some(msg)).error_response());
+                                return Err(ErrResp::ErrIntMsg(Some(msg)).into_response());
                             }
                         }
                         MqttState::Rumqttd => {}
@@ -371,10 +377,10 @@ async fn delete_application_resources(
 async fn delete_network_resources(
     fn_name: &str,
     token: &HeaderValue,
-    state: &web::Data<State>,
+    state: &AppState,
     unit_id: &str,
     unit_code: &str,
-) -> Result<(), HttpResponse> {
+) -> Result<(), Response> {
     // Get network from stream and delete broker resources.
     let client = state.client.clone();
     let uri = format!(
@@ -392,7 +398,7 @@ async fn delete_network_resources(
             Err(e) => {
                 let msg = format!("get network body error: {}", e);
                 error!("[{}] {}", fn_name, msg);
-                return Err(ErrResp::ErrIntMsg(Some(msg)).error_response());
+                return Err(ErrResp::ErrIntMsg(Some(msg)).into_response());
             }
             Ok(body) => buffer.extend_from_slice(&body[..]),
         }
@@ -409,13 +415,13 @@ async fn delete_network_resources(
                                 Err(e) => {
                                     let msg = format!("{} is not valid URI: {}", v.host_uri, e);
                                     error!("[{}] {}", fn_name, msg);
-                                    return Err(ErrResp::ErrUnknown(Some(msg)).error_response());
+                                    return Err(ErrResp::ErrUnknown(Some(msg)).into_response());
                                 }
                                 Ok(url) => match url.host_str() {
                                     None => {
                                         let msg = format!("{} is not valid URI", v.host_uri);
                                         error!("[{}] {}", fn_name, msg);
-                                        return Err(ErrResp::ErrUnknown(Some(msg)).error_response());
+                                        return Err(ErrResp::ErrUnknown(Some(msg)).into_response());
                                     }
                                     Some(host) => host.to_string(),
                                 },
@@ -432,7 +438,7 @@ async fn delete_network_resources(
                             {
                                 let msg = format!("delete RabbitMQ user {} error: {}", username, e);
                                 error!("[{}] {}", fn_name, msg);
-                                return Err(ErrResp::ErrIntMsg(Some(msg)).error_response());
+                                return Err(ErrResp::ErrIntMsg(Some(msg)).into_response());
                             }
                         }
                     }
@@ -443,13 +449,13 @@ async fn delete_network_resources(
                                 Err(e) => {
                                     let msg = format!("{} is not valid URI: {}", v.host_uri, e);
                                     error!("[{}] {}", fn_name, msg);
-                                    return Err(ErrResp::ErrUnknown(Some(msg)).error_response());
+                                    return Err(ErrResp::ErrUnknown(Some(msg)).into_response());
                                 }
                                 Ok(url) => match url.host_str() {
                                     None => {
                                         let msg = format!("{} is not valid URI", v.host_uri);
                                         error!("[{}] {}", fn_name, msg);
-                                        return Err(ErrResp::ErrUnknown(Some(msg)).error_response());
+                                        return Err(ErrResp::ErrUnknown(Some(msg)).into_response());
                                     }
                                     Some(host) => host.to_string(),
                                 },
@@ -462,7 +468,7 @@ async fn delete_network_resources(
                             {
                                 let msg = format!("delete RabbitMQ user {} error: {}", username, e);
                                 error!("[{}] {}", fn_name, msg);
-                                return Err(ErrResp::ErrIntMsg(Some(msg)).error_response());
+                                return Err(ErrResp::ErrIntMsg(Some(msg)).into_response());
                             }
                         }
                         MqttState::Rumqttd => {}

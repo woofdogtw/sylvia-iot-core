@@ -50,6 +50,8 @@ struct GetCountReq<'a> {
     #[serde(skip_serializing_if = "Option::is_none")]
     unit: Option<&'a str>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    code: Option<&'a str>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     contains: Option<&'a str>,
 }
 
@@ -75,6 +77,8 @@ struct GetListReq<'a> {
     format: Option<&'a str>,
     #[serde(skip_serializing_if = "Option::is_none")]
     unit: Option<&'a str>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    code: Option<&'a str>,
     #[serde(skip_serializing_if = "Option::is_none")]
     contains: Option<&'a str>,
 }
@@ -242,6 +246,12 @@ pub fn reg_args(cmd: Command) -> Command {
                         .num_args(1),
                 )
                 .arg(
+                    Arg::new("code")
+                        .long("code")
+                        .help("The specified application code")
+                        .num_args(1),
+                )
+                .arg(
                     Arg::new("contains")
                         .long("contains")
                         .help("The partial word of application code (case insensitive)")
@@ -295,6 +305,12 @@ pub fn reg_args(cmd: Command) -> Command {
                     Arg::new("unitid")
                         .long("unitid")
                         .help("The specified unit ID")
+                        .num_args(1),
+                )
+                .arg(
+                    Arg::new("code")
+                        .long("code")
+                        .help("The specified application code")
                         .num_args(1),
                 )
                 .arg(
@@ -575,6 +591,10 @@ async fn count(config: &Config, args: &ArgMatches) -> Result<GetCountResData, Er
             None => None,
             Some(v) => Some(v.as_str()),
         },
+        code: match args.get_one::<String>("code") {
+            None => None,
+            Some(v) => Some(v.as_str()),
+        },
         contains: match args.get_one::<String>("contains") {
             None => None,
             Some(v) => Some(v.as_str()),
@@ -667,6 +687,10 @@ async fn list(config: &Config, args: &ArgMatches) -> Result<Vec<GetResData>, Err
             Some(v) => Some(v.as_str()),
         },
         unit: match args.get_one::<String>("unitid") {
+            None => None,
+            Some(v) => Some(v.as_str()),
+        },
+        code: match args.get_one::<String>("code") {
             None => None,
             Some(v) => Some(v.as_str()),
         },

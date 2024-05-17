@@ -172,14 +172,14 @@ impl GmqQueue for Queue {
         }
     }
 
-    async fn close(&mut self) -> Result<(), Box<dyn StdError>> {
+    async fn close(&mut self) -> Result<(), Box<dyn StdError + Send + Sync>> {
         match self {
             Queue::Amqp(q) => q.close().await,
             Queue::Mqtt(q) => q.close().await,
         }
     }
 
-    async fn send_msg(&self, payload: Vec<u8>) -> Result<(), Box<dyn StdError>> {
+    async fn send_msg(&self, payload: Vec<u8>) -> Result<(), Box<dyn StdError + Send + Sync>> {
         match self {
             Queue::Amqp(q) => q.send_msg(payload).await,
             Queue::Mqtt(q) => q.send_msg(payload).await,

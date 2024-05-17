@@ -4,13 +4,13 @@ use std::{
     time::Duration,
 };
 
-use actix_web::{
-    http::{header, StatusCode},
-    middleware::NormalizePath,
-    test::{self, TestRequest},
-    web, App, HttpRequest, HttpResponse, Responder,
-};
 use async_trait::async_trait;
+use axum::{
+    http::{header, HeaderValue, StatusCode},
+    response::IntoResponse,
+    routing, Router,
+};
+use axum_test::TestServer;
 use laboratory::{describe, expect, SpecContext, Suite};
 use serde::Deserialize;
 use serde_json::{Map, Value};
@@ -191,29 +191,26 @@ fn test_get(context: &mut SpecContext<TestState>) -> Result<(), String> {
     let auth_uri = state.auth_uri.as_ref().unwrap();
     let data_sender = state.routes_state.as_ref().unwrap().data_sender.clone();
 
-    let mut app = runtime.block_on(async {
-        test::init_service(
-            App::new()
-                .wrap(NormalizePath::trim())
-                .wrap(LogService::new(auth_uri.clone(), data_sender))
-                .route("/", web::get().to(dummy_handler)),
-        )
-        .await
-    });
+    let app = Router::new()
+        .route("/", routing::get(dummy_handler))
+        .layer(LogService::new(auth_uri.clone(), data_sender));
+    let server = match TestServer::new(app) {
+        Err(e) => return Err(format!("new server error: {}", e)),
+        Ok(server) => server,
+    };
 
     let data_recv_queue = state.data_queue.as_mut().unwrap();
     let handler = TestHandler::new();
     data_recv_queue.set_msg_handler(Arc::new(handler.clone()));
 
-    let req = TestRequest::get()
-        .uri("/")
-        .insert_header((header::AUTHORIZATION, format!("Bearer {}", TOKEN_MANAGER)))
-        .to_request();
-    let resp = runtime.block_on(async { test::call_service(&mut app, req).await });
-    let status = resp.status();
+    let req = server.get("/").add_header(
+        header::AUTHORIZATION,
+        HeaderValue::from_str(format!("Bearer {}", TOKEN_MANAGER).as_str()).unwrap(),
+    );
+    let resp = runtime.block_on(async { req.await });
+    let status = resp.status_code();
     if status != StatusCode::NO_CONTENT {
-        let body = runtime.block_on(async { test::read_body(resp).await });
-        return Err(format!("status {}, body: {:?}", status, body));
+        return Err(format!("status {}, body: {:?}", status, resp.text()));
     }
 
     runtime.block_on(async {
@@ -236,15 +233,13 @@ fn test_post(context: &mut SpecContext<TestState>) -> Result<(), String> {
     let auth_uri = state.auth_uri.as_ref().unwrap();
     let data_sender = state.routes_state.as_ref().unwrap().data_sender.clone();
 
-    let mut app = runtime.block_on(async {
-        test::init_service(
-            App::new()
-                .wrap(NormalizePath::trim())
-                .wrap(LogService::new(auth_uri.clone(), data_sender))
-                .route("/", web::post().to(dummy_handler)),
-        )
-        .await
-    });
+    let app = Router::new()
+        .route("/", routing::post(dummy_handler))
+        .layer(LogService::new(auth_uri.clone(), data_sender));
+    let server = match TestServer::new(app) {
+        Err(e) => return Err(format!("new server error: {}", e)),
+        Ok(server) => server,
+    };
 
     let data_recv_queue = state.data_queue.as_mut().unwrap();
     let handler = TestHandler::new();
@@ -254,16 +249,17 @@ fn test_post(context: &mut SpecContext<TestState>) -> Result<(), String> {
     let mut req_data = Map::<String, Value>::new();
     req_data.insert("key".to_string(), Value::String("value".to_string()));
     req_body.insert("data".to_string(), Value::Object(req_data));
-    let req = TestRequest::post()
-        .uri("/")
-        .insert_header((header::AUTHORIZATION, format!("Bearer {}", TOKEN_MANAGER)))
-        .set_json(&req_body)
-        .to_request();
-    let resp = runtime.block_on(async { test::call_service(&mut app, req).await });
-    let status = resp.status();
+    let req = server
+        .post("/")
+        .add_header(
+            header::AUTHORIZATION,
+            HeaderValue::from_str(format!("Bearer {}", TOKEN_MANAGER).as_str()).unwrap(),
+        )
+        .json(&req_body);
+    let resp = runtime.block_on(async { req.await });
+    let status = resp.status_code();
     if status != StatusCode::NO_CONTENT {
-        let body = runtime.block_on(async { test::read_body(resp).await });
-        return Err(format!("status {}, body: {:?}", status, body));
+        return Err(format!("status {}, body: {:?}", status, resp.text()));
     }
 
     runtime.block_on(async {
@@ -295,15 +291,13 @@ fn test_patch_password(context: &mut SpecContext<TestState>) -> Result<(), Strin
     let auth_uri = state.auth_uri.as_ref().unwrap();
     let data_sender = state.routes_state.as_ref().unwrap().data_sender.clone();
 
-    let mut app = runtime.block_on(async {
-        test::init_service(
-            App::new()
-                .wrap(NormalizePath::trim())
-                .wrap(LogService::new(auth_uri.clone(), data_sender))
-                .route("/", web::patch().to(dummy_handler)),
-        )
-        .await
-    });
+    let app = Router::new()
+        .route("/", routing::patch(dummy_handler))
+        .layer(LogService::new(auth_uri.clone(), data_sender));
+    let server = match TestServer::new(app) {
+        Err(e) => return Err(format!("new server error: {}", e)),
+        Ok(server) => server,
+    };
 
     let data_recv_queue = state.data_queue.as_mut().unwrap();
     let handler = TestHandler::new();
@@ -313,16 +307,17 @@ fn test_patch_password(context: &mut SpecContext<TestState>) -> Result<(), Strin
     let mut req_data = Map::<String, Value>::new();
     req_data.insert("password".to_string(), Value::String("value".to_string()));
     req_body.insert("data".to_string(), Value::Object(req_data));
-    let req = TestRequest::patch()
-        .uri("/")
-        .insert_header((header::AUTHORIZATION, format!("Bearer {}", TOKEN_MANAGER)))
-        .set_json(&req_body)
-        .to_request();
-    let resp = runtime.block_on(async { test::call_service(&mut app, req).await });
-    let status = resp.status();
+    let req = server
+        .patch("/")
+        .add_header(
+            header::AUTHORIZATION,
+            HeaderValue::from_str(format!("Bearer {}", TOKEN_MANAGER).as_str()).unwrap(),
+        )
+        .json(&req_body);
+    let resp = runtime.block_on(async { req.await });
+    let status = resp.status_code();
     if status != StatusCode::NO_CONTENT {
-        let body = runtime.block_on(async { test::read_body(resp).await });
-        return Err(format!("status {}, body: {:?}", status, body));
+        return Err(format!("status {}, body: {:?}", status, resp.text()));
     }
     let mut req_data = Map::<String, Value>::new();
     req_data.insert("password".to_string(), Value::String("".to_string()));
@@ -357,48 +352,43 @@ fn test_delete_cover(context: &mut SpecContext<TestState>) -> Result<(), String>
     let auth_uri = state.auth_uri.as_ref().unwrap();
     let data_sender = state.routes_state.as_ref().unwrap().data_sender.clone();
 
-    let mut app = runtime.block_on(async {
-        test::init_service(
-            App::new()
-                .wrap(NormalizePath::trim())
-                .wrap(LogService::new(auth_uri.clone(), data_sender))
-                .route("/", web::delete().to(dummy_err_handler)),
-        )
-        .await
-    });
+    let app = Router::new()
+        .route("/", routing::delete(dummy_err_handler))
+        .layer(LogService::new(auth_uri.clone(), data_sender));
+    let server = match TestServer::new(app) {
+        Err(e) => return Err(format!("new server error: {}", e)),
+        Ok(server) => server,
+    };
 
     let data_recv_queue = state.data_queue.as_mut().unwrap();
     let handler = TestHandler::new();
     data_recv_queue.set_msg_handler(Arc::new(handler.clone()));
 
-    let req = TestRequest::delete().uri("/").to_request();
-    let resp = runtime.block_on(async { test::call_service(&mut app, req).await });
-    let status = resp.status();
+    let req = server.delete("/");
+    let resp = runtime.block_on(async { req.await });
+    let status = resp.status_code();
     if status != StatusCode::BAD_REQUEST {
-        let body = runtime.block_on(async { test::read_body(resp).await });
-        return Err(format!("status {}, body: {:?}", status, body));
+        return Err(format!("status {}, body: {:?}", status, resp.text()));
     }
 
-    let req = TestRequest::delete()
-        .uri("/")
-        .insert_header((header::AUTHORIZATION, format!("Bearer ")))
-        .to_request();
-    let resp = runtime.block_on(async { test::call_service(&mut app, req).await });
-    let status = resp.status();
+    let req = server.delete("/").add_header(
+        header::AUTHORIZATION,
+        HeaderValue::from_str("Bearer ").unwrap(),
+    );
+    let resp = runtime.block_on(async { req.await });
+    let status = resp.status_code();
     if status != StatusCode::BAD_REQUEST {
-        let body = runtime.block_on(async { test::read_body(resp).await });
-        return Err(format!("status {}, body: {:?}", status, body));
+        return Err(format!("status {}, body: {:?}", status, resp.text()));
     }
 
-    let req = TestRequest::delete()
-        .uri("/")
-        .insert_header((header::AUTHORIZATION, format!("Bearer test")))
-        .to_request();
-    let resp = runtime.block_on(async { test::call_service(&mut app, req).await });
-    let status = resp.status();
+    let req = server.delete("/").add_header(
+        header::AUTHORIZATION,
+        HeaderValue::from_str("Bearer test").unwrap(),
+    );
+    let resp = runtime.block_on(async { req.await });
+    let status = resp.status_code();
     if status != StatusCode::BAD_REQUEST {
-        let body = runtime.block_on(async { test::read_body(resp).await });
-        return Err(format!("status {}, body: {:?}", status, body));
+        return Err(format!("status {}, body: {:?}", status, resp.text()));
     }
 
     runtime.block_on(async {
@@ -414,12 +404,12 @@ fn test_delete_cover(context: &mut SpecContext<TestState>) -> Result<(), String>
     })
 }
 
-async fn dummy_handler(_req: HttpRequest) -> impl Responder {
-    HttpResponse::NoContent().finish()
+async fn dummy_handler() -> impl IntoResponse {
+    StatusCode::NO_CONTENT
 }
 
-async fn dummy_err_handler(_req: HttpRequest) -> impl Responder {
-    HttpResponse::BadRequest().finish()
+async fn dummy_err_handler() -> impl IntoResponse {
+    StatusCode::BAD_REQUEST
 }
 
 fn create_data_recv_queue(state: &mut TestState, data_host: &'static str) -> Result<(), String> {

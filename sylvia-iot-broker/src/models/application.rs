@@ -65,6 +65,8 @@ pub struct ListQueryCond<'a> {
     pub unit_id: Option<&'a str>,
     /// To get the specified application.
     pub application_id: Option<&'a str>,
+    /// To get the specified application by code.
+    pub code: Option<&'a str>,
     /// To get unit that their **code** contains the specified (partial) word.
     pub code_contains: Option<&'a str>,
     /// To get unit that their **name** contains the specified (partial) word.
