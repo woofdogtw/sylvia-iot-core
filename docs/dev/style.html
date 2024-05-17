@@ -1,5 +1,5 @@
 <!DOCTYPE HTML>
-<html lang="en" class="sidebar-visible no-js rust">
+<html lang="en" class="rust" dir="ltr">
     <head>
         <!-- Book generated using mdBook -->
         <meta charset="UTF-8">
@@ -10,7 +10,7 @@
         
         <meta name="description" content="">
         <meta name="viewport" content="width=device-width, initial-scale=1">
-        <meta name="theme-color" content="#ffffff" />
+        <meta name="theme-color" content="#ffffff">
 
         <link rel="icon" href="../favicon.svg">
         <link rel="shortcut icon" href="../favicon.png">
@@ -31,7 +31,7 @@
         <!-- Custom theme stylesheets -->
 
     </head>
-    <body>
+    <body class="sidebar-visible no-js">
     <div id="body-container">
         <!-- Provide site root to javascript -->
         <script>
@@ -61,31 +61,38 @@
             try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
             if (theme === null || theme === undefined) { theme = default_theme; }
             var html = document.querySelector('html');
-            html.classList.remove('no-js')
             html.classList.remove('rust')
             html.classList.add(theme);
-            html.classList.add('js');
+            var body = document.querySelector('body');
+            body.classList.remove('no-js')
+            body.classList.add('js');
         </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
 
         <!-- Hide / unhide sidebar before it is displayed -->
         <script>
-            var html = document.querySelector('html');
+            var body = document.querySelector('body');
             var sidebar = null;
+            var sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
             if (document.body.clientWidth >= 1080) {
                 try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
                 sidebar = sidebar || 'visible';
             } else {
                 sidebar = 'hidden';
             }
-            html.classList.remove('sidebar-visible');
-            html.classList.add("sidebar-" + sidebar);
+            sidebar_toggle.checked = sidebar === 'visible';
+            body.classList.remove('sidebar-visible');
+            body.classList.add("sidebar-" + sidebar);
         </script>
 
         <nav id="sidebar" class="sidebar" aria-label="Table of contents">
             <div class="sidebar-scrollbox">
                 <ol class="chapter"><li class="chapter-item expanded "><a href="../index.html"><strong aria-hidden="true">1.</strong> Introduction</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../intro/overview.html"><strong aria-hidden="true">1.1.</strong> What is Sylvia-IoT?</a></li><li class="chapter-item expanded "><a href="../intro/concept.html"><strong aria-hidden="true">1.2.</strong> Concept</a></li></ol></li><li class="chapter-item expanded "><a href="../guide/index.html"><strong aria-hidden="true">2.</strong> User Guide</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../guide/quick.html"><strong aria-hidden="true">2.1.</strong> Quick Start</a></li><li class="chapter-item expanded "><a href="../guide/configuration.html"><strong aria-hidden="true">2.2.</strong> Configuration</a></li></ol></li><li class="chapter-item expanded "><a href="../arch/index.html"><strong aria-hidden="true">3.</strong> Internal Architecture</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../arch/arch.html"><strong aria-hidden="true">3.1.</strong> Architecture</a></li><li class="chapter-item expanded "><a href="../arch/flow.html"><strong aria-hidden="true">3.2.</strong> Data Flow</a></li><li class="chapter-item expanded "><a href="../arch/cache.html"><strong aria-hidden="true">3.3.</strong> Cache</a></li></ol></li><li class="chapter-item expanded "><a href="../dev/index.html"><strong aria-hidden="true">4.</strong> Developer's Guide</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../dev/oauth2.html"><strong aria-hidden="true">4.1.</strong> OAuth2 Authentication</a></li><li class="chapter-item expanded "><a href="../dev/network.html"><strong aria-hidden="true">4.2.</strong> Network Services</a></li><li class="chapter-item expanded "><a href="../dev/application.html"><strong aria-hidden="true">4.3.</strong> Application Services</a></li><li class="chapter-item expanded "><a href="../dev/core.html"><strong aria-hidden="true">4.4.</strong> Sylvia-IoT Core</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../dev/dir.html"><strong aria-hidden="true">4.4.1.</strong> Directory Structure</a></li><li class="chapter-item expanded "><a href="../dev/style.html" class="active"><strong aria-hidden="true">4.4.2.</strong> Code Style</a></li><li class="chapter-item expanded "><a href="../dev/testing.html"><strong aria-hidden="true">4.4.3.</strong> Writing Tests</a></li></ol></li><li class="chapter-item expanded "><a href="../dev/cross.html"><strong aria-hidden="true">4.5.</strong> Cross-Platform Compilation</a></li></ol></li><li class="chapter-item expanded "><a href="../appendex/index.html"><strong aria-hidden="true">5.</strong> Appendix</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../appendex/source.html"><strong aria-hidden="true">5.1.</strong> Data Sources</a></li><li class="chapter-item expanded "><a href="../appendex/repo.html"><strong aria-hidden="true">5.2.</strong> Supplementary Projects</a></li></ol></li></ol>
             </div>
-            <div id="sidebar-resize-handle" class="sidebar-resize-handle"></div>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
         </nav>
 
         <!-- Track and set sidebar scroll position -->
@@ -116,9 +123,9 @@
                                 <div id="menu-bar-hover-placeholder"></div>
                 <div id="menu-bar" class="menu-bar sticky">
                     <div class="left-buttons">
-                        <button id="sidebar-toggle" class="icon-button" type="button" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
                             <i class="fa fa-bars"></i>
-                        </button>
+                        </label>
                         <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
                             <i class="fa fa-paint-brush"></i>
                         </button>
@@ -186,24 +193,24 @@
 <li>
 <p>VSCode Settings</p>
 <pre><code class="language-json">{
-    &quot;crates.listPreReleases&quot;: true,
-    &quot;editor.formatOnSave&quot;: true,
-    &quot;editor.renderWhitespace&quot;: &quot;all&quot;,
-    &quot;editor.roundedSelection&quot;: false,
-    &quot;editor.tabSize&quot;: 4,
-    &quot;files.eol&quot;: &quot;\n&quot;,
-    &quot;rust-analyzer.inlayHints.chainingHints.enable&quot;: false,
-    &quot;rust-analyzer.inlayHints.closingBraceHints.enable&quot;: false,
-    &quot;rust-analyzer.inlayHints.parameterHints.enable&quot;: false,
-    &quot;rust-analyzer.inlayHints.typeHints.enable&quot;: false,
-    &quot;rust-analyzer.server.extraEnv&quot;: {
-        &quot;RUSTFLAGS&quot;: &quot;-C instrument-coverage&quot;
+    "crates.listPreReleases": true,
+    "editor.formatOnSave": true,
+    "editor.renderWhitespace": "all",
+    "editor.roundedSelection": false,
+    "editor.tabSize": 4,
+    "files.eol": "\n",
+    "rust-analyzer.inlayHints.chainingHints.enable": false,
+    "rust-analyzer.inlayHints.closingBraceHints.enable": false,
+    "rust-analyzer.inlayHints.parameterHints.enable": false,
+    "rust-analyzer.inlayHints.typeHints.enable": false,
+    "rust-analyzer.server.extraEnv": {
+        "RUSTFLAGS": "-C instrument-coverage"
     }
 }
 </code></pre>
 <blockquote>
 <p>The use of the <code>-C instrument-coverage</code> environment variable is due to the author's need to generate coverage reports during testing. Adding this variable prevents recompilation triggered by saving and running tests. Below is the command for running tests:</p>
-<p><code>RUSTFLAGS=&quot;-C instrument-coverage&quot; cargo test -p $PROJ --test integration_test -- --nocapture</code></p>
+<p><code>RUSTFLAGS="-C instrument-coverage" cargo test -p $PROJ --test integration_test -- --nocapture</code></p>
 </blockquote>
 </li>
 </ul>
@@ -269,7 +276,7 @@ fn prv_funcs {}
 <p>Within each section, <code>pub</code> comes before private.</p>
 <h2 id="model"><a class="header" href="#model">Model</a></h2>
 <p>The Model layer must provide a unified struct and trait interface.
-In the design philosophy of Sylvia-IoT, &quot;plug-and-play&quot; is a concept that is highly valued. Users
+In the design philosophy of Sylvia-IoT, "plug-and-play" is a concept that is highly valued. Users
 should be able to choose appropriate implementations in different scenarios.</p>
 <h3 id="database-design"><a class="header" href="#database-design">Database Design</a></h3>
 <p>When providing CRUD operations, the following order must be followed:</p>
@@ -294,7 +301,7 @@ made the call.</li>
 </ul>
 </li>
 <li>When data cannot be retrieved, return <code>None</code> or an empty <code>Vec</code>, not an <code>Error</code>.</li>
-<li>Any database that can fulfill the &quot;complex query&quot; condition should be implementable using the same
+<li>Any database that can fulfill the "complex query" condition should be implementable using the same
 trait interface.
 <ul>
 <li>SQL, MongoDB meet this requirement.</li>
@@ -336,7 +343,7 @@ different tools.</li>
 latter represents a variable object ID. When designing IDs, it is essential to avoid conflicts with
 the names of actions.</p>
 <blockquote>
-<p>When mounting routes using Actix Web, the fixed <code>[op]</code> should be placed before the variable
+<p>When mounting routes using axum, the fixed <code>[op]</code> should be placed before the variable
 <code>{id}</code>.</p>
 </blockquote>
 <p>For example, let's consider the Broker's
@@ -386,7 +393,7 @@ struct GetDeviceListQuery {}
                                 <i class="fa fa-angle-left"></i>
                             </a>
 
-                            <a rel="next" href="../dev/testing.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                            <a rel="next prefetch" href="../dev/testing.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                                 <i class="fa fa-angle-right"></i>
                             </a>
 
@@ -400,7 +407,7 @@ struct GetDeviceListQuery {}
                         <i class="fa fa-angle-left"></i>
                     </a>
 
-                    <a rel="next" href="../dev/testing.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                    <a rel="next prefetch" href="../dev/testing.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                         <i class="fa fa-angle-right"></i>
                     </a>
             </nav>

@@ -1,5 +1,5 @@
 <!DOCTYPE HTML>
-<html lang="en" class="sidebar-visible no-js rust">
+<html lang="en" class="rust" dir="ltr">
     <head>
         <!-- Book generated using mdBook -->
         <meta charset="UTF-8">
@@ -10,7 +10,7 @@
         
         <meta name="description" content="">
         <meta name="viewport" content="width=device-width, initial-scale=1">
-        <meta name="theme-color" content="#ffffff" />
+        <meta name="theme-color" content="#ffffff">
 
         <link rel="icon" href="../favicon.svg">
         <link rel="shortcut icon" href="../favicon.png">
@@ -31,7 +31,7 @@
         <!-- Custom theme stylesheets -->
 
     </head>
-    <body>
+    <body class="sidebar-visible no-js">
     <div id="body-container">
         <!-- Provide site root to javascript -->
         <script>
@@ -61,31 +61,38 @@
             try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
             if (theme === null || theme === undefined) { theme = default_theme; }
             var html = document.querySelector('html');
-            html.classList.remove('no-js')
             html.classList.remove('rust')
             html.classList.add(theme);
-            html.classList.add('js');
+            var body = document.querySelector('body');
+            body.classList.remove('no-js')
+            body.classList.add('js');
         </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
 
         <!-- Hide / unhide sidebar before it is displayed -->
         <script>
-            var html = document.querySelector('html');
+            var body = document.querySelector('body');
             var sidebar = null;
+            var sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
             if (document.body.clientWidth >= 1080) {
                 try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
                 sidebar = sidebar || 'visible';
             } else {
                 sidebar = 'hidden';
             }
-            html.classList.remove('sidebar-visible');
-            html.classList.add("sidebar-" + sidebar);
+            sidebar_toggle.checked = sidebar === 'visible';
+            body.classList.remove('sidebar-visible');
+            body.classList.add("sidebar-" + sidebar);
         </script>
 
         <nav id="sidebar" class="sidebar" aria-label="Table of contents">
             <div class="sidebar-scrollbox">
                 <ol class="chapter"><li class="chapter-item expanded "><a href="../index.html"><strong aria-hidden="true">1.</strong> Introduction</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../intro/overview.html"><strong aria-hidden="true">1.1.</strong> What is Sylvia-IoT?</a></li><li class="chapter-item expanded "><a href="../intro/concept.html"><strong aria-hidden="true">1.2.</strong> Concept</a></li></ol></li><li class="chapter-item expanded "><a href="../guide/index.html"><strong aria-hidden="true">2.</strong> User Guide</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../guide/quick.html"><strong aria-hidden="true">2.1.</strong> Quick Start</a></li><li class="chapter-item expanded "><a href="../guide/configuration.html"><strong aria-hidden="true">2.2.</strong> Configuration</a></li></ol></li><li class="chapter-item expanded "><a href="../arch/index.html"><strong aria-hidden="true">3.</strong> Internal Architecture</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../arch/arch.html"><strong aria-hidden="true">3.1.</strong> Architecture</a></li><li class="chapter-item expanded "><a href="../arch/flow.html"><strong aria-hidden="true">3.2.</strong> Data Flow</a></li><li class="chapter-item expanded "><a href="../arch/cache.html"><strong aria-hidden="true">3.3.</strong> Cache</a></li></ol></li><li class="chapter-item expanded "><a href="../dev/index.html"><strong aria-hidden="true">4.</strong> Developer's Guide</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../dev/oauth2.html" class="active"><strong aria-hidden="true">4.1.</strong> OAuth2 Authentication</a></li><li class="chapter-item expanded "><a href="../dev/network.html"><strong aria-hidden="true">4.2.</strong> Network Services</a></li><li class="chapter-item expanded "><a href="../dev/application.html"><strong aria-hidden="true">4.3.</strong> Application Services</a></li><li class="chapter-item expanded "><a href="../dev/core.html"><strong aria-hidden="true">4.4.</strong> Sylvia-IoT Core</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../dev/dir.html"><strong aria-hidden="true">4.4.1.</strong> Directory Structure</a></li><li class="chapter-item expanded "><a href="../dev/style.html"><strong aria-hidden="true">4.4.2.</strong> Code Style</a></li><li class="chapter-item expanded "><a href="../dev/testing.html"><strong aria-hidden="true">4.4.3.</strong> Writing Tests</a></li></ol></li><li class="chapter-item expanded "><a href="../dev/cross.html"><strong aria-hidden="true">4.5.</strong> Cross-Platform Compilation</a></li></ol></li><li class="chapter-item expanded "><a href="../appendex/index.html"><strong aria-hidden="true">5.</strong> Appendix</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../appendex/source.html"><strong aria-hidden="true">5.1.</strong> Data Sources</a></li><li class="chapter-item expanded "><a href="../appendex/repo.html"><strong aria-hidden="true">5.2.</strong> Supplementary Projects</a></li></ol></li></ol>
             </div>
-            <div id="sidebar-resize-handle" class="sidebar-resize-handle"></div>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
         </nav>
 
         <!-- Track and set sidebar scroll position -->
@@ -116,9 +123,9 @@
                                 <div id="menu-bar-hover-placeholder"></div>
                 <div id="menu-bar" class="menu-bar sticky">
                     <div class="left-buttons">
-                        <button id="sidebar-toggle" class="icon-button" type="button" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
                             <i class="fa fa-bars"></i>
-                        </button>
+                        </label>
                         <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
                             <i class="fa fa-paint-brush"></i>
                         </button>
@@ -195,7 +202,7 @@ address.
 If your service needs to be accessed through <strong>http://localhost</strong> or
 <strong>https://network.example.com</strong>, and it receives the authorization code at the path
 <strong>/network/redirect</strong>, you can set the redirect URI as
-<code>[&quot;http://localhost/network/redirect&quot;,&quot;https://network.example.com/network/redirect&quot;]</code>.</li>
+<code>["http://localhost/network/redirect","https://network.example.com/network/redirect"]</code>.</li>
 </ul>
 <h2 id="using-browser-and-curl"><a class="header" href="#using-browser-and-curl">Using Browser and Curl</a></h2>
 <p>Here, we will explain how to log in with your account credentials and obtain a session ID to access
@@ -214,7 +221,7 @@ to obtain the token:</p>
 </code></pre>
 <p>If you see the following message, it means you have obtained the token (your content will be
 slightly different):</p>
-<pre><code>{&quot;access_token&quot;:&quot;fecc5af17e254e6c5a561b7acc900c8f0449a42e77f07a19261c2e6cff518ec8&quot;,&quot;refresh_token&quot;:&quot;5905fc23f65ca7ed92bc7be74e33fc3e79cd8bce2c9ef2ef1bb368caaf6c07f0&quot;,&quot;token_type&quot;:&quot;bearer&quot;,&quot;expires_in&quot;:3599,&quot;scope&quot;:&quot;&quot;}
+<pre><code>{"access_token":"fecc5af17e254e6c5a561b7acc900c8f0449a42e77f07a19261c2e6cff518ec8","refresh_token":"5905fc23f65ca7ed92bc7be74e33fc3e79cd8bce2c9ef2ef1bb368caaf6c07f0","token_type":"bearer","expires_in":3599,"scope":""}
 </code></pre>
 <h2 id="using-curl"><a class="header" href="#using-curl">Using Curl</a></h2>
 <p>If you want to use the curl command to assist with your program development, you can follow these
@@ -249,7 +256,7 @@ within 30 seconds to obtain the token:</p>
 </code></pre>
 <p>If you see the following message, it means you have obtained the token (your content will be
 slightly different):</p>
-<pre><code>{&quot;access_token&quot;:&quot;6994982614dc9f6f2bff08169f7636873531686c34c02fbd6bb45655c8f24b13&quot;,&quot;refresh_token&quot;:&quot;387822850a8fa9a474c413b62a17d9f218204ddcaad51ca475448827b83972fe&quot;,&quot;token_type&quot;:&quot;bearer&quot;,&quot;expires_in&quot;:3599,&quot;scope&quot;:&quot;&quot;}
+<pre><code>{"access_token":"6994982614dc9f6f2bff08169f7636873531686c34c02fbd6bb45655c8f24b13","refresh_token":"387822850a8fa9a474c413b62a17d9f218204ddcaad51ca475448827b83972fe","token_type":"bearer","expires_in":3599,"scope":""}
 </code></pre>
 <h2 id="authentication-flow-endpoints"><a class="header" href="#authentication-flow-endpoints">Authentication Flow Endpoints</a></h2>
 <p>Here are the endpoints involved in the OAuth2 authentication flow:</p>
@@ -372,7 +379,7 @@ the address specified by the client whether successful or failed.</li>
 of the templates and pay attention to the Jinja2 variables to be preserved within <code>{{ }}</code>.</p>
 <p>For the account login page, please reserve the following variables:</p>
 <ul>
-<li><code>scope_path</code>: This will determine the endpoint to send the <code>POST /login</code> request when the &quot;Login&quot;
+<li><code>scope_path</code>: This will determine the endpoint to send the <code>POST /login</code> request when the "Login"
 button is clicked.
 <ul>
 <li>The default for Sylvia-IoT is <code>SCHEME://SERVER_HOST/auth</code>, where <code>SCHEME://SERVER_HOST</code>
@@ -385,7 +392,7 @@ includes it in the template.</li>
 <p>For the client authorization page, please reserve the following variables:</p>
 <ul>
 <li><code>scope_path</code>: This will determine the endpoint to send the <code>POST /authorize</code> request when the
-&quot;Login&quot; button is clicked.
+"Login" button is clicked.
 <ul>
 <li>The default for Sylvia-IoT is <code>SCHEME://SERVER_HOST/auth</code>, where <code>SCHEME://SERVER_HOST</code>
 corresponds to the information from the <code>POST /login</code> endpoint.</li>
@@ -409,7 +416,7 @@ parameters in the <a href="../guide/configuration.html"><strong>Configuration Fi
                                 <i class="fa fa-angle-left"></i>
                             </a>
 
-                            <a rel="next" href="../dev/network.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                            <a rel="next prefetch" href="../dev/network.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                                 <i class="fa fa-angle-right"></i>
                             </a>
 
@@ -423,7 +430,7 @@ parameters in the <a href="../guide/configuration.html"><strong>Configuration Fi
                         <i class="fa fa-angle-left"></i>
                     </a>
 
-                    <a rel="next" href="../dev/network.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                    <a rel="next prefetch" href="../dev/network.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                         <i class="fa fa-angle-right"></i>
                     </a>
             </nav>

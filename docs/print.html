@@ -1,17 +1,17 @@
 <!DOCTYPE HTML>
-<html lang="en" class="sidebar-visible no-js rust">
+<html lang="en" class="rust" dir="ltr">
     <head>
         <!-- Book generated using mdBook -->
         <meta charset="UTF-8">
         <title>Sylvia-IoT Documentation</title>
-        <meta name="robots" content="noindex" />
+        <meta name="robots" content="noindex">
 
 
         <!-- Custom HTML head -->
         
         <meta name="description" content="">
         <meta name="viewport" content="width=device-width, initial-scale=1">
-        <meta name="theme-color" content="#ffffff" />
+        <meta name="theme-color" content="#ffffff">
 
         <link rel="icon" href="favicon.svg">
         <link rel="shortcut icon" href="favicon.png">
@@ -32,7 +32,7 @@
         <!-- Custom theme stylesheets -->
 
     </head>
-    <body>
+    <body class="sidebar-visible no-js">
     <div id="body-container">
         <!-- Provide site root to javascript -->
         <script>
@@ -62,31 +62,38 @@
             try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
             if (theme === null || theme === undefined) { theme = default_theme; }
             var html = document.querySelector('html');
-            html.classList.remove('no-js')
             html.classList.remove('rust')
             html.classList.add(theme);
-            html.classList.add('js');
+            var body = document.querySelector('body');
+            body.classList.remove('no-js')
+            body.classList.add('js');
         </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
 
         <!-- Hide / unhide sidebar before it is displayed -->
         <script>
-            var html = document.querySelector('html');
+            var body = document.querySelector('body');
             var sidebar = null;
+            var sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
             if (document.body.clientWidth >= 1080) {
                 try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
                 sidebar = sidebar || 'visible';
             } else {
                 sidebar = 'hidden';
             }
-            html.classList.remove('sidebar-visible');
-            html.classList.add("sidebar-" + sidebar);
+            sidebar_toggle.checked = sidebar === 'visible';
+            body.classList.remove('sidebar-visible');
+            body.classList.add("sidebar-" + sidebar);
         </script>
 
         <nav id="sidebar" class="sidebar" aria-label="Table of contents">
             <div class="sidebar-scrollbox">
                 <ol class="chapter"><li class="chapter-item expanded "><a href="index.html"><strong aria-hidden="true">1.</strong> Introduction</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="intro/overview.html"><strong aria-hidden="true">1.1.</strong> What is Sylvia-IoT?</a></li><li class="chapter-item expanded "><a href="intro/concept.html"><strong aria-hidden="true">1.2.</strong> Concept</a></li></ol></li><li class="chapter-item expanded "><a href="guide/index.html"><strong aria-hidden="true">2.</strong> User Guide</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="guide/quick.html"><strong aria-hidden="true">2.1.</strong> Quick Start</a></li><li class="chapter-item expanded "><a href="guide/configuration.html"><strong aria-hidden="true">2.2.</strong> Configuration</a></li></ol></li><li class="chapter-item expanded "><a href="arch/index.html"><strong aria-hidden="true">3.</strong> Internal Architecture</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="arch/arch.html"><strong aria-hidden="true">3.1.</strong> Architecture</a></li><li class="chapter-item expanded "><a href="arch/flow.html"><strong aria-hidden="true">3.2.</strong> Data Flow</a></li><li class="chapter-item expanded "><a href="arch/cache.html"><strong aria-hidden="true">3.3.</strong> Cache</a></li></ol></li><li class="chapter-item expanded "><a href="dev/index.html"><strong aria-hidden="true">4.</strong> Developer's Guide</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="dev/oauth2.html"><strong aria-hidden="true">4.1.</strong> OAuth2 Authentication</a></li><li class="chapter-item expanded "><a href="dev/network.html"><strong aria-hidden="true">4.2.</strong> Network Services</a></li><li class="chapter-item expanded "><a href="dev/application.html"><strong aria-hidden="true">4.3.</strong> Application Services</a></li><li class="chapter-item expanded "><a href="dev/core.html"><strong aria-hidden="true">4.4.</strong> Sylvia-IoT Core</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="dev/dir.html"><strong aria-hidden="true">4.4.1.</strong> Directory Structure</a></li><li class="chapter-item expanded "><a href="dev/style.html"><strong aria-hidden="true">4.4.2.</strong> Code Style</a></li><li class="chapter-item expanded "><a href="dev/testing.html"><strong aria-hidden="true">4.4.3.</strong> Writing Tests</a></li></ol></li><li class="chapter-item expanded "><a href="dev/cross.html"><strong aria-hidden="true">4.5.</strong> Cross-Platform Compilation</a></li></ol></li><li class="chapter-item expanded "><a href="appendex/index.html"><strong aria-hidden="true">5.</strong> Appendix</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="appendex/source.html"><strong aria-hidden="true">5.1.</strong> Data Sources</a></li><li class="chapter-item expanded "><a href="appendex/repo.html"><strong aria-hidden="true">5.2.</strong> Supplementary Projects</a></li></ol></li></ol>
             </div>
-            <div id="sidebar-resize-handle" class="sidebar-resize-handle"></div>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
         </nav>
 
         <!-- Track and set sidebar scroll position -->
@@ -117,9 +124,9 @@
                                 <div id="menu-bar-hover-placeholder"></div>
                 <div id="menu-bar" class="menu-bar sticky">
                     <div class="left-buttons">
-                        <button id="sidebar-toggle" class="icon-button" type="button" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
                             <i class="fa fa-bars"></i>
-                        </button>
+                        </label>
                         <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
                             <i class="fa fa-paint-brush"></i>
                         </button>
@@ -280,9 +287,9 @@ device data.</li>
 <li>Provide complete configuration file content and overview.</li>
 </ul>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="quick-start"><a class="header" href="#quick-start">Quick Start</a></h1>
-<p>This chapter describes the quick installation steps in the Ubuntu 20.04 environment.</p>
+<p>This chapter describes the quick installation steps in the Ubuntu 22.04 environment.</p>
 <blockquote>
-<p>The current executable is compiled using GLIBC 2.31 and can be executed on Ubuntu 20.04 or later
+<p>The current executable is compiled using GLIBC 2.31 and can be executed on Ubuntu 22.04 or later
 OS versions.
 Older OS versions can use the <a href="https://hub.docker.com/r/woofdogtw/sylvia-iot-core"><strong>Docker image</strong></a>.
 Related configurations and environment variables will be explained in the
@@ -295,7 +302,7 @@ Related configurations and environment variables will be explained in the
 <p>Refer to the installation steps on the <a href="https://docs.docker.com/engine/install/ubuntu/"><strong>Docker official website</strong></a>.</p>
 <pre><code class="language-shell">sudo apt -y install apt-transport-https ca-certificates curl gnupg lsb-release
 curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
-echo &quot;deb [arch=amd64 signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable&quot; | sudo tee /etc/apt/sources.list.d/docker.list &gt; /dev/null
+echo "deb [arch=amd64 signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list &gt; /dev/null
 sudo apt update
 sudo apt -y install docker-ce docker-ce-cli containerd.io docker-compose-plugin
 sudo usermod -aG docker $USER
@@ -305,9 +312,9 @@ sudo usermod -aG docker $USER
 </blockquote>
 <h2 id="install-mongodbrabbitmqemqx"><a class="header" href="#install-mongodbrabbitmqemqx">Install MongoDB、RabbitMQ、EMQX</a></h2>
 <p>Start the services (versions and data storage folders can be adjusted as needed):</p>
-<pre><code class="language-shell">export MONGODB_VER=6.0.8
-export RABBITMQ_VER=3.12.1
-export EMQX_VER=5.1.1
+<pre><code class="language-shell">export MONGODB_VER=7.0.9
+export RABBITMQ_VER=3.13.2
+export EMQX_VER=5.6.1
 
 export MONGODB_DIR=$HOME/db/mongodb
 export RABBITMQ_DIR=$HOME/db/rabbitmq
@@ -321,15 +328,15 @@ docker run --rm --name mongodb -d \
 
 mkdir -p $RABBITMQ_DIR
 docker run --rm --name rabbitmq -d \
-  -e RABBITMQ_NODENAME=&quot;rabbit@localhost&quot; \
+  -e RABBITMQ_NODENAME="rabbit@localhost" \
   -p 5671:5671 -p 5672:5672 -p 15672:15672 \
   -v $RABBITMQ_DIR:/var/lib/rabbitmq \
   rabbitmq:$RABBITMQ_VER-management-alpine
 
 mkdir -p $EMQX_DIR
 docker run --rm --name emqx -d \
-  -e EMQX_LOADED_PLUGINS=&quot;emqx_dashboard|emqx_management|emqx_auth_mnesia&quot; \
-  -e EMQX_LOADED_MODULES=&quot;emqx_mod_acl_internal,emqx_mod_presence,emqx_mod_topic_metrics&quot; \
+  -e EMQX_LOADED_PLUGINS="emqx_dashboard|emqx_management|emqx_auth_mnesia" \
+  -e EMQX_LOADED_MODULES="emqx_mod_acl_internal,emqx_mod_presence,emqx_mod_topic_metrics" \
   -p 1883:1883 -p 8883:8883 -p 18083:18083 \
   -v $EMQX_DIR:/opt/emqx/data \
   emqx/emqx:$EMQX_VER
@@ -348,37 +355,37 @@ tar xf sylvia-iot-coremgr-cli.tar.xz
 <h2 id="modify-configjson5"><a class="header" href="#modify-configjson5">Modify config.json5</a></h2>
 <p>For demonstration purposes, we make some modifications to the example config.json5:</p>
 <ul>
-<li>Since we are showcasing MongoDB here, we change all <code>&quot;engine&quot;: &quot;sqlite&quot;</code> to <code>&quot;engine&quot;: &quot;mongodb&quot;</code>.
-<pre><code>&quot;db&quot;: {
-    &quot;engine&quot;: &quot;mongodb&quot;,
+<li>Since we are showcasing MongoDB here, we change all <code>"engine": "sqlite"</code> to <code>"engine": "mongodb"</code>.
+<pre><code>"db": {
+    "engine": "mongodb",
     ...
 },
 </code></pre>
 </li>
 <li>We don't enable HTTPS for now, so the certificate file settings are commented out:
-<pre><code>//&quot;cacertFile&quot;: &quot;/etc/ssl/certs/ca-certificates.crt&quot;,
-//&quot;certFile&quot;: &quot;/home/user/rust/conf/certs/sylvia-iot.crt&quot;,
-//&quot;keyFile&quot;: &quot;/home/user/rust/conf/certs/sylvia-iot.key&quot;,
+<pre><code>//"cacertFile": "/etc/ssl/certs/ca-certificates.crt",
+//"certFile": "/home/user/rust/conf/certs/sylvia-iot.crt",
+//"keyFile": "/home/user/rust/conf/certs/sylvia-iot.key",
 </code></pre>
 </li>
 <li>We create a folder to store static files, and in this example, it's <code>/home/user/static</code>.
-<pre><code>&quot;staticPath&quot;: &quot;/home/user/static&quot;,
+<pre><code>"staticPath": "/home/user/static",
 </code></pre>
 </li>
 <li>We use the default login page template and comment out the example template:
-<pre><code>&quot;templates&quot;: {      // Jinja2 template paths.
-    //&quot;login&quot;: &quot;/home/user/rust/static/login.j2&quot;,
-    //&quot;grant&quot;: &quot;/home/user/rust/static/grant.j2&quot;,
+<pre><code>"templates": {      // Jinja2 template paths.
+    //"login": "/home/user/rust/static/login.j2",
+    //"grant": "/home/user/rust/static/grant.j2",
 },
 </code></pre>
 </li>
 <li>We use <a href="https://github.com/bytebeamio/rumqtt"><strong>rumqttd</strong></a> instead of EMQX:
-<pre><code>&quot;coremgr&quot;: {
+<pre><code>"coremgr": {
   ...
-  &quot;mq&quot;: {
-    &quot;engine&quot;: {
-      &quot;amqp&quot;: &quot;rabbitmq&quot;,
-      &quot;mqtt&quot;: &quot;rumqttd&quot;,
+  "mq": {
+    "engine": {
+      "amqp": "rabbitmq",
+      "mqtt": "rumqttd",
     },
     ...
   },
@@ -402,7 +409,7 @@ db.user.insertOne({
   verifiedAt: new Date(),
   expiredAt: null,
   disabledAt: null,
-  roles: {&quot;admin&quot;:true,&quot;dev&quot;:false},
+  roles: {"admin":true,"dev":false},
   password: '27258772d876ffcef7ca2c75d6f4e6bcd81c203bd3e93c0791c736e5a2df4afa',
   salt: 'YsBsou2O',
   name: 'Admin',
@@ -433,10 +440,10 @@ db.client.insertOne({
 <p>You will see the following screen (the content you see may be slightly different):</p>
 <pre><code>$ ./sylvia-iot-coremgr-cli -f config.json5 login -a admin -p admin
 {
-  &quot;access_token&quot;: &quot;ef9cf7cfc645f9092b9af62666d903c5a8e4579ff6941b479c1d9c9b63b0b634&quot;,
-  &quot;refresh_token&quot;: &quot;265983a08af706fbe2912ff2edb1750311d1b689e4dab3a83c4b494c4cf2d033&quot;,
-  &quot;token_type&quot;: &quot;bearer&quot;,
-  &quot;expires_in&quot;: 3599
+  "access_token": "ef9cf7cfc645f9092b9af62666d903c5a8e4579ff6941b479c1d9c9b63b0b634",
+  "refresh_token": "265983a08af706fbe2912ff2edb1750311d1b689e4dab3a83c4b494c4cf2d033",
+  "token_type": "bearer",
+  "expires_in": 3599
 }
 OK (146 ms)
 </code></pre>
@@ -473,12 +480,12 @@ DEV_ID=$(./sylvia-iot-coremgr-cli -f config.json5 device add -u $UNIT_ID --netid
 </code></pre>
 <p>Open another shell to simulate the network system sending device data (topic format:
 <code>broker.network.[unit-code].[net-code].uldata</code>):</p>
-<pre><code class="language-shell">mosquitto_pub -u test-net-mqtt -P password -t broker.network.demo.test-net-mqtt.uldata -m '{&quot;time&quot;:&quot;2023-07-08T06:55:02.000Z&quot;,&quot;networkAddr&quot;:&quot;01000461&quot;,&quot;data&quot;:&quot;74657374&quot;}'
+<pre><code class="language-shell">mosquitto_pub -u test-net-mqtt -P password -t broker.network.demo.test-net-mqtt.uldata -m '{"time":"2023-07-08T06:55:02.000Z","networkAddr":"01000461","data":"74657374"}'
 </code></pre>
 <p>At this point, you should see the following screen in the subscribed shell (the content may be
 slightly different):</p>
 <pre><code>$ mosquitto_sub -u test-app-mqtt -P password -t broker.application.demo.test-app-mqtt.uldata
-{&quot;dataId&quot;:&quot;1688799672075-iJ4YQeQ5Lyv4&quot;,&quot;time&quot;:&quot;2023-07-08T06:55:02.000Z&quot;,&quot;pub&quot;:&quot;2023-07-08T07:01:12.075Z&quot;,&quot;deviceId&quot;:&quot;1688798563252-aWcZVRML&quot;,&quot;networkId&quot;:&quot;1688798370824-RwAbBDFh&quot;,&quot;networkCode&quot;:&quot;test-net-mqtt&quot;,&quot;networkAddr&quot;:&quot;01000461&quot;,&quot;isPublic&quot;:true,&quot;profile&quot;:&quot;&quot;,&quot;data&quot;:&quot;74657374&quot;}
+{"dataId":"1688799672075-iJ4YQeQ5Lyv4","time":"2023-07-08T06:55:02.000Z","pub":"2023-07-08T07:01:12.075Z","deviceId":"1688798563252-aWcZVRML","networkId":"1688798370824-RwAbBDFh","networkCode":"test-net-mqtt","networkAddr":"01000461","isPublic":true,"profile":"","data":"74657374"}
 </code></pre>
 <p>If you see the data, congratulations! You have completed the basic use of Sylvia-IoT! (Congratulations! Achievement unlocked!
 😆)</p>
@@ -546,7 +553,7 @@ relevant scopes enabled by the client during registration and authorized by the 
 API.</p>
 <p>Both command-line parameters and environment variables should be provided as JSON strings. For
 example:</p>
-<pre><code>--auth.api-scopes='{&quot;auth.tokeninfo.get&quot;:[]}'
+<pre><code>--auth.api-scopes='{"auth.tokeninfo.get":[]}'
 </code></pre>
 <p>You can define custom scope names and apply them to various API scopes. You can refer to the example
 provided in the <strong>Authentication Service</strong> section for more details.</p>
@@ -572,7 +579,7 @@ to match your own style.</li>
 <li>The templates use the Jinja2 format (dependent on the <a href="https://tera.netlify.app/"><strong>tera</strong></a>
 package).</li>
 <li>Both command-line parameters and environment variables should use JSON strings. For example:
-<pre><code>--auth.templates='{&quot;login&quot;:&quot;xxx&quot;}'
+<pre><code>--auth.templates='{"login":"xxx"}'
 </code></pre>
 </li>
 <li>For more details, please refer to <a href="guide/../dev/oauth2.html"><strong>OAuth2 Authentication</strong></a>.</li>
@@ -662,22 +669,22 @@ APIs to limit the scope of access for clients:
 <li><code>api.readonly</code>： Only allow access to GET APIs.</li>
 <li>Allow access to token data and log out actions for all clients.</li>
 </ul>
-<pre><code>&quot;auth&quot;: {
+<pre><code>"auth": {
     ...
-    &quot;apiScopes&quot;: {
-        &quot;auth.tokeninfo.get&quot;: [],
-        &quot;auth.logout.post&quot;: [],
-        &quot;user.get&quot;: [&quot;api.rw&quot;, &quot;api.readonly&quot;],
-        &quot;user.patch&quot;: [&quot;api.rw&quot;],
-        &quot;user.post.admin&quot;: [&quot;api.rw&quot;],
-        &quot;user.get.admin&quot;: [&quot;api.rw&quot;, &quot;api.readonly&quot;],
-        &quot;user.patch.admin&quot;: [&quot;api.rw&quot;],
-        &quot;user.delete.admin&quot;: [&quot;api.rw&quot;],
-        &quot;client.post&quot;: [&quot;api.rw&quot;],
-        &quot;client.get&quot;: [&quot;api.rw&quot;, &quot;api.readonly&quot;],
-        &quot;client.patch&quot;: [&quot;api.rw&quot;],
-        &quot;client.delete&quot;: [&quot;api.rw&quot;],
-        &quot;client.delete.user&quot;: [&quot;api.admin&quot;],
+    "apiScopes": {
+        "auth.tokeninfo.get": [],
+        "auth.logout.post": [],
+        "user.get": ["api.rw", "api.readonly"],
+        "user.patch": ["api.rw"],
+        "user.post.admin": ["api.rw"],
+        "user.get.admin": ["api.rw", "api.readonly"],
+        "user.patch.admin": ["api.rw"],
+        "user.delete.admin": ["api.rw"],
+        "client.post": ["api.rw"],
+        "client.get": ["api.rw", "api.readonly"],
+        "client.patch": ["api.rw"],
+        "client.delete": ["api.rw"],
+        "client.delete.user": ["api.admin"],
     },
     ...
 }
@@ -1049,7 +1056,7 @@ common rule engine in IoT platforms.</li>
 <h2 id="message-brokers"><a class="header" href="#message-brokers">Message Brokers</a></h2>
 <blockquote>
 <p>Here, message brokers refer to services like RabbitMQ and EMQX, not Sylvia-IoT Broker.
-Unless specifically mentioned, &quot;Broker&quot; in this document refers to Sylvia-IoT Broker.</p>
+Unless specifically mentioned, "Broker" in this document refers to Sylvia-IoT Broker.</p>
 </blockquote>
 <p>Some important points:</p>
 <ul>
@@ -1087,7 +1094,7 @@ executable includes the complete Auth/Broker/Coremgr/Data and rumqttd.</p>
 By configuring it to use SQLite as the database and MQTT for message delivery, the sylvia-iot-core
 achieves the full functionality of Sylvia-IoT in just two files.</p>
 <blockquote>
-<p>The &quot;core&quot; is an executable that contains all the complete functionalities, whereas &quot;coremgr&quot; only
+<p>The "core" is an executable that contains all the complete functionalities, whereas "coremgr" only
 contains management functionalities and does not include rumqttd.</p>
 </blockquote>
 <p>To accommodate this limited environment, Sylvia-IoT adopts rumqttd.
@@ -1228,8 +1235,8 @@ content is cleared. The key is retained to indicate that this request involves p
 <li>Client ID</li>
 </ul>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="cache"><a class="header" href="#cache">Cache</a></h1>
-<p>In the <a href="arch/flow.html"><strong>Data Flow</strong></a> section, it is mentioned that the main task of the Broker is &quot;to
-match routing rules and forward data&quot;.
+<p>In the <a href="arch/flow.html"><strong>Data Flow</strong></a> section, it is mentioned that the main task of the Broker is "to
+match routing rules and forward data".
 Typically, routing rules are stored in a database, so the speed of matching becomes a critical
 bottleneck. This is especially true when forwarding thousands or even tens of thousands of data at
 the same time, putting significant pressure on the database.</p>
@@ -1264,7 +1271,7 @@ step 3 is a deletion action) and then filling it with cache-miss.</p>
 </blockquote>
 <p>Let's discuss a few special situations:</p>
 <ul>
-<li>The caching design of the Broker adopts &quot;eventual consistency.&quot; After step 3, there might be a
+<li>The caching design of the Broker adopts "eventual consistency." After step 3, there might be a
 short period during which the old routing is still in use. However, this period is usually not
 very long (within tens or hundreds of milliseconds, or perhaps even shorter).</li>
 <li>To avoid data inconsistency, when a process detects a reconnection to the control channel's queue,
@@ -1314,7 +1321,7 @@ address.
 If your service needs to be accessed through <strong>http://localhost</strong> or
 <strong>https://network.example.com</strong>, and it receives the authorization code at the path
 <strong>/network/redirect</strong>, you can set the redirect URI as
-<code>[&quot;http://localhost/network/redirect&quot;,&quot;https://network.example.com/network/redirect&quot;]</code>.</li>
+<code>["http://localhost/network/redirect","https://network.example.com/network/redirect"]</code>.</li>
 </ul>
 <h2 id="using-browser-and-curl"><a class="header" href="#using-browser-and-curl">Using Browser and Curl</a></h2>
 <p>Here, we will explain how to log in with your account credentials and obtain a session ID to access
@@ -1333,7 +1340,7 @@ to obtain the token:</p>
 </code></pre>
 <p>If you see the following message, it means you have obtained the token (your content will be
 slightly different):</p>
-<pre><code>{&quot;access_token&quot;:&quot;fecc5af17e254e6c5a561b7acc900c8f0449a42e77f07a19261c2e6cff518ec8&quot;,&quot;refresh_token&quot;:&quot;5905fc23f65ca7ed92bc7be74e33fc3e79cd8bce2c9ef2ef1bb368caaf6c07f0&quot;,&quot;token_type&quot;:&quot;bearer&quot;,&quot;expires_in&quot;:3599,&quot;scope&quot;:&quot;&quot;}
+<pre><code>{"access_token":"fecc5af17e254e6c5a561b7acc900c8f0449a42e77f07a19261c2e6cff518ec8","refresh_token":"5905fc23f65ca7ed92bc7be74e33fc3e79cd8bce2c9ef2ef1bb368caaf6c07f0","token_type":"bearer","expires_in":3599,"scope":""}
 </code></pre>
 <h2 id="using-curl"><a class="header" href="#using-curl">Using Curl</a></h2>
 <p>If you want to use the curl command to assist with your program development, you can follow these
@@ -1368,7 +1375,7 @@ within 30 seconds to obtain the token:</p>
 </code></pre>
 <p>If you see the following message, it means you have obtained the token (your content will be
 slightly different):</p>
-<pre><code>{&quot;access_token&quot;:&quot;6994982614dc9f6f2bff08169f7636873531686c34c02fbd6bb45655c8f24b13&quot;,&quot;refresh_token&quot;:&quot;387822850a8fa9a474c413b62a17d9f218204ddcaad51ca475448827b83972fe&quot;,&quot;token_type&quot;:&quot;bearer&quot;,&quot;expires_in&quot;:3599,&quot;scope&quot;:&quot;&quot;}
+<pre><code>{"access_token":"6994982614dc9f6f2bff08169f7636873531686c34c02fbd6bb45655c8f24b13","refresh_token":"387822850a8fa9a474c413b62a17d9f218204ddcaad51ca475448827b83972fe","token_type":"bearer","expires_in":3599,"scope":""}
 </code></pre>
 <h2 id="authentication-flow-endpoints"><a class="header" href="#authentication-flow-endpoints">Authentication Flow Endpoints</a></h2>
 <p>Here are the endpoints involved in the OAuth2 authentication flow:</p>
@@ -1491,7 +1498,7 @@ the address specified by the client whether successful or failed.</li>
 of the templates and pay attention to the Jinja2 variables to be preserved within <code>{{ }}</code>.</p>
 <p>For the account login page, please reserve the following variables:</p>
 <ul>
-<li><code>scope_path</code>: This will determine the endpoint to send the <code>POST /login</code> request when the &quot;Login&quot;
+<li><code>scope_path</code>: This will determine the endpoint to send the <code>POST /login</code> request when the "Login"
 button is clicked.
 <ul>
 <li>The default for Sylvia-IoT is <code>SCHEME://SERVER_HOST/auth</code>, where <code>SCHEME://SERVER_HOST</code>
@@ -1504,7 +1511,7 @@ includes it in the template.</li>
 <p>For the client authorization page, please reserve the following variables:</p>
 <ul>
 <li><code>scope_path</code>: This will determine the endpoint to send the <code>POST /authorize</code> request when the
-&quot;Login&quot; button is clicked.
+"Login" button is clicked.
 <ul>
 <li>The default for Sylvia-IoT is <code>SCHEME://SERVER_HOST/auth</code>, where <code>SCHEME://SERVER_HOST</code>
 corresponds to the information from the <code>POST /login</code> endpoint.</li>
@@ -1561,7 +1568,7 @@ retain <code>dataId</code> while processing downlink data for subsequent result 
 <ul>
 <li>For unreported downlink data, it has no impact on the Broker.
 <ul>
-<li>Currently retained for one day. If not reported, it will always be marked as &quot;unreported&quot;.</li>
+<li>Currently retained for one day. If not reported, it will always be marked as "unreported".</li>
 </ul>
 </li>
 <li>The application service can decide how to handle downlink data that has not been reported for
@@ -1620,7 +1627,7 @@ delivered.</li>
 timing of queues and related data.</p>
 <h2 id="queues-and-data-formats-1"><a class="header" href="#queues-and-data-formats-1">Queues and Data Formats</a></h2>
 <ul>
-<li><a href="https://github.com/woofdogtw/sylvia-iot-core/blob/main/sylvia-iot-broker/doc/message.md#between-broker-and-application"><strong>This document</strong></a> 
+<li><a href="https://github.com/woofdogtw/sylvia-iot-core/blob/main/sylvia-iot-broker/doc/message.md#between-broker-and-application"><strong>This document</strong></a>
 defines the data content of the queues between the Broker and application services.</li>
 <li>Data channels use unicast mode.
 <ul>
@@ -1812,24 +1819,24 @@ within <code>routes</code>.</li>
 <li>
 <p>VSCode Settings</p>
 <pre><code class="language-json">{
-    &quot;crates.listPreReleases&quot;: true,
-    &quot;editor.formatOnSave&quot;: true,
-    &quot;editor.renderWhitespace&quot;: &quot;all&quot;,
-    &quot;editor.roundedSelection&quot;: false,
-    &quot;editor.tabSize&quot;: 4,
-    &quot;files.eol&quot;: &quot;\n&quot;,
-    &quot;rust-analyzer.inlayHints.chainingHints.enable&quot;: false,
-    &quot;rust-analyzer.inlayHints.closingBraceHints.enable&quot;: false,
-    &quot;rust-analyzer.inlayHints.parameterHints.enable&quot;: false,
-    &quot;rust-analyzer.inlayHints.typeHints.enable&quot;: false,
-    &quot;rust-analyzer.server.extraEnv&quot;: {
-        &quot;RUSTFLAGS&quot;: &quot;-C instrument-coverage&quot;
+    "crates.listPreReleases": true,
+    "editor.formatOnSave": true,
+    "editor.renderWhitespace": "all",
+    "editor.roundedSelection": false,
+    "editor.tabSize": 4,
+    "files.eol": "\n",
+    "rust-analyzer.inlayHints.chainingHints.enable": false,
+    "rust-analyzer.inlayHints.closingBraceHints.enable": false,
+    "rust-analyzer.inlayHints.parameterHints.enable": false,
+    "rust-analyzer.inlayHints.typeHints.enable": false,
+    "rust-analyzer.server.extraEnv": {
+        "RUSTFLAGS": "-C instrument-coverage"
     }
 }
 </code></pre>
 <blockquote>
 <p>The use of the <code>-C instrument-coverage</code> environment variable is due to the author's need to generate coverage reports during testing. Adding this variable prevents recompilation triggered by saving and running tests. Below is the command for running tests:</p>
-<p><code>RUSTFLAGS=&quot;-C instrument-coverage&quot; cargo test -p $PROJ --test integration_test -- --nocapture</code></p>
+<p><code>RUSTFLAGS="-C instrument-coverage" cargo test -p $PROJ --test integration_test -- --nocapture</code></p>
 </blockquote>
 </li>
 </ul>
@@ -1895,7 +1902,7 @@ fn prv_funcs {}
 <p>Within each section, <code>pub</code> comes before private.</p>
 <h2 id="model"><a class="header" href="#model">Model</a></h2>
 <p>The Model layer must provide a unified struct and trait interface.
-In the design philosophy of Sylvia-IoT, &quot;plug-and-play&quot; is a concept that is highly valued. Users
+In the design philosophy of Sylvia-IoT, "plug-and-play" is a concept that is highly valued. Users
 should be able to choose appropriate implementations in different scenarios.</p>
 <h3 id="database-design"><a class="header" href="#database-design">Database Design</a></h3>
 <p>When providing CRUD operations, the following order must be followed:</p>
@@ -1920,7 +1927,7 @@ made the call.</li>
 </ul>
 </li>
 <li>When data cannot be retrieved, return <code>None</code> or an empty <code>Vec</code>, not an <code>Error</code>.</li>
-<li>Any database that can fulfill the &quot;complex query&quot; condition should be implementable using the same
+<li>Any database that can fulfill the "complex query" condition should be implementable using the same
 trait interface.
 <ul>
 <li>SQL, MongoDB meet this requirement.</li>
@@ -1962,7 +1969,7 @@ different tools.</li>
 latter represents a variable object ID. When designing IDs, it is essential to avoid conflicts with
 the names of actions.</p>
 <blockquote>
-<p>When mounting routes using Actix Web, the fixed <code>[op]</code> should be placed before the variable
+<p>When mounting routes using axum, the fixed <code>[op]</code> should be placed before the variable
 <code>{id}</code>.</p>
 </blockquote>
 <p>For example, let's consider the Broker's
@@ -2048,8 +2055,8 @@ functionalities are correctly implemented and tested before testing.</li>
 </ul>
 <h2 id="routes"><a class="header" href="#routes">routes</a></h2>
 <ul>
-<li>Although you can use Actix Web's <code>test::init_service()</code> as a virtual service, services required by
-middleware or API bridges need to be started using threads.</li>
+<li>Although you can use axum's <code>TestServer::new()</code> as a virtual service, services required by
+middleware or API bridges need to be started using Tokio Task.</li>
 <li>You can use model trait interfaces for initializing test datasets and data validation after API
 requests.</li>
 <li>You can use model delete to delete test data in <code>after</code>.</li>
@@ -2062,25 +2069,25 @@ has tested.</p>
 <p>The compiled executable should be able to run on compatible environments. For example, a Windows 10
 executable should also be executable on Windows 7 or Windows 11.</p>
 <blockquote>
-<p>The compilation environment is based on Ubuntu-20.04.</p>
+<p>The compilation environment is based on Ubuntu-22.04.</p>
 </blockquote>
 <h2 id="windows-10-64-bit"><a class="header" href="#windows-10-64-bit">Windows 10 64-bit</a></h2>
 <pre><code class="language-shell">rustup target add x86_64-pc-windows-gnu
 rustup toolchain install stable-x86_64-pc-windows-gnu
 sudo apt -y install mingw-w64
-echo -e &quot;[target.x86_64-pc-windows-gnu]\nlinker = \&quot;/usr/bin/x86_64-w64-mingw32-gcc\&quot;\nar = \&quot;/usr/bin/x86_64-w64-mingw32-ar\&quot;\n&quot; &gt;&gt; ~/.cargo/config
+echo -e "[target.x86_64-pc-windows-gnu]\nlinker = \"/usr/bin/x86_64-w64-mingw32-gcc\"\nar = \"/usr/bin/x86_64-w64-mingw32-ar\"\n" &gt;&gt; ~/.cargo/config
 cargo build --target=x86_64-pc-windows-gnu -p sylvia-iot-coremgr
 </code></pre>
 <h2 id="raspberry-pi-os-64-bit"><a class="header" href="#raspberry-pi-os-64-bit">Raspberry Pi OS 64-bit</a></h2>
 <pre><code class="language-shell">rustup target add aarch64-unknown-linux-gnu
 sudo apt -y install gcc-aarch64-linux-gnu
-echo -e &quot;[target.aarch64-unknown-linux-gnu]\nlinker = \&quot;/usr/bin/aarch64-linux-gnu-gcc\&quot;\n&quot; &gt;&gt; ~/.cargo/config
+echo -e "[target.aarch64-unknown-linux-gnu]\nlinker = \"/usr/bin/aarch64-linux-gnu-gcc\"\n" &gt;&gt; ~/.cargo/config
 cargo build --target=aarch64-unknown-linux-gnu -p sylvia-iot-coremgr
 </code></pre>
 <h2 id="raspberry-pi-os-32-bit"><a class="header" href="#raspberry-pi-os-32-bit">Raspberry Pi OS 32-bit</a></h2>
 <pre><code class="language-shell">rustup target add armv7-unknown-linux-gnueabihf
 sudo apt -y install gcc-arm-linux-gnueabihf
-echo -e &quot;[target.armv7-unknown-linux-gnueabihf]\nlinker = \&quot;arm-linux-gnueabihf-gcc\&quot;\n&quot; &gt;&gt; ~/.cargo/config
+echo -e "[target.armv7-unknown-linux-gnueabihf]\nlinker = \"arm-linux-gnueabihf-gcc\"\n" &gt;&gt; ~/.cargo/config
 cargo build --target=armv7-unknown-linux-gnueabihf -p sylvia-iot-coremgr
 </code></pre>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="appendix"><a class="header" href="#appendix">Appendix</a></h1>
