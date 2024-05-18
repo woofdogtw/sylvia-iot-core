@@ -58,8 +58,9 @@ struct PatchHost {
 
 /// To launch a HTTP request as bridge from coremgr to auth/broker.
 async fn api_bridge(fn_name: &str, client: &Client, req: Request, api_path: &str) -> Response {
-    let (parts, body) = req.into_parts();
+    let (mut parts, body) = req.into_parts();
 
+    parts.headers.remove(header::CONTENT_LENGTH);
     let mut builder = client
         .request(parts.method, api_path)
         .headers(parts.headers);
@@ -98,6 +99,9 @@ async fn api_bridge(fn_name: &str, client: &Client, req: Request, api_path: &str
 
     let mut resp_builder = Response::builder().status(api_resp.status());
     for (k, v) in api_resp.headers() {
+        if k == reqwest::header::CONTENT_LENGTH {
+            continue;
+        }
         resp_builder = resp_builder.header(k, v);
     }
     match resp_builder.body(Body::from_stream(api_resp.bytes_stream())) {
@@ -119,7 +123,8 @@ async fn list_api_bridge(
     force_array: bool,
     csv_file: &str,
 ) -> ListResp {
-    let (parts, _body) = req.into_parts();
+    let (mut parts, _body) = req.into_parts();
+    parts.headers.remove(header::CONTENT_LENGTH);
 
     let mut is_csv = false;
     let mut builder = client
@@ -187,6 +192,9 @@ async fn list_api_bridge(
         }
     } else {
         for (k, v) in api_resp.headers() {
+            if k == reqwest::header::CONTENT_LENGTH {
+                continue;
+            }
             resp_builder = resp_builder.header(k, v);
         }
     }

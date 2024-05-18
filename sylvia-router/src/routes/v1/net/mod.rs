@@ -44,7 +44,7 @@ pub fn new_service(scope_path: &str, state: &State) -> Router {
             )
             .route(
                 "/wwan/list",
-                routing::put(api::get_wwan_list).layer(AuthService::new(auth_uri.clone())),
+                routing::get(api::get_wwan_list).layer(AuthService::new(auth_uri.clone())),
             )
             .with_state(state.clone()),
     )

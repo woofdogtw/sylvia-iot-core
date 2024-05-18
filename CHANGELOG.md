@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.1.1 - 2024-05-18
+
+### Changed
+
+- Use `frolvlad/alpine-glibc:alpine-3.18_glibc-2.34` to solve segmentation fault from v0.0.36.
+    - **Note**: This image has some CVE medium level issues and we will update when the segmentation fault is resolved.
+
+### Fixed
+
+- **coremgr**: Fix API bridge `Content-Type` header.
+- **router**: Fix wireless LAN API.
+
 ## 0.1.0 - 2024-05-17
 
 ### Added
