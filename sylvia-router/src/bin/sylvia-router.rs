@@ -124,7 +124,7 @@ async fn main() -> std::io::Result<()> {
         .merge(coremgr_routes::new_service(&coremgr_state))
         .merge(data_routes::new_service(&data_state))
         .merge(routes::new_service(&router_state))
-        .route("/version", routing::get(coremgr_routes::get_version))
+        .route("/version", routing::get(routes::get_version))
         .route(
             "/metrics",
             routing::get(|| async move { metric_handle.render() }),

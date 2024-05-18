@@ -1,4 +1,4 @@
-FROM frolvlad/alpine-glibc
+FROM frolvlad/alpine-glibc:alpine-3.18_glibc-2.34
 ARG BIN_DIR
 ARG PROJ
 ARG CLI

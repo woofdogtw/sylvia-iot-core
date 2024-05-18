@@ -128,7 +128,7 @@ pub fn new_service(scope_path: &str, state: &AppState) -> Router {
 /// `POST /{base}/api/v1/application`
 async fn post_application(
     State(state): State<AppState>,
-    headers: HeaderMap,
+    mut headers: HeaderMap,
     Json(mut body): Json<request::PostApplicationBody>,
 ) -> impl IntoResponse {
     const FN_NAME: &'static str = "post_application";
@@ -227,6 +227,7 @@ async fn post_application(
     let mut body_uri = uri.clone();
     transfer_host_uri(&state, &mut body_uri, username);
     body.data.host_uri = body_uri.to_string();
+    headers.remove(header::CONTENT_LENGTH);
     let builder = client
         .request(reqwest::Method::POST, api_path)
         .headers(headers)
