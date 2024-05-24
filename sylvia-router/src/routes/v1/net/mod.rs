@@ -28,7 +28,7 @@ pub fn new_service(scope_path: &str, state: &State) -> Router {
             )
             .route(
                 "/lan/leases",
-                routing::put(api::get_lan_leases).layer(AuthService::new(auth_uri.clone())),
+                routing::get(api::get_lan_leases).layer(AuthService::new(auth_uri.clone())),
             )
             .route(
                 "/wlan",
