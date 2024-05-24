@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.1.2 - 2024-05-24
+
+### Changed
+
+- Update dependencies.
+
+### Fixed
+
+- **router**: Fix LAN leases API.
+
 ## 0.1.1 - 2024-05-18
 
 ### Changed
@@ -9,7 +19,7 @@
 
 ### Fixed
 
-- **coremgr**: Fix API bridge `Content-Type` header.
+- **coremgr**: Fix API bridge `Content-Length` header.
 - **router**: Fix wireless LAN API.
 
 ## 0.1.0 - 2024-05-17

@@ -1,6 +1,6 @@
 [package]
 name = "sylvia-iot-corelib"
-version = "0.1.1"
+version = "0.1.2"
 authors = ["Chien-Hong Chan"]
 categories = ["web-programming::http-server"]
 description = "Common libraries of Sylvia-IoT core modules."
@@ -12,7 +12,7 @@ repository = "https://github.com/woofdogtw/sylvia-iot-core.git"
 rust-version = "1.75"
 
 [dependencies]
-anyhow = "1.0.85"
+anyhow = "1.0.86"
 async-trait = "0.1.80"
 axum = "0.7.5"
 bytes = "1.6.0"
