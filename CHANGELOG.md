@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.1.3 - 2024-05-27
+
+### Changed
+
+- Update dependencies.
+
+### Fixed
+
+- **router**: Fix LAN leases start/end time.
+
 ## 0.1.2 - 2024-05-24
 
 ### Changed

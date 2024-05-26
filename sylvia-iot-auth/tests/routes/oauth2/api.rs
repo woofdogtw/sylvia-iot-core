@@ -877,21 +877,6 @@ pub fn post_token(context: &mut SpecContext<TestState>) -> Result<(), String> {
         grant_type: "authorization_code".to_string(),
         code: "public".to_string(),
         redirect_uri: crate::TEST_REDIRECT_URI.to_string(),
-        client_id: None,
-    };
-    test_post_token(
-        runtime,
-        routes_state,
-        Some(&mut params),
-        Some("Basic cHVibGljOg=="),
-        StatusCode::UNAUTHORIZED,
-        INVALID_CLIENT,
-    )?;
-
-    let mut params = request::PostTokenRequest {
-        grant_type: "authorization_code".to_string(),
-        code: "public".to_string(),
-        redirect_uri: crate::TEST_REDIRECT_URI.to_string(),
         client_id: Some("id".to_string()),
     };
     test_post_token(

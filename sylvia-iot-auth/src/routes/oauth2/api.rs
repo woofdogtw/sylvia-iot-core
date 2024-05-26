@@ -10,9 +10,8 @@ use chrono::{TimeDelta, Utc};
 use log::{error, warn};
 use oxide_auth::{
     code_grant::{
-        accesstoken::{Error as AccessTokenError, Request, TokenResponse},
-        authorization::Error as AuthorizationError,
-        authorization::Request as OxideAuthorizationRequest,
+        accesstoken::{Authorization, Error as AccessTokenError, Request, TokenResponse},
+        authorization::{Error as AuthorizationError, Request as OxideAuthorizationRequest},
         refresh::Error as RefreshTokenError,
     },
     primitives::{
@@ -423,29 +422,30 @@ async fn client_credentials_token(
     endpoint: &mut Endpoint,
 ) -> Response {
     // Validate the client.
-    let client = match req.authorization() {
-        None => return resp_invalid_request(None),
-        Some(auth) => {
-            let cond = ClientQueryCond {
-                client_id: Some(auth.0.as_ref()),
-                ..Default::default()
-            };
-            let client = match state.model.client().get(&cond).await {
-                Err(e) => return resp_temporary_unavailable(Some(format!("{}", e))),
-                Ok(client) => match client {
-                    None => return resp_invalid_client(None),
-                    Some(client) => client,
-                },
-            };
-            match client.client_secret.as_ref() {
-                None => return resp_invalid_client(None),
-                Some(secret) => match secret.as_bytes().eq(auth.1.as_ref()) {
-                    false => return resp_invalid_client(None),
-                    true => client,
-                },
-            }
-        }
+    let (client_id, client_secret) = match req.authorization() {
+        Authorization::None => return resp_invalid_request(None),
+        Authorization::Username(_) => return resp_invalid_client(None),
+        Authorization::UsernamePassword(user, pass) => (user, pass),
+        _ => return resp_invalid_request(None),
     };
+    let cond = ClientQueryCond {
+        client_id: Some(client_id.as_ref()),
+        ..Default::default()
+    };
+    let client = match state.model.client().get(&cond).await {
+        Err(e) => return resp_temporary_unavailable(Some(format!("{}", e))),
+        Ok(client) => match client {
+            None => return resp_invalid_client(None),
+            Some(client) => client,
+        },
+    };
+    match client.client_secret.as_ref() {
+        None => return resp_invalid_client(None),
+        Some(secret) => match secret.as_bytes().eq(client_secret.as_ref()) {
+            false => return resp_invalid_client(None),
+            true => (),
+        },
+    }
 
     // Reuse the issuer to generate tokens.
     let grant = Grant {
