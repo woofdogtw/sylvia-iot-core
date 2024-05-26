@@ -9,7 +9,7 @@ use axum::{
 };
 use base64::{engine::general_purpose, Engine};
 use oxide_auth::code_grant::{
-    accesstoken::Request as OxideAccessTokenRequest,
+    accesstoken::{Authorization, Request as OxideAccessTokenRequest},
     authorization::Request as OxideAuthorizationRequest,
     refresh::Request as OxideRefreshTokenRequest,
 };
@@ -224,10 +224,16 @@ impl OxideAccessTokenRequest for AccessTokenRequest {
         }
     }
 
-    fn authorization(&self) -> Option<(Cow<str>, Cow<[u8]>)> {
+    fn authorization(&self) -> Authorization {
         match self.authorization.as_ref() {
-            None => None,
-            Some(auth) => Some((Cow::from(auth.0.as_str()), Cow::from(auth.1.as_slice()))),
+            None => Authorization::None,
+            Some(auth) => match auth.1.len() {
+                0 => Authorization::Username(Cow::from(auth.0.as_str())),
+                _ => Authorization::UsernamePassword(
+                    Cow::from(auth.0.as_str()),
+                    Cow::from(auth.1.as_slice()),
+                ),
+            },
         }
     }
 

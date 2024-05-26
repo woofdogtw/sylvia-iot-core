@@ -11,7 +11,7 @@ use std::{
     process::Command,
 };
 
-use chrono::DateTime;
+use chrono::NaiveDateTime;
 use ipnet::Ipv4Net;
 use serde::{Deserialize, Serialize};
 use shell_escape;
@@ -146,6 +146,7 @@ const NM_FIELDS: &'static str = "connection.autoconnect,connection.type,\
     802-11-wireless.ssid,802-11-wireless.channel";
 const DHCPD_CONF_PATH: &'static str = "/etc/dhcp/dhcpd.conf";
 const DHCPD_LEASES_PATH: &'static str = "/var/lib/dhcp/dhcpd.leases";
+const DHCPD_LEASES_FMT: &'static str = "%Y/%m/%d %H:%M:%S";
 
 /// Get WAN interface configurations.
 pub fn get_wan_conf(wan_id: &str) -> Result<Option<(WanConf, WanConn4)>, IoError> {
@@ -436,8 +437,8 @@ pub fn get_dhcp_leases() -> Result<Vec<DhcpLease>, IoError> {
                 None => continue,
                 Some(v) => dt_str.push_str(v),
             }
-            if let Ok(dt) = DateTime::parse_from_rfc3339(dt_str.as_str()) {
-                new_lease.starts = Some(strings::time_str(&dt.into()));
+            if let Ok(dt) = NaiveDateTime::parse_from_str(dt_str.as_str(), DHCPD_LEASES_FMT) {
+                new_lease.starts = Some(strings::time_str(&dt.and_utc()));
             }
         } else if line.starts_with("  ends ") && line.ends_with(";") {
             let content = line.strip_prefix("  ends ").unwrap();
@@ -456,8 +457,8 @@ pub fn get_dhcp_leases() -> Result<Vec<DhcpLease>, IoError> {
                 None => continue,
                 Some(v) => dt_str.push_str(v),
             }
-            if let Ok(dt) = DateTime::parse_from_rfc3339(dt_str.as_str()) {
-                new_lease.ends = Some(strings::time_str(&dt.into()));
+            if let Ok(dt) = NaiveDateTime::parse_from_str(dt_str.as_str(), DHCPD_LEASES_FMT) {
+                new_lease.ends = Some(strings::time_str(&dt.and_utc()));
             }
         } else if line.starts_with("  hardware ethernet ") && line.ends_with(";") {
             let content = line.strip_prefix("  hardware ethernet ").unwrap();
