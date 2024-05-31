@@ -1,6 +1,6 @@
 # What is Sylvia-IoT?
 
-**Sylvia-IoT** is an Internet of Things (IoT) platform primarily designed to forward device messages
+**Sylvia-IoT** is an IoT (Internet of Things) platform primarily designed to forward device messages
 to applications or enable applications to send commands to devices.
 
 ![Introduction](intro.svg)

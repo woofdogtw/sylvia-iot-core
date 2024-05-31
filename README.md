@@ -2,9 +2,9 @@
 [![Docker](https://img.shields.io/docker/v/woofdogtw/sylvia-iot-core?label=docker&logo=docker)](https://hub.docker.com/r/woofdogtw/sylvia-iot-core)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-# Sylvia-IoT: An Internet of Things Platform
+# Sylvia-IoT: An Open Source IoT Platform
 
-**Sylvia-IoT** is an Internet of Things (IoT) platform primarily designed to forward device messages
+**Sylvia-IoT** is an open source IoT (Internet of Things) platform primarily designed to forward device messages
 to applications or enable applications to send commands to devices.
 
 ![Introduction](documentation/book/src/intro/intro.svg)
