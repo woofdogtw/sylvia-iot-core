@@ -11,13 +11,16 @@ pub struct GetTokenInfo {
 #[derive(Deserialize)]
 pub struct TokenInfo {
     #[serde(rename = "userId")]
-    pub user_id: String,
-    pub account: String,
-    pub name: String,
+    pub _user_id: String,
+    #[serde(rename = "account")]
+    pub _account: String,
+    #[serde(rename = "name")]
+    pub _name: String,
     pub roles: HashMap<String, bool>,
     #[serde(rename = "clientId")]
-    pub client_id: String,
-    pub scopes: Vec<String>,
+    pub _client_id: String,
+    #[serde(rename = "scopes")]
+    pub _scopes: Vec<String>,
 }
 
 #[derive(Deserialize)]
@@ -181,21 +184,23 @@ pub struct GetDevice {
 #[derive(Deserialize)]
 pub struct Device {
     #[serde(rename = "deviceId")]
-    pub device_id: String,
+    pub _device_id: String,
     #[serde(rename = "unitId")]
-    pub unit_id: String,
+    pub _unit_id: String,
     #[serde(rename = "unitCode")]
-    pub unit_code: Option<String>,
+    pub _unit_code: Option<String>,
     #[serde(rename = "networkId")]
-    pub network_id: String,
+    pub _network_id: String,
     #[serde(rename = "networkCode")]
-    pub network_code: String,
+    pub _network_code: String,
     #[serde(rename = "networkAddr")]
     pub network_addr: String,
     #[serde(rename = "createdAt")]
-    pub created_at: String,
+    pub _created_at: String,
     #[serde(rename = "modifiedAt")]
-    pub modified_at: String,
-    pub name: String,
-    pub info: Map<String, Value>,
+    pub _modified_at: String,
+    #[serde(rename = "name")]
+    pub _name: String,
+    #[serde(rename = "info")]
+    pub _info: Map<String, Value>,
 }

@@ -39,20 +39,20 @@ use crate::{TestState, WAIT_COUNT, WAIT_TICK};
 #[derive(Debug, Deserialize)]
 pub struct AppUlData {
     #[serde(rename = "dataId")]
-    pub data_id: String,
+    pub _data_id: String,
     pub time: String,
     #[serde(rename = "pub")]
-    pub publish: String,
+    pub _publish: String,
     #[serde(rename = "deviceId")]
-    pub device_id: String,
+    pub _device_id: String,
     #[serde(rename = "networkId")]
-    pub network_id: String,
+    pub _network_id: String,
     #[serde(rename = "networkCode")]
-    pub network_code: String,
+    pub _network_code: String,
     #[serde(rename = "networkAddr")]
     pub network_addr: String,
     #[serde(rename = "isPublic")]
-    pub is_public: bool,
+    pub _is_public: bool,
     pub profile: String,
     pub data: String,
     pub extension: Option<Map<String, Value>>,
@@ -91,7 +91,8 @@ pub struct AppDlDataResult {
     #[serde(rename = "dataId")]
     pub data_id: String,
     pub status: isize,
-    pub message: Option<String>,
+    #[serde(rename = "message")]
+    pub _message: Option<String>,
 }
 
 /// Uplink data from network to broker.
@@ -113,10 +114,11 @@ pub struct NetDlData {
     #[serde(rename = "pub")]
     pub publish: String,
     #[serde(rename = "expiresIn")]
-    pub expires_in: i64,
+    pub _expires_in: i64,
     #[serde(rename = "networkAddr")]
     pub network_addr: String,
-    pub data: String,
+    #[serde(rename = "data")]
+    pub _data: String,
     pub extension: Option<Map<String, Value>>,
 }
 

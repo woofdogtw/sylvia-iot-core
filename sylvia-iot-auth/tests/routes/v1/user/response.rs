@@ -72,7 +72,8 @@ pub struct GetAdminUserListData {
         with = "serde_with::rust::double_option"
     )]
     pub disabled_at: Option<Option<String>>,
-    pub roles: HashMap<String, bool>,
+    #[serde(rename = "roles")]
+    pub _roles: HashMap<String, bool>,
     pub name: String,
     pub info: Map<String, Value>,
 }

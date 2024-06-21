@@ -22,17 +22,20 @@ pub struct GetListData {
     pub data_id: String,
     pub proc: String,
     #[serde(rename = "unitCode")]
-    pub unit_code: Option<String>,
+    pub _unit_code: Option<String>,
     #[serde(rename = "networkCode")]
-    pub network_code: String,
+    pub _network_code: String,
     #[serde(rename = "networkAddr")]
-    pub network_addr: String,
+    pub _network_addr: String,
     #[serde(rename = "unitId")]
-    pub unit_id: Option<String>,
+    pub _unit_id: Option<String>,
     #[serde(rename = "deviceId")]
-    pub device_id: Option<String>,
+    pub _device_id: Option<String>,
     pub time: String,
-    pub profile: String,
-    pub data: String,
-    pub extension: Option<Map<String, Value>>,
+    #[serde(rename = "profile")]
+    pub _profile: String,
+    #[serde(rename = "data")]
+    pub _data: String,
+    #[serde(rename = "extension")]
+    pub _extension: Option<Map<String, Value>>,
 }

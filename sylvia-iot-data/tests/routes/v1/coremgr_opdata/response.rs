@@ -25,19 +25,23 @@ pub struct GetListData {
     #[serde(rename = "resTime")]
     pub res_time: String,
     #[serde(rename = "latencyMs")]
-    pub latency_ms: i64,
-    pub status: i32,
+    pub _latency_ms: i64,
+    #[serde(rename = "status")]
+    pub _status: i32,
     #[serde(rename = "sourceIp")]
-    pub source_ip: String,
-    pub method: String,
-    pub path: String,
-    pub body: Option<Map<String, Value>>,
+    pub _source_ip: String,
+    #[serde(rename = "method")]
+    pub _method: String,
+    #[serde(rename = "path")]
+    pub _path: String,
+    #[serde(rename = "body")]
+    pub _body: Option<Map<String, Value>>,
     #[serde(rename = "userId")]
-    pub user_id: String,
+    pub _user_id: String,
     #[serde(rename = "clientId")]
-    pub client_id: String,
+    pub _client_id: String,
     #[serde(rename = "errCode")]
-    pub err_code: Option<String>,
+    pub _err_code: Option<String>,
     #[serde(rename = "errMessage")]
-    pub err_message: Option<String>,
+    pub _err_message: Option<String>,
 }
