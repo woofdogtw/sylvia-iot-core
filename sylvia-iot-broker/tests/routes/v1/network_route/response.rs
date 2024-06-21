@@ -31,13 +31,13 @@ pub struct GetNetworkRouteListData {
     #[serde(rename = "routeId")]
     pub route_id: String,
     #[serde(rename = "unitId")]
-    pub unit_id: String,
+    pub _unit_id: String,
     #[serde(rename = "applicationId")]
-    pub application_id: String,
+    pub _application_id: String,
     #[serde(rename = "applicationCode")]
     pub application_code: String,
     #[serde(rename = "networkId")]
-    pub network_id: String,
+    pub _network_id: String,
     #[serde(rename = "networkCode")]
     pub network_code: String,
     #[serde(rename = "createdAt")]

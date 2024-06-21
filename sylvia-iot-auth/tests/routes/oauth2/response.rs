@@ -3,13 +3,16 @@ use serde::Deserialize;
 #[derive(Deserialize)]
 pub struct OAuth2Error {
     pub error: String,
-    pub error_description: Option<String>,
+    #[serde(rename = "error_description")]
+    pub _error_description: Option<String>,
 }
 
 #[derive(Deserialize)]
 pub struct PostLoginLocation {
-    pub state: String,
-    pub session_id: String,
+    #[serde(rename = "state")]
+    pub _state: String,
+    #[serde(rename = "session_id")]
+    pub _session_id: String,
 }
 
 #[derive(Deserialize)]
