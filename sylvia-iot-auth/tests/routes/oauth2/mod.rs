@@ -119,7 +119,7 @@ fn after_all_fn(state: &mut HashMap<&'static str, TestState>) -> () {
             Err(_) => return (),
             Ok(conn) => conn,
         };
-        if let Err(e) = conn.drop(None).await {
+        if let Err(e) = conn.drop().await {
             println!("remove database error: {}", e);
         }
     });

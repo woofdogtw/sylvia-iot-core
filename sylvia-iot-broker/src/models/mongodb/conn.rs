@@ -2,10 +2,7 @@ use std::{error::Error as StdError, sync::Arc};
 
 use log::{error, info};
 use mongodb::{
-    event::cmap::{
-        CmapEventHandler, ConnectionClosedEvent, ConnectionCreatedEvent, ConnectionReadyEvent,
-        PoolClearedEvent, PoolClosedEvent, PoolCreatedEvent, PoolReadyEvent,
-    },
+    event::{cmap::CmapEvent, EventHandler},
     options::ClientOptions,
     Client, Database,
 };
@@ -20,40 +17,55 @@ pub struct Options {
     pub pool_size: Option<u32>,
 }
 
-struct ConnectionHandler;
-
 /// Connect to MongoDB.
 pub async fn connect(options: &Options) -> Result<Database, Box<dyn StdError>> {
     let mut opts = ClientOptions::parse(&options.url).await?;
     if let Some(pool_size) = options.pool_size {
         opts.max_pool_size = Some(pool_size);
     }
-    opts.cmap_event_handler = Some(Arc::new(ConnectionHandler));
+    opts.cmap_event_handler = Some(EventHandler::Callback(Arc::new(event_handler)));
     let client = Client::with_options(opts)?;
-    client.list_database_names(None, None).await?;
+    client.list_database_names().await?;
     Ok(client.database(&options.db))
 }
 
-impl CmapEventHandler for ConnectionHandler {
-    fn handle_pool_created_event(&self, _event: PoolCreatedEvent) {
-        info!("[handle_pool_created_event]");
-    }
-    fn handle_pool_ready_event(&self, _event: PoolReadyEvent) {
-        info!("[handle_pool_ready_event]");
-    }
-    fn handle_pool_cleared_event(&self, _event: PoolClearedEvent) {
-        error!("[handle_pool_cleared_event]");
-    }
-    fn handle_pool_closed_event(&self, _event: PoolClosedEvent) {
-        error!("[handle_pool_closed_event]");
-    }
-    fn handle_connection_created_event(&self, _event: ConnectionCreatedEvent) {
-        info!("[handle_connection_created_event]");
-    }
-    fn handle_connection_ready_event(&self, _event: ConnectionReadyEvent) {
-        info!("[handle_connection_ready_event]");
-    }
-    fn handle_connection_closed_event(&self, _event: ConnectionClosedEvent) {
-        error!("[handle_connection_closed_event]");
+fn event_handler(ev: CmapEvent) {
+    match ev {
+        CmapEvent::PoolCreated(_ev) => {
+            info!("[CmapEvent::PoolCreated]");
+        }
+        CmapEvent::PoolReady(_ev) => {
+            info!("[CmapEvent::PoolReady]");
+        }
+        CmapEvent::PoolCleared(_ev) => {
+            error!("[CmapEvent::PoolCleared]");
+        }
+        CmapEvent::PoolClosed(_ev) => {
+            error!("[CmapEvent::PoolClosed]");
+        }
+        CmapEvent::ConnectionCreated(_ev) => {
+            info!("[CmapEvent::ConnectionCreated]");
+        }
+        CmapEvent::ConnectionReady(_ev) => {
+            info!("[CmapEvent::ConnectionReady]");
+        }
+        CmapEvent::ConnectionClosed(_ev) => {
+            error!("[CmapEvent::ConnectionClosed]");
+        }
+        CmapEvent::ConnectionCheckoutStarted(_ev) => {
+            info!("[CmapEvent::ConnectionCheckoutStarted]");
+        }
+        CmapEvent::ConnectionCheckoutFailed(_ev) => {
+            error!("[CmapEvent::ConnectionCheckoutFailed]");
+        }
+        CmapEvent::ConnectionCheckedOut(_ev) => {
+            info!("[CmapEvent::ConnectionCheckedOut]");
+        }
+        CmapEvent::ConnectionCheckedIn(_ev) => {
+            info!("[CmapEvent::ConnectionCheckedIn]");
+        }
+        _ => {
+            error!("[CmapEvent::Unknown]");
+        }
     }
 }

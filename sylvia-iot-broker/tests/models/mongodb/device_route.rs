@@ -45,7 +45,7 @@ pub fn after_each_fn(state: &mut HashMap<&'static str, TestState>) -> () {
     let conn = state.mongodb.as_ref().unwrap().get_connection();
     let _ = runtime.block_on(async {
         conn.collection::<Schema>(COL_NAME)
-            .delete_many(Document::new(), None)
+            .delete_many(Document::new())
             .await
     });
 }
@@ -84,11 +84,9 @@ pub fn get(context: &mut SpecContext<TestState>) -> Result<(), String> {
         created_at: now.into(),
         modified_at: now.into(),
     };
-    if let Err(e) = runtime.block_on(async {
-        conn.collection::<Schema>(COL_NAME)
-            .insert_one(item, None)
-            .await
-    }) {
+    if let Err(e) =
+        runtime.block_on(async { conn.collection::<Schema>(COL_NAME).insert_one(item).await })
+    {
         return Err(format!("insert_one() error: {}", e));
     }
 

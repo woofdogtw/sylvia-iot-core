@@ -3,8 +3,8 @@ use std::{error::Error as StdError, sync::Arc};
 use async_trait::async_trait;
 use futures::TryStreamExt;
 use mongodb::{
+    action::Find,
     bson::{self, doc, DateTime, Document, Regex},
-    options::FindOptions,
     Cursor as MongoDbCursor, Database,
 };
 use serde::{Deserialize, Serialize};
@@ -73,7 +73,7 @@ impl UnitModel for Model {
             "createIndexes": COL_NAME,
             "indexes": indexes,
         };
-        self.conn.run_command(command, None).await?;
+        self.conn.run_command(command).await?;
         Ok(())
     }
 
@@ -82,7 +82,7 @@ impl UnitModel for Model {
         let count = self
             .conn
             .collection::<Schema>(COL_NAME)
-            .count_documents(filter, None)
+            .count_documents(filter)
             .await?;
         Ok(count)
     }
@@ -95,11 +95,8 @@ impl UnitModel for Model {
         let mut cursor = match cursor {
             None => {
                 let filter = get_list_query_filter(opts.cond);
-                let options = get_find_options(opts);
                 Box::new(DbCursor::new(
-                    self.conn
-                        .collection::<Schema>(COL_NAME)
-                        .find(filter, options)
+                    build_find_options(opts, self.conn.collection::<Schema>(COL_NAME).find(filter))
                         .await?,
                 ))
             }
@@ -125,7 +122,7 @@ impl UnitModel for Model {
         let mut cursor = self
             .conn
             .collection::<Schema>(COL_NAME)
-            .find(filter, None)
+            .find(filter)
             .await?;
         if let Some(item) = cursor.try_next().await? {
             return Ok(Some(Unit {
@@ -155,7 +152,7 @@ impl UnitModel for Model {
         };
         self.conn
             .collection::<Schema>(COL_NAME)
-            .insert_one(item, None)
+            .insert_one(item)
             .await?;
         Ok(())
     }
@@ -164,7 +161,7 @@ impl UnitModel for Model {
         let filter = get_query_filter(cond);
         self.conn
             .collection::<Schema>(COL_NAME)
-            .delete_many(filter, None)
+            .delete_many(filter)
             .await?;
         Ok(())
     }
@@ -178,7 +175,7 @@ impl UnitModel for Model {
         if let Some(updates) = get_update_doc(updates) {
             self.conn
                 .collection::<Schema>(COL_NAME)
-                .update_one(filter, updates, None)
+                .update_one(filter, updates)
                 .await?;
         }
         return Ok(());
@@ -268,14 +265,16 @@ fn get_list_query_filter(cond: &ListQueryCond) -> Document {
 }
 
 /// Transforms model options to the options.
-fn get_find_options(opts: &ListOptions) -> FindOptions {
-    let mut options = FindOptions::builder().build();
+fn build_find_options<'a, T>(opts: &ListOptions, mut find: Find<'a, T>) -> Find<'a, T>
+where
+    T: Send + Sync,
+{
     if let Some(offset) = opts.offset {
-        options.skip = Some(offset);
+        find = find.skip(offset);
     }
     if let Some(limit) = opts.limit {
         if limit > 0 {
-            options.limit = Some(limit as i64);
+            find = find.limit(limit as i64);
         }
     }
     if let Some(sort_list) = opts.sort.as_ref() {
@@ -294,10 +293,10 @@ fn get_find_options(opts: &ListOptions) -> FindOptions {
                     sort_opts.insert(key.to_string(), -1);
                 }
             }
-            options.sort = Some(sort_opts);
+            find = find.sort(sort_opts);
         }
     }
-    options
+    find
 }
 
 /// Transforms query conditions to the MongoDB document.

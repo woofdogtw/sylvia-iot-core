@@ -62,7 +62,7 @@ impl AuthorizationCodeModel for Model {
             "createIndexes": COL_NAME,
             "indexes": indexes,
         };
-        self.conn.run_command(command, None).await?;
+        self.conn.run_command(command).await?;
         Ok(())
     }
 
@@ -70,7 +70,7 @@ impl AuthorizationCodeModel for Model {
         let mut cursor = self
             .conn
             .collection::<Schema>(COL_NAME)
-            .find(doc! {"code": code}, None)
+            .find(doc! {"code": code})
             .await?;
         if let Some(item) = cursor.try_next().await? {
             return Ok(Some(AuthorizationCode {
@@ -100,7 +100,7 @@ impl AuthorizationCodeModel for Model {
         };
         self.conn
             .collection::<Schema>(COL_NAME)
-            .insert_one(item, None)
+            .insert_one(item)
             .await?;
         Ok(())
     }
@@ -109,7 +109,7 @@ impl AuthorizationCodeModel for Model {
         let filter = get_query_filter(cond);
         self.conn
             .collection::<Schema>(COL_NAME)
-            .delete_many(filter, None)
+            .delete_many(filter)
             .await?;
         Ok(())
     }

@@ -46,7 +46,7 @@ pub fn after_each_fn(state: &mut HashMap<&'static str, TestState>) -> () {
     let conn = state.mongodb.as_ref().unwrap().get_connection();
     let _ = runtime.block_on(async {
         conn.collection::<Schema>(COL_NAME)
-            .delete_many(Document::new(), None)
+            .delete_many(Document::new())
             .await
     });
 }
@@ -238,7 +238,7 @@ impl<'a> common_test::Db for Db<'a> {
         let mut cursor = self
             .conn
             .collection::<Schema>(COL_NAME)
-            .find(filter, None)
+            .find(filter)
             .await?;
         if let Some(item) = cursor.try_next().await? {
             return Ok(Some(ApplicationDlData {

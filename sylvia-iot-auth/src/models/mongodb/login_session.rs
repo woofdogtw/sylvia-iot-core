@@ -55,7 +55,7 @@ impl LoginSessionModel for Model {
             "createIndexes": COL_NAME,
             "indexes": indexes,
         };
-        self.conn.run_command(command, None).await?;
+        self.conn.run_command(command).await?;
         Ok(())
     }
 
@@ -63,7 +63,7 @@ impl LoginSessionModel for Model {
         let mut cursor = self
             .conn
             .collection::<Schema>(COL_NAME)
-            .find(doc! {"sessionId": session_id}, None)
+            .find(doc! {"sessionId": session_id})
             .await?;
         if let Some(item) = cursor.try_next().await? {
             return Ok(Some(LoginSession {
@@ -87,7 +87,7 @@ impl LoginSessionModel for Model {
         };
         self.conn
             .collection::<Schema>(COL_NAME)
-            .insert_one(item, None)
+            .insert_one(item)
             .await?;
         Ok(())
     }
@@ -96,7 +96,7 @@ impl LoginSessionModel for Model {
         let filter = get_query_filter(cond);
         self.conn
             .collection::<Schema>(COL_NAME)
-            .delete_many(filter, None)
+            .delete_many(filter)
             .await?;
         Ok(())
     }

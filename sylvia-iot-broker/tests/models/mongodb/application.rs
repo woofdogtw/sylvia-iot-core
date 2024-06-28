@@ -38,7 +38,7 @@ pub fn after_each_fn(state: &mut HashMap<&'static str, TestState>) -> () {
     let conn = state.mongodb.as_ref().unwrap().get_connection();
     let _ = runtime.block_on(async {
         conn.collection::<Schema>(COL_NAME)
-            .delete_many(Document::new(), None)
+            .delete_many(Document::new())
             .await
     });
 }
@@ -74,11 +74,9 @@ pub fn get_by_application_id(context: &mut SpecContext<TestState>) -> Result<(),
         name: "".to_string(),
         info: Document::new(),
     };
-    if let Err(e) = runtime.block_on(async {
-        conn.collection::<Schema>(COL_NAME)
-            .insert_one(item, None)
-            .await
-    }) {
+    if let Err(e) =
+        runtime.block_on(async { conn.collection::<Schema>(COL_NAME).insert_one(item).await })
+    {
         return Err(format!("insert_one() none error: {}", e));
     }
 
@@ -133,11 +131,9 @@ pub fn get_by_application_id(context: &mut SpecContext<TestState>) -> Result<(),
             }
         },
     };
-    if let Err(e) = runtime.block_on(async {
-        conn.collection::<Schema>(COL_NAME)
-            .insert_one(item, None)
-            .await
-    }) {
+    if let Err(e) =
+        runtime.block_on(async { conn.collection::<Schema>(COL_NAME).insert_one(item).await })
+    {
         return Err(format!("insert_one() some error: {}", e));
     }
 
@@ -228,11 +224,9 @@ pub fn get_by_code(context: &mut SpecContext<TestState>) -> Result<(), String> {
         name: "name_get".to_string(),
         info: Document::new(),
     };
-    if let Err(e) = runtime.block_on(async {
-        conn.collection::<Schema>(COL_NAME)
-            .insert_one(item, None)
-            .await
-    }) {
+    if let Err(e) =
+        runtime.block_on(async { conn.collection::<Schema>(COL_NAME).insert_one(item).await })
+    {
         return Err(format!("insert_one() error: {}", e));
     }
 
@@ -293,11 +287,9 @@ pub fn get_by_unit_application(context: &mut SpecContext<TestState>) -> Result<(
         name: "name_get".to_string(),
         info: Document::new(),
     };
-    if let Err(e) = runtime.block_on(async {
-        conn.collection::<Schema>(COL_NAME)
-            .insert_one(item, None)
-            .await
-    }) {
+    if let Err(e) =
+        runtime.block_on(async { conn.collection::<Schema>(COL_NAME).insert_one(item).await })
+    {
         return Err(format!("insert_one() get error: {}", e));
     }
     let item = Schema {
@@ -311,11 +303,9 @@ pub fn get_by_unit_application(context: &mut SpecContext<TestState>) -> Result<(
         name: "name_get".to_string(),
         info: Document::new(),
     };
-    if let Err(e) = runtime.block_on(async {
-        conn.collection::<Schema>(COL_NAME)
-            .insert_one(item, None)
-            .await
-    }) {
+    if let Err(e) =
+        runtime.block_on(async { conn.collection::<Schema>(COL_NAME).insert_one(item).await })
+    {
         return Err(format!("insert_one() not-get error: {}", e));
     }
     let item = Schema {
@@ -329,11 +319,9 @@ pub fn get_by_unit_application(context: &mut SpecContext<TestState>) -> Result<(
         name: "name_get".to_string(),
         info: Document::new(),
     };
-    if let Err(e) = runtime.block_on(async {
-        conn.collection::<Schema>(COL_NAME)
-            .insert_one(item, None)
-            .await
-    }) {
+    if let Err(e) =
+        runtime.block_on(async { conn.collection::<Schema>(COL_NAME).insert_one(item).await })
+    {
         return Err(format!("insert_one() get other error: {}", e));
     }
 
