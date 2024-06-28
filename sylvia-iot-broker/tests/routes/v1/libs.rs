@@ -32,31 +32,31 @@ pub fn clear_all_data(runtime: &Runtime, state: &TestState) -> () {
             let conn = model.get_connection();
             let _ = conn
                 .collection::<Doc>(UNIT_NAME)
-                .delete_many(Document::new(), None)
+                .delete_many(Document::new())
                 .await;
             let _ = conn
                 .collection::<Doc>(APPLICATION_NAME)
-                .delete_many(Document::new(), None)
+                .delete_many(Document::new())
                 .await;
             let _ = conn
                 .collection::<Doc>(NETWORK_NAME)
-                .delete_many(Document::new(), None)
+                .delete_many(Document::new())
                 .await;
             let _ = conn
                 .collection::<Doc>(DEVICE_NAME)
-                .delete_many(Document::new(), None)
+                .delete_many(Document::new())
                 .await;
             let _ = conn
                 .collection::<Doc>(NETWORK_ROUTE_NAME1)
-                .delete_many(Document::new(), None)
+                .delete_many(Document::new())
                 .await;
             let _ = conn
                 .collection::<Doc>(DEVICE_ROUTE_NAME1)
-                .delete_many(Document::new(), None)
+                .delete_many(Document::new())
                 .await;
             let _ = conn
                 .collection::<Doc>(DLDATA_BUFFER_NAME1)
-                .delete_many(Document::new(), None)
+                .delete_many(Document::new())
                 .await;
         });
     }

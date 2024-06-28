@@ -149,7 +149,7 @@ fn collections_after_all(state: &mut HashMap<&'static str, TestState>) -> () {
             .as_ref()
             .unwrap()
             .get_connection()
-            .drop(None)
+            .drop()
             .await
     });
 }

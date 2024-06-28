@@ -37,7 +37,7 @@ pub fn after_each_fn(state: &mut HashMap<&'static str, TestState>) -> () {
     let conn = state.mongodb.as_ref().unwrap().get_connection();
     let _ = runtime.block_on(async {
         conn.collection::<Schema>(COL_NAME)
-            .delete_many(Document::new(), None)
+            .delete_many(Document::new())
             .await
     });
 }
@@ -73,11 +73,9 @@ pub fn get_by_client_id(context: &mut SpecContext<TestState>) -> Result<(), Stri
         name: "".to_string(),
         image_url: None,
     };
-    if let Err(e) = runtime.block_on(async {
-        conn.collection::<Schema>(COL_NAME)
-            .insert_one(item, None)
-            .await
-    }) {
+    if let Err(e) =
+        runtime.block_on(async { conn.collection::<Schema>(COL_NAME).insert_one(item).await })
+    {
         return Err(format!("insert_one() none error: {}", e));
     }
 
@@ -125,11 +123,9 @@ pub fn get_by_client_id(context: &mut SpecContext<TestState>) -> Result<(), Stri
         name: "name_get".to_string(),
         image_url: Some("image_url_get".to_string()),
     };
-    if let Err(e) = runtime.block_on(async {
-        conn.collection::<Schema>(COL_NAME)
-            .insert_one(item, None)
-            .await
-    }) {
+    if let Err(e) =
+        runtime.block_on(async { conn.collection::<Schema>(COL_NAME).insert_one(item).await })
+    {
         return Err(format!("insert_one() some error: {}", e));
     }
 
@@ -178,11 +174,9 @@ pub fn get_by_user_client(context: &mut SpecContext<TestState>) -> Result<(), St
         name: "name_get".to_string(),
         image_url: None,
     };
-    if let Err(e) = runtime.block_on(async {
-        conn.collection::<Schema>(COL_NAME)
-            .insert_one(item, None)
-            .await
-    }) {
+    if let Err(e) =
+        runtime.block_on(async { conn.collection::<Schema>(COL_NAME).insert_one(item).await })
+    {
         return Err(format!("insert_one() get error: {}", e));
     }
     let item = Schema {
@@ -196,11 +190,9 @@ pub fn get_by_user_client(context: &mut SpecContext<TestState>) -> Result<(), St
         name: "name_get".to_string(),
         image_url: None,
     };
-    if let Err(e) = runtime.block_on(async {
-        conn.collection::<Schema>(COL_NAME)
-            .insert_one(item, None)
-            .await
-    }) {
+    if let Err(e) =
+        runtime.block_on(async { conn.collection::<Schema>(COL_NAME).insert_one(item).await })
+    {
         return Err(format!("insert_one() not-get error: {}", e));
     }
     let item = Schema {
@@ -214,11 +206,9 @@ pub fn get_by_user_client(context: &mut SpecContext<TestState>) -> Result<(), St
         name: "name_get".to_string(),
         image_url: None,
     };
-    if let Err(e) = runtime.block_on(async {
-        conn.collection::<Schema>(COL_NAME)
-            .insert_one(item, None)
-            .await
-    }) {
+    if let Err(e) =
+        runtime.block_on(async { conn.collection::<Schema>(COL_NAME).insert_one(item).await })
+    {
         return Err(format!("insert_one() other error: {}", e));
     }
 

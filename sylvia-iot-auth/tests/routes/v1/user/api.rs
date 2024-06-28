@@ -68,11 +68,11 @@ pub fn after_each_fn(state: &mut HashMap<&'static str, TestState>) -> () {
             let conn = model.get_connection();
             let _ = conn
                 .collection::<Doc>(USER_NAME)
-                .delete_many(Document::new(), None)
+                .delete_many(Document::new())
                 .await;
             let _ = conn
                 .collection::<Doc>(CLIENT_NAME)
-                .delete_many(Document::new(), None)
+                .delete_many(Document::new())
                 .await;
         });
     }

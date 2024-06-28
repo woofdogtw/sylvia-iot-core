@@ -64,7 +64,7 @@ impl AccessTokenModel for Model {
             "createIndexes": COL_NAME,
             "indexes": indexes,
         };
-        self.conn.run_command(command, None).await?;
+        self.conn.run_command(command).await?;
         Ok(())
     }
 
@@ -72,7 +72,7 @@ impl AccessTokenModel for Model {
         let mut cursor = self
             .conn
             .collection::<Schema>(COL_NAME)
-            .find(doc! {"accessToken": access_token}, None)
+            .find(doc! {"accessToken": access_token})
             .await?;
         if let Some(item) = cursor.try_next().await? {
             return Ok(Some(AccessToken {
@@ -104,7 +104,7 @@ impl AccessTokenModel for Model {
         };
         self.conn
             .collection::<Schema>(COL_NAME)
-            .insert_one(item, None)
+            .insert_one(item)
             .await?;
         Ok(())
     }
@@ -113,7 +113,7 @@ impl AccessTokenModel for Model {
         let filter = get_query_filter(cond);
         self.conn
             .collection::<Schema>(COL_NAME)
-            .delete_many(filter, None)
+            .delete_many(filter)
             .await?;
         Ok(())
     }

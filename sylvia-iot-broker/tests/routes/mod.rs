@@ -74,7 +74,7 @@ pub fn suite() -> Suite<TestState> {
             let runtime = state.runtime.as_ref().unwrap();
             if let Some(model) = state.mongodb.as_ref() {
                 runtime.block_on(async {
-                    if let Err(e) = model.get_connection().drop(None).await {
+                    if let Err(e) = model.get_connection().drop().await {
                         println!("remove mongodb database error: {}", e);
                     }
                 })

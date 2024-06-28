@@ -24,23 +24,23 @@ pub fn clear_all_data(runtime: &Runtime, state: &TestState) -> () {
             let conn = model.get_connection();
             let _ = conn
                 .collection::<Doc>(APP_DLDATA_NAME)
-                .delete_many(Document::new(), None)
+                .delete_many(Document::new())
                 .await;
             let _ = conn
                 .collection::<Doc>(APP_ULDATA_NAME)
-                .delete_many(Document::new(), None)
+                .delete_many(Document::new())
                 .await;
             let _ = conn
                 .collection::<Doc>(NET_DLDATA_NAME)
-                .delete_many(Document::new(), None)
+                .delete_many(Document::new())
                 .await;
             let _ = conn
                 .collection::<Doc>(NET_ULDATA_NAME)
-                .delete_many(Document::new(), None)
+                .delete_many(Document::new())
                 .await;
             let _ = conn
                 .collection::<Doc>(COREMGR_OPDATA_NAME)
-                .delete_many(Document::new(), None)
+                .delete_many(Document::new())
                 .await;
         });
     }

@@ -283,7 +283,7 @@ fn after_all_fn(state: &mut HashMap<&'static str, TestState>) -> () {
 
     if let Some(model) = state.mongodb.as_ref() {
         runtime.block_on(async {
-            if let Err(e) = model.get_connection().drop(None).await {
+            if let Err(e) = model.get_connection().drop().await {
                 println!("remove mongodb database error: {}", e);
             }
         })
