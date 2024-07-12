@@ -13,22 +13,22 @@ rust-version = "1.75"
 
 [dependencies]
 async-stream = "0.3.5"
-async-trait = "0.1.80"
+async-trait = "0.1.81"
 axum = "0.7.5"
 axum-prometheus = "0.6.1"
 axum-server = { version = "0.6.0", features = ["tls-rustls"] }
 bson = { version = "2.11.0", features = ["chrono-0_4"] }
 chrono = { version = "0.4.38", default-features = false, features = ["serde"] }
-clap = { version = "4.5.8", default-features = false, features = ["std", "help", "usage", "error-context"] }
+clap = { version = "4.5.9", default-features = false, features = ["std", "help", "usage", "error-context"] }
 futures = "0.3.30"
 general-mq = { path="../general-mq" }
 hex = "0.4.3"
 json5 = "0.4.1"
 log = "0.4.22"
 lru = "0.12.3"
-mongodb = "3.0.0"
+mongodb = "3.0.1"
 reqwest = { version = "0.12.5", default-features = false, features = ["json", "rustls-tls"] }
-serde = { version = "1.0.203", features = ["derive"] }
+serde = { version = "1.0.204", features = ["derive"] }
 serde_json = "1.0.120"
 sql-builder = "3.1.1"
 sqlx = { version = "0.7.4", default-features = false, features = ["macros", "runtime-tokio", "sqlite"] }
@@ -39,7 +39,7 @@ tower-http = { version = "0.5.2", default-features = false, features = ["cors", 
 url = "2.5.2"
 
 [dev-dependencies]
-axum-test = "15.2.0"
+axum-test = "15.3.0"
 laboratory = "2.0.0"
 serde_urlencoded = "0.7.1"
 sylvia-iot-auth = { path="../sylvia-iot-auth" }
