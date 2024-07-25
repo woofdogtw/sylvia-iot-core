@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.1.4 - 2024-07-26
+
+### Changed
+
+- Update Rust to 1.79.0 with GitHub Actions runner image 20240721.1.1.
+- Update dependencies.
+
+### Fixed
+
+- **broker**: Fix all device APIs by modify `profile` and `networkAddr` relative parameters to lowercase and case insensitive.
+- **corelib**: Fix user account E-mail address validation.
+
 ## 0.1.3 - 2024-05-27
 
 ### Changed

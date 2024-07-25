@@ -17,7 +17,7 @@ async-trait = "0.1.81"
 axum = "0.7.5"
 bytes = "1.6.1"
 chrono = { version = "0.4.38", default-features = false, features = ["serde"] }
-clap = { version = "4.5.9", default-features = false, features = [
+clap = { version = "4.5.11", default-features = false, features = [
     "std",
     "help",
     "usage",
@@ -40,7 +40,7 @@ url = "2.5.2"
 [dev-dependencies]
 axum-test = "15.3.0"
 laboratory = "2.0.0"
-tokio = { version = "1.38.1", features = ["rt-multi-thread"] }
+tokio = { version = "1.39.1", features = ["rt-multi-thread"] }
 
 [profile.release]
 codegen-units = 1

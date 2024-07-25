@@ -317,13 +317,14 @@ pub fn new_ctrl_receiver(state: &AppState, config: &CfgCtrl) -> Result<Queue, Bo
 pub async fn post_device(
     State(state): State<AppState>,
     Extension(token_info): Extension<GetTokenInfoData>,
-    Json(body): Json<request::PostDeviceBody>,
+    Json(mut body): Json<request::PostDeviceBody>,
 ) -> impl IntoResponse {
     const FN_NAME: &'static str = "post_device";
 
     let user_id = token_info.user_id.as_str();
     let roles = &token_info.roles;
 
+    body.data.network_addr = body.data.network_addr.trim().to_lowercase();
     if body.data.unit_id.len() == 0 {
         return Err(ErrResp::ErrParam(Some(
             "`unitId` must with at least one character".to_string(),
@@ -338,6 +339,7 @@ pub async fn post_device(
         )));
     }
     if let Some(profile) = body.data.profile.as_ref() {
+        let profile = profile.to_lowercase();
         if profile.len() > 0 && !strings::is_code(profile.as_str()) {
             return Err(ErrResp::ErrParam(Some(
                 "`profile` must be [A-Za-z0-9]{1}[A-Za-z0-9-_]*".to_string(),
@@ -389,12 +391,12 @@ pub async fn post_device(
         },
         network_id: network.network_id,
         network_code: network.code.clone(),
-        network_addr: body.data.network_addr.to_lowercase(),
+        network_addr: body.data.network_addr,
         created_at: now,
         modified_at: now,
         profile: match body.data.profile.as_ref() {
             None => "".to_string(),
-            Some(profile) => profile.clone(),
+            Some(profile) => profile.to_lowercase(),
         },
         name: match body.data.name.as_ref() {
             None => "".to_string(),
@@ -476,6 +478,7 @@ pub async fn post_device_bulk(
         ))));
     }
     if let Some(profile) = body.data.profile.as_ref() {
+        let profile = profile.to_lowercase();
         if profile.len() > 0 && !strings::is_code(profile.as_str()) {
             return Err(ErrResp::ErrParam(Some(
                 "`profile` must be [A-Za-z0-9]{1}[A-Za-z0-9-_]*".to_string(),
@@ -484,12 +487,13 @@ pub async fn post_device_bulk(
     }
     let mut addrs = vec![];
     for addr in body.data.network_addrs.iter() {
+        let addr = addr.trim().to_lowercase();
         if addr.len() == 0 {
             return Err(ErrResp::ErrParam(Some(
                 "`networkAddrs` must be non-empty address array".to_string(),
             )));
         }
-        addrs.push(addr.to_lowercase());
+        addrs.push(addr);
     }
     body.data.network_addrs = addrs;
     let unit_id = body.data.unit_id.as_str();
@@ -532,9 +536,9 @@ pub async fn post_device_bulk(
             modified_at: now,
             profile: match body.data.profile.as_ref() {
                 None => "".to_string(),
-                Some(profile) => profile.clone(),
+                Some(profile) => profile.to_lowercase(),
             },
-            name: network_addr.to_lowercase(),
+            name: network_addr.clone(),
             info: Map::new(),
         };
         devices.push(device);
@@ -569,7 +573,7 @@ pub async fn post_device_bulk(
         time: time_str(&Utc::now()),
         operation: msg_op.to_string(),
         new: NetCtrlAddrs {
-            network_addrs: body.data.network_addrs.clone(),
+            network_addrs: body.data.network_addrs,
         },
     };
     let _ = send_net_ctrl_message(FN_NAME, &msg, msg_op, &state, &mgr_key).await;
@@ -608,12 +612,13 @@ pub async fn post_device_bulk_del(
     }
     let mut addrs = vec![];
     for addr in body.data.network_addrs.iter() {
+        let addr = addr.trim().to_lowercase();
         if addr.len() == 0 {
             return Err(ErrResp::ErrParam(Some(
                 "`networkAddrs` must be non-empty address array".to_string(),
             )));
         }
-        addrs.push(addr.to_lowercase());
+        addrs.push(addr);
     }
     body.data.network_addrs = addrs;
     let unit_id = body.data.unit_id.as_str();
@@ -651,7 +656,7 @@ pub async fn post_device_bulk_del(
         time: time_str(&Utc::now()),
         operation: msg_op.to_string(),
         new: NetCtrlAddrs {
-            network_addrs: body.data.network_addrs.clone(),
+            network_addrs: body.data.network_addrs,
         },
     };
     let _ = send_net_ctrl_message(FN_NAME, &msg, msg_op, &state, &mgr_key).await;
@@ -663,13 +668,15 @@ pub async fn post_device_bulk_del(
 pub async fn post_device_range(
     State(state): State<AppState>,
     Extension(token_info): Extension<GetTokenInfoData>,
-    Json(body): Json<request::PostDeviceRangeBody>,
+    Json(mut body): Json<request::PostDeviceRangeBody>,
 ) -> impl IntoResponse {
     const FN_NAME: &'static str = "post_device_range";
 
     let user_id = token_info.user_id.as_str();
     let roles = &token_info.roles;
 
+    body.data.start_addr = body.data.start_addr.trim().to_lowercase();
+    body.data.end_addr = body.data.end_addr.trim().to_lowercase();
     if body.data.unit_id.len() == 0 {
         return Err(ErrResp::ErrParam(Some(
             "`unitId` must with at least one character".to_string(),
@@ -678,17 +685,22 @@ pub async fn post_device_range(
         return Err(ErrResp::ErrParam(Some(
             "`networkId` must with at least one character".to_string(),
         )));
-    } else if body.data.start_addr.len() != body.data.end_addr.len() {
+    } else if body.data.start_addr.len() == 0
+        || body.data.start_addr.len() != body.data.end_addr.len()
+    {
         return Err(ErrResp::ErrParam(Some(
-            "`startAddr` and `endAddr` must have the same length".to_string(),
+            "`startAddr` and `endAddr` must have at least one character and with the same length"
+                .to_string(),
         )));
     }
     if let Some(profile) = body.data.profile.as_ref() {
+        let profile = profile.to_lowercase();
         if profile.len() > 0 && !strings::is_code(profile.as_str()) {
             return Err(ErrResp::ErrParam(Some(
                 "`profile` must be [A-Za-z0-9]{1}[A-Za-z0-9-_]*".to_string(),
             )));
         }
+        body.data.profile = Some(profile);
     }
     let start_addr = match hex_addr_to_u128(body.data.start_addr.as_str()) {
         Err(e) => return Err(ErrResp::ErrParam(Some(e.to_string()))),
@@ -789,8 +801,8 @@ pub async fn post_device_range(
         time: time_str(&Utc::now()),
         operation: msg_op.to_string(),
         new: NetCtrlAddrRange {
-            start_addr: body.data.start_addr.clone(),
-            end_addr: body.data.end_addr.clone(),
+            start_addr: body.data.start_addr,
+            end_addr: body.data.end_addr,
         },
     };
     let _ = send_net_ctrl_message(FN_NAME, &msg, msg_op, &state, &mgr_key).await;
@@ -802,13 +814,15 @@ pub async fn post_device_range(
 pub async fn post_device_range_del(
     State(state): State<AppState>,
     Extension(token_info): Extension<GetTokenInfoData>,
-    Json(body): Json<request::PostDeviceRangeBody>,
+    Json(mut body): Json<request::PostDeviceRangeBody>,
 ) -> impl IntoResponse {
     const FN_NAME: &'static str = "post_device_range_del";
 
     let user_id = token_info.user_id.as_str();
     let roles = &token_info.roles;
 
+    body.data.start_addr = body.data.start_addr.trim().to_lowercase();
+    body.data.end_addr = body.data.end_addr.trim().to_lowercase();
     if body.data.unit_id.len() == 0 {
         return Err(ErrResp::ErrParam(Some(
             "`unitId` must with at least one character".to_string(),
@@ -817,9 +831,12 @@ pub async fn post_device_range_del(
         return Err(ErrResp::ErrParam(Some(
             "`networkId` must with at least one character".to_string(),
         )));
-    } else if body.data.start_addr.len() != body.data.end_addr.len() {
+    } else if body.data.start_addr.len() == 0
+        || body.data.start_addr.len() != body.data.end_addr.len()
+    {
         return Err(ErrResp::ErrParam(Some(
-            "`startAddr` and `endAddr` must have the same length".to_string(),
+            "`startAddr` and `endAddr` must have at least one character and with the same length"
+                .to_string(),
         )));
     }
     let start_addr = match hex_addr_to_u128(body.data.start_addr.as_str()) {
@@ -889,8 +906,8 @@ pub async fn post_device_range_del(
         time: time_str(&Utc::now()),
         operation: msg_op.to_string(),
         new: NetCtrlAddrRange {
-            start_addr: body.data.start_addr.clone(),
-            end_addr: body.data.end_addr.clone(),
+            start_addr: body.data.start_addr,
+            end_addr: body.data.end_addr,
         },
     };
     let _ = send_net_ctrl_message(FN_NAME, &msg, msg_op, &state, &mgr_key).await;
@@ -902,7 +919,7 @@ pub async fn post_device_range_del(
 pub async fn get_device_count(
     State(state): State<AppState>,
     Extension(token_info): Extension<GetTokenInfoData>,
-    Query(query): Query<request::GetDeviceCountQuery>,
+    Query(mut query): Query<request::GetDeviceCountQuery>,
 ) -> impl IntoResponse {
     const FN_NAME: &'static str = "get_device_count";
 
@@ -937,6 +954,12 @@ pub async fn get_device_count(
             }
         },
     };
+    if let Some(addr) = query.addr.as_ref() {
+        query.addr = Some(addr.trim().to_lowercase());
+    }
+    if let Some(profile) = query.profile.as_ref() {
+        query.profile = Some((*profile).to_lowercase());
+    }
     let mut name_contains_cond = None;
     if let Some(contains) = query.contains.as_ref() {
         if contains.len() > 0 {
@@ -984,7 +1007,7 @@ pub async fn get_device_count(
 pub async fn get_device_list(
     State(state): State<AppState>,
     Extension(token_info): Extension<GetTokenInfoData>,
-    Query(query): Query<request::GetDeviceListQuery>,
+    Query(mut query): Query<request::GetDeviceListQuery>,
 ) -> impl IntoResponse {
     const FN_NAME: &'static str = "get_device_list";
 
@@ -1019,6 +1042,12 @@ pub async fn get_device_list(
             }
         },
     };
+    if let Some(addr) = query.addr.as_ref() {
+        query.addr = Some(addr.trim().to_lowercase());
+    }
+    if let Some(profile) = query.profile.as_ref() {
+        query.profile = Some((*profile).to_lowercase());
+    }
     let mut name_contains_cond = None;
     if let Some(contains) = query.contains.as_ref() {
         if contains.len() > 0 {
@@ -1195,18 +1224,22 @@ pub async fn patch_device(
         }
     }
     if let Some(network_addr) = body.data.network_addr.as_ref() {
+        let network_addr = network_addr.trim().to_lowercase();
         if network_addr.len() == 0 {
             return Err(ErrResp::ErrParam(Some(
                 "`networkAddr` must with at least one character".to_string(),
             )));
         }
+        body.data.network_addr = Some(network_addr);
     }
     if let Some(profile) = body.data.profile.as_ref() {
+        let profile = profile.to_lowercase();
         if profile.len() > 0 && !strings::is_code(profile.as_str()) {
             return Err(ErrResp::ErrParam(Some(
                 "`profile` must be [A-Za-z0-9]{1}[A-Za-z0-9-_]*".to_string(),
             )));
         }
+        body.data.profile = Some(profile);
     }
 
     let mut updates = get_updates(&mut body.data).await?;

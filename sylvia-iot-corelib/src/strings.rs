@@ -27,7 +27,7 @@ pub fn hex_addr_to_u128(addr: &str) -> Result<u128, &'static str> {
 pub fn is_account(account: &str) -> bool {
     let name_regex = Regex::new(r"^[a-z0-9]{1}[a-z0-9_-]*$").unwrap();
     let email_regex = Regex::new(
-        r"^([a-z0-9_+]([a-z0-9_+.]*[a-z0-9_+])?)@([a-z0-9]+([\-\.]{1}[a-z0-9]+)*\.[a-z]{2,6})",
+        r"^([a-z0-9_+]([a-z0-9_+.]*[a-z0-9_+])?)@([a-z0-9]+([\-\.]{1}[a-z0-9]+)*\.[a-z]{2,6})$",
     )
     .unwrap();
 
