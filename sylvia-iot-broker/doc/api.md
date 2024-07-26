@@ -1005,7 +1005,7 @@ Create a device.
     - *string* `unitId`: The associated unit ID.
     - *string* `networkId`: The associated network ID. The public network can be assigned by **admin** or **manager**.
     - *string* `networkAddr`: The network address of the specified network. This will be transformed to lowercase.
-    - *string* `profile`: (**optional**) Device profile that is used for application servers to identify data content. The pattern is empty or `[A-Za-z0-9]{1}[A-Za-z0-9-_]*`.
+    - *string* `profile`: (**optional**) Device profile that is used for application servers to identify data content. The pattern is empty or `[A-Za-z0-9]{1}[A-Za-z0-9-_]*`. This will be transformed to lowercase.
     - *string* `name`: (**optional**) Display name.
     - *object* `info`: (**optional**) Other information.
 
@@ -1071,7 +1071,7 @@ Notes:
     - *string* `unitId`: The associated unit ID.
     - *string* `networkId`: The associated network ID. The public network can be assigned by **admin** or **manager**.
     - *string[]* `networkAddrs`: The network addresses of the specified network. This will be transformed to lowercase.
-    - *string* `profile`: (**optional**) Device profile that is used for application servers to identify data content. The pattern is empty or `[A-Za-z0-9]{1}[A-Za-z0-9-_]*`.
+    - *string* `profile`: (**optional**) Device profile that is used for application servers to identify data content. The pattern is empty or `[A-Za-z0-9]{1}[A-Za-z0-9-_]*`. This will be transformed to lowercase.
 
 - **Example**
 
@@ -1166,7 +1166,7 @@ Notes:
     - *string* `networkId`: The associated network ID. The public network can be assigned by **admin** or **manager**.
     - *string* `startAddr`: The start network address of the specified network.
     - *string* `endAddr`: The end network address of the specified network.
-    - *string* `profile`: (**optional**) The device profile that is used for application servers to identify data content. The pattern is empty or `[A-Za-z0-9]{1}[A-Za-z0-9-_]*`.
+    - *string* `profile`: (**optional**) The device profile that is used for application servers to identify data content. The pattern is empty or `[A-Za-z0-9]{1}[A-Za-z0-9-_]*`. This will be transformed to lowercase.
 
 - **Example**
 
@@ -1247,8 +1247,8 @@ Get device list count.
 
 - *string* `unit`: (**required for normal user**) To search devices of the specified unit ID.
 - *string* `network`: (**optional**) To search devices of the specified network ID.
-- *string* `addr`: (**optional**) To search devices of the specified network address.
-- *string* `profile`: (**optional**) To search devices of the specified profile.
+- *string* `addr`: (**optional**) To search devices of the specified network address. This is case insensitive.
+- *string* `profile`: (**optional**) To search devices of the specified profile. This is case insensitive.
 - *string* `contains`: (**optional**) To search names which contain the specified word. This is case insensitive.
 
 #### Response
@@ -1289,8 +1289,8 @@ Get device list.
 
 - *string* `unit`: (**required for normal user**) To search devices of the specified unit ID.
 - *string* `network`: (**optional**) To search devices of the specified network ID.
-- *string* `addr`: (**optional**) To search devices of the specified network address.
-- *string* `profile`: (**optional**) To search devices of the specified profile.
+- *string* `addr`: (**optional**) To search devices of the specified network address. This is case insensitive.
+- *string* `profile`: (**optional**) To search devices of the specified profile. This is case insensitive.
 - *string* `contains`: (**optional**) To search names which contain the specified word. This is case insensitive.
 - *number* `offset`: (**optional**) Data offset. Default is **0**.
 - *number* `limit`: (**optional**) Number of items to list. **0** to list all data. Default is **100**.
@@ -1432,7 +1432,7 @@ Update the specified device information.
 - *object* `data`:
     - *string* `networkId`: (**optional**) The associated network ID. The public network can be assigned by **admin** or **manager**.
     - *string* `networkAddr`: (**optional**) The network address of the specified network. This will be transformed to lowercase.
-    - *string* `profile`: (**optional**) The device profile. The pattern is empty or `[A-Za-z0-9]{1}[A-Za-z0-9-_]*`.
+    - *string* `profile`: (**optional**) The device profile. The pattern is empty or `[A-Za-z0-9]{1}[A-Za-z0-9-_]*`. This will be transformed to lowercase.
     - *string* `name`: (**optional**) The display name.
     - *object* `info`: (**optional**) Other information. You must provide full of fields, or all fields will be replaced with the new value.
 

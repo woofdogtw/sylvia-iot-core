@@ -19,7 +19,8 @@ pub fn hex_addr_to_u128(_context: &mut SpecContext<TestState>) -> Result<(), Str
 pub fn is_account(_context: &mut SpecContext<TestState>) -> Result<(), String> {
     expect(strings::is_account("abc-_")).to_equal(true)?;
     expect(strings::is_account("email@example.com")).to_equal(true)?;
-    expect(strings::is_account("_abc")).to_equal(false)
+    expect(strings::is_account("_abc")).to_equal(false)?;
+    expect(strings::is_account("email@example.com@")).to_equal(false)
 }
 
 /// Test [`strings::is_code`].
