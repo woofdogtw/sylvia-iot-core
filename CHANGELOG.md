@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.1.5 - 2024-07-30
+
+### Changed
+
+- Use release branches for tags to release crates instead of using `--allow-dirty`.
+- Update dependencies.
+
 ## 0.1.4 - 2024-07-26
 
 ### Changed
