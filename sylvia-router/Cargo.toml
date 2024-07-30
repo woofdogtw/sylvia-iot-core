@@ -33,13 +33,13 @@ serde = { version = "1.0.204", features = ["derive"] }
 serde_json = "1.0.121"
 serde_urlencoded = "0.7.1"
 shell-escape = "0.1.5"
-sylvia-iot-auth = { path = "../sylvia-iot-auth" }
-sylvia-iot-broker = { path = "../sylvia-iot-broker" }
-sylvia-iot-corelib = { path = "../sylvia-iot-corelib" }
-sylvia-iot-coremgr = { path = "../sylvia-iot-coremgr" }
-sylvia-iot-coremgr-cli = { path = "../sylvia-iot-coremgr-cli" }
-sylvia-iot-data = { path = "../sylvia-iot-data" }
-sylvia-iot-sdk = { path = "../sylvia-iot-sdk" }
+sylvia-iot-auth = "0.1.5"
+sylvia-iot-broker = "0.1.5"
+sylvia-iot-corelib = "0.1.5"
+sylvia-iot-coremgr = "0.1.5"
+sylvia-iot-coremgr-cli = "0.1.5"
+sylvia-iot-data = "0.1.5"
+sylvia-iot-sdk = "0.1.5"
 sysinfo = "0.30.13"
 tokio = { version = "1.39.2", features = [
     "io-util",
