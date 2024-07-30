@@ -8,13 +8,39 @@ env:
   BIN_DIR: dist
 jobs:
   release:
-    name: Publish GitHub Releases and Docker Hub
+    name: Publish crates.io, GitHub Releases and Docker Hub
     runs-on: ubuntu-22.04
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
         with:
           ref: ${{ github.ref_name }}
+      - name: Login to crates.io
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
+        run: |
+          cargo login ${CARGO_REGISTRY_TOKEN}
+      - name: Publish general-mq
+        run: |
+          cargo publish -p general-mq
+      - name: Publish sylvia-iot-corelib
+        run: |
+          cargo publish -p sylvia-iot-corelib
+      - name: Publish sylvia-iot-auth
+        run: |
+          cargo publish -p sylvia-iot-auth
+      - name: Publish sylvia-iot-broker
+        run: |
+          cargo publish -p sylvia-iot-broker
+      - name: Publish sylvia-iot-coremgr
+        run: |
+          cargo publish -p sylvia-iot-coremgr
+      - name: Publish sylvia-iot-data
+        run: |
+          cargo publish -p sylvia-iot-data
+      - name: Publish sylvia-iot-sdk
+        run: |
+          cargo publish -p sylvia-iot-sdk
       - name: Build general-mq
         run: cargo build -p general-mq --release
       - name: Build corelib
@@ -169,52 +195,3 @@ jobs:
           curl -LO https://github.com/tcnksm/ghr/releases/download/${GHR_VER}/ghr_${GHR_VER}_linux_amd64.tar.gz
           tar xf ghr_${GHR_VER}_linux_amd64.tar.gz
           ./ghr_${GHR_VER}_linux_amd64/ghr -u "${GITHUB_REPOSITORY%/*}" -r "${GITHUB_REPOSITORY#*/}" "${GITHUB_REF#refs/tags/}" ${BIN_DIR}
-  crates:
-    name: Publish crates.io
-    runs-on: ubuntu-22.04
-    env:
-      CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
-      RELEASE_VER: ${{ github.ref_name }}
-    steps:
-      - name: Check out repository
-        uses: actions/checkout@v4
-        with:
-          ref: ${{ github.ref_name }}
-      - name: Login to crates.io
-        run: |
-          cargo login ${CARGO_REGISTRY_TOKEN}
-      - name: Publish general-mq
-        run: |
-          cargo publish --allow-dirty -p general-mq
-      - name: Publish sylvia-iot-corelib
-        run: |
-          cargo publish --allow-dirty -p sylvia-iot-corelib
-      - name: Publish sylvia-iot-auth
-        run: |
-          sed -i "s,^sylvia-iot-corelib =.*,sylvia-iot-corelib = \"${RELEASE_VER:1}\"," sylvia-iot-auth/Cargo.toml
-          cargo publish --allow-dirty -p sylvia-iot-auth
-      - name: Publish sylvia-iot-broker
-        run: |
-          sed -i "s,^general-mq =.*,general-mq = \"${RELEASE_VER:1}\"," sylvia-iot-broker/Cargo.toml
-          sed -i "s,^sylvia-iot-corelib =.*,sylvia-iot-corelib = \"${RELEASE_VER:1}\"," sylvia-iot-broker/Cargo.toml
-          cargo publish --allow-dirty -p sylvia-iot-broker
-      - name: Publish sylvia-iot-coremgr
-        run: |
-          sed -i "s,^general-mq =.*,general-mq = \"${RELEASE_VER:1}\"," sylvia-iot-coremgr/Cargo.toml
-          sed -i "s,^sylvia-iot-auth =.*,sylvia-iot-auth = \"${RELEASE_VER:1}\"," sylvia-iot-coremgr/Cargo.toml
-          sed -i "s,^sylvia-iot-broker =.*,sylvia-iot-broker = \"${RELEASE_VER:1}\"," sylvia-iot-coremgr/Cargo.toml
-          sed -i "s,^sylvia-iot-corelib =.*,sylvia-iot-corelib = \"${RELEASE_VER:1}\"," sylvia-iot-coremgr/Cargo.toml
-          cargo publish --allow-dirty -p sylvia-iot-coremgr
-      - name: Publish sylvia-iot-data
-        run: |
-          sed -i "s,^general-mq =.*,general-mq = \"${RELEASE_VER:1}\"," sylvia-iot-data/Cargo.toml
-          sed -i "s,^sylvia-iot-auth =.*,sylvia-iot-auth = \"${RELEASE_VER:1}\"," sylvia-iot-data/Cargo.toml
-          sed -i "s,^sylvia-iot-broker =.*,sylvia-iot-broker = \"${RELEASE_VER:1}\"," sylvia-iot-data/Cargo.toml
-          sed -i "s,^sylvia-iot-corelib =.*,sylvia-iot-corelib = \"${RELEASE_VER:1}\"," sylvia-iot-data/Cargo.toml
-          sed -i "s,^sylvia-iot-coremgr =.*,sylvia-iot-coremgr = \"${RELEASE_VER:1}\"," sylvia-iot-data/Cargo.toml
-          cargo publish --allow-dirty -p sylvia-iot-data
-      - name: Publish sylvia-iot-sdk
-        run: |
-          sed -i "s,^general-mq =.*,general-mq = \"${RELEASE_VER:1}\"," sylvia-iot-sdk/Cargo.toml
-          sed -i "s,^sylvia-iot-corelib =.*,sylvia-iot-corelib = \"${RELEASE_VER:1}\"," sylvia-iot-sdk/Cargo.toml
-          cargo publish --allow-dirty -p sylvia-iot-sdk
