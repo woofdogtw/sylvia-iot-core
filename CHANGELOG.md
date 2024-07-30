@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.6 - 2024-07-30
+
+### Fixed
+
+- Publish `sylvia-iot-coremgr-cli` for building `sylvia-router`.
+
 ## 0.1.5 - 2024-07-30
 
 ### Changed

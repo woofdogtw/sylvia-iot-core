@@ -35,6 +35,9 @@ jobs:
       - name: Publish sylvia-iot-coremgr
         run: |
           cargo publish -p sylvia-iot-coremgr
+      - name: Publish sylvia-iot-coremgr-cli
+        run: |
+          cargo publish -p sylvia-iot-coremgr-cli
       - name: Publish sylvia-iot-data
         run: |
           cargo publish -p sylvia-iot-data
