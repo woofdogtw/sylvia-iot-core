@@ -6,6 +6,8 @@ on:
 env:
   GHR_VER: v0.16.2
   BIN_DIR: dist
+  SBOM_VER: v0.9.1
+  SBOM_DIR: sbom
 jobs:
   release:
     name: Publish crates.io, GitHub Releases and Docker Hub
@@ -80,6 +82,32 @@ jobs:
           cd ..
           xz -z -9 -e ${BIN_DIR}/*
           echo -n ${RELEASE_VER:1} > ${BIN_DIR}/VERSION
+      - name: Prepare SBOM
+        run: |
+          mkdir -p ${SBOM_DIR}
+          curl -kLo cargo-sbom https://github.com/psastras/sbom-rs/releases/download/cargo-sbom-${SBOM_VER}/cargo-sbom-x86_64-unknown-linux-gnu
+          chmod +x cargo-sbom
+          ./cargo-sbom --cargo-package general-mq --output-format spdx_json_2_3 > ${SBOM_DIR}/general-mq.spdx.json
+          ./cargo-sbom --cargo-package general-mq --output-format cyclone_dx_json_1_4 > ${SBOM_DIR}/general-mq.cdx.json
+          ./cargo-sbom --cargo-package sylvia-iot-auth --output-format spdx_json_2_3 > ${SBOM_DIR}/sylvia-iot-auth.spdx.json
+          ./cargo-sbom --cargo-package sylvia-iot-auth --output-format cyclone_dx_json_1_4 > ${SBOM_DIR}/sylvia-iot-auth.cdx.json
+          ./cargo-sbom --cargo-package sylvia-iot-broker --output-format spdx_json_2_3 > ${SBOM_DIR}/sylvia-iot-broker.spdx.json
+          ./cargo-sbom --cargo-package sylvia-iot-broker --output-format cyclone_dx_json_1_4 > ${SBOM_DIR}/sylvia-iot-broker.cdx.json
+          ./cargo-sbom --cargo-package sylvia-iot-coremgr --output-format spdx_json_2_3 > ${SBOM_DIR}/sylvia-iot-coremgr.spdx.json
+          ./cargo-sbom --cargo-package sylvia-iot-coremgr --output-format cyclone_dx_json_1_4 > ${SBOM_DIR}/sylvia-iot-coremgr.cdx.json
+          ./cargo-sbom --cargo-package sylvia-iot-coremgr-cli --output-format spdx_json_2_3 > ${SBOM_DIR}/sylvia-iot-coremgr-cli.spdx.json
+          ./cargo-sbom --cargo-package sylvia-iot-coremgr-cli --output-format cyclone_dx_json_1_4 > ${SBOM_DIR}/sylvia-iot-coremgr-cli.cdx.json
+          ./cargo-sbom --cargo-package sylvia-iot-data --output-format spdx_json_2_3 > ${SBOM_DIR}/sylvia-iot-data.spdx.json
+          ./cargo-sbom --cargo-package sylvia-iot-data --output-format cyclone_dx_json_1_4 > ${SBOM_DIR}/sylvia-iot-data.cdx.json
+          ./cargo-sbom --cargo-package sylvia-iot-sdk --output-format spdx_json_2_3 > ${SBOM_DIR}/sylvia-iot-sdk.spdx.json
+          ./cargo-sbom --cargo-package sylvia-iot-sdk --output-format cyclone_dx_json_1_4 > ${SBOM_DIR}/sylvia-iot-sdk.cdx.json
+          ./cargo-sbom --cargo-package sylvia-router --output-format spdx_json_2_3 > ${SBOM_DIR}/sylvia-router.spdx.json
+          ./cargo-sbom --cargo-package sylvia-router --output-format cyclone_dx_json_1_4 > ${SBOM_DIR}/sylvia-router.cdx.json
+          ./cargo-sbom --output-format spdx_json_2_3 > ${SBOM_DIR}/sylvia-iot-core.spdx.json
+          ./cargo-sbom --output-format cyclone_dx_json_1_4 > ${SBOM_DIR}/sylvia-iot-core.cdx.json
+          tar cf sbom.tar sbom
+          xz -z -9 -e sbom.tar
+          mv sbom.tar.xz ${BIN_DIR}/
       - name: Login to Docker Hub
         uses: docker/login-action@v3
         with:

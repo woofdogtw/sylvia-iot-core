@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.1.7 - 2024-08-02
+
+### Added
+
+- Add SBOM (SPDX and CycloneDX JSON using `cargo-sbom`) for Releases. See `sbom.tar.xz` in Releases.
+
+### Changed
+
+- Update dependencies.
+
 ## 0.1.6 - 2024-07-30
 
 ### Fixed
