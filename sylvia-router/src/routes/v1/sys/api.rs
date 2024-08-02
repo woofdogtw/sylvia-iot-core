@@ -15,7 +15,7 @@ pub async fn get_usage(State(state): State<AppState>) -> impl IntoResponse {
     let result = task::spawn_blocking(move || {
         let mut sys = sys_info.lock().unwrap();
         let mut disk = disk_info.lock().unwrap();
-        sys.refresh_cpu();
+        sys.refresh_cpu_all();
         sys.refresh_memory();
         disk.refresh_list();
 

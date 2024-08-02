@@ -62,7 +62,7 @@ pub async fn new_state(
             .with_memory(MemoryRefreshKind::new().with_ram().with_swap()),
     );
     let disk_info = Disks::new_with_refreshed_list();
-    sys_info.refresh_cpu();
+    sys_info.refresh_cpu_all();
     let state = State {
         scope_path,
         config: conf.clone(),
