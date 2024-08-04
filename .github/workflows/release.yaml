@@ -9,8 +9,8 @@ env:
   SBOM_VER: v0.9.1
   SBOM_DIR: sbom
 jobs:
-  release:
-    name: Publish crates.io, GitHub Releases and Docker Hub
+  crates:
+    name: Publish crates.io
     runs-on: ubuntu-22.04
     steps:
       - name: Check out repository
@@ -46,6 +46,15 @@ jobs:
       - name: Publish sylvia-iot-sdk
         run: |
           cargo publish -p sylvia-iot-sdk
+  release:
+    name: Publish GitHub Releases and Docker Hub
+    needs: crates
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
       - name: Build general-mq
         run: cargo build -p general-mq --release
       - name: Build corelib

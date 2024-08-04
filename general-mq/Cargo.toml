@@ -1,6 +1,6 @@
 [package]
 name = "general-mq"
-version = "0.1.8"
+version = "0.1.9"
 authors = ["Chien-Hong Chan"]
 categories = ["network-programming"]
 description = "General purposed interfaces for message queues."
