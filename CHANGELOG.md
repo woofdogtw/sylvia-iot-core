@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.9 - 2024-08-05
+
+### Changed
+
+- Separates publishing crates and releases into two GitHub Action jobs.
+
 ## 0.1.8 - 2024-08-04
 
 ### Changed
