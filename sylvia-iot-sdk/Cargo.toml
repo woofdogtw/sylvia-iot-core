@@ -1,6 +1,6 @@
 [package]
 name = "sylvia-iot-sdk"
-version = "0.1.7"
+version = "0.1.8"
 authors = ["Chien-Hong Chan"]
 categories = ["web-programming::http-server"]
 description = "SDK for developing networks (adapters) and applications on Sylvia-IoT."

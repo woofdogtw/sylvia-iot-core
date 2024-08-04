@@ -1,6 +1,6 @@
 [package]
 name = "sylvia-iot-broker"
-version = "0.1.7"
+version = "0.1.8"
 authors = ["Chien-Hong Chan"]
 categories = ["web-programming::http-server"]
 description = "The message broker module of the Sylvia-IoT platform."
@@ -36,6 +36,7 @@ reqwest = { version = "0.12.5", default-features = false, features = [
     "json",
     "rustls-tls",
 ] }
+rustls = "0.23.12"
 serde = { version = "1.0.204", features = ["derive"] }
 serde_json = "1.0.122"
 sql-builder = "3.1.1"

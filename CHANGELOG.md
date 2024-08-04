@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.1.8 - 2024-08-04
+
+### Changed
+
+- Update Rust to 1.80.0 with GitHub Actions runner image 20240730.2.1.
+- Update dependencies.
+
+### Fixed
+
+- Fix HTTPS error for upgrading `rustls` to v0.23.
+
 ## 0.1.7 - 2024-08-02
 
 ### Added
