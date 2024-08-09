@@ -1,6 +1,6 @@
 [package]
 name = "general-mq"
-version = "0.1.9"
+version = "0.1.10"
 authors = ["Chien-Hong Chan"]
 categories = ["network-programming"]
 description = "General purposed interfaces for message queues."
@@ -30,7 +30,7 @@ urlencoding = "2.1.3"
 [dev-dependencies]
 laboratory = "2.0.0"
 reqwest = { version = "0.12.5", default-features = false, features = ["json"] }
-serde = { version = "1.0.204", features = ["derive"] }
+serde = { version = "1.0.205", features = ["derive"] }
 
 [profile.release]
 codegen-units = 1
