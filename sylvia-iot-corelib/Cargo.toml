@@ -1,6 +1,6 @@
 [package]
 name = "sylvia-iot-corelib"
-version = "0.1.10"
+version = "0.1.11"
 authors = ["Chien-Hong Chan"]
 categories = ["web-programming::http-server"]
 description = "Common libraries of Sylvia-IoT core modules."
@@ -39,9 +39,9 @@ tower-layer = "0.3.3"
 url = "2.5.2"
 
 [dev-dependencies]
-axum-test = "15.3.1"
+axum-test = "15.5.4"
 laboratory = "2.0.0"
-tokio = { version = "1.39.2", features = ["rt-multi-thread"] }
+tokio = { version = "1.39.3", features = ["rt-multi-thread"] }
 
 [profile.release]
 codegen-units = 1
