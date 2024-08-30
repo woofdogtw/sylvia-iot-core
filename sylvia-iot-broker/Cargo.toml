@@ -37,16 +37,16 @@ reqwest = { version = "0.12.7", default-features = false, features = [
     "rustls-tls",
 ] }
 rustls = "0.23.12"
-serde = { version = "1.0.208", features = ["derive"] }
-serde_json = "1.0.125"
+serde = { version = "1.0.209", features = ["derive"] }
+serde_json = "1.0.127"
 sql-builder = "3.1.1"
-sqlx = { version = "0.8.0", default-features = false, features = [
+sqlx = { version = "0.8.1", default-features = false, features = [
     "macros",
     "runtime-tokio",
     "sqlite",
 ] }
 sylvia-iot-corelib = { path = "../sylvia-iot-corelib" }
-tokio = { version = "1.39.3", features = [
+tokio = { version = "1.40.0", features = [
     "io-util",
     "macros",
     "rt-multi-thread",
@@ -63,7 +63,7 @@ tower-http = { version = "0.5.2", default-features = false, features = [
 url = "2.5.2"
 
 [dev-dependencies]
-axum-test = "15.5.4"
+axum-test = "15.6.0"
 laboratory = "2.0.0"
 serde_urlencoded = "0.7.1"
 sylvia-iot-auth = { path = "../sylvia-iot-auth" }
