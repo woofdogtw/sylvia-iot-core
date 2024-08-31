@@ -15,7 +15,7 @@ use axum::{
     Extension,
 };
 use chrono::{DateTime, Utc};
-use log::{error, info, warn};
+use log::{debug, error, info, warn};
 use serde::{Deserialize, Serialize};
 use serde_json::{self, Map, Value};
 use tokio::time;
@@ -153,7 +153,7 @@ enum SendDataKind {
         #[serde(rename = "deviceId", skip_serializing_if = "Option::is_none")]
         device_id: Option<String>,
         time: String,
-        profile: Option<String>,
+        profile: String,
         data: String,
         #[serde(skip_serializing_if = "Option::is_none")]
         extension: Option<Map<String, Value>>,
@@ -1606,8 +1606,8 @@ impl MgrHandler {
                         Some(device) => Some(device.device_id.clone()),
                     },
                     profile: match device {
-                        None => None,
-                        Some(device) => Some(device.profile.clone()),
+                        None => "".to_string(),
+                        Some(device) => device.profile.clone(),
                     },
                     time: data.time.clone(),
                     data: data.data.clone(),
@@ -1946,6 +1946,8 @@ impl MessageHandler for CtrlReceiverHandler {
                             "[{}] {} delete device cache error: {}",
                             FN_NAME, queue_name, e
                         );
+                    } else {
+                        debug!("[{}] {} delete device cache", FN_NAME, queue_name);
                     }
                     if let Err(e) = cache
                         .network_route()
@@ -1956,6 +1958,8 @@ impl MessageHandler for CtrlReceiverHandler {
                             "[{}] {} delete network route cache error: {}",
                             FN_NAME, queue_name, e
                         );
+                    } else {
+                        debug!("[{}] {} delete network route cache", FN_NAME, queue_name);
                     }
                 }
                 if let Err(e) = msg.ack().await {
@@ -1994,7 +1998,10 @@ impl MessageHandler for CtrlReceiverHandler {
                         }
                         return;
                     }
-                    Ok(mgr) => mgr,
+                    Ok(mgr) => {
+                        debug!("[{}] {} new manager", FN_NAME, queue_name);
+                        mgr
+                    }
                 };
                 let key = gen_mgr_key(unit_code.as_str(), name.as_str());
                 let old_mgr = { self.network_mgrs.lock().unwrap().insert(key.clone(), mgr) };
@@ -2004,6 +2011,8 @@ impl MessageHandler for CtrlReceiverHandler {
                             "[{}] {} close old manager {} error: {}",
                             FN_NAME, queue_name, key, e
                         );
+                    } else {
+                        debug!("[{}] {} close old manager {}", FN_NAME, queue_name, key);
                     }
                 }
                 if let Err(e) = msg.ack().await {
@@ -2027,6 +2036,8 @@ impl MessageHandler for CtrlReceiverHandler {
                                 "[{}] {} close old manager {} error: {}",
                                 FN_NAME, queue_name, new, e
                             );
+                        } else {
+                            debug!("[{}] {} close old manager {}", FN_NAME, queue_name, new);
                         }
                     }
                 }

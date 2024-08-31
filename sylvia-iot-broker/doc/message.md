@@ -263,7 +263,7 @@ These messages are used from `broker` to `data` module(s) with **unicast** and *
         - *string* `unitId`: (**present for private network**) network's unit ID.
         - *string* `deviceId`: (**present if the device exist**) device ID.
         - *string* `time`: data time in RFC 3339 format from the device.
-        - *string* `profile`: (**present if the device exist**) device profile.
+        - *string* `profile`: device profile.
         - *string* `data`: data in hexadecimal format.
         - *object* `extension`: (**optional**) extensions.
 

@@ -15,7 +15,7 @@ use axum::{
     Extension,
 };
 use chrono::{DateTime, TimeZone, Utc};
-use log::{error, info, warn};
+use log::{debug, error, info, warn};
 use serde::{Deserialize, Serialize};
 use serde_json::{self, Map, Value};
 use tokio::time;
@@ -1639,7 +1639,10 @@ impl MessageHandler for CtrlReceiverHandler {
                         }
                         return;
                     }
-                    Ok(mgr) => mgr,
+                    Ok(mgr) => {
+                        debug!("[{}] {} new manager", FN_NAME, queue_name);
+                        mgr
+                    }
                 };
                 let key = gen_mgr_key(unit_code.as_str(), name.as_str());
                 let old_mgr = {
@@ -1654,6 +1657,8 @@ impl MessageHandler for CtrlReceiverHandler {
                             "[{}] {} close old manager {} error: {}",
                             FN_NAME, queue_name, key, e
                         );
+                    } else {
+                        debug!("[{}] {} close old manager {}", FN_NAME, queue_name, key);
                     }
                 }
                 info!("[{}] {} manager {} added", FN_NAME, queue_name, key);
@@ -1674,6 +1679,8 @@ impl MessageHandler for CtrlReceiverHandler {
                                 "[{}] {} close old manager {} error: {}",
                                 FN_NAME, queue_name, new, e
                             );
+                        } else {
+                            debug!("[{}] {} close old manager {}", FN_NAME, queue_name, new);
                         }
                     }
                 }
