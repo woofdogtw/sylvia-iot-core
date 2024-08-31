@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.1.12 - 2024-08-31
+
+### Changed
+
+- Update dependencies.
+
+### Fixed
+
+- **broker**: Fix cache cleaning when changing device's network or address.
+- **broker**: Fix device profile information when sending network uplink data to the **data** module.
+
 ## 0.1.11 - 2024-08-30
 
 ### Changed

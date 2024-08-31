@@ -1,6 +1,6 @@
 [package]
 name = "sylvia-iot-corelib"
-version = "0.1.11"
+version = "0.1.12"
 authors = ["Chien-Hong Chan"]
 categories = ["web-programming::http-server"]
 description = "Common libraries of Sylvia-IoT core modules."
