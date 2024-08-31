@@ -15,7 +15,7 @@ use axum::{
     Extension,
 };
 use chrono::Utc;
-use log::{error, info, warn};
+use log::{debug, error, info, warn};
 use serde::{Deserialize, Serialize};
 use serde_json::{self, Map};
 use tokio::time;
@@ -1308,11 +1308,33 @@ pub async fn patch_device(
         let msg = SendCtrlMsg::DelDevice {
             operation: CtrlMsgOp::DEL_DEVICE.to_string(),
             new: CtrlDelDevice {
-                unit_id: device.unit_id,
+                unit_id: device.unit_id.clone(),
                 unit_code: device.unit_code.clone(),
-                network_id: device.network_id,
+                network_id: device.network_id.clone(),
                 network_code: device.network_code.clone(),
                 network_addr: device.network_addr.clone(),
+                device_id: device.device_id.clone(),
+            },
+        };
+        send_del_ctrl_message(FN_NAME, &msg, &state).await?;
+
+        let msg = SendCtrlMsg::DelDevice {
+            operation: CtrlMsgOp::DEL_DEVICE.to_string(),
+            new: CtrlDelDevice {
+                unit_id: device.unit_id,
+                unit_code: device.unit_code.clone(),
+                network_id: match updates.network.as_ref() {
+                    None => device.network_id,
+                    Some((network_id, _)) => network_id.to_string(),
+                },
+                network_code: match updates.network.as_ref() {
+                    None => device.network_code.clone(),
+                    Some((_, network_code)) => network_code.to_string(),
+                },
+                network_addr: match updates.network_addr.as_ref() {
+                    None => device.network_addr.clone(),
+                    Some(addr) => addr.to_string(),
+                },
                 device_id: device.device_id,
             },
         };
@@ -1951,12 +1973,22 @@ impl MessageHandler for CtrlReceiverHandler {
                             "[{}] {} delete device cache {}.{}.{} error: {}",
                             FN_NAME, queue_name, unit_code, network_code, network_addr, e
                         );
+                    } else {
+                        debug!(
+                            "[{}] {} delete device cache {}.{}.{}",
+                            FN_NAME, queue_name, unit_code, network_code, network_addr
+                        );
                     }
                     let device_id = new.device_id.as_str();
                     if let Err(e) = cache.device_route().del_uldata(device_id).await {
                         error!(
                             "[{}] {} delete device route cache uldata {} error: {}",
                             FN_NAME, queue_name, device_id, e
+                        );
+                    } else {
+                        debug!(
+                            "[{}] {} delete device route cache uldata {}",
+                            FN_NAME, queue_name, device_id
                         );
                     }
                     let cond = device_route::DelCacheQueryCond {
@@ -1969,6 +2001,11 @@ impl MessageHandler for CtrlReceiverHandler {
                             "[{}] {} delete device route cache dldata {}.{}.{} error: {}",
                             FN_NAME, queue_name, unit_code, network_code, network_addr, e
                         );
+                    } else {
+                        debug!(
+                            "[{}] {} delete device route cache dldata {}.{}.{}",
+                            FN_NAME, queue_name, unit_code, network_code, network_addr
+                        );
                     }
                     let unit_id = new.unit_id.as_str();
                     let cond = device_route::DelCachePubQueryCond {
@@ -1979,6 +2016,11 @@ impl MessageHandler for CtrlReceiverHandler {
                         error!(
                             "[{}] {} delete device route cache dldata_pub {}.{} error: {}",
                             FN_NAME, queue_name, unit_id, device_id, e
+                        );
+                    } else {
+                        debug!(
+                            "[{}] {} delete device route cache dldata_pub {}.{}",
+                            FN_NAME, queue_name, unit_id, device_id
                         );
                     }
                 }
@@ -1992,6 +2034,11 @@ impl MessageHandler for CtrlReceiverHandler {
                                 "[{}] {} delete bulk device route cache uldata {} error: {}",
                                 FN_NAME, queue_name, device_id, e
                             );
+                        } else {
+                            debug!(
+                                "[{}] {} delete bulk device route cache uldata {}",
+                                FN_NAME, queue_name, device_id
+                            );
                         }
                         let unit_id = new.unit_id.as_str();
                         let cond = device_route::DelCachePubQueryCond {
@@ -2002,6 +2049,11 @@ impl MessageHandler for CtrlReceiverHandler {
                             error!(
                                 "[{}] {} delete bulk device route cache dldata_pub {}.{} error: {}",
                                 FN_NAME, queue_name, unit_id, device_id, e
+                            );
+                        } else {
+                            debug!(
+                                "[{}] {} delete bulk device route cache dldata_pub {}.{}",
+                                FN_NAME, queue_name, unit_id, device_id
                             );
                         }
                     }
@@ -2022,6 +2074,11 @@ impl MessageHandler for CtrlReceiverHandler {
                                 "[{}] {} delete bulk device cache {}.{}.{} error: {}",
                                 FN_NAME, queue_name, unit_code, network_code, network_addr, e
                             );
+                        } else {
+                            debug!(
+                                "[{}] {} delete bulk device cache {}.{}.{}",
+                                FN_NAME, queue_name, unit_code, network_code, network_addr
+                            );
                         }
                         let cond = device_route::DelCacheQueryCond {
                             unit_code,
@@ -2032,6 +2089,11 @@ impl MessageHandler for CtrlReceiverHandler {
                             error!(
                                 "[{}] {} delete device route cache dldata {}.{}.{} error: {}",
                                 FN_NAME, queue_name, unit_code, network_code, network_addr, e
+                            );
+                        } else {
+                            debug!(
+                                "[{}] {} delete device route cache dldata {}.{}.{}",
+                                FN_NAME, queue_name, unit_code, network_code, network_addr
                             );
                         }
                     }

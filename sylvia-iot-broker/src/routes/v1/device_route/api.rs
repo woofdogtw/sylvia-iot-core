@@ -16,7 +16,7 @@ use axum::{
     Extension,
 };
 use chrono::Utc;
-use log::{error, info, warn};
+use log::{debug, error, info, warn};
 use serde::{Deserialize, Serialize};
 use serde_json;
 use tokio::time;
@@ -1424,6 +1424,11 @@ impl MessageHandler for CtrlReceiverHandler {
                             "[{}] {} delete device route cache {} error: {}",
                             FN_NAME, queue_name, new.device_id, e
                         );
+                    } else {
+                        debug!(
+                            "[{}] {} delete device route cache {}",
+                            FN_NAME, queue_name, new.device_id
+                        );
                     }
                 }
             }
@@ -1434,6 +1439,11 @@ impl MessageHandler for CtrlReceiverHandler {
                             error!(
                                 "[{}] {} delete device route cache {} error: {}",
                                 FN_NAME, queue_name, device_id, e
+                            );
+                        } else {
+                            debug!(
+                                "[{}] {} delete device route cache {}",
+                                FN_NAME, queue_name, device_id
                             );
                         }
                     }

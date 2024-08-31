@@ -16,7 +16,7 @@ use axum::{
     Extension,
 };
 use chrono::Utc;
-use log::{error, info, warn};
+use log::{debug, error, info, warn};
 use serde::{Deserialize, Serialize};
 use serde_json;
 use tokio::time;
@@ -868,6 +868,11 @@ impl MessageHandler for CtrlReceiverHandler {
                         error!(
                             "[{}] {} delete network route cache error: {}",
                             FN_NAME, queue_name, e
+                        );
+                    } else {
+                        debug!(
+                            "[{}] {} delete network route cache error",
+                            FN_NAME, queue_name
                         );
                     }
                 }
