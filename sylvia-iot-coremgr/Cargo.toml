@@ -1,6 +1,6 @@
 [package]
 name = "sylvia-iot-coremgr"
-version = "0.1.12"
+version = "0.1.13"
 authors = ["Chien-Hong Chan"]
 categories = ["web-programming::http-server"]
 description = "The manager of Sylvia-IoT core modules."
@@ -13,14 +13,14 @@ rust-version = "1.75"
 
 [dependencies]
 async-stream = "0.3.5"
-async-trait = "0.1.81"
+async-trait = "0.1.82"
 axum = "0.7.5"
 axum-prometheus = "0.7.0"
 axum-server = { version = "0.7.1", features = ["tls-rustls"] }
 base64 = "0.22.1"
 bytes = "1.7.1"
 chrono = { version = "0.4.38", default-features = false, features = ["serde"] }
-clap = { version = "4.5.16", default-features = false, features = [
+clap = { version = "4.5.17", default-features = false, features = [
     "std",
     "help",
     "usage",
@@ -41,7 +41,7 @@ reqwest = { version = "0.12.7", default-features = false, features = [
 rumqttd = "0.19.0"
 rustls = "0.23.12"
 serde = { version = "1.0.209", features = ["derive"] }
-serde_json = "1.0.127"
+serde_json = "1.0.128"
 serde_urlencoded = "0.7.1"
 sylvia-iot-auth = { path = "../sylvia-iot-auth" }
 sylvia-iot-broker = { path = "../sylvia-iot-broker" }
@@ -62,7 +62,7 @@ tower-http = { version = "0.5.2", default-features = false, features = [
 url = "2.5.2"
 
 [dev-dependencies]
-axum-test = "15.6.0"
+axum-test = "15.7.0"
 laboratory = "2.0.0"
 
 [profile.release]
