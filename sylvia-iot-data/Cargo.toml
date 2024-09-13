@@ -27,7 +27,7 @@ clap = { version = "4.5.17", default-features = false, features = [
 ] }
 csv = "1.3.0"
 futures = "0.3.30"
-general-mq = "0.1.12"
+general-mq = "0.1.13"
 json5 = "0.4.1"
 log = "0.4.22"
 mongodb = "3.1.0"
@@ -44,10 +44,10 @@ sqlx = { version = "0.8.2", default-features = false, features = [
     "runtime-tokio",
     "sqlite",
 ] }
-sylvia-iot-auth = "0.1.12"
-sylvia-iot-broker = "0.1.12"
-sylvia-iot-corelib = "0.1.12"
-sylvia-iot-coremgr = "0.1.12"
+sylvia-iot-auth = "0.1.13"
+sylvia-iot-broker = "0.1.13"
+sylvia-iot-corelib = "0.1.13"
+sylvia-iot-coremgr = "0.1.13"
 tokio = { version = "1.40.0", features = [
     "io-util",
     "macros",
