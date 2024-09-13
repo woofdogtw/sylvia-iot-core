@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.1.13 - 2024-09-13
+
+### Changed
+
+- Update Rust to 1.81.0 with GitHub Actions runner image 20240908.1.1.
+- Update dependencies for yanked crates.
+
 ## 0.1.12 - 2024-08-31
 
 ### Changed
