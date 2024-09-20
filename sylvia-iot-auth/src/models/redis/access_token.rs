@@ -92,7 +92,7 @@ pub async fn add(
         user_id: token.user_id.to_string(),
     };
     let item_str = serde_json::to_string(&token)?;
-    let _ = conn
+    let _: () = conn
         .set_ex(
             PREFIX.to_string() + token.access_token.as_str(),
             item_str,
@@ -109,7 +109,7 @@ pub async fn del<'a>(
     if cond.access_token.is_none() {
         return Ok(());
     }
-    let _ = conn
+    let _: () = conn
         .del(PREFIX.to_string() + cond.access_token.unwrap())
         .await?;
     Ok(())
