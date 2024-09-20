@@ -1,6 +1,6 @@
 [package]
 name = "sylvia-iot-coremgr-cli"
-version = "0.1.13"
+version = "0.1.14"
 authors = ["Chien-Hong Chan"]
 categories = ["web-programming::http-client"]
 description = "The command-line tool for Sylvia-IoT core manager."

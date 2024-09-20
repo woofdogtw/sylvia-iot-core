@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.14 - 2024-09-20
+
+### Changed
+
+- Update dependencies for yanked crates.
+
 ## 0.1.13 - 2024-09-13
 
 ### Changed

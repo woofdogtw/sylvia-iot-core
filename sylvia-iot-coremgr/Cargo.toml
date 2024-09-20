@@ -1,6 +1,6 @@
 [package]
 name = "sylvia-iot-coremgr"
-version = "0.1.13"
+version = "0.1.14"
 authors = ["Chien-Hong Chan"]
 categories = ["web-programming::http-server"]
 description = "The manager of Sylvia-IoT core modules."
@@ -18,7 +18,7 @@ axum = "0.7.5"
 axum-prometheus = "0.7.0"
 axum-server = { version = "0.7.1", features = ["tls-rustls"] }
 base64 = "0.22.1"
-bytes = "1.7.1"
+bytes = "1.7.2"
 chrono = { version = "0.4.38", default-features = false, features = ["serde"] }
 clap = { version = "4.5.17", default-features = false, features = [
     "std",
@@ -53,7 +53,7 @@ tokio = { version = "1.40.0", features = [
     "time",
 ] }
 tower = "0.5.1"
-tower-http = { version = "0.5.2", default-features = false, features = [
+tower-http = { version = "0.6.0", default-features = false, features = [
     "cors",
     "fs",
     "normalize-path",
