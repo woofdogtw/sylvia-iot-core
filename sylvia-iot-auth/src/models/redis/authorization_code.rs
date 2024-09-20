@@ -82,7 +82,7 @@ pub async fn add(
         user_id: code.user_id.to_string(),
     };
     let item_str = serde_json::to_string(&code)?;
-    let _ = conn
+    let _: () = conn
         .set_ex(
             PREFIX.to_string() + code.code.as_str(),
             item_str,
@@ -99,6 +99,6 @@ pub async fn del<'a>(
     if cond.code.is_none() {
         return Ok(());
     }
-    let _ = conn.del(PREFIX.to_string() + cond.code.unwrap()).await?;
+    let _: () = conn.del(PREFIX.to_string() + cond.code.unwrap()).await?;
     Ok(())
 }
