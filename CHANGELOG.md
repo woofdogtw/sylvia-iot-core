@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.15 - 2024-09-28
+
+### Changed
+
+- Update dependencies for fixing crate bugs.
+
 ## 0.1.14 - 2024-09-20
 
 ### Changed
