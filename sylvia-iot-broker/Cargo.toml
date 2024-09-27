@@ -1,6 +1,6 @@
 [package]
 name = "sylvia-iot-broker"
-version = "0.1.14"
+version = "0.1.15"
 authors = ["Chien-Hong Chan"]
 categories = ["web-programming::http-server"]
 description = "The message broker module of the Sylvia-IoT platform."
@@ -13,13 +13,13 @@ rust-version = "1.75"
 
 [dependencies]
 async-stream = "0.3.5"
-async-trait = "0.1.82"
-axum = "0.7.5"
+async-trait = "0.1.83"
+axum = "0.7.6"
 axum-prometheus = "0.7.0"
 axum-server = { version = "0.7.1", features = ["tls-rustls"] }
 bson = { version = "2.13.0", features = ["chrono-0_4"] }
 chrono = { version = "0.4.38", default-features = false, features = ["serde"] }
-clap = { version = "4.5.17", default-features = false, features = [
+clap = { version = "4.5.18", default-features = false, features = [
     "std",
     "help",
     "usage",
@@ -54,7 +54,7 @@ tokio = { version = "1.40.0", features = [
     "time",
 ] }
 tower = "0.5.1"
-tower-http = { version = "0.6.0", default-features = false, features = [
+tower-http = { version = "0.6.1", default-features = false, features = [
     "cors",
     "fs",
     "normalize-path",
@@ -63,7 +63,7 @@ tower-http = { version = "0.6.0", default-features = false, features = [
 url = "2.5.2"
 
 [dev-dependencies]
-axum-test = "15.7.1"
+axum-test = "16.0.0"
 laboratory = "2.0.0"
 serde_urlencoded = "0.7.1"
 sylvia-iot-auth = "0.1.14"
