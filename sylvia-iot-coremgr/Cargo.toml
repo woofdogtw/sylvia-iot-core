@@ -1,6 +1,6 @@
 [package]
 name = "sylvia-iot-coremgr"
-version = "0.1.15"
+version = "0.1.16"
 authors = ["Chien-Hong Chan"]
 categories = ["web-programming::http-server"]
 description = "The manager of Sylvia-IoT core modules."
@@ -12,15 +12,15 @@ repository = "https://github.com/woofdogtw/sylvia-iot-core.git"
 rust-version = "1.75"
 
 [dependencies]
-async-stream = "0.3.5"
+async-stream = "0.3.6"
 async-trait = "0.1.83"
-axum = "0.7.6"
+axum = "0.7.7"
 axum-prometheus = "0.7.0"
 axum-server = { version = "0.7.1", features = ["tls-rustls"] }
 base64 = "0.22.1"
 bytes = "1.7.2"
 chrono = { version = "0.4.38", default-features = false, features = ["serde"] }
-clap = { version = "4.5.18", default-features = false, features = [
+clap = { version = "4.5.19", default-features = false, features = [
     "std",
     "help",
     "usage",
@@ -33,7 +33,7 @@ general-mq = { path = "../general-mq" }
 hex = "0.4.3"
 json5 = "0.4.1"
 log = "0.4.22"
-reqwest = { version = "0.12.7", default-features = false, features = [
+reqwest = { version = "0.12.8", default-features = false, features = [
     "json",
     "rustls-tls",
     "stream",
@@ -62,7 +62,7 @@ tower-http = { version = "0.6.1", default-features = false, features = [
 url = "2.5.2"
 
 [dev-dependencies]
-axum-test = "16.0.0"
+axum-test = "16.1.0"
 laboratory = "2.0.0"
 
 [profile.release]
