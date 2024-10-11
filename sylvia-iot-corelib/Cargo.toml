@@ -17,13 +17,13 @@ async-trait = "0.1.83"
 axum = "0.7.7"
 bytes = "1.7.2"
 chrono = { version = "0.4.38", default-features = false, features = ["serde"] }
-clap = { version = "4.5.19", default-features = false, features = [
+clap = { version = "4.5.20", default-features = false, features = [
     "std",
     "help",
     "usage",
     "error-context",
 ] }
-futures = "0.3.30"
+futures = "0.3.31"
 hex = "0.4.3"
 hmac = "0.12.1"
 log = "0.4.22"
@@ -39,7 +39,7 @@ tower-layer = "0.3.3"
 url = "2.5.2"
 
 [dev-dependencies]
-axum-test = "16.1.0"
+axum-test = "16.2.0"
 laboratory = "2.0.0"
 tokio = { version = "1.40.0", features = ["rt-multi-thread"] }
 
