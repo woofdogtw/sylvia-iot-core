@@ -16,7 +16,7 @@ async-trait = "0.1.83"
 axum = "0.7.7"
 bytes = "1.7.2"
 chrono = { version = "0.4.38", default-features = false, features = ["serde"] }
-futures = "0.3.30"
+futures = "0.3.31"
 general-mq = { path = "../general-mq" }
 hex = "0.4.3"
 reqwest = { version = "0.12.8", default-features = false, features = ["json"] }
@@ -33,7 +33,7 @@ tower = "0.5.1"
 url = "2.5.2"
 
 [dev-dependencies]
-axum-test = "16.1.0"
+axum-test = "16.2.0"
 laboratory = "2.0.0"
 sylvia-iot-auth = { path = "../sylvia-iot-auth" }
 sylvia-iot-broker = { path = "../sylvia-iot-broker" }
