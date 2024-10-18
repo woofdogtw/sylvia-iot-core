@@ -36,9 +36,9 @@ reqwest = { version = "0.12.8", default-features = false, features = [
     "json",
     "rustls-tls",
 ] }
-rustls = "0.23.14"
+rustls = "0.23.15"
 serde = { version = "1.0.210", features = ["derive"] }
-serde_json = "1.0.128"
+serde_json = "1.0.129"
 sql-builder = "3.1.1"
 sqlx = { version = "0.8.2", default-features = false, features = [
     "macros",
