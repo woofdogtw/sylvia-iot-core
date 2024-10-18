@@ -32,7 +32,7 @@ pbkdf2 = "0.12.2"
 rand = "0.8.5"
 regex = "1.11.0"
 serde = { version = "1.0.210", features = ["derive"] }
-serde_json = "1.0.128"
+serde_json = "1.0.129"
 sha2 = "0.10.8"
 tower = "0.5.1"
 tower-layer = "0.3.3"
