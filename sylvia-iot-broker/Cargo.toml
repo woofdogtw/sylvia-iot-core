@@ -37,8 +37,8 @@ reqwest = { version = "0.12.8", default-features = false, features = [
     "rustls-tls",
 ] }
 rustls = "0.23.15"
-serde = { version = "1.0.210", features = ["derive"] }
-serde_json = "1.0.129"
+serde = { version = "1.0.213", features = ["derive"] }
+serde_json = "1.0.132"
 sql-builder = "3.1.1"
 sqlx = { version = "0.8.2", default-features = false, features = [
     "macros",
@@ -46,7 +46,7 @@ sqlx = { version = "0.8.2", default-features = false, features = [
     "sqlite",
 ] }
 sylvia-iot-corelib = { path = "../sylvia-iot-corelib" }
-tokio = { version = "1.40.0", features = [
+tokio = { version = "1.41.0", features = [
     "io-util",
     "macros",
     "rt-multi-thread",
