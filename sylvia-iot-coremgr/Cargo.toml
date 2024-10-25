@@ -18,7 +18,7 @@ axum = "0.7.7"
 axum-prometheus = "0.7.0"
 axum-server = { version = "0.7.1", features = ["tls-rustls"] }
 base64 = "0.22.1"
-bytes = "1.7.2"
+bytes = "1.8.0"
 chrono = { version = "0.4.38", default-features = false, features = ["serde"] }
 clap = { version = "4.5.20", default-features = false, features = [
     "std",
@@ -40,13 +40,13 @@ reqwest = { version = "0.12.8", default-features = false, features = [
 ] }
 rumqttd = "0.19.0"
 rustls = "0.23.15"
-serde = { version = "1.0.210", features = ["derive"] }
-serde_json = "1.0.129"
+serde = { version = "1.0.213", features = ["derive"] }
+serde_json = "1.0.132"
 serde_urlencoded = "0.7.1"
 sylvia-iot-auth = { path = "../sylvia-iot-auth" }
 sylvia-iot-broker = { path = "../sylvia-iot-broker" }
 sylvia-iot-corelib = { path = "../sylvia-iot-corelib" }
-tokio = { version = "1.40.0", features = [
+tokio = { version = "1.41.0", features = [
     "io-util",
     "macros",
     "rt-multi-thread",
