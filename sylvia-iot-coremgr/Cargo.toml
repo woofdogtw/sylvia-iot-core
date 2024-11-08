@@ -46,7 +46,7 @@ serde_urlencoded = "0.7.1"
 sylvia-iot-auth = { path = "../sylvia-iot-auth" }
 sylvia-iot-broker = { path = "../sylvia-iot-broker" }
 sylvia-iot-corelib = { path = "../sylvia-iot-corelib" }
-tokio = { version = "1.41.0", features = [
+tokio = { version = "1.41.1", features = [
     "io-util",
     "macros",
     "rt-multi-thread",
@@ -59,7 +59,7 @@ tower-http = { version = "0.6.1", default-features = false, features = [
     "normalize-path",
     "timeout",
 ] }
-url = "2.5.2"
+url = "2.5.3"
 
 [dev-dependencies]
 axum-test = "16.3.0"
