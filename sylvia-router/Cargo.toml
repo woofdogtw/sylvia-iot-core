@@ -42,7 +42,7 @@ sylvia-iot-coremgr-cli = { path = "../sylvia-iot-coremgr-cli" }
 sylvia-iot-data = { path = "../sylvia-iot-data" }
 sylvia-iot-sdk = { path = "../sylvia-iot-sdk" }
 sysinfo = "0.32.0"
-tokio = { version = "1.41.0", features = [
+tokio = { version = "1.41.1", features = [
     "io-util",
     "macros",
     "rt-multi-thread",

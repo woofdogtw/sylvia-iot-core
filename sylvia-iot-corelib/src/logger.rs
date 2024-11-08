@@ -76,7 +76,7 @@ struct JsonEncoderHttpMsg {
     pub method: String,
     pub url: String,
     #[serde(rename = "latencyMs")]
-    pub latency_ms: String,
+    pub latency_ms: i64,
 }
 
 // remote address, status code, processing milliseconds, request URL, request line (method, resource, version)
@@ -437,6 +437,9 @@ fn get_http_msg(record: &Record<'_>) -> Option<JsonEncoderHttpMsg> {
         status: status.to_string(),
         method: method.to_string(),
         url: url.to_string(),
-        latency_ms: latency_ms.to_string(),
+        latency_ms: match latency_ms.parse() {
+            Err(_) => -1,
+            Ok(latency) => latency,
+        },
     })
 }
