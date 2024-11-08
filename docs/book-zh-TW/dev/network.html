@@ -1,0 +1,302 @@
+<!DOCTYPE HTML>
+<html lang="zh-TW" class="rust" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>網路服務 - Sylvia-IoT 說明文件</title>
+
+
+        <!-- Custom HTML head -->
+        
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="../favicon.svg">
+        <link rel="shortcut icon" href="../favicon.png">
+        <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+        <link rel="stylesheet" href="../css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" href="../highlight.css">
+        <link rel="stylesheet" href="../tomorrow-night.css">
+        <link rel="stylesheet" href="../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+
+    </head>
+    <body class="sidebar-visible no-js">
+    <div id="body-container">
+        <!-- Provide site root to javascript -->
+        <script>
+            var path_to_root = "../";
+            var default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "navy" : "rust";
+        </script>
+
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                var theme = localStorage.getItem('mdbook-theme');
+                var sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            var theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            var html = document.querySelector('html');
+            html.classList.remove('rust')
+            html.classList.add(theme);
+            var body = document.querySelector('body');
+            body.classList.remove('no-js')
+            body.classList.add('js');
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            var body = document.querySelector('body');
+            var sidebar = null;
+            var sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+            }
+            sidebar_toggle.checked = sidebar === 'visible';
+            body.classList.remove('sidebar-visible');
+            body.classList.add("sidebar-" + sidebar);
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <div class="sidebar-scrollbox">
+                <ol class="chapter"><li class="chapter-item expanded "><a href="../index.html"><strong aria-hidden="true">1.</strong> 介紹</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../intro/overview.html"><strong aria-hidden="true">1.1.</strong> 什麼是 Sylvia-IoT？</a></li><li class="chapter-item expanded "><a href="../intro/concept.html"><strong aria-hidden="true">1.2.</strong> 概念</a></li></ol></li><li class="chapter-item expanded "><a href="../guide/index.html"><strong aria-hidden="true">2.</strong> 使用指南</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../guide/quick.html"><strong aria-hidden="true">2.1.</strong> 快速開始</a></li><li class="chapter-item expanded "><a href="../guide/configuration.html"><strong aria-hidden="true">2.2.</strong> 設定檔</a></li></ol></li><li class="chapter-item expanded "><a href="../arch/index.html"><strong aria-hidden="true">3.</strong> 內部架構</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../arch/arch.html"><strong aria-hidden="true">3.1.</strong> 架構</a></li><li class="chapter-item expanded "><a href="../arch/flow.html"><strong aria-hidden="true">3.2.</strong> 資料流</a></li><li class="chapter-item expanded "><a href="../arch/cache.html"><strong aria-hidden="true">3.3.</strong> 快取</a></li></ol></li><li class="chapter-item expanded "><a href="../dev/index.html"><strong aria-hidden="true">4.</strong> 開發指南</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../dev/oauth2.html"><strong aria-hidden="true">4.1.</strong> OAuth2 認證</a></li><li class="chapter-item expanded "><a href="../dev/network.html" class="active"><strong aria-hidden="true">4.2.</strong> 網路服務</a></li><li class="chapter-item expanded "><a href="../dev/application.html"><strong aria-hidden="true">4.3.</strong> 應用服務</a></li><li class="chapter-item expanded "><a href="../dev/core.html"><strong aria-hidden="true">4.4.</strong> Sylvia-IoT 核心</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../dev/dir.html"><strong aria-hidden="true">4.4.1.</strong> 目錄結構</a></li><li class="chapter-item expanded "><a href="../dev/style.html"><strong aria-hidden="true">4.4.2.</strong> 程式碼風格</a></li><li class="chapter-item expanded "><a href="../dev/testing.html"><strong aria-hidden="true">4.4.3.</strong> 撰寫測試</a></li></ol></li><li class="chapter-item expanded "><a href="../dev/cross.html"><strong aria-hidden="true">4.5.</strong> 跨平台編譯</a></li></ol></li><li class="chapter-item expanded "><a href="../appendex/index.html"><strong aria-hidden="true">5.</strong> 附錄</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../appendex/source.html"><strong aria-hidden="true">5.1.</strong> 資料來源</a></li><li class="chapter-item expanded "><a href="../appendex/repo.html"><strong aria-hidden="true">5.2.</strong> 輔助專案</a></li></ol></li></ol>
+            </div>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <!-- Track and set sidebar scroll position -->
+        <script>
+            var sidebarScrollbox = document.querySelector('#sidebar .sidebar-scrollbox');
+            sidebarScrollbox.addEventListener('click', function(e) {
+                if (e.target.tagName === 'A') {
+                    sessionStorage.setItem('sidebar-scroll', sidebarScrollbox.scrollTop);
+                }
+            }, { passive: true });
+            var sidebarScrollTop = sessionStorage.getItem('sidebar-scroll');
+            sessionStorage.removeItem('sidebar-scroll');
+            if (sidebarScrollTop) {
+                // preserve sidebar scroll position when navigating via links within sidebar
+                sidebarScrollbox.scrollTop = sidebarScrollTop;
+            } else {
+                // scroll sidebar to current active section when navigating via "next/previous chapter" buttons
+                var activeSection = document.querySelector('#sidebar .active');
+                if (activeSection) {
+                    activeSection.scrollIntoView({ block: 'center' });
+                }
+            }
+        </script>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </label>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">Sylvia-IoT 說明文件</h1>
+
+                    <div class="right-buttons">
+                        <a href="../print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="網路服務"><a class="header" href="#網路服務">網路服務</a></h1>
+<p>本章節簡述開發網路服務的幾個要點，包含：</p>
+<ul>
+<li>資料通道 (Data Channel)</li>
+<li>控制通道 (Control Channel)</li>
+<li>Rust 使用 <a href="https://crates.io/crates/sylvia-iot-sdk"><strong>SDK</strong></a> 連接通道</li>
+</ul>
+<p>在開始本章之前，請先確保已經研讀過 <a href="../arch/flow.html"><strong>資料流</strong></a> 章節並了解佇列和相關資料的產生與消費時機。</p>
+<h2 id="佇列與資料格式"><a class="header" href="#佇列與資料格式">佇列與資料格式</a></h2>
+<ul>
+<li>
+<p><a href="https://github.com/woofdogtw/sylvia-iot-core/blob/main/sylvia-iot-broker/doc/message.md#between-broker-and-network"><strong>這份文件</strong></a> 定義了 Broker 與網路服務佇列的資料內容。</p>
+</li>
+<li>
+<p>無論資料通道或控制通道，都是使用單播模式（unicast）。特性如下：</p>
+<ul>
+<li>AMQP 屬性：
+<ul>
+<li>durable: true</li>
+<li>exclusive: false</li>
+<li>auto-delete: false</li>
+<li>ttl: 產生 network 時決定</li>
+<li>max-length: 產生 network 時決定</li>
+</ul>
+</li>
+<li>MQTT 屬性：
+<ul>
+<li>QoS: Broker 端為 1</li>
+<li>clean session: Broker 端為 true</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>
+<p>在 <a href="../arch/flow.html"><strong>資料流</strong></a> 章節有提到，網路服務在處理下行資料時需要保留 <code>dataId</code>，以便後續回報結果。</p>
+<ul>
+<li>對於未回報的下行資料，對 Broker 沒有影響。
+<ul>
+<li>目前只保留一天。如沒有回報則永遠呈現未回報狀態。</li>
+</ul>
+</li>
+<li>應用服務可以自行決定太久沒有回報的下行資料該如何處理。</li>
+</ul>
+</li>
+<li>
+<p>關於 <code>result</code> 的規則：</p>
+<ul>
+<li>小於 0 表示進行中。
+<ul>
+<li>-2: 表示資料正在往網路服務傳送中。由 Broker 在儲存到資料庫前設定。</li>
+<li>-1: 表示網路服務已經接收到。須由網路服務透過 <code>result</code> 佇列回報 -1。</li>
+</ul>
+</li>
+<li>0 或是正數表示處理完成。此時會從 dldata 資料庫中移除，之後的任何回報都無法再傳回應用端。
+<ul>
+<li>都由網路服務回報。</li>
+<li>0: 成功發送到裝置端，或是裝置端回覆了成功。</li>
+<li>正數: 無法發送到裝置端，或是裝置端回覆了錯誤。</li>
+</ul>
+</li>
+</ul>
+<blockquote>
+<p>由於目前是由網路服務定義結果，應用端仍需知道該裝置目前綁定到哪個網路。建議開發網路服務時，跟著以上的規則，可以讓應用端的呈現更加一致化。</p>
+</blockquote>
+</li>
+</ul>
+<h2 id="rust-使用-sdk"><a class="header" href="#rust-使用-sdk">Rust 使用 SDK</a></h2>
+<p>針對 Rust 開發人員，目前提供了 SDK 協助開發人員開發網路服務，在 <a href="../appendex/repo.html"><strong>附錄</strong></a> 章節也有提供使用範例。這裡介紹幾個使用的技巧：</p>
+<ul>
+<li>通道的維護都寫在 <code>mq</code> 模組中的 <code>NetworkMgr</code> 中。</li>
+<li>一個 <code>NetworkMgr</code> 對應一個網路服務。</li>
+<li>只要管理 <code>NetworkMgr</code> 即可，無需自行管理所有佇列的連線狀態和 AMQP/MQTT 的屬性。</li>
+<li>註冊 <code>EventHandler</code> 可即時於佇列狀態改變或是資料送達時收到。</li>
+<li>可以透過 <code>send_uldata()</code> 和 <code>send_dldata_result()</code> 傳送資料給 Broker。</li>
+</ul>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../dev/oauth2.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="../dev/application.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../dev/oauth2.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="../dev/application.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+
+        <script src="../elasticlunr.min.js"></script>
+        <script src="../mark.min.js"></script>
+        <script src="../searcher.js"></script>
+
+        <script src="../clipboard.min.js"></script>
+        <script src="../highlight.js"></script>
+        <script src="../book.js"></script>
+
+        <!-- Custom JS scripts -->
+
+
+    </div>
+    </body>
+</html>
