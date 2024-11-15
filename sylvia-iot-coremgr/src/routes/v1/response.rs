@@ -50,9 +50,9 @@ pub struct Unit {
     pub modified_at: String,
     #[serde(rename = "ownerId")]
     pub owner_id: String,
-    #[serde(rename = "memberIds", skip_serializing)]
+    #[serde(rename(deserialize = "memberIds"), skip_serializing)]
     pub member_ids: Vec<String>,
-    #[serde(rename = "memberIds")]
+    #[serde(rename(serialize = "memberIds"))]
     pub member_ids_str: Option<String>,
     pub name: String,
     #[serde(skip_serializing)]
