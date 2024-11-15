@@ -58,7 +58,7 @@ use crate::{
 enum RecvCtrlMsg {
     #[serde(rename = "del-device-route")]
     DelDeviceRoute { new: CtrlDelDeviceRoute },
-    #[serde(rename = "del-device-route")]
+    #[serde(rename = "del-device-route-bulk")]
     DelDeviceRouteBulk { new: CtrlDelDeviceRouteBulk },
 }
 
