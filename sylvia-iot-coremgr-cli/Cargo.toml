@@ -38,7 +38,7 @@ tokio = { version = "1.41.1", features = [
     "rt-multi-thread",
     "time",
 ] }
-url = "2.5.3"
+url = "2.5.4"
 validators = "0.25.3"
 
 [dev-dependencies]
