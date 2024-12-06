@@ -17,7 +17,7 @@ pub async fn get_usage(State(state): State<AppState>) -> impl IntoResponse {
         let mut disk = disk_info.lock().unwrap();
         sys.refresh_cpu_all();
         sys.refresh_memory();
-        disk.refresh_list();
+        disk.refresh(false);
 
         let mut cpu_usages = vec![];
         for cpu in sys.cpus() {
