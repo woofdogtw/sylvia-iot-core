@@ -12,12 +12,12 @@ repository = "https://github.com/woofdogtw/sylvia-iot-core.git"
 rust-version = "1.75"
 
 [dependencies]
-anyhow = "1.0.93"
+anyhow = "1.0.94"
 async-trait = "0.1.83"
 axum = "0.7.7"
 bytes = "1.9.0"
 chrono = { version = "0.4.38", default-features = false, features = ["serde"] }
-clap = { version = "4.5.21", default-features = false, features = [
+clap = { version = "4.5.23", default-features = false, features = [
     "std",
     "help",
     "usage",
@@ -41,7 +41,7 @@ url = "2.5.4"
 [dev-dependencies]
 axum-test = "16.4.0"
 laboratory = "2.0.0"
-tokio = { version = "1.41.1", features = ["rt-multi-thread"] }
+tokio = { version = "1.42.0", features = ["rt-multi-thread"] }
 
 [profile.release]
 codegen-units = 1
