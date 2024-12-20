@@ -8,8 +8,8 @@ on:
       - main
 env:
   BINUTILS_VER: v0.3.6
-  GRCOV_VER: v0.8.19
-  MDBOOK_VER: v0.4.40
+  GRCOV_VER: v0.8.20
+  MDBOOK_VER: v0.4.43
 jobs:
   general-mq:
     name: Build and test general-mq
@@ -18,13 +18,13 @@ jobs:
     runs-on: ubuntu-22.04
     services:
       rabbitmq:
-        image: rabbitmq:4.0.1-management-alpine
+        image: rabbitmq:4.0.5-management-alpine
         ports:
           - 5671:5671
           - 5672:5672
           - 15672:15672
       emqx:
-        image: emqx/emqx:5.8.0
+        image: emqx/emqx:5.8.3
         ports:
           - 1883:1883
           - 8883:8883
@@ -81,7 +81,7 @@ jobs:
     runs-on: ubuntu-22.04
     services:
       mongo:
-        image: mongo:7.0.14
+        image: mongo:8.0.4
         ports:
           - 27017:27017
       redis:
@@ -140,17 +140,17 @@ jobs:
     runs-on: ubuntu-22.04
     services:
       mongo:
-        image: mongo:7.0.14
+        image: mongo:8.0.4
         ports:
           - 27017:27017
       rabbitmq:
-        image: rabbitmq:4.0.1-management-alpine
+        image: rabbitmq:4.0.5-management-alpine
         ports:
           - 5671:5671
           - 5672:5672
           - 15672:15672
       emqx:
-        image: emqx/emqx:5.8.0
+        image: emqx/emqx:5.8.3
         ports:
           - 1883:1883
           - 8883:8883
@@ -257,11 +257,11 @@ jobs:
     runs-on: ubuntu-22.04
     services:
       mongo:
-        image: mongo:7.0.14
+        image: mongo:8.0.4
         ports:
           - 27017:27017
       rabbitmq:
-        image: rabbitmq:4.0.1-management-alpine
+        image: rabbitmq:4.0.5-management-alpine
         ports:
           - 5671:5671
           - 5672:5672
@@ -288,7 +288,7 @@ jobs:
           -e EMQX_LOADED_MODULES="emqx_mod_acl_internal,emqx_mod_presence,emqx_mod_topic_metrics"
           -p 1883:1883 -p 8883:8883 -p 18083:18083
           -v "$(pwd)/.github/workflows/files/emqx.conf":"/opt/emqx/etc/emqx.conf"
-          emqx/emqx:5.8.0
+          emqx/emqx:5.8.3
       - name: Build bin/lib
         run: cargo build -p $PROJ
       - name: Print system info
@@ -339,17 +339,17 @@ jobs:
     runs-on: ubuntu-22.04
     services:
       mongo:
-        image: mongo:7.0.14
+        image: mongo:8.0.4
         ports:
           - 27017:27017
       rabbitmq:
-        image: rabbitmq:4.0.1-management-alpine
+        image: rabbitmq:4.0.5-management-alpine
         ports:
           - 5671:5671
           - 5672:5672
           - 15672:15672
       emqx:
-        image: emqx/emqx:5.8.0
+        image: emqx/emqx:5.8.3
         ports:
           - 1883:1883
           - 8883:8883
@@ -406,13 +406,13 @@ jobs:
     runs-on: ubuntu-22.04
     services:
       rabbitmq:
-        image: rabbitmq:4.0.1-management-alpine
+        image: rabbitmq:4.0.5-management-alpine
         ports:
           - 5671:5671
           - 5672:5672
           - 15672:15672
       emqx:
-        image: emqx/emqx:5.8.0
+        image: emqx/emqx:5.8.3
         ports:
           - 1883:1883
           - 8883:8883

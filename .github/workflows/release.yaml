@@ -4,7 +4,7 @@ on:
     tags:
       - v*
 env:
-  GHR_VER: v0.16.2
+  GHR_VER: v0.17.0
   BIN_DIR: dist
   SBOM_VER: v0.9.1
   SBOM_DIR: sbom
@@ -133,7 +133,7 @@ jobs:
             type=semver,pattern={{major}}.{{minor}}
             type=semver,pattern={{major}}
       - name: Create auth Docker image
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         with:
           build-args: |
             BIN_DIR=${{ env.BIN_DIR }}
@@ -154,7 +154,7 @@ jobs:
             type=semver,pattern={{major}}.{{minor}}
             type=semver,pattern={{major}}
       - name: Create broker Docker image
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         with:
           build-args: |
             BIN_DIR=${{ env.BIN_DIR }}
@@ -175,7 +175,7 @@ jobs:
             type=semver,pattern={{major}}.{{minor}}
             type=semver,pattern={{major}}
       - name: Create coremgr Docker
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         with:
           build-args: |
             BIN_DIR=${{ env.BIN_DIR }}
@@ -196,7 +196,7 @@ jobs:
             type=semver,pattern={{major}}.{{minor}}
             type=semver,pattern={{major}}
       - name: Create data Docker
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         with:
           build-args: |
             BIN_DIR=${{ env.BIN_DIR }}
@@ -217,7 +217,7 @@ jobs:
             type=semver,pattern={{major}}.{{minor}}
             type=semver,pattern={{major}}
       - name: Create core Docker
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         with:
           build-args: |
             BIN_DIR=${{ env.BIN_DIR }}

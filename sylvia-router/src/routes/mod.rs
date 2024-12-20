@@ -57,9 +57,9 @@ pub async fn new_state(
     conf: &Config,
 ) -> Result<State, Box<dyn StdError>> {
     let mut sys_info = System::new_with_specifics(
-        RefreshKind::new()
-            .with_cpu(CpuRefreshKind::new().with_cpu_usage())
-            .with_memory(MemoryRefreshKind::new().with_ram().with_swap()),
+        RefreshKind::nothing()
+            .with_cpu(CpuRefreshKind::nothing().with_cpu_usage())
+            .with_memory(MemoryRefreshKind::nothing().with_ram().with_swap()),
     );
     let disk_info = Disks::new_with_refreshed_list();
     sys_info.refresh_cpu_all();

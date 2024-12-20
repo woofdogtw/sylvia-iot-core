@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.1.16 - 2024-12-20
+
+### Changed
+
+- Update Rust to 1.83.0 with GitHub Actions runner image 20241215.1.1.
+- Update dependencies and fix vulnerabilities.
+
 ## 0.1.15 - 2024-09-28
 
 ### Changed

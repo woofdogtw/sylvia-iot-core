@@ -1,6 +1,6 @@
 [package]
 name = "sylvia-router"
-version = "0.1.15"
+version = "0.1.16"
 authors = ["Chien-Hong Chan"]
 categories = ["web-programming::http-server"]
 description = "A simple router application with full Sylvia-IoT core components."
@@ -12,26 +12,26 @@ repository = "https://github.com/woofdogtw/sylvia-iot-core.git"
 rust-version = "1.75"
 
 [dependencies]
-axum = "0.7.6"
+axum = "0.7.7"
 axum-prometheus = "0.7.0"
 axum-server = { version = "0.7.1", features = ["tls-rustls"] }
-chrono = { version = "0.4.38", default-features = false, features = ["serde"] }
-clap = { version = "4.5.18", default-features = false, features = [
+chrono = { version = "0.4.39", default-features = false, features = ["serde"] }
+clap = { version = "4.5.23", default-features = false, features = [
     "std",
     "help",
     "usage",
     "error-context",
 ] }
-ipnet = "2.10.0"
+ipnet = "2.10.1"
 json5 = "0.4.1"
 log = "0.4.22"
-reqwest = { version = "0.12.7", default-features = false, features = [
+reqwest = { version = "0.12.9", default-features = false, features = [
     "json",
     "rustls-tls",
 ] }
-rustls = "0.23.13"
-serde = { version = "1.0.210", features = ["derive"] }
-serde_json = "1.0.128"
+rustls = "0.23.20"
+serde = { version = "1.0.216", features = ["derive"] }
+serde_json = "1.0.133"
 serde_urlencoded = "0.7.1"
 shell-escape = "0.1.5"
 sylvia-iot-auth = "0.1.15"
@@ -41,15 +41,15 @@ sylvia-iot-coremgr = "0.1.15"
 sylvia-iot-coremgr-cli = "0.1.15"
 sylvia-iot-data = "0.1.15"
 sylvia-iot-sdk = "0.1.15"
-sysinfo = "0.31.4"
-tokio = { version = "1.40.0", features = [
+sysinfo = "0.33.0"
+tokio = { version = "1.42.0", features = [
     "io-util",
     "macros",
     "rt-multi-thread",
     "time",
 ] }
-tower = "0.5.1"
-tower-http = { version = "0.6.1", default-features = false, features = [
+tower = "0.5.2"
+tower-http = { version = "0.6.2", default-features = false, features = [
     "cors",
     "fs",
     "normalize-path",

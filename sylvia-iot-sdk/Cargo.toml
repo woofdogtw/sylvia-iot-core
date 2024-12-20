@@ -1,6 +1,6 @@
 [package]
 name = "sylvia-iot-sdk"
-version = "0.1.15"
+version = "0.1.16"
 authors = ["Chien-Hong Chan"]
 categories = ["web-programming::http-server"]
 description = "SDK for developing networks (adapters) and applications on Sylvia-IoT."
@@ -13,27 +13,27 @@ rust-version = "1.75"
 
 [dependencies]
 async-trait = "0.1.83"
-axum = "0.7.6"
-bytes = "1.7.2"
-chrono = { version = "0.4.38", default-features = false, features = ["serde"] }
-futures = "0.3.30"
+axum = "0.7.7"
+bytes = "1.9.0"
+chrono = { version = "0.4.39", default-features = false, features = ["serde"] }
+futures = "0.3.31"
 general-mq = "0.1.15"
 hex = "0.4.3"
-reqwest = { version = "0.12.7", default-features = false, features = ["json"] }
-serde = { version = "1.0.210", features = ["derive"] }
-serde_json = "1.0.128"
+reqwest = { version = "0.12.9", default-features = false, features = ["json"] }
+serde = { version = "1.0.216", features = ["derive"] }
+serde_json = "1.0.133"
 sylvia-iot-corelib = "0.1.15"
-tokio = { version = "1.40.0", features = [
+tokio = { version = "1.42.0", features = [
     "io-util",
     "macros",
     "rt-multi-thread",
     "time",
 ] }
-tower = "0.5.1"
-url = "2.5.2"
+tower = "0.5.2"
+url = "2.5.4"
 
 [dev-dependencies]
-axum-test = "16.0.0"
+axum-test = "16.4.1"
 laboratory = "2.0.0"
 sylvia-iot-auth = "0.1.15"
 sylvia-iot-broker = "0.1.15"
