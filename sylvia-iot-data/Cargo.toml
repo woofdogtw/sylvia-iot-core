@@ -1,6 +1,6 @@
 [package]
 name = "sylvia-iot-data"
-version = "0.1.16"
+version = "0.1.17"
 authors = ["Chien-Hong Chan"]
 categories = ["web-programming::http-server"]
 description = "The data storage of Sylvia-IoT core modules."
@@ -31,13 +31,13 @@ general-mq = { path = "../general-mq" }
 json5 = "0.4.1"
 log = "0.4.22"
 mongodb = "3.1.1"
-reqwest = { version = "0.12.9", default-features = false, features = [
+reqwest = { version = "0.12.10", default-features = false, features = [
     "json",
     "rustls-tls",
 ] }
 rustls = "0.23.20"
 serde = { version = "1.0.216", features = ["derive"] }
-serde_json = "1.0.133"
+serde_json = "1.0.134"
 sql-builder = "3.1.1"
 sqlx = { version = "0.8.2", default-features = false, features = [
     "macros",
