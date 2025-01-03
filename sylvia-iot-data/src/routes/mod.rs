@@ -48,7 +48,8 @@ pub struct State {
     pub data_receivers: HashMap<String, Queue>,
 }
 
-/// The sylvia-iot module specific error codes in addition to standard [`ErrResp`].
+/// The sylvia-iot module specific error codes in addition to standard
+/// [`sylvia_iot_corelib::err::ErrResp`].
 pub struct ErrReq;
 
 /// Query parameters for `GET /version`
