@@ -85,7 +85,8 @@ pub struct CtrlSenders {
     pub network_route: Arc<Mutex<Queue>>,
 }
 
-/// The sylvia-iot module specific error codes in addition to standard [`ErrResp`].
+/// The sylvia-iot module specific error codes in addition to standard
+/// [`sylvia_iot_corelib::err::ErrResp`].
 pub struct ErrReq;
 
 struct DataSenderHandler;

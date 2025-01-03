@@ -34,7 +34,8 @@ pub struct State {
     pub model: Arc<dyn Model>,
 }
 
-/// The sylvia-iot module specific error codes in addition to standard [`ErrResp`].
+/// The sylvia-iot module specific error codes in addition to standard
+/// [`sylvia_iot_corelib::err::ErrResp`].
 pub struct ErrReq;
 
 /// Query parameters for `GET /version`

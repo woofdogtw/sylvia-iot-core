@@ -21,7 +21,7 @@ pub enum Status {
 }
 
 /// The accepted pattern of the queue name.
-pub(crate) const QUEUE_NAME_PATTERN: &'static str = r"^[a-z0-9_-]+([\.]{1}[a-z0-9_-]+)*$";
+pub const QUEUE_NAME_PATTERN: &'static str = r"^[a-z0-9_-]+([\.]{1}[a-z0-9_-]+)*$";
 
 /// The operations for queues.
 #[async_trait]
