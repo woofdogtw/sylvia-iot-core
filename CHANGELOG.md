@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.2.1 - 2025-01-10
+
+### Fixed
+
+- **sylvia-iot-auth**, **sylvia-iot-core**, **sylvia-router**: Replace `nest_service` with `fallback_service` for root path not support issue.
+
 ## 0.2.0 - 2025-01-10
 
 ### Changed
