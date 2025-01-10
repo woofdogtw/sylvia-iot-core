@@ -75,7 +75,7 @@ async fn main() -> std::io::Result<()> {
             "/metrics",
             routing::get(|| async move { metric_handle.render() }),
         )
-        .nest_service("/", ServeDir::new(static_path))
+        .fallback_service(ServeDir::new(static_path))
         .layer(TimeoutLayer::new(Duration::from_secs(60)))
         .layer(CorsLayer::permissive())
         .layer(NormalizePathLayer::trim_trailing_slash())

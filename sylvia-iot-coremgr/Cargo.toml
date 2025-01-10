@@ -1,6 +1,6 @@
 [package]
 name = "sylvia-iot-coremgr"
-version = "0.2.0"
+version = "0.2.1"
 authors = ["Chien-Hong Chan"]
 categories = ["web-programming::http-server"]
 description = "The manager of Sylvia-IoT core modules."
