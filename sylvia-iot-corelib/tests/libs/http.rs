@@ -84,7 +84,7 @@ pub fn test_path(_context: &mut SpecContext<TestState>) -> Result<(), String> {
     let runtime = Runtime::new().unwrap();
 
     let app = Router::new().route(
-        "/:param",
+        "/{param}",
         routing::get(|Path(_): Path<TestParam>| async { "" }),
     );
     let server = TestServer::new(app).unwrap();

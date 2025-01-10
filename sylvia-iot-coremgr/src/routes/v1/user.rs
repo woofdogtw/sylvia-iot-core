@@ -58,7 +58,7 @@ pub fn new_service(scope_path: &str, state: &AppState) -> Router {
             .route("/count", routing::get(get_admin_user_count))
             .route("/list", routing::get(get_admin_user_list))
             .route(
-                "/:user_id",
+                "/{user_id}",
                 routing::get(get_admin_user)
                     .patch(patch_admin_user)
                     .delete(delete_admin_user),

@@ -61,7 +61,7 @@ pub fn new_service(scope_path: &str, state: &AppState) -> Router {
             .route("/range-delete", routing::post(post_device_route_range_del))
             .route("/count", routing::get(get_device_route_count))
             .route("/list", routing::get(get_device_route_list))
-            .route("/:route_id", routing::delete(delete_device_route))
+            .route("/{route_id}", routing::delete(delete_device_route))
             .with_state(state.clone()),
     )
 }

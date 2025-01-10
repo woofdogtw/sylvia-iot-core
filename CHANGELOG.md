@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.2.0 - 2025-01-10
+
+### Changed
+
+- **breaking**: Upgrade axum to 0.8, changing the path parameter syntax from `/:single` to `/{single}`.
+- Update dependencies.
+
 ## 0.1.16 - 2024-12-20
 
 ### Changed

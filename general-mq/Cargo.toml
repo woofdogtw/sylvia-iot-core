@@ -1,6 +1,6 @@
 [package]
 name = "general-mq"
-version = "0.1.17"
+version = "0.2.0"
 authors = ["Chien-Hong Chan"]
 categories = ["network-programming"]
 description = "General purposed interfaces for message queues."
@@ -13,12 +13,12 @@ rust-version = "1.75"
 
 [dependencies]
 amqprs = { version = "2.1.0", features = ["tls", "urispec"] }
-async-trait = "0.1.84"
+async-trait = "0.1.85"
 lapin = { version = "2.5.0", features = ["rustls"] }
 rand = "0.8.5"
 regex = "1.11.1"
 rumqttc = "0.24.0"
-tokio = { version = "1.42.0", features = [
+tokio = { version = "1.43.0", features = [
     "io-util",
     "macros",
     "rt-multi-thread",

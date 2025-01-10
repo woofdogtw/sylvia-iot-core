@@ -1,6 +1,5 @@
 use std::{borrow::Cow, str};
 
-use async_trait::async_trait;
 use axum::{
     body::Bytes,
     extract::{Form, FromRequest, Query, Request},
@@ -72,7 +71,6 @@ pub struct RefreshTokenRequest {
 
 pub const ALLOW_VALUE: &'static str = "yes";
 
-#[async_trait]
 impl<S> FromRequest<S> for GetAuthRequest
 where
     S: Send + Sync,
@@ -87,7 +85,6 @@ where
     }
 }
 
-#[async_trait]
 impl<S> FromRequest<S> for GetLoginRequest
 where
     S: Send + Sync,
@@ -102,7 +99,6 @@ where
     }
 }
 
-#[async_trait]
 impl<S> FromRequest<S> for PostLoginRequest
 where
     Bytes: FromRequest<S>,
@@ -131,7 +127,6 @@ impl AuthorizationRequest {
     }
 }
 
-#[async_trait]
 impl<S> FromRequest<S> for AuthorizationRequest
 where
     Bytes: FromRequest<S>,
@@ -190,7 +185,6 @@ impl OxideAuthorizationRequest for AuthorizationRequest {
     }
 }
 
-#[async_trait]
 impl<S> FromRequest<S> for AccessTokenRequest
 where
     Bytes: FromRequest<S>,
@@ -264,7 +258,6 @@ impl OxideAccessTokenRequest for AccessTokenRequest {
     }
 }
 
-#[async_trait]
 impl<S> FromRequest<S> for RefreshTokenRequest
 where
     Bytes: FromRequest<S>,

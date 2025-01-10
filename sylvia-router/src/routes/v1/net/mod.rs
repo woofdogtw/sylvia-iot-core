@@ -17,7 +17,7 @@ pub fn new_service(scope_path: &str, state: &State) -> Router {
                 routing::get(api::get_wan).layer(AuthService::new(auth_uri.clone())),
             )
             .route(
-                "/wan/:wan_id",
+                "/wan/{wan_id}",
                 routing::put(api::put_wan).layer(AuthService::new(auth_uri.clone())),
             )
             .route(

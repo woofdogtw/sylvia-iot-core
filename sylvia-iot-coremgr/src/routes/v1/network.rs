@@ -105,13 +105,13 @@ pub fn new_service(scope_path: &str, state: &AppState) -> Router {
             .route("/count", routing::get(get_network_count))
             .route("/list", routing::get(get_network_list))
             .route(
-                "/:network_id",
+                "/{network_id}",
                 routing::get(get_network)
                     .patch(patch_network)
                     .delete(delete_network),
             )
-            .route("/:network_id/stats", routing::get(get_network_stats))
-            .route("/:network_id/uldata", routing::post(post_network_uldata))
+            .route("/{network_id}/stats", routing::get(get_network_stats))
+            .route("/{network_id}/uldata", routing::post(post_network_uldata))
             .with_state(state.clone()),
     )
 }

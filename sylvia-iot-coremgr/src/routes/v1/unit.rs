@@ -53,7 +53,7 @@ pub fn new_service(scope_path: &str, state: &AppState) -> Router {
             .route("/count", routing::get(get_unit_count))
             .route("/list", routing::get(get_unit_list))
             .route(
-                "/:unit_id",
+                "/{unit_id}",
                 routing::get(get_unit).patch(patch_unit).delete(delete_unit),
             )
             .with_state(state.clone()),

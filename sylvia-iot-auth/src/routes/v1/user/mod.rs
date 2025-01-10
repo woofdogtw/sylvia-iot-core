@@ -105,7 +105,7 @@ pub fn new_service(scope_path: &str, state: &State) -> Router {
                     .layer(AuthService::new(&state.model, role_scopes_list)),
             )
             .route(
-                "/:user_id",
+                "/{user_id}",
                 routing::get(api::get_admin_user)
                     .patch(api::patch_admin_user)
                     .delete(api::delete_admin_user)

@@ -108,17 +108,17 @@ pub fn new_service(scope_path: &str, state: &AppState) -> Router {
             .route("/count", routing::get(get_application_count))
             .route("/list", routing::get(get_application_list))
             .route(
-                "/:application_id",
+                "/{application_id}",
                 routing::get(get_application)
                     .patch(patch_application)
                     .delete(delete_application),
             )
             .route(
-                "/:application_id/stats",
+                "/{application_id}/stats",
                 routing::get(get_application_stats),
             )
             .route(
-                "/:application_id/dldata",
+                "/{application_id}/dldata",
                 routing::post(post_application_dldata),
             )
             .with_state(state.clone()),
