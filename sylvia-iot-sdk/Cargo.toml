@@ -17,12 +17,12 @@ axum = "0.8.1"
 bytes = "1.9.0"
 chrono = { version = "0.4.39", default-features = false, features = ["serde"] }
 futures = "0.3.31"
-general-mq = "0.2.0"
+general-mq = "0.2.1"
 hex = "0.4.3"
 reqwest = { version = "0.12.12", default-features = false, features = ["json"] }
 serde = { version = "1.0.217", features = ["derive"] }
 serde_json = "1.0.135"
-sylvia-iot-corelib = "0.2.0"
+sylvia-iot-corelib = "0.2.1"
 tokio = { version = "1.43.0", features = [
     "io-util",
     "macros",
@@ -35,9 +35,9 @@ url = "2.5.4"
 [dev-dependencies]
 axum-test = "17.0.1"
 laboratory = "2.0.0"
-sylvia-iot-auth = "0.2.0"
-sylvia-iot-broker = "0.2.0"
-sylvia-iot-coremgr = "0.2.0"
+sylvia-iot-auth = "0.2.1"
+sylvia-iot-broker = "0.2.1"
+sylvia-iot-coremgr = "0.2.1"
 
 [profile.release]
 codegen-units = 1
