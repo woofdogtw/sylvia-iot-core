@@ -103,7 +103,7 @@ pub fn new_service(scope_path: &str, state: &State) -> Router {
                     .layer(AuthService::new(auth_uri.clone(), role_scopes_list)),
             )
             .route(
-                "/:route_id",
+                "/{route_id}",
                 routing::delete(api::delete_device_route)
                     .layer(AuthService::new(auth_uri.clone(), role_scopes_param)),
             )

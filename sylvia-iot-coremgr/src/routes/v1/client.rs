@@ -62,12 +62,12 @@ pub fn new_service(scope_path: &str, state: &AppState) -> Router {
             .route("/count", routing::get(get_client_count))
             .route("/list", routing::get(get_client_list))
             .route(
-                "/:client_id",
+                "/{client_id}",
                 routing::get(get_client)
                     .patch(patch_client)
                     .delete(delete_client),
             )
-            .route("/user/:user_id", routing::delete(delete_client_user))
+            .route("/user/{user_id}", routing::delete(delete_client_user))
             .with_state(state.clone()),
     )
 }

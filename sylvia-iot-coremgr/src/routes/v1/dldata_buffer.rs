@@ -51,7 +51,7 @@ pub fn new_service(scope_path: &str, state: &AppState) -> Router {
         Router::new()
             .route("/count", routing::get(get_dldata_buffer_count))
             .route("/list", routing::get(get_dldata_buffer_list))
-            .route("/:data_id", routing::delete(delete_dldata_buffer))
+            .route("/{data_id}", routing::delete(delete_dldata_buffer))
             .with_state(state.clone()),
     )
 }

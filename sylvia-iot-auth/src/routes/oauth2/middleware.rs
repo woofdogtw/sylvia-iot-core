@@ -6,7 +6,6 @@ use std::{
     task::{Context, Poll},
 };
 
-use async_trait::async_trait;
 use axum::{
     extract::{FromRequest, Request},
     http::{header, Method, StatusCode},
@@ -201,7 +200,6 @@ impl ResourceRequest {
     }
 }
 
-#[async_trait]
 impl<S> FromRequest<S> for ResourceRequest
 where
     S: Send + Sync,

@@ -89,14 +89,14 @@ pub fn new_service(scope_path: &str, state: &State) -> Router {
                     .layer(AuthService::new(auth_uri.clone(), role_scopes_list)),
             )
             .route(
-                "/:unit_id",
+                "/{unit_id}",
                 routing::get(api::get_unit)
                     .patch(api::patch_unit)
                     .delete(api::delete_unit)
                     .layer(AuthService::new(auth_uri.clone(), role_scopes_param)),
             )
             .route(
-                "/user/:user_id",
+                "/user/{user_id}",
                 routing::delete(api::delete_unit_user)
                     .layer(AuthService::new(auth_uri.clone(), role_scopes_user)),
             )

@@ -90,14 +90,14 @@ pub fn new_service(scope_path: &str, state: &State) -> Router {
                     .layer(AuthService::new(&state.model, role_scopes_list)),
             )
             .route(
-                "/:client_id",
+                "/{client_id}",
                 routing::get(api::get_client)
                     .patch(api::patch_client)
                     .delete(api::delete_client)
                     .layer(AuthService::new(&state.model, role_scopes_param)),
             )
             .route(
-                "/user/:user_id",
+                "/user/{user_id}",
                 routing::delete(api::delete_client_user)
                     .layer(AuthService::new(&state.model, role_scopes_user_param)),
             )

@@ -1,4 +1,3 @@
-use async_trait::async_trait;
 use axum::{
     extract::{
         rejection::JsonRejection, FromRequest, FromRequestParts, Json as AxumJson,
@@ -27,7 +26,6 @@ pub struct Path<T>(pub T);
 /// This is the customized [`axum::extract::Query`] version to respose error with [`ErrResp`].
 pub struct Query<T>(pub T);
 
-#[async_trait]
 impl<S, T> FromRequest<S> for Json<T>
 where
     AxumJson<T>: FromRequest<S, Rejection = JsonRejection>,
@@ -62,7 +60,6 @@ where
     }
 }
 
-#[async_trait]
 impl<T, S> FromRequestParts<S> for Path<T>
 where
     T: DeserializeOwned + Send,
@@ -78,7 +75,6 @@ where
     }
 }
 
-#[async_trait]
 impl<T, S> FromRequestParts<S> for Query<T>
 where
     T: DeserializeOwned,

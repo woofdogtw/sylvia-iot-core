@@ -63,7 +63,7 @@ pub fn new_service(scope_path: &str, state: &AppState) -> Router {
             .route("/count", routing::get(get_device_count))
             .route("/list", routing::get(get_device_list))
             .route(
-                "/:device_id",
+                "/{device_id}",
                 routing::get(get_device)
                     .patch(patch_device)
                     .delete(delete_device),

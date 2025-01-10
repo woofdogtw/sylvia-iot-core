@@ -75,7 +75,7 @@ pub fn new_service(scope_path: &str, state: &State) -> Router {
                     .layer(AuthService::new(auth_uri.clone(), role_scopes_list)),
             )
             .route(
-                "/:network_id",
+                "/{network_id}",
                 routing::get(api::get_network)
                     .patch(api::patch_network)
                     .delete(api::delete_network)

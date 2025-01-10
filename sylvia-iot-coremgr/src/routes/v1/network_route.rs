@@ -50,7 +50,7 @@ pub fn new_service(scope_path: &str, state: &AppState) -> Router {
             .route("/", routing::post(post_network_route))
             .route("/count", routing::get(get_network_route_count))
             .route("/list", routing::get(get_network_route_list))
-            .route("/:route_id", routing::delete(delete_network_route))
+            .route("/{route_id}", routing::delete(delete_network_route))
             .with_state(state.clone()),
     )
 }
