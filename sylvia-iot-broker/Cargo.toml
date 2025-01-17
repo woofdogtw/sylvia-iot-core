@@ -1,6 +1,6 @@
 [package]
 name = "sylvia-iot-broker"
-version = "0.2.1"
+version = "0.2.2"
 authors = ["Chien-Hong Chan"]
 categories = ["web-programming::http-server"]
 description = "The message broker module of the Sylvia-IoT platform."
@@ -29,9 +29,9 @@ futures = "0.3.31"
 general-mq = { path = "../general-mq" }
 hex = "0.4.3"
 json5 = "0.4.1"
-log = "0.4.22"
+log = "0.4.25"
 lru = "0.12.5"
-mongodb = "3.1.1"
+mongodb = "3.2.0"
 reqwest = { version = "0.12.12", default-features = false, features = [
     "json",
     "rustls-tls",
@@ -63,7 +63,7 @@ tower-http = { version = "0.6.2", default-features = false, features = [
 url = "2.5.4"
 
 [dev-dependencies]
-axum-test = "17.0.1"
+axum-test = "17.1.0"
 laboratory = "2.0.0"
 serde_urlencoded = "0.7.1"
 sylvia-iot-auth = { path = "../sylvia-iot-auth" }
