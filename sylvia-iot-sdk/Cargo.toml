@@ -1,6 +1,6 @@
 [package]
 name = "sylvia-iot-sdk"
-version = "0.2.1"
+version = "0.2.2"
 authors = ["Chien-Hong Chan"]
 categories = ["web-programming::http-server"]
 description = "SDK for developing networks (adapters) and applications on Sylvia-IoT."
@@ -33,7 +33,7 @@ tower = "0.5.2"
 url = "2.5.4"
 
 [dev-dependencies]
-axum-test = "17.0.1"
+axum-test = "17.1.0"
 laboratory = "2.0.0"
 sylvia-iot-auth = { path = "../sylvia-iot-auth" }
 sylvia-iot-broker = { path = "../sylvia-iot-broker" }
