@@ -36,10 +36,10 @@ log = "0.4.25"
 mongodb = "3.2.0"
 oxide-auth = "0.6.1"
 oxide-auth-async = "0.2.1"
-redis = { version = "0.28.1", features = ["tokio-comp"] }
-rustls = "0.23.21"
+redis = { version = "0.28.2", features = ["tokio-comp"] }
+rustls = "0.23.22"
 serde = { version = "1.0.217", features = ["derive"] }
-serde_json = "1.0.137"
+serde_json = "1.0.138"
 serde_urlencoded = "0.7.1"
 serde_with = { version = "3.12.0", features = ["json"] }
 sql-builder = "3.1.1"
@@ -66,7 +66,7 @@ tower-http = { version = "0.6.2", default-features = false, features = [
 url = "2.5.4"
 
 [dev-dependencies]
-axum-test = "17.1.0"
+axum-test = "17.2.0"
 laboratory = "2.0.0"
 
 [profile.release]

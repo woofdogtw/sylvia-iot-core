@@ -4,7 +4,7 @@ use chrono::{DateTime, SecondsFormat, Utc};
 use hex;
 use hmac::Hmac;
 use pbkdf2;
-use rand::{distributions::Alphanumeric, thread_rng, Rng};
+use rand::{distr::Alphanumeric, Rng};
 use regex::Regex;
 use sha2::{Digest, Sha256};
 use url::Url;
@@ -78,7 +78,7 @@ pub fn random_id_sha(time: &DateTime<Utc>, len: usize) -> String {
 
 /// To generate random alphanumeric string with the specified length.
 pub fn randomstring(len: usize) -> String {
-    let mut rng = thread_rng();
+    let mut rng = rand::rng();
     std::iter::repeat(())
         .map(|()| rng.sample(Alphanumeric))
         .map(char::from)

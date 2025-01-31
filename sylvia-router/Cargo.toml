@@ -29,9 +29,9 @@ reqwest = { version = "0.12.12", default-features = false, features = [
     "json",
     "rustls-tls",
 ] }
-rustls = "0.23.21"
+rustls = "0.23.22"
 serde = { version = "1.0.217", features = ["derive"] }
-serde_json = "1.0.137"
+serde_json = "1.0.138"
 serde_urlencoded = "0.7.1"
 shell-escape = "0.1.5"
 sylvia-iot-auth = { path = "../sylvia-iot-auth" }
