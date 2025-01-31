@@ -61,7 +61,7 @@
 use std::{error::Error as StdError, fmt, sync::Arc};
 
 use async_trait::async_trait;
-use rand::{distributions::Alphanumeric, thread_rng, Rng};
+use rand::{distr::Alphanumeric, Rng};
 
 pub mod connection;
 pub mod queue;
@@ -189,7 +189,7 @@ impl GmqQueue for Queue {
 
 /// Generate random alphanumeric with the specified length.
 pub fn randomstring(len: usize) -> String {
-    let mut rng = thread_rng();
+    let mut rng = rand::rng();
     std::iter::repeat(())
         .map(|()| rng.sample(Alphanumeric))
         .map(char::from)
