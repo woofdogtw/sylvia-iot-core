@@ -13,7 +13,7 @@ rust-version = "1.75"
 
 [dependencies]
 chrono = { version = "0.4.39", default-features = false, features = ["serde"] }
-clap = { version = "4.5.29", default-features = false, features = [
+clap = { version = "4.5.30", default-features = false, features = [
     "std",
     "help",
     "usage",
@@ -27,8 +27,8 @@ reqwest = { version = "0.12.12", default-features = false, features = [
     "rustls-tls",
     "stream",
 ] }
-serde = { version = "1.0.217", features = ["derive"] }
-serde_json = "1.0.138"
+serde = { version = "1.0.218", features = ["derive"] }
+serde_json = "1.0.139"
 serde_urlencoded = "0.7.1"
 serde_with = { version = "3.12.0", features = ["json"] }
 sylvia-iot-corelib = { path = "../sylvia-iot-corelib" }
