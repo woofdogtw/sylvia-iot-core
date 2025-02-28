@@ -19,8 +19,8 @@ axum-prometheus = "0.8.0"
 axum-server = { version = "0.7.1", features = ["tls-rustls"] }
 base64 = "0.22.1"
 bytes = "1.10.0"
-chrono = { version = "0.4.39", default-features = false, features = ["serde"] }
-clap = { version = "4.5.30", default-features = false, features = [
+chrono = { version = "0.4.40", default-features = false, features = ["serde"] }
+clap = { version = "4.5.31", default-features = false, features = [
     "std",
     "help",
     "usage",

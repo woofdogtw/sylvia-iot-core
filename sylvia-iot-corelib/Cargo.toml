@@ -16,8 +16,8 @@ anyhow = "1.0.96"
 async-trait = "0.1.86"
 axum = "0.8.1"
 bytes = "1.10.0"
-chrono = { version = "0.4.39", default-features = false, features = ["serde"] }
-clap = { version = "4.5.30", default-features = false, features = [
+chrono = { version = "0.4.40", default-features = false, features = ["serde"] }
+clap = { version = "4.5.31", default-features = false, features = [
     "std",
     "help",
     "usage",
