@@ -12,10 +12,10 @@ repository = "https://github.com/woofdogtw/sylvia-iot-core.git"
 rust-version = "1.75"
 
 [dependencies]
-anyhow = "1.0.96"
-async-trait = "0.1.86"
+anyhow = "1.0.97"
+async-trait = "0.1.87"
 axum = "0.8.1"
-bytes = "1.10.0"
+bytes = "1.10.1"
 chrono = { version = "0.4.40", default-features = false, features = ["serde"] }
 clap = { version = "4.5.31", default-features = false, features = [
     "std",
@@ -32,7 +32,7 @@ pbkdf2 = "0.12.2"
 rand = "0.9.0"
 regex = "1.11.1"
 serde = { version = "1.0.218", features = ["derive"] }
-serde_json = "1.0.139"
+serde_json = "1.0.140"
 sha2 = "0.10.8"
 tower = "0.5.2"
 tower-layer = "0.3.3"
