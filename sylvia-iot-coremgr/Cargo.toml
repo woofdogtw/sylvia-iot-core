@@ -20,7 +20,7 @@ axum-server = { version = "0.7.1", features = ["tls-rustls"] }
 base64 = "0.22.1"
 bytes = "1.10.1"
 chrono = { version = "0.4.40", default-features = false, features = ["serde"] }
-clap = { version = "4.5.31", default-features = false, features = [
+clap = { version = "4.5.32", default-features = false, features = [
     "std",
     "help",
     "usage",
@@ -33,20 +33,20 @@ general-mq = { path = "../general-mq" }
 hex = "0.4.3"
 json5 = "0.4.1"
 log = "0.4.26"
-reqwest = { version = "0.12.12", default-features = false, features = [
+reqwest = { version = "0.12.14", default-features = false, features = [
     "json",
     "rustls-tls",
     "stream",
 ] }
 rumqttd = "0.19.0"
 rustls = "0.23.23"
-serde = { version = "1.0.218", features = ["derive"] }
+serde = { version = "1.0.219", features = ["derive"] }
 serde_json = "1.0.140"
 serde_urlencoded = "0.7.1"
 sylvia-iot-auth = { path = "../sylvia-iot-auth" }
 sylvia-iot-broker = { path = "../sylvia-iot-broker" }
 sylvia-iot-corelib = { path = "../sylvia-iot-corelib" }
-tokio = { version = "1.43.0", features = [
+tokio = { version = "1.44.1", features = [
     "io-util",
     "macros",
     "rt-multi-thread",
