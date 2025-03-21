@@ -6,7 +6,7 @@ edition = "2021"
 description = "A very simple traffic generation program for testing Sylvia-IoT broker."
 
 [dependencies]
-async-trait = "0.1.87"
+async-trait = "0.1.88"
 chrono = { version = "0.4.40" }
 general-mq = { path = "../general-mq" }
 serde = { version = "1.0.219", features = ["derive"] }
