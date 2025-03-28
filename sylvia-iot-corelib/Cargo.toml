@@ -17,7 +17,7 @@ async-trait = "0.1.88"
 axum = "0.8.1"
 bytes = "1.10.1"
 chrono = { version = "0.4.40", default-features = false, features = ["serde"] }
-clap = { version = "4.5.32", default-features = false, features = [
+clap = { version = "4.5.34", default-features = false, features = [
     "std",
     "help",
     "usage",
@@ -26,7 +26,7 @@ clap = { version = "4.5.32", default-features = false, features = [
 futures = "0.3.31"
 hex = "0.4.3"
 hmac = "0.12.1"
-log = "0.4.26"
+log = "0.4.27"
 log4rs = "1.3.0"
 pbkdf2 = "0.12.2"
 rand = "0.9.0"

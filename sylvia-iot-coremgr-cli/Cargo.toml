@@ -13,7 +13,7 @@ rust-version = "1.75"
 
 [dependencies]
 chrono = { version = "0.4.40", default-features = false, features = ["serde"] }
-clap = { version = "4.5.32", default-features = false, features = [
+clap = { version = "4.5.34", default-features = false, features = [
     "std",
     "help",
     "usage",
