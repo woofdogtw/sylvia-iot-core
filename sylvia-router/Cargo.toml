@@ -12,11 +12,11 @@ repository = "https://github.com/woofdogtw/sylvia-iot-core.git"
 rust-version = "1.75"
 
 [dependencies]
-axum = "0.8.1"
+axum = "0.8.3"
 axum-prometheus = "0.8.0"
 axum-server = { version = "0.7.2", features = ["tls-rustls"] }
 chrono = { version = "0.4.40", default-features = false, features = ["serde"] }
-clap = { version = "4.5.34", default-features = false, features = [
+clap = { version = "4.5.35", default-features = false, features = [
     "std",
     "help",
     "usage",
@@ -41,7 +41,7 @@ sylvia-iot-coremgr = { path = "../sylvia-iot-coremgr" }
 sylvia-iot-coremgr-cli = { path = "../sylvia-iot-coremgr-cli" }
 sylvia-iot-data = { path = "../sylvia-iot-data" }
 sylvia-iot-sdk = { path = "../sylvia-iot-sdk" }
-sysinfo = "0.34.0"
+sysinfo = "0.34.2"
 tokio = { version = "1.44.1", features = [
     "io-util",
     "macros",
