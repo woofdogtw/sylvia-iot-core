@@ -14,12 +14,12 @@ rust-version = "1.75"
 [dependencies]
 async-stream = "0.3.6"
 async-trait = "0.1.88"
-axum = "0.8.1"
+axum = "0.8.3"
 axum-prometheus = "0.8.0"
 axum-server = { version = "0.7.2", features = ["tls-rustls"] }
 bson = { version = "2.14.0", features = ["chrono-0_4"] }
 chrono = { version = "0.4.40", default-features = false, features = ["serde"] }
-clap = { version = "4.5.34", default-features = false, features = [
+clap = { version = "4.5.35", default-features = false, features = [
     "std",
     "help",
     "usage",
@@ -64,7 +64,7 @@ tower-http = { version = "0.6.2", default-features = false, features = [
 url = "2.5.4"
 
 [dev-dependencies]
-axum-test = "17.2.0"
+axum-test = "17.3.0"
 laboratory = "2.0.0"
 serde_urlencoded = "0.7.1"
 
