@@ -19,7 +19,7 @@ axum-prometheus = "0.8.0"
 axum-server = { version = "0.7.2", features = ["tls-rustls"] }
 bson = { version = "2.14.0", features = ["chrono-0_4"] }
 chrono = { version = "0.4.40", default-features = false, features = ["serde"] }
-clap = { version = "4.5.36", default-features = false, features = [
+clap = { version = "4.5.37", default-features = false, features = [
     "std",
     "help",
     "usage",
