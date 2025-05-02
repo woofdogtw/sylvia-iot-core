@@ -13,9 +13,9 @@ rust-version = "1.75"
 
 [dependencies]
 async-trait = "0.1.88"
-axum = "0.8.3"
+axum = "0.8.4"
 bytes = "1.10.1"
-chrono = { version = "0.4.40", default-features = false, features = ["serde"] }
+chrono = { version = "0.4.41", default-features = false, features = ["serde"] }
 futures = "0.3.31"
 general-mq = { path = "../general-mq" }
 hex = "0.4.3"
