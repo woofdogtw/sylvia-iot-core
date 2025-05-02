@@ -14,7 +14,7 @@ rust-version = "1.75"
 [dependencies]
 async-stream = "0.3.6"
 async-trait = "0.1.88"
-axum = "0.8.3"
+axum = "0.8.4"
 axum-extra = { version = "0.10.1", default-features = false, features = [
     "tracing",
     "typed-header",
@@ -23,7 +23,7 @@ axum-prometheus = "0.8.0"
 axum-server = { version = "0.7.2", features = ["tls-rustls"] }
 base64 = "0.22.1"
 bson = { version = "2.14.0", features = ["chrono-0_4"] }
-chrono = { version = "0.4.40", default-features = false, features = ["serde"] }
+chrono = { version = "0.4.41", default-features = false, features = ["serde"] }
 clap = { version = "4.5.37", default-features = false, features = [
     "std",
     "help",
