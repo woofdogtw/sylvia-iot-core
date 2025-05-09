@@ -29,7 +29,7 @@ reqwest = { version = "0.12.15", default-features = false, features = [
     "json",
     "rustls-tls",
 ] }
-rustls = "0.23.26"
+rustls = "0.23.27"
 serde = { version = "1.0.219", features = ["derive"] }
 serde_json = "1.0.140"
 serde_urlencoded = "0.7.1"
@@ -42,7 +42,7 @@ sylvia-iot-coremgr-cli = { path = "../sylvia-iot-coremgr-cli" }
 sylvia-iot-data = { path = "../sylvia-iot-data" }
 sylvia-iot-sdk = { path = "../sylvia-iot-sdk" }
 sysinfo = "0.35.0"
-tokio = { version = "1.44.2", features = [
+tokio = { version = "1.45.0", features = [
     "io-util",
     "macros",
     "rt-multi-thread",
