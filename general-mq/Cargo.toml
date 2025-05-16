@@ -9,7 +9,7 @@ keywords = ["amqp", "mq", "mqtt"]
 license = "MIT"
 readme = "README.md"
 repository = "https://github.com/woofdogtw/sylvia-iot-core.git"
-rust-version = "1.75"
+rust-version = "1.81"
 
 [dependencies]
 amqprs = { version = "2.1.1", features = ["tls", "urispec"] }
