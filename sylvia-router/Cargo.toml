@@ -9,14 +9,14 @@ keywords = ["iot", "router"]
 license = "MIT"
 readme = "README.md"
 repository = "https://github.com/woofdogtw/sylvia-iot-core.git"
-rust-version = "1.75"
+rust-version = "1.81"
 
 [dependencies]
 axum = "0.8.4"
 axum-prometheus = "0.8.0"
 axum-server = { version = "0.7.2", features = ["tls-rustls"] }
 chrono = { version = "0.4.41", default-features = false, features = ["serde"] }
-clap = { version = "4.5.37", default-features = false, features = [
+clap = { version = "4.5.38", default-features = false, features = [
     "std",
     "help",
     "usage",
@@ -41,7 +41,7 @@ sylvia-iot-coremgr = { path = "../sylvia-iot-coremgr" }
 sylvia-iot-coremgr-cli = { path = "../sylvia-iot-coremgr-cli" }
 sylvia-iot-data = { path = "../sylvia-iot-data" }
 sylvia-iot-sdk = { path = "../sylvia-iot-sdk" }
-sysinfo = "0.35.0"
+sysinfo = "0.35.1"
 tokio = { version = "1.45.0", features = [
     "io-util",
     "macros",
@@ -49,7 +49,7 @@ tokio = { version = "1.45.0", features = [
     "time",
 ] }
 tower = "0.5.2"
-tower-http = { version = "0.6.2", default-features = false, features = [
+tower-http = { version = "0.6.4", default-features = false, features = [
     "cors",
     "fs",
     "normalize-path",
