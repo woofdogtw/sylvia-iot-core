@@ -11,7 +11,7 @@ env:
 jobs:
   crates:
     name: Publish crates.io
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
@@ -49,7 +49,7 @@ jobs:
   release:
     name: Publish GitHub Releases and Docker Hub
     needs: crates
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
