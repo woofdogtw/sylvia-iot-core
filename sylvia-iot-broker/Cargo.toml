@@ -32,7 +32,7 @@ json5 = "0.4.1"
 log = "0.4.27"
 lru = "0.14.0"
 mongodb = "3.2.3"
-reqwest = { version = "0.12.18", default-features = false, features = [
+reqwest = { version = "0.12.19", default-features = false, features = [
     "json",
     "rustls-tls",
 ] }
@@ -54,7 +54,7 @@ tokio = { version = "1.45.1", features = [
     "time",
 ] }
 tower = "0.5.2"
-tower-http = { version = "0.6.4", default-features = false, features = [
+tower-http = { version = "0.6.6", default-features = false, features = [
     "cors",
     "fs",
     "normalize-path",
