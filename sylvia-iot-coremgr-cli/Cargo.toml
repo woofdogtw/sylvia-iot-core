@@ -1,15 +1,15 @@
 [package]
 name = "sylvia-iot-coremgr-cli"
-version = "0.2.2"
+version = "0.3.0"
 authors = ["Chien-Hong Chan"]
 categories = ["web-programming::http-client"]
 description = "The command-line tool for Sylvia-IoT core manager."
-edition = "2021"
+edition = "2024"
 keywords = ["iot"]
 license = "MIT"
 readme = "README.md"
 repository = "https://github.com/woofdogtw/sylvia-iot-core.git"
-rust-version = "1.81"
+rust-version = "1.85.1"
 
 [dependencies]
 chrono = { version = "0.4.41", default-features = false, features = ["serde"] }

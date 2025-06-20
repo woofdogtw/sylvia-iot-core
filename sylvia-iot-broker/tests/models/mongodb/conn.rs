@@ -1,8 +1,8 @@
-use laboratory::{expect, SpecContext};
+use laboratory::{SpecContext, expect};
 
-use sylvia_iot_broker::models::{self, mongodb_conn, ConnOptions, MongoDbOptions};
+use sylvia_iot_broker::models::{self, ConnOptions, MongoDbOptions, mongodb_conn};
 
-use super::{TestState, STATE};
+use super::{STATE, TestState};
 
 /// Generate spec for models::conn::connect().
 pub fn conn(context: &mut SpecContext<TestState>) -> Result<(), String> {

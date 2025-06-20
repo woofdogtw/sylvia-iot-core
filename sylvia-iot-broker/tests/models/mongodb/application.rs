@@ -1,14 +1,14 @@
 use std::collections::HashMap;
 
 use chrono::{SubsecRound, Utc};
-use laboratory::{expect, SpecContext};
-use mongodb::bson::{doc, DateTime, Document};
+use laboratory::{SpecContext, expect};
+use mongodb::bson::{DateTime, Document, doc};
 use serde::{Deserialize, Serialize};
 use serde_json::{Map, Value};
 
-use sylvia_iot_broker::models::{application::QueryCond, Model};
+use sylvia_iot_broker::models::{Model, application::QueryCond};
 
-use super::{super::common::application as common_test, TestState, STATE};
+use super::{super::common::application as common_test, STATE, TestState};
 
 /// MongoDB schema.
 #[derive(Debug, Deserialize, Serialize)]

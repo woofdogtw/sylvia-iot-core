@@ -1,8 +1,8 @@
 use std::{collections::HashMap, net::SocketAddr, time::Duration};
 
 use axum::{
-    http::{header, HeaderValue, Method, StatusCode},
     Router,
+    http::{HeaderValue, Method, StatusCode, header},
 };
 use axum_test::TestServer;
 use chrono::{DateTime, TimeZone, Utc};
@@ -25,6 +25,7 @@ use sylvia_iot_broker::{
         Sqlite as SqliteConfig,
     },
     models::{
+        MongoDbModel, MongoDbOptions, SqliteModel, SqliteOptions,
         application::{Application, QueryCond as ApplicationQueryCond},
         device::{Device, QueryCond as DeviceQueryCond},
         device_route::DeviceRoute,
@@ -32,7 +33,6 @@ use sylvia_iot_broker::{
         network::{Network, QueryCond as NetworkQueryCond},
         network_route::NetworkRoute,
         unit::{QueryCond as UnitQueryCond, Unit},
-        MongoDbModel, MongoDbOptions, SqliteModel, SqliteOptions,
     },
     routes,
 };

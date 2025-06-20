@@ -1,12 +1,12 @@
-use laboratory::{describe, expect, SpecContext, Suite};
+use laboratory::{SpecContext, Suite, describe, expect};
 
-use sylvia_iot_auth::models::{user::QueryCond, Model};
+use sylvia_iot_auth::models::{Model, user::QueryCond};
 use sylvia_iot_sdk::api::{
     http::{Client as SdkClient, ClientOptions},
     user as userapi,
 };
 
-use super::{after_all_fn, before_all_fn, CLIENT_ID, CLIENT_SECRET, STATE, USER_ID};
+use super::{CLIENT_ID, CLIENT_SECRET, STATE, USER_ID, after_all_fn, before_all_fn};
 use crate::TestState;
 
 pub fn suite() -> Suite<TestState> {

@@ -13,8 +13,9 @@ use serde::Deserialize;
 use serde_json::{Map, Value};
 use tokio::time;
 
-use super::{super::config::DataData as DataMqConfig, new_data_queue, Connection};
+use super::{super::config::DataData as DataMqConfig, Connection, new_data_queue};
 use crate::models::{
+    Model,
     application_dldata::{
         ApplicationDlData, UpdateQueryCond as ApplicationDlDataCond,
         Updates as ApplicationDlDataUpdate,
@@ -24,11 +25,10 @@ use crate::models::{
         NetworkDlData, UpdateQueryCond as NetworkDlDataCond, Updates as NetworkDlDataUpdate,
     },
     network_uldata::NetworkUlData,
-    Model,
 };
 use general_mq::{
-    queue::{EventHandler, GmqQueue, Message, MessageHandler, Status},
     Queue,
+    queue::{EventHandler, GmqQueue, Message, MessageHandler, Status},
 };
 
 #[derive(Clone)]

@@ -11,9 +11,9 @@
 use std::{error::Error, fmt};
 
 use axum::{
+    Json,
     http::StatusCode,
     response::{IntoResponse, Response},
-    Json,
 };
 use serde::Serialize;
 use serde_json;

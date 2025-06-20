@@ -7,17 +7,17 @@ use serde_json::{Map, Value};
 use tokio::time;
 
 use general_mq::{
-    connection::GmqConnection,
-    queue::{GmqQueue, Status},
     AmqpConnection, AmqpConnectionOptions, AmqpQueueOptions, MqttConnection, MqttConnectionOptions,
     MqttQueueOptions, Queue, QueueOptions,
+    connection::GmqConnection,
+    queue::{GmqQueue, Status},
 };
 use sylvia_iot_corelib::{constants::MqEngine, strings};
 use sylvia_iot_data::{
     libs::{config::DataData as DataMqConfig, mq::coremgr},
     models::{
-        coremgr_opdata::{ListOptions as CmOpDataOpts, ListQueryCond as CmOpDataCond},
         Model,
+        coremgr_opdata::{ListOptions as CmOpDataOpts, ListQueryCond as CmOpDataCond},
     },
 };
 

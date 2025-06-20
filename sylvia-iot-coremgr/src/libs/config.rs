@@ -3,8 +3,8 @@
 use std::env;
 
 use clap::{
-    builder::{BoolValueParser, RangedU64ValueParser},
     Arg, ArgMatches, Command,
+    builder::{BoolValueParser, RangedU64ValueParser},
 };
 use serde::Deserialize;
 

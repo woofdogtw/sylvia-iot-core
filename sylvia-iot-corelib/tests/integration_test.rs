@@ -1,4 +1,4 @@
-use laboratory::{describe, LabResult};
+use laboratory::{LabResult, describe};
 
 mod libs;
 

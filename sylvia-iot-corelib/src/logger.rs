@@ -14,7 +14,7 @@ use axum::{
 use chrono::{SecondsFormat, Utc};
 use clap::{Arg, ArgMatches, Command};
 use futures::future::BoxFuture;
-use log::{info, Level, LevelFilter, Record};
+use log::{Level, LevelFilter, Record, info};
 use log4rs::{
     self,
     append::console::ConsoleAppender,

@@ -1,13 +1,13 @@
 use axum::{
     extract::{
-        rejection::JsonRejection, FromRequest, FromRequestParts, Json as AxumJson,
-        Path as AxumPath, Query as AxumQuery, Request,
+        FromRequest, FromRequestParts, Json as AxumJson, Path as AxumPath, Query as AxumQuery,
+        Request, rejection::JsonRejection,
     },
     http::{header, request::Parts},
     response::{IntoResponse, Response},
 };
 use bytes::{BufMut, BytesMut};
-use serde::{de::DeserializeOwned, Serialize};
+use serde::{Serialize, de::DeserializeOwned};
 
 use crate::{constants::ContentType, err::ErrResp};
 

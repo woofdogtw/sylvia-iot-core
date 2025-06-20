@@ -19,7 +19,7 @@ use serde::{self, Deserialize, Serialize};
 use serde_json::{Map, Value};
 use tower::{Layer, Service};
 
-use general_mq::{queue::GmqQueue, Queue};
+use general_mq::{Queue, queue::GmqQueue};
 use sylvia_iot_corelib::{err::ErrResp, http as sylvia_http, strings};
 
 #[derive(Clone)]

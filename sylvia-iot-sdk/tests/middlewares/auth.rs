@@ -1,21 +1,22 @@
 use std::{collections::HashMap, error::Error as StdError, net::SocketAddr, time::Duration};
 
 use axum::{
-    http::{header, HeaderValue, StatusCode},
+    Extension, Router,
+    http::{HeaderValue, StatusCode, header},
     response::IntoResponse,
-    routing, Extension, Router,
+    routing,
 };
 use axum_test::TestServer;
 use chrono::{DateTime, TimeZone, Utc};
-use laboratory::{describe, expect, SpecContext, Suite};
+use laboratory::{SpecContext, Suite, describe, expect};
 use serde_json::{Map, Value};
 use tokio::{net::TcpListener, runtime::Runtime, time};
 
 use sylvia_iot_auth::{
     libs::config as sylvia_iot_auth_config,
     models::{
-        self as sylvia_iot_auth_models, access_token::AccessToken, client::Client, user::User,
-        Model,
+        self as sylvia_iot_auth_models, Model, access_token::AccessToken, client::Client,
+        user::User,
     },
     routes as sylvia_iot_auth_routes,
 };

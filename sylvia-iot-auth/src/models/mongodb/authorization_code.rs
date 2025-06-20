@@ -4,15 +4,15 @@ use async_trait::async_trait;
 use chrono::TimeDelta;
 use futures::TryStreamExt;
 use mongodb::{
-    bson::{doc, DateTime, Document},
     Database,
+    bson::{DateTime, Document, doc},
 };
 use serde::{Deserialize, Serialize};
 
 use sylvia_iot_corelib::err::E_UNKNOWN;
 
 use super::super::authorization_code::{
-    AuthorizationCode, AuthorizationCodeModel, QueryCond, EXPIRES,
+    AuthorizationCode, AuthorizationCodeModel, EXPIRES, QueryCond,
 };
 
 /// Model instance.

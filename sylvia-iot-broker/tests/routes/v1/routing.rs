@@ -7,31 +7,31 @@ use std::{
 
 use async_trait::async_trait;
 use chrono::{DateTime, Utc};
-use laboratory::{expect, SpecContext};
+use laboratory::{SpecContext, expect};
 use serde::{Deserialize, Serialize};
 use serde_json::{Map, Value};
 use tokio::time;
 
 use general_mq::{
-    connection::GmqConnection,
-    queue::{EventHandler, GmqQueue, Message, MessageHandler, Status},
     AmqpConnection, AmqpConnectionOptions, AmqpQueueOptions, MqttConnection, MqttConnectionOptions,
     MqttQueueOptions, Queue, QueueOptions,
+    connection::GmqConnection,
+    queue::{EventHandler, GmqQueue, Message, MessageHandler, Status},
 };
 use sylvia_iot_broker::{
     libs::mq::{Connection, MgrStatus, Options},
     models::{
+        Model,
         device::{QueryCond, QueryOneCond},
         device_route::QueryCond as RouteQueryCond,
-        Model,
     },
     routes::ErrReq,
 };
 use sylvia_iot_corelib::strings;
 
 use super::{
-    application, device, device_route, libs, network, network_route, unit, STATE, TOKEN_MANAGER,
-    TOKEN_OWNER,
+    STATE, TOKEN_MANAGER, TOKEN_OWNER, application, device, device_route, libs, network,
+    network_route, unit,
 };
 use crate::{TestState, WAIT_COUNT, WAIT_TICK};
 

@@ -3,12 +3,12 @@ use std::{env, error::Error as StdError, sync::Arc, time::Duration};
 use async_trait::async_trait;
 
 use general_mq::{
+    AmqpConnection, AmqpConnectionOptions, AmqpQueue, AmqpQueueOptions, MqttConnection,
+    MqttConnectionOptions, MqttQueue, MqttQueueOptions,
     connection::{EventHandler as ConnHandler, GmqConnection, Status as ConnStatus},
     queue::{
         EventHandler as QueueHandler, GmqQueue, Message, MessageHandler, Status as QueueStatus,
     },
-    AmqpConnection, AmqpConnectionOptions, AmqpQueue, AmqpQueueOptions, MqttConnection,
-    MqttConnectionOptions, MqttQueue, MqttQueueOptions,
 };
 
 struct TestConnHandler;

@@ -1,6 +1,6 @@
 use axum::{
-    http::{header, HeaderValue, Method, StatusCode},
     Router,
+    http::{HeaderValue, Method, StatusCode, header},
 };
 use axum_test::TestServer;
 use base64::Engine;

@@ -1,12 +1,12 @@
 use std::error::Error as StdError;
 
 use chrono::{TimeZone, Utc};
-use redis::{aio::MultiplexedConnection, AsyncCommands};
+use redis::{AsyncCommands, aio::MultiplexedConnection};
 use serde::{Deserialize, Serialize};
 use serde_json;
 
 use super::{
-    super::authorization_code::{AuthorizationCode, QueryCond, EXPIRES},
+    super::authorization_code::{AuthorizationCode, EXPIRES, QueryCond},
     conn::{self, Options},
 };
 

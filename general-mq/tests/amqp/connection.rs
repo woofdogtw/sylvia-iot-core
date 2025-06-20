@@ -5,15 +5,15 @@ use std::{
 };
 
 use async_trait::async_trait;
-use laboratory::{expect, SpecContext};
+use laboratory::{SpecContext, expect};
 use tokio::time;
 
 use general_mq::{
-    connection::{EventHandler, GmqConnection, Status},
     AmqpConnection, AmqpConnectionOptions,
+    connection::{EventHandler, GmqConnection, Status},
 };
 
-use super::{TestState, STATE};
+use super::{STATE, TestState};
 
 struct TestConnectHandler {
     pub recv_connected: Arc<Mutex<bool>>,

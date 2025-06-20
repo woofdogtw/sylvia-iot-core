@@ -1,13 +1,14 @@
 use std::{cmp::Ordering, collections::HashMap, error::Error as StdError};
 
 use axum::{
-    http::{header, HeaderValue, Method, StatusCode},
+    Extension, Router,
+    http::{HeaderValue, Method, StatusCode, header},
     response::IntoResponse,
-    routing, Extension, Router,
+    routing,
 };
 use axum_test::TestServer;
 use chrono::Utc;
-use laboratory::{describe, expect, SpecContext, Suite};
+use laboratory::{SpecContext, Suite, describe, expect};
 
 use sylvia_iot_auth::models::Model;
 use sylvia_iot_broker::routes::middleware::{AuthService, GetTokenInfoData, RoleScopeType};

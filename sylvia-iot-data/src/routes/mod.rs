@@ -1,6 +1,6 @@
 use std::{collections::HashMap, error::Error as StdError, sync::Arc};
 
-use axum::{response::IntoResponse, Router};
+use axum::{Router, response::IntoResponse};
 use reqwest;
 use serde::{Deserialize, Serialize};
 

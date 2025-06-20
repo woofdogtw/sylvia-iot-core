@@ -5,6 +5,7 @@ use std::{
 };
 
 use amqprs::{
+    BasicProperties, Deliver,
     channel::{
         BasicAckArguments, BasicConsumeArguments, BasicNackArguments, BasicPublishArguments,
         BasicQosArguments, Channel, ConfirmSelectArguments, ExchangeDeclareArguments, ExchangeType,
@@ -12,7 +13,6 @@ use amqprs::{
     },
     consumer::AsyncConsumer,
     error::Error as AmqprsError,
-    BasicProperties, Deliver,
 };
 use async_trait::async_trait;
 use tokio::{
@@ -22,11 +22,11 @@ use tokio::{
 
 use super::connection::AmqpConnection;
 use crate::{
+    Error,
     connection::{GmqConnection, Status as ConnStatus},
     queue::{
-        name_validate, EventHandler, GmqQueue, Message, MessageHandler, Status, QUEUE_NAME_PATTERN,
+        EventHandler, GmqQueue, Message, MessageHandler, QUEUE_NAME_PATTERN, Status, name_validate,
     },
-    Error,
 };
 
 /// Manages an AMQP queue.

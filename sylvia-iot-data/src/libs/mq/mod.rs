@@ -6,10 +6,10 @@ use std::{
 use url::Url;
 
 use general_mq::{
-    connection::GmqConnection,
-    queue::{EventHandler, GmqQueue, MessageHandler},
     AmqpConnection, AmqpConnectionOptions, AmqpQueueOptions, MqttConnection, MqttConnectionOptions,
     MqttQueueOptions, Queue, QueueOptions,
+    connection::GmqConnection,
+    queue::{EventHandler, GmqQueue, MessageHandler},
 };
 
 pub mod broker;

@@ -3,10 +3,10 @@ use std::{error::Error as StdError, sync::Arc};
 use async_trait::async_trait;
 use futures::TryStreamExt;
 use mongodb::{
-    action::Find,
-    bson::{doc, DateTime, Document},
-    error::ErrorKind,
     Cursor as MongoDbCursor, Database,
+    action::Find,
+    bson::{DateTime, Document, doc},
+    error::ErrorKind,
 };
 use serde::{Deserialize, Serialize};
 

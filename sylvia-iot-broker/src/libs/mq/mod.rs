@@ -21,8 +21,8 @@ use serde::{Deserialize, Serialize};
 use url::Url;
 
 use general_mq::{
-    connection::GmqConnection, queue::Status, AmqpConnection, AmqpConnectionOptions,
-    AmqpQueueOptions, MqttConnection, MqttConnectionOptions, MqttQueueOptions, Queue, QueueOptions,
+    AmqpConnection, AmqpConnectionOptions, AmqpQueueOptions, MqttConnection, MqttConnectionOptions,
+    MqttQueueOptions, Queue, QueueOptions, connection::GmqConnection, queue::Status,
 };
 
 pub mod application;

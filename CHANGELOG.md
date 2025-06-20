@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.3.0 - 2025-06-20
+
+### Changed
+
+- **breaking**: Upgrade Rust to 2024 edition and modify MSRV to 1.85.1.
+- Run rustfmt with 2024 edition.
+- Update dependencies.
+
 ## 0.2.1 - 2025-01-10
 
 ### Fixed

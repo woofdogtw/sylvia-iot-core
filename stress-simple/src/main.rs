@@ -12,10 +12,10 @@ use serde_json::{Map, Value};
 use tokio::time;
 
 use general_mq::{
-    connection::GmqConnection,
-    queue::{GmqQueue, Message, MessageHandler, Status as QueueStatus},
     AmqpConnection, AmqpConnectionOptions, AmqpQueueOptions, MqttConnection, MqttConnectionOptions,
     MqttQueueOptions, Queue, QueueOptions,
+    connection::GmqConnection,
+    queue::{GmqQueue, Message, MessageHandler, Status as QueueStatus},
 };
 
 #[derive(Deserialize)]

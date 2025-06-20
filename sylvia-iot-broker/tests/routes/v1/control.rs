@@ -10,7 +10,7 @@ use url::Url;
 use general_mq::queue::{EventHandler, GmqQueue, Message, MessageHandler, Status};
 use sylvia_iot_broker::libs::{
     config::DEF_MQ_CHANNEL_URL,
-    mq::{control, Options as MgrOptions},
+    mq::{Options as MgrOptions, control},
 };
 
 use super::STATE;

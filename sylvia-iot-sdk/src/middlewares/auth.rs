@@ -147,7 +147,7 @@ where
                 }
                 Ok(resp) => match resp.status() {
                     reqwest::StatusCode::UNAUTHORIZED => {
-                        return Ok(ErrResp::ErrAuth(None).into_response())
+                        return Ok(ErrResp::ErrAuth(None).into_response());
                     }
                     reqwest::StatusCode::OK => resp,
                     _ => {

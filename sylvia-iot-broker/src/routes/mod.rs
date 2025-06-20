@@ -5,7 +5,7 @@ use std::{
     sync::{Arc, Mutex},
 };
 
-use axum::{response::IntoResponse, Router};
+use axum::{Router, response::IntoResponse};
 use reqwest;
 use serde::{Deserialize, Serialize};
 use url::Url;
@@ -14,8 +14,8 @@ use async_trait::async_trait;
 use log::{error, info, warn};
 
 use general_mq::{
-    queue::{EventHandler as QueueEventHandler, GmqQueue, Status},
     Queue,
+    queue::{EventHandler as QueueEventHandler, GmqQueue, Status},
 };
 use sylvia_iot_corelib::{
     constants::{CacheEngine, DbEngine},
@@ -25,7 +25,7 @@ use sylvia_iot_corelib::{
 use crate::{
     libs::{
         config::{self, Config},
-        mq::{self, application::ApplicationMgr, network::NetworkMgr, Connection},
+        mq::{self, Connection, application::ApplicationMgr, network::NetworkMgr},
     },
     models::{
         self, Cache, CacheConnOptions, ConnOptions, DeviceOptions, DeviceRouteOptions, Model,
@@ -296,7 +296,7 @@ pub fn new_data_sender(
             return Err(Box::new(IoError::new(
                 ErrorKind::InvalidInput,
                 "empty control url",
-            )))
+            )));
         }
         Some(url) => match Url::parse(url.as_str()) {
             Err(e) => return Err(Box::new(e)),

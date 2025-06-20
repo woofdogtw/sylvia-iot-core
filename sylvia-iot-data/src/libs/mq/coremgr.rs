@@ -14,12 +14,12 @@ use serde_json::{Map, Value};
 use tokio::time;
 
 use general_mq::{
-    queue::{EventHandler, GmqQueue, Message, MessageHandler, Status},
     Queue,
+    queue::{EventHandler, GmqQueue, Message, MessageHandler, Status},
 };
 
-use super::{super::config::DataData as DataMqConfig, new_data_queue, Connection};
-use crate::models::{coremgr_opdata::CoremgrOpData, Model};
+use super::{super::config::DataData as DataMqConfig, Connection, new_data_queue};
+use crate::models::{Model, coremgr_opdata::CoremgrOpData};
 
 #[derive(Clone)]
 struct DataHandler {

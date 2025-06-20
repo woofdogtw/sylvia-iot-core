@@ -3,9 +3,9 @@ use std::{error::Error as StdError, sync::Arc};
 use async_trait::async_trait;
 use futures::TryStreamExt;
 use mongodb::{
-    action::Find,
-    bson::{self, doc, DateTime, Document, Regex},
     Cursor as MongoDbCursor, Database,
+    action::Find,
+    bson::{self, DateTime, Document, Regex, doc},
 };
 use serde::{Deserialize, Serialize};
 

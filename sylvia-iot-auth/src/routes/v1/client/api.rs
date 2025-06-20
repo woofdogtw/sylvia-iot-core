@@ -1,11 +1,11 @@
 use std::{error::Error as StdError, sync::Arc};
 
 use axum::{
+    Extension,
     body::{Body, Bytes},
     extract::State,
-    http::{header, StatusCode},
+    http::{StatusCode, header},
     response::IntoResponse,
-    Extension,
 };
 use chrono::Utc;
 use log::{error, warn};
@@ -23,13 +23,12 @@ use super::{
     request, response,
 };
 use crate::models::{
-    access_token, authorization_code,
+    Model, access_token, authorization_code,
     client::{
         Client, ListOptions, ListQueryCond, QueryCond, SortCond, SortKey, UpdateQueryCond, Updates,
     },
     refresh_token,
     user::{QueryCond as UserQueryCond, User},
-    Model,
 };
 
 const LIST_LIMIT_DEFAULT: u64 = 100;
@@ -87,7 +86,7 @@ pub async fn post_client(
                             ErrReq::USER_NOT_EXIST.0,
                             ErrReq::USER_NOT_EXIST.1,
                             None,
-                        ))
+                        ));
                     }
                     Ok(_) => user_id,
                 }
@@ -204,13 +203,13 @@ pub async fn get_client_list(
         Ok((list, cursor)) => match cursor {
             None => match query.format {
                 Some(request::ListFormat::Array) => {
-                    return Ok(Json(client_list_transform(&list, is_admin)).into_response())
+                    return Ok(Json(client_list_transform(&list, is_admin)).into_response());
                 }
                 _ => {
                     return Ok(Json(response::GetClientList {
                         data: client_list_transform(&list, is_admin),
                     })
-                    .into_response())
+                    .into_response());
                 }
             },
             Some(_) => (list, cursor),
@@ -453,7 +452,7 @@ fn get_sort_cond(sort_args: &Option<String>) -> Result<Vec<SortCond>, ErrResp> {
                             return Err(ErrResp::ErrParam(Some(format!(
                                 "invalid sort key {}",
                                 field
-                            ))))
+                            ))));
                         }
                     },
                 };
@@ -466,7 +465,7 @@ fn get_sort_cond(sort_args: &Option<String>) -> Result<Vec<SortCond>, ErrResp> {
                             return Err(ErrResp::ErrParam(Some(format!(
                                 "invalid sort asc {}",
                                 asc
-                            ))))
+                            ))));
                         }
                     },
                 };

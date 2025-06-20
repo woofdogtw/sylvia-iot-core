@@ -1,12 +1,12 @@
 use std::collections::HashMap;
 
-use laboratory::{describe, LabResult};
+use laboratory::{LabResult, describe};
 use tokio::{
     runtime::Runtime,
     task::{self, JoinHandle},
 };
 
-use general_mq::{connection::GmqConnection, Queue};
+use general_mq::{Queue, connection::GmqConnection};
 use sylvia_iot_auth::models::SqliteModel as AuthDbModel;
 use sylvia_iot_broker::models::SqliteModel as BrokerDbModel;
 use sylvia_iot_corelib::constants::{DbEngine, MqEngine};

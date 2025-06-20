@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use chrono::Utc;
-use laboratory::{describe, Suite};
+use laboratory::{Suite, describe};
 
 use sylvia_iot_auth::models::Model;
 use sylvia_iot_corelib::role::Role;

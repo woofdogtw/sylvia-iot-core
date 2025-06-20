@@ -2,13 +2,13 @@ use std::{collections::HashMap, error::Error as StdError};
 
 use async_trait::async_trait;
 use chrono::{TimeZone, Utc};
-use laboratory::{expect, SpecContext};
-use sql_builder::{quote, SqlBuilder};
+use laboratory::{SpecContext, expect};
+use sql_builder::{SqlBuilder, quote};
 use sqlx::SqlitePool;
 
-use sylvia_iot_data::models::{coremgr_opdata::CoremgrOpData, Model};
+use sylvia_iot_data::models::{Model, coremgr_opdata::CoremgrOpData};
 
-use super::{super::common::coremgr_opdata as common_test, TestState, STATE};
+use super::{super::common::coremgr_opdata as common_test, STATE, TestState};
 
 struct Db<'a> {
     conn: &'a SqlitePool,

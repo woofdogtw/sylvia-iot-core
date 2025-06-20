@@ -1,15 +1,15 @@
 use std::{error::Error as StdError, fs};
 
-use clap::{builder::RangedU64ValueParser, Arg, ArgMatches, Command};
+use clap::{Arg, ArgMatches, Command, builder::RangedU64ValueParser};
 use hex;
-use reqwest::{header, Client, Method, StatusCode};
+use reqwest::{Client, Method, StatusCode, header};
 use serde::{Deserialize, Serialize};
 use serde_json::{Map, Value};
 use serde_urlencoded;
 
 use sylvia_iot_corelib::err::ErrResp;
 
-use super::{config, get_csv_filename, refresh, validate_code, validate_json, Config, API_RETRY};
+use super::{API_RETRY, Config, config, get_csv_filename, refresh, validate_code, validate_json};
 
 #[derive(Serialize)]
 struct PostReq<'a> {

@@ -2,9 +2,9 @@ use std::{error::Error as StdError, sync::Arc};
 
 use log::{error, info};
 use mongodb::{
-    event::{cmap::CmapEvent, EventHandler},
-    options::ClientOptions,
     Client, Database,
+    event::{EventHandler, cmap::CmapEvent},
+    options::ClientOptions,
 };
 
 /// MongoDB connection options.

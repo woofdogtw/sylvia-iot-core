@@ -2,7 +2,7 @@
 
 use std::{collections::HashMap, env};
 
-use clap::{builder::RangedU64ValueParser, Arg, ArgMatches, Command};
+use clap::{Arg, ArgMatches, Command, builder::RangedU64ValueParser};
 use serde::Deserialize;
 use serde_json;
 

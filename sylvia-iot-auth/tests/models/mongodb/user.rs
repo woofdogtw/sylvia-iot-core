@@ -1,14 +1,14 @@
 use std::collections::HashMap;
 
 use chrono::{SubsecRound, Utc};
-use laboratory::{expect, SpecContext};
-use mongodb::bson::{doc, DateTime, Document};
+use laboratory::{SpecContext, expect};
+use mongodb::bson::{DateTime, Document, doc};
 use serde::{Deserialize, Serialize};
 use serde_json::{Map, Value};
 
-use sylvia_iot_auth::models::{user::QueryCond, Model};
+use sylvia_iot_auth::models::{Model, user::QueryCond};
 
-use super::{super::common::user as common_test, TestState, STATE};
+use super::{super::common::user as common_test, STATE, TestState};
 
 #[derive(Debug, Deserialize, Serialize)]
 struct Schema {

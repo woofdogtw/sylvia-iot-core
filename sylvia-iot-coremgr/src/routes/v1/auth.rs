@@ -1,7 +1,8 @@
 use axum::{
+    Router,
     extract::{Request, State},
     response::IntoResponse,
-    routing, Router,
+    routing,
 };
 
 use super::{super::State as AppState, api_bridge};

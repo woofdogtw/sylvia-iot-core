@@ -1,15 +1,15 @@
 [package]
 name = "sylvia-router"
-version = "0.2.2"
+version = "0.3.0"
 authors = ["Chien-Hong Chan"]
 categories = ["web-programming::http-server"]
 description = "A simple router application with full Sylvia-IoT core components."
-edition = "2021"
+edition = "2024"
 keywords = ["iot", "router"]
 license = "MIT"
 readme = "README.md"
 repository = "https://github.com/woofdogtw/sylvia-iot-core.git"
-rust-version = "1.81"
+rust-version = "1.85.1"
 
 [dependencies]
 axum = "0.8.4"

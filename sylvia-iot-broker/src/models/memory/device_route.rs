@@ -5,13 +5,13 @@ use lru::LruCache;
 use tokio::sync::RwLock;
 
 use super::super::{
+    Model,
     device::{QueryCond as DeviceQueryCond, QueryOneCond as DeviceQueryOneCond},
     device_route::{
         DelCachePubQueryCond, DelCacheQueryCond, DeviceRouteCache, DeviceRouteCacheDlData,
         DeviceRouteCacheUlData, GetCachePubQueryCond, GetCacheQueryCond, ListOptions,
         ListQueryCond,
     },
-    Model,
 };
 
 pub struct Cache {

@@ -1,8 +1,8 @@
 use std::{collections::HashMap, net::SocketAddr, time::Duration};
 
 use axum::{
-    http::{header, HeaderValue, Method, StatusCode},
     Router,
+    http::{HeaderValue, Method, StatusCode, header},
 };
 use axum_test::{TestRequest, TestServer};
 use chrono::{DateTime, TimeZone, Utc};
@@ -14,8 +14,8 @@ use tokio::{net::TcpListener, runtime::Runtime, time};
 use sylvia_iot_auth::{
     libs::config as sylvia_iot_auth_config,
     models::{
-        self as sylvia_iot_auth_models, access_token::AccessToken, client::Client, user::User,
-        Model,
+        self as sylvia_iot_auth_models, Model, access_token::AccessToken, client::Client,
+        user::User,
     },
     routes as sylvia_iot_auth_routes,
 };
@@ -42,7 +42,7 @@ use sylvia_iot_coremgr::{
     routes,
 };
 
-use crate::{libs::mq::emqx, TestState, WAIT_COUNT, WAIT_TICK};
+use crate::{TestState, WAIT_COUNT, WAIT_TICK, libs::mq::emqx};
 
 #[derive(Deserialize)]
 pub struct ApiError {

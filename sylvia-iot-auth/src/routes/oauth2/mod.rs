@@ -1,6 +1,6 @@
 //! Handlers of all OAuth2 functions.
 
-use axum::{http::StatusCode, response::IntoResponse, routing, Extension, Router};
+use axum::{Extension, Router, http::StatusCode, response::IntoResponse, routing};
 use tera::Tera;
 
 use super::State as AppState;

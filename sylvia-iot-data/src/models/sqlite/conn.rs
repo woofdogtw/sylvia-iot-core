@@ -2,7 +2,7 @@ use std::error::Error as StdError;
 use std::str::FromStr;
 
 use log::LevelFilter;
-use sqlx::{sqlite::SqliteConnectOptions, ConnectOptions, SqlitePool};
+use sqlx::{ConnectOptions, SqlitePool, sqlite::SqliteConnectOptions};
 
 /// SQLite connection options.
 pub struct Options {

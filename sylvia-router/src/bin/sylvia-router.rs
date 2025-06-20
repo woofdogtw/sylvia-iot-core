@@ -6,7 +6,7 @@ use std::{
     time::Duration,
 };
 
-use axum::{routing, Router};
+use axum::{Router, routing};
 use axum_prometheus::PrometheusMetricLayer;
 use axum_server::{self, tls_rustls::RustlsConfig};
 use clap::{Arg as ClapArg, Command};

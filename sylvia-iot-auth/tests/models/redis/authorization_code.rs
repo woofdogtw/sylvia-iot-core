@@ -1,5 +1,5 @@
 use chrono::{SubsecRound, Utc};
-use laboratory::{expect, SpecContext};
+use laboratory::{SpecContext, expect};
 use redis::{AsyncCommands, RedisResult};
 use serde::{Deserialize, Serialize};
 use serde_json;
@@ -9,7 +9,7 @@ use sylvia_iot_auth::models::{
     redis::authorization_code,
 };
 
-use super::{TestState, STATE};
+use super::{STATE, TestState};
 
 #[derive(Deserialize, Serialize)]
 struct AuthorizationCodeSchema {

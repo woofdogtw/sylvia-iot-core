@@ -19,8 +19,9 @@ use tokio::{
 
 use super::uri::{MQTTScheme, MQTTUri};
 use crate::{
+    ID_SIZE,
     connection::{EventHandler, GmqConnection, Status},
-    randomstring, ID_SIZE,
+    randomstring,
 };
 
 /// Manages a MQTT connection.

@@ -1,8 +1,8 @@
-use laboratory::{describe, Suite};
+use laboratory::{Suite, describe};
 use reqwest::{self, Method, StatusCode};
 use serde::Deserialize;
 
-use crate::{clear_state, new_state, TestState, STATE};
+use crate::{STATE, TestState, clear_state, new_state};
 
 mod connection;
 mod queue;

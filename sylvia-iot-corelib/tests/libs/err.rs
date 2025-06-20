@@ -1,5 +1,5 @@
 use axum::{http::StatusCode, response::IntoResponse};
-use laboratory::{expect, SpecContext};
+use laboratory::{SpecContext, expect};
 
 use sylvia_iot_corelib::err::{self, ErrResp};
 

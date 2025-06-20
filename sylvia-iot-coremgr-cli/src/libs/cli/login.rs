@@ -1,7 +1,7 @@
 use std::error::Error as StdError;
 
 use clap::{Arg, ArgMatches, Command};
-use reqwest::{header, redirect::Policy, ClientBuilder, Method, Response, StatusCode};
+use reqwest::{ClientBuilder, Method, Response, StatusCode, header, redirect::Policy};
 use serde::{Deserialize, Serialize};
 use serde_json;
 use serde_urlencoded;
@@ -9,7 +9,7 @@ use url::Url;
 
 use sylvia_iot_corelib::err::ErrResp;
 
-use super::{config, AccessToken, Config, Storage};
+use super::{AccessToken, Config, Storage, config};
 
 #[derive(Deserialize)]
 struct GetAuthResponse {

@@ -9,7 +9,7 @@ use serde::Deserialize;
 
 use sylvia_iot_corelib::{err::ErrResp, role::Role};
 
-use super::{middleware::GetTokenInfoData, ErrReq, State};
+use super::{ErrReq, State, middleware::GetTokenInfoData};
 
 pub mod application_dldata;
 pub mod application_uldata;
@@ -135,7 +135,7 @@ async fn get_unit_cond(
                                 ErrReq::UNIT_NOT_EXIST.1,
                                 None,
                             )
-                            .into_response())
+                            .into_response());
                         }
                         Some(_) => Ok(Some(unit_id.clone())),
                     },

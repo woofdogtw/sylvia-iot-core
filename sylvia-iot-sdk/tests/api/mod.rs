@@ -2,7 +2,7 @@ use std::{collections::HashMap, error::Error as StdError, net::SocketAddr, time:
 
 use axum::Router;
 use chrono::{DateTime, Utc};
-use laboratory::{describe, Suite};
+use laboratory::{Suite, describe};
 use serde_json::{Map, Value};
 use tokio::{net::TcpListener, runtime::Runtime, time};
 
@@ -13,7 +13,7 @@ use sylvia_iot_auth::{
 };
 use sylvia_iot_auth::{
     libs::config as sylvia_iot_auth_config,
-    models::{self as sylvia_iot_auth_models, client::Client, user::User, Model},
+    models::{self as sylvia_iot_auth_models, Model, client::Client, user::User},
     routes as sylvia_iot_auth_routes,
 };
 use sylvia_iot_coremgr::{

@@ -1,7 +1,7 @@
 use std::{collections::HashMap, env, ffi::OsStr};
 
 use clap::Command;
-use laboratory::{expect, SpecContext};
+use laboratory::{SpecContext, expect};
 
 use sylvia_iot_broker::libs::config::{self, Config};
 use sylvia_iot_corelib::constants::{CacheEngine, DbEngine};
@@ -275,40 +275,34 @@ pub fn read_args(_context: &mut SpecContext<TestState>) -> Result<(), String> {
     let args = config::reg_args(Command::new("test")).get_matches_from(vec!["test"]);
 
     // Modified default by environment variables.
-    env::set_var(&OsStr::new("BROKER_AUTH"), "sylvia2");
-    env::set_var(&OsStr::new("BROKER_DB_ENGINE"), "mongodb");
-    env::set_var(&OsStr::new("BROKER_DB_MONGODB_URL"), "url21");
-    env::set_var(&OsStr::new("BROKER_DB_MONGODB_DATABASE"), "db2");
-    env::set_var(&OsStr::new("BROKER_DB_MONGODB_POOLSIZE"), "21");
-    env::set_var(&OsStr::new("BROKER_DB_SQLITE_PATH"), "path2");
-    env::set_var(&OsStr::new("BROKER_CACHE_ENGINE"), "memory");
-    env::set_var(&OsStr::new("BROKER_CACHE_MEMORY_DEVICE"), "121");
-    env::set_var(&OsStr::new("BROKER_CACHE_MEMORY_DEVICE_ROUTE"), "122");
-    env::set_var(&OsStr::new("BROKER_CACHE_MEMORY_NETWORK_ROUTE"), "123");
-    env::set_var(&OsStr::new("BROKER_MQ_PREFETCH"), "22");
-    env::set_var(&OsStr::new("BROKER_MQ_PERSISTENT"), "true");
-    env::set_var(&OsStr::new("BROKER_MQ_SHAREDPREFIX"), "prefix2");
-    env::set_var(&OsStr::new("BROKER_MQCHANNELS_UNIT_URL"), "url23");
-    env::set_var(&OsStr::new("BROKER_MQCHANNELS_UNIT_PREFETCH"), "23");
-    env::set_var(&OsStr::new("BROKER_MQCHANNELS_APPLICATION_URL"), "url24");
-    env::set_var(&OsStr::new("BROKER_MQCHANNELS_APPLICATION_PREFETCH"), "24");
-    env::set_var(&OsStr::new("BROKER_MQCHANNELS_NETWORK_URL"), "url25");
-    env::set_var(&OsStr::new("BROKER_MQCHANNELS_NETWORK_PREFETCH"), "25");
-    env::set_var(&OsStr::new("BROKER_MQCHANNELS_DEVICE_URL"), "url26");
-    env::set_var(&OsStr::new("BROKER_MQCHANNELS_DEVICE_PREFETCH"), "26");
-    env::set_var(&OsStr::new("BROKER_MQCHANNELS_DEVICE_ROUTE_URL"), "url27");
-    env::set_var(&OsStr::new("BROKER_MQCHANNELS_DEVICE_ROUTE_PREFETCH"), "27");
-    env::set_var(&OsStr::new("BROKER_MQCHANNELS_NETWORK_ROUTE_URL"), "url28");
-    env::set_var(
-        &OsStr::new("BROKER_MQCHANNELS_NETWORK_ROUTE_PREFETCH"),
-        "28",
-    );
-    env::set_var(&OsStr::new("BROKER_MQCHANNELS_DATA_URL"), "url29");
-    env::set_var(&OsStr::new("BROKER_MQCHANNELS_DATA_PERSISTENT"), "false");
-    env::set_var(
-        &OsStr::new("BROKER_API_SCOPES"),
-        "{\"key21\":[\"value21\"]}",
-    );
+    set_env_var("BROKER_AUTH", "sylvia2");
+    set_env_var("BROKER_DB_ENGINE", "mongodb");
+    set_env_var("BROKER_DB_MONGODB_URL", "url21");
+    set_env_var("BROKER_DB_MONGODB_DATABASE", "db2");
+    set_env_var("BROKER_DB_MONGODB_POOLSIZE", "21");
+    set_env_var("BROKER_DB_SQLITE_PATH", "path2");
+    set_env_var("BROKER_CACHE_ENGINE", "memory");
+    set_env_var("BROKER_CACHE_MEMORY_DEVICE", "121");
+    set_env_var("BROKER_CACHE_MEMORY_DEVICE_ROUTE", "122");
+    set_env_var("BROKER_CACHE_MEMORY_NETWORK_ROUTE", "123");
+    set_env_var("BROKER_MQ_PREFETCH", "22");
+    set_env_var("BROKER_MQ_PERSISTENT", "true");
+    set_env_var("BROKER_MQ_SHAREDPREFIX", "prefix2");
+    set_env_var("BROKER_MQCHANNELS_UNIT_URL", "url23");
+    set_env_var("BROKER_MQCHANNELS_UNIT_PREFETCH", "23");
+    set_env_var("BROKER_MQCHANNELS_APPLICATION_URL", "url24");
+    set_env_var("BROKER_MQCHANNELS_APPLICATION_PREFETCH", "24");
+    set_env_var("BROKER_MQCHANNELS_NETWORK_URL", "url25");
+    set_env_var("BROKER_MQCHANNELS_NETWORK_PREFETCH", "25");
+    set_env_var("BROKER_MQCHANNELS_DEVICE_URL", "url26");
+    set_env_var("BROKER_MQCHANNELS_DEVICE_PREFETCH", "26");
+    set_env_var("BROKER_MQCHANNELS_DEVICE_ROUTE_URL", "url27");
+    set_env_var("BROKER_MQCHANNELS_DEVICE_ROUTE_PREFETCH", "27");
+    set_env_var("BROKER_MQCHANNELS_NETWORK_ROUTE_URL", "url28");
+    set_env_var("BROKER_MQCHANNELS_NETWORK_ROUTE_PREFETCH", "28");
+    set_env_var("BROKER_MQCHANNELS_DATA_URL", "url29");
+    set_env_var("BROKER_MQCHANNELS_DATA_PERSISTENT", "false");
+    set_env_var("BROKER_API_SCOPES", "{\"key21\":[\"value21\"]}");
     let conf = config::read_args(&args);
     expect(conf.auth.is_some()).to_equal(true)?;
     expect(conf.auth.as_ref().unwrap().as_str()).to_equal("sylvia2")?;
@@ -387,9 +381,9 @@ pub fn read_args(_context: &mut SpecContext<TestState>) -> Result<(), String> {
     map.insert("key21".to_string(), vec!["value21".to_string()]);
     expect(conf.api_scopes.as_ref()).to_equal(Some(&map))?;
 
-    env::set_var(&OsStr::new("BROKER_DB_ENGINE"), "sqlite");
-    env::set_var(&OsStr::new("BROKER_CACHE_ENGINE"), "none");
-    env::set_var(&OsStr::new("BROKER_API_SCOPES"), "");
+    set_env_var("BROKER_DB_ENGINE", "sqlite");
+    set_env_var("BROKER_CACHE_ENGINE", "none");
+    set_env_var("BROKER_API_SCOPES", "");
     let conf = config::read_args(&args);
     expect(conf.db.is_some()).to_equal(true)?;
     expect(conf.db.as_ref().unwrap().engine.as_ref().unwrap().as_str())
@@ -400,31 +394,22 @@ pub fn read_args(_context: &mut SpecContext<TestState>) -> Result<(), String> {
     expect(conf.api_scopes.as_ref()).to_equal(Some(&HashMap::new()))?;
 
     // Test wrong environment variables.
-    env::set_var(&OsStr::new("BROKER_DB_ENGINE"), "test2");
-    env::set_var(&OsStr::new("BROKER_CACHE_ENGINE"), "test3");
-    env::set_var(&OsStr::new("BROKER_DB_MONGODB_POOLSIZE"), "12_000");
-    env::set_var(&OsStr::new("BROKER_CACHE_MEMORY_DEVICE"), "12_000");
-    env::set_var(&OsStr::new("BROKER_CACHE_MEMORY_DEVICE_ROUTE"), "12_000");
-    env::set_var(&OsStr::new("BROKER_CACHE_MEMORY_NETWORK_ROUTE"), "12_000");
-    env::set_var(&OsStr::new("BROKER_MQ_PREFETCH"), "12_000");
-    env::set_var(&OsStr::new("BROKER_MQ_PERSISTENT"), "1");
-    env::set_var(&OsStr::new("BROKER_MQCHANNELS_UNIT_PREFETCH"), "12_000");
-    env::set_var(
-        &OsStr::new("BROKER_MQCHANNELS_APPLICATION_PREFETCH"),
-        "12_000",
-    );
-    env::set_var(&OsStr::new("BROKER_MQCHANNELS_NETWORK_PREFETCH"), "12_000");
-    env::set_var(&OsStr::new("BROKER_MQCHANNELS_DEVICE_PREFETCH"), "12_000");
-    env::set_var(
-        &OsStr::new("BROKER_MQCHANNELS_DEVICE_ROUTE_PREFETCH"),
-        "12_000",
-    );
-    env::set_var(
-        &OsStr::new("BROKER_MQCHANNELS_NETWORK_ROUTE_PREFETCH"),
-        "12_000",
-    );
-    env::set_var(&OsStr::new("BROKER_MQCHANNELS_DATA_PERSISTENT"), "0");
-    env::set_var(&OsStr::new("BROKER_API_SCOPES"), "}");
+    set_env_var("BROKER_DB_ENGINE", "test2");
+    set_env_var("BROKER_CACHE_ENGINE", "test3");
+    set_env_var("BROKER_DB_MONGODB_POOLSIZE", "12_000");
+    set_env_var("BROKER_CACHE_MEMORY_DEVICE", "12_000");
+    set_env_var("BROKER_CACHE_MEMORY_DEVICE_ROUTE", "12_000");
+    set_env_var("BROKER_CACHE_MEMORY_NETWORK_ROUTE", "12_000");
+    set_env_var("BROKER_MQ_PREFETCH", "12_000");
+    set_env_var("BROKER_MQ_PERSISTENT", "1");
+    set_env_var("BROKER_MQCHANNELS_UNIT_PREFETCH", "12_000");
+    set_env_var("BROKER_MQCHANNELS_APPLICATION_PREFETCH", "12_000");
+    set_env_var("BROKER_MQCHANNELS_NETWORK_PREFETCH", "12_000");
+    set_env_var("BROKER_MQCHANNELS_DEVICE_PREFETCH", "12_000");
+    set_env_var("BROKER_MQCHANNELS_DEVICE_ROUTE_PREFETCH", "12_000");
+    set_env_var("BROKER_MQCHANNELS_NETWORK_ROUTE_PREFETCH", "12_000");
+    set_env_var("BROKER_MQCHANNELS_DATA_PERSISTENT", "0");
+    set_env_var("BROKER_API_SCOPES", "}");
     let args = config::reg_args(Command::new("test")).get_matches_from(vec!["test"]);
     let conf = config::read_args(&args);
     let db_conf = conf.db.as_ref().unwrap().mongodb.as_ref().unwrap();
@@ -506,40 +491,34 @@ pub fn read_args(_context: &mut SpecContext<TestState>) -> Result<(), String> {
         "--broker.api-scopes",
         "{\"key31\":[\"value31\"]}",
     ];
-    env::set_var(&OsStr::new("BROKER_AUTH"), "sylvia4");
-    env::set_var(&OsStr::new("BROKER_DB_ENGINE"), "mongodb");
-    env::set_var(&OsStr::new("BROKER_DB_MONGODB_URL"), "url41");
-    env::set_var(&OsStr::new("BROKER_DB_MONGODB_DATABASE"), "db4");
-    env::set_var(&OsStr::new("BROKER_DB_MONGODB_POOLSIZE"), "41");
-    env::set_var(&OsStr::new("BROKER_DB_SQLITE_PATH"), "path4");
-    env::set_var(&OsStr::new("BROKER_CACHE_ENGINE"), "memory");
-    env::set_var(&OsStr::new("BROKER_CACHE_MEMORY_DEVICE"), "141");
-    env::set_var(&OsStr::new("BROKER_CACHE_MEMORY_DEVICE_ROUTE"), "142");
-    env::set_var(&OsStr::new("BROKER_CACHE_MEMORY_NETWORK_ROUTE"), "143");
-    env::set_var(&OsStr::new("BROKER_MQ_PREFETCH"), "42");
-    env::set_var(&OsStr::new("BROKER_MQ_PERSISTENT"), "false");
-    env::set_var(&OsStr::new("BROKER_MQ_SHAREDPREFIX"), "prefix4");
-    env::set_var(&OsStr::new("BROKER_MQCHANNELS_UNIT_URL"), "url43");
-    env::set_var(&OsStr::new("BROKER_MQCHANNELS_UNIT_PREFETCH"), "43");
-    env::set_var(&OsStr::new("BROKER_MQCHANNELS_APPLICATION_URL"), "url44");
-    env::set_var(&OsStr::new("BROKER_MQCHANNELS_APPLICATION_PREFETCH"), "44");
-    env::set_var(&OsStr::new("BROKER_MQCHANNELS_NETWORK_URL"), "url45");
-    env::set_var(&OsStr::new("BROKER_MQCHANNELS_NETWORK_PREFETCH"), "45");
-    env::set_var(&OsStr::new("BROKER_MQCHANNELS_DEVICE_URL"), "url46");
-    env::set_var(&OsStr::new("BROKER_MQCHANNELS_DEVICE_PREFETCH"), "46");
-    env::set_var(&OsStr::new("BROKER_MQCHANNELS_DEVICE_ROUTE_URL"), "url47");
-    env::set_var(&OsStr::new("BROKER_MQCHANNELS_DEVICE_ROUTE_PREFETCH"), "47");
-    env::set_var(&OsStr::new("BROKER_MQCHANNELS_NETWORK_ROUTE_URL"), "url48");
-    env::set_var(
-        &OsStr::new("BROKER_MQCHANNELS_NETWORK_ROUTE_PREFETCH"),
-        "48",
-    );
-    env::set_var(&OsStr::new("BROKER_MQCHANNELS_DATA_URL"), "url49");
-    env::set_var(&OsStr::new("BROKER_MQCHANNELS_DATA_PERSISTENT"), "true");
-    env::set_var(
-        &OsStr::new("BROKER_API_SCOPES"),
-        "{\"key41\":[\"value41\"]}",
-    );
+    set_env_var("BROKER_AUTH", "sylvia4");
+    set_env_var("BROKER_DB_ENGINE", "mongodb");
+    set_env_var("BROKER_DB_MONGODB_URL", "url41");
+    set_env_var("BROKER_DB_MONGODB_DATABASE", "db4");
+    set_env_var("BROKER_DB_MONGODB_POOLSIZE", "41");
+    set_env_var("BROKER_DB_SQLITE_PATH", "path4");
+    set_env_var("BROKER_CACHE_ENGINE", "memory");
+    set_env_var("BROKER_CACHE_MEMORY_DEVICE", "141");
+    set_env_var("BROKER_CACHE_MEMORY_DEVICE_ROUTE", "142");
+    set_env_var("BROKER_CACHE_MEMORY_NETWORK_ROUTE", "143");
+    set_env_var("BROKER_MQ_PREFETCH", "42");
+    set_env_var("BROKER_MQ_PERSISTENT", "false");
+    set_env_var("BROKER_MQ_SHAREDPREFIX", "prefix4");
+    set_env_var("BROKER_MQCHANNELS_UNIT_URL", "url43");
+    set_env_var("BROKER_MQCHANNELS_UNIT_PREFETCH", "43");
+    set_env_var("BROKER_MQCHANNELS_APPLICATION_URL", "url44");
+    set_env_var("BROKER_MQCHANNELS_APPLICATION_PREFETCH", "44");
+    set_env_var("BROKER_MQCHANNELS_NETWORK_URL", "url45");
+    set_env_var("BROKER_MQCHANNELS_NETWORK_PREFETCH", "45");
+    set_env_var("BROKER_MQCHANNELS_DEVICE_URL", "url46");
+    set_env_var("BROKER_MQCHANNELS_DEVICE_PREFETCH", "46");
+    set_env_var("BROKER_MQCHANNELS_DEVICE_ROUTE_URL", "url47");
+    set_env_var("BROKER_MQCHANNELS_DEVICE_ROUTE_PREFETCH", "47");
+    set_env_var("BROKER_MQCHANNELS_NETWORK_ROUTE_URL", "url48");
+    set_env_var("BROKER_MQCHANNELS_NETWORK_ROUTE_PREFETCH", "48");
+    set_env_var("BROKER_MQCHANNELS_DATA_URL", "url49");
+    set_env_var("BROKER_MQCHANNELS_DATA_PERSISTENT", "true");
+    set_env_var("BROKER_API_SCOPES", "{\"key41\":[\"value41\"]}");
     let args = config::reg_args(Command::new("test")).get_matches_from(args);
     let conf = config::read_args(&args);
     expect(conf.auth.is_some()).to_equal(true)?;
@@ -1010,4 +989,10 @@ pub fn apply_default(_context: &mut SpecContext<TestState>) -> Result<(), String
     expect(data_conf.persistent.is_some()).to_equal(true)?;
     expect(data_conf.persistent.unwrap()).to_equal(false)?;
     expect(conf.api_scopes.as_ref()).to_equal(Some(&api_scopes))
+}
+
+fn set_env_var(key: &str, val: &str) {
+    unsafe {
+        env::set_var(&OsStr::new(key), val);
+    }
 }

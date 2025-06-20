@@ -54,7 +54,7 @@ pub async fn get(client: &mut Client) -> Result<GetResData, Error> {
                 return Err(Error::Sylvia(ApiError {
                     code: err::E_UNKNOWN.to_string(),
                     message: Some(e.to_string()),
-                }))
+                }));
             }
             Ok(resp) => return Ok(resp.data),
         }
@@ -75,7 +75,7 @@ pub async fn update(client: &mut Client, data: PatchReqData) -> Result<(), Error
             return Err(Error::Sylvia(ApiError {
                 code: err::E_UNKNOWN.to_string(),
                 message: Some(e.to_string()),
-            }))
+            }));
         }
         Ok(body) => Some(Bytes::from(body)),
     };

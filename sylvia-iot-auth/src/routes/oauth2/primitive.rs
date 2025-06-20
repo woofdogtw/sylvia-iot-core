@@ -14,11 +14,11 @@ use oxide_auth_async::primitives::{Authorizer, Issuer, Registrar};
 use sylvia_iot_corelib::{err::E_UNKNOWN, strings};
 
 use crate::models::{
+    Model,
     access_token::{self, AccessToken, QueryCond as AccessTokenQuery},
     authorization_code::{self, AuthorizationCode, QueryCond as AuthorizationCodeQuery},
     client::QueryCond,
     refresh_token::{self, QueryCond as RefreshTokenQuery, RefreshToken},
-    Model,
 };
 
 #[derive(Clone)]
@@ -343,7 +343,7 @@ impl Registrar for Primitive {
                 return {
                     error!("[{}] get client error: {}", FN_NAME, e);
                     Err(RegistrarError::PrimitiveError)
-                }
+                };
             }
             Ok(client) => match client {
                 None => return Err(RegistrarError::Unspecified),

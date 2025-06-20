@@ -1,12 +1,12 @@
 use std::collections::HashMap;
 
 use axum::{
-    http::{header, HeaderValue, StatusCode},
     Router,
+    http::{HeaderValue, StatusCode, header},
 };
 use axum_test::TestServer;
 use chrono::{TimeDelta, TimeZone, Utc};
-use laboratory::{expect, SpecContext};
+use laboratory::{SpecContext, expect};
 use mongodb::bson::Document;
 use sql_builder::SqlBuilder;
 use sqlx;
@@ -26,8 +26,8 @@ use sylvia_iot_auth::{
 use super::{
     super::{
         super::libs::{create_client, create_user},
+        STATE, TestState,
         libs::get_token,
-        TestState, STATE,
     },
     response,
 };

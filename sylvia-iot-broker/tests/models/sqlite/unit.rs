@@ -1,13 +1,13 @@
 use std::collections::HashMap;
 
 use chrono::{SubsecRound, Utc};
-use laboratory::{expect, SpecContext};
+use laboratory::{SpecContext, expect};
 use serde_json::{Map, Value};
-use sql_builder::{quote, SqlBuilder};
+use sql_builder::{SqlBuilder, quote};
 
-use sylvia_iot_broker::models::{unit::QueryCond, Model};
+use sylvia_iot_broker::models::{Model, unit::QueryCond};
 
-use super::{super::common::unit as common_test, TestState, STATE};
+use super::{super::common::unit as common_test, STATE, TestState};
 
 const TABLE_NAME: &'static str = "unit";
 const FIELDS: &'static [&'static str] = &[

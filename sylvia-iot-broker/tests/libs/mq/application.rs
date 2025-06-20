@@ -6,25 +6,25 @@ use std::{
 };
 
 use async_trait::async_trait;
-use laboratory::{expect, SpecContext};
+use laboratory::{SpecContext, expect};
 use serde::{self, Deserialize, Serialize};
 use serde_json::{self, Map, Value};
 use tokio::time;
 
 use general_mq::{
+    AmqpQueueOptions, MqttQueueOptions, Queue, QueueOptions,
     queue::{
         EventHandler as MqEventHandler, GmqQueue, Message, MessageHandler as MqMessageHandler,
         Status as MqStatus,
     },
-    AmqpQueueOptions, MqttQueueOptions, Queue, QueueOptions,
 };
 use sylvia_iot_broker::libs::mq::{
-    application::{ApplicationMgr, DlData, DlDataResp, DlDataResult, EventHandler, UlData},
     Connection, MgrStatus, Options,
+    application::{ApplicationMgr, DlData, DlDataResp, DlDataResult, EventHandler, UlData},
 };
 
-use super::{new_connection, STATE};
-use crate::{libs::libs::conn_host_uri, TestState, WAIT_COUNT, WAIT_TICK};
+use super::{STATE, new_connection};
+use crate::{TestState, WAIT_COUNT, WAIT_TICK, libs::libs::conn_host_uri};
 
 /// Downlink data from application to broker.
 #[derive(Debug, Default, Serialize)]

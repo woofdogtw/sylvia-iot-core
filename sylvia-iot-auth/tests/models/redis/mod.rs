@@ -1,5 +1,5 @@
-use laboratory::{describe, Suite};
-use redis::{aio::MultiplexedConnection, AsyncCommands, RedisResult};
+use laboratory::{Suite, describe};
+use redis::{AsyncCommands, RedisResult, aio::MultiplexedConnection};
 use tokio::runtime::Runtime;
 
 use sylvia_iot_auth::models::redis::conn::{self as models_conn, Options};

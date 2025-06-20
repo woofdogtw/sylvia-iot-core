@@ -1,39 +1,39 @@
 use std::{collections::HashMap, sync::Arc, time::Duration};
 
 use async_trait::async_trait;
-use axum::http::{header, HeaderValue, Method, StatusCode};
-use base64::{engine::general_purpose, Engine};
+use axum::http::{HeaderValue, Method, StatusCode, header};
+use base64::{Engine, engine::general_purpose};
 use chrono::{DateTime, SubsecRound, Utc};
 use hex;
-use laboratory::{expect, SpecContext};
+use laboratory::{SpecContext, expect};
 use serde::{Deserialize, Serialize};
 use serde_json::{Map, Value};
 use tokio::{runtime::Runtime, time};
 
 use general_mq::{
-    connection::{GmqConnection, Status as ConnStatus},
-    queue::{GmqQueue, Message, MessageHandler, Status as QueueStatus},
     AmqpConnection, AmqpConnectionOptions, AmqpQueue, AmqpQueueOptions, MqttConnection,
     MqttConnectionOptions, MqttQueue, MqttQueueOptions,
+    connection::{GmqConnection, Status as ConnStatus},
+    queue::{GmqQueue, Message, MessageHandler, Status as QueueStatus},
 };
-use sylvia_iot_broker::models::{device, Model};
+use sylvia_iot_broker::models::{Model, device};
 use sylvia_iot_corelib::{constants::ContentType, err};
 use sylvia_iot_coremgr::{
-    libs::mq::{self, emqx, rabbitmq, to_username, QueueType},
+    libs::mq::{self, QueueType, emqx, rabbitmq, to_username},
     routes,
 };
 
-use crate::{routes::libs::new_test_server, WAIT_COUNT, WAIT_TICK};
+use crate::{WAIT_COUNT, WAIT_TICK, routes::libs::new_test_server};
 
 use super::{
     super::{
-        libs::{
-            create_device, create_unit, test_invalid_param, test_invalid_token, test_list,
-            ApiError, TOKEN_MANAGER, TOKEN_MEMBER,
-        },
         TestState,
+        libs::{
+            ApiError, TOKEN_MANAGER, TOKEN_MEMBER, create_device, create_unit, test_invalid_param,
+            test_invalid_token, test_list,
+        },
     },
-    remove_network, remove_unit, Stats, STATE,
+    STATE, Stats, remove_network, remove_unit,
 };
 
 struct TestDummyHandler;
@@ -1625,7 +1625,7 @@ fn test_stats(
             let (dldata_stats, ctrl_stats) =
                 match serde_json::from_str::<GetNetworkStatsRes>(body.as_str()) {
                     Err(e) => {
-                        return Err(format!("unexpected response format: {}, body: {}", e, body))
+                        return Err(format!("unexpected response format: {}, body: {}", e, body));
                     }
                     Ok(body) => (body.data.dldata, body.data.ctrl),
                 };
@@ -1795,7 +1795,7 @@ async fn check_queue(host_uri: &str, password: &str, unit: &str, code: &str) -> 
                 let _ = opposite_conn.close().await;
                 match opposite_conn.status() {
                     ConnStatus::Connected => {
-                        return Err("should not connected to opposite".to_string())
+                        return Err("should not connected to opposite".to_string());
                     }
                     _ => return Ok(()),
                 }
@@ -1846,7 +1846,7 @@ async fn check_queue(host_uri: &str, password: &str, unit: &str, code: &str) -> 
                 let _ = opposite_conn.close().await;
                 match opposite_conn.status() {
                     ConnStatus::Connected => {
-                        return Err("should not connected to opposite".to_string())
+                        return Err("should not connected to opposite".to_string());
                     }
                     _ => return Ok(()),
                 }

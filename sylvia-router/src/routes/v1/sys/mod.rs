@@ -1,4 +1,4 @@
-use axum::{routing, Router};
+use axum::{Router, routing};
 use sylvia_iot_sdk::middlewares::auth::AuthService;
 
 use super::super::State;

@@ -1,12 +1,12 @@
 use std::cmp::Ordering;
 
 use axum::{
-    http::{header, HeaderValue, Method, StatusCode},
     Router,
+    http::{HeaderValue, Method, StatusCode, header},
 };
 use axum_test::TestServer;
 use chrono::{SubsecRound, TimeDelta, Utc};
-use laboratory::{expect, SpecContext};
+use laboratory::{SpecContext, expect};
 use serde_json::{Map, Value};
 use tokio::runtime::Runtime;
 
@@ -21,11 +21,11 @@ use crate::routes::libs::{add_device_bulk_model, get_network_model, rm_device_bu
 use super::{
     super::{
         super::libs::{
-            add_application_model, add_device_model, add_device_route_model, add_network_model,
-            add_unit_model, create_device_route, get_application_model, get_device_model,
-            get_device_route_model, test_get_400, test_invalid_token, ApiError,
+            ApiError, add_application_model, add_device_model, add_device_route_model,
+            add_network_model, add_unit_model, create_device_route, get_application_model,
+            get_device_model, get_device_route_model, test_get_400, test_invalid_token,
         },
-        TestState, STATE, TOKEN_MANAGER, TOKEN_MEMBER, TOKEN_OWNER,
+        STATE, TOKEN_MANAGER, TOKEN_MEMBER, TOKEN_OWNER, TestState,
     },
     request, response,
 };

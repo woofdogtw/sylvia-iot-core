@@ -330,7 +330,7 @@ pub async fn get_policies(
                 return Ok(BrokerPolicies {
                     ttl: Some(0),
                     length: Some(0),
-                })
+                });
             }
             _ => {
                 let e = format!("execute request with status: {}", resp.status());

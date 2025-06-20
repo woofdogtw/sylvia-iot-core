@@ -1,7 +1,7 @@
 use axum::{
     body::{self, Body},
     extract::Request,
-    http::{header, response::Builder, HeaderValue, StatusCode},
+    http::{HeaderValue, StatusCode, header, response::Builder},
     response::{IntoResponse, Response},
 };
 use log::error;
@@ -12,7 +12,7 @@ use url::Url;
 use sylvia_iot_corelib::err::ErrResp;
 
 use super::{AmqpState, MqttState, State as AppState};
-use crate::libs::mq::{emqx, rabbitmq, QueueType};
+use crate::libs::mq::{QueueType, emqx, rabbitmq};
 
 pub mod application;
 pub mod auth;

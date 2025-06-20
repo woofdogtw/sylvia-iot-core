@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use laboratory::{expect, SpecContext};
+use laboratory::{SpecContext, expect};
 
 use sylvia_iot_corelib::role::Role;
 

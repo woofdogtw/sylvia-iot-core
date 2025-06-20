@@ -1,7 +1,7 @@
 use std::{env, ffi::OsStr};
 
 use clap::Command;
-use laboratory::{expect, SpecContext};
+use laboratory::{SpecContext, expect};
 
 use sylvia_iot_corelib::constants::MqEngine;
 use sylvia_iot_coremgr::libs::config::{self, Config};
@@ -191,29 +191,29 @@ pub fn read_args(_context: &mut SpecContext<TestState>) -> Result<(), String> {
     let args = config::reg_args(Command::new("test")).get_matches_from(vec!["test"]);
 
     // Modified default by environment variables.
-    env::set_var(&OsStr::new("COREMGR_AUTH"), "sylvia21");
-    env::set_var(&OsStr::new("COREMGR_BROKER"), "sylvia22");
-    env::set_var(&OsStr::new("COREMGR_MQ_ENGINE_AMQP"), "rabbitmq");
-    env::set_var(&OsStr::new("COREMGR_MQ_ENGINE_MQTT"), "rumqttd");
-    env::set_var(&OsStr::new("COREMGR_MQ_RABBITMQ_USERNAME"), "rabbituser2");
-    env::set_var(&OsStr::new("COREMGR_MQ_RABBITMQ_PASSWORD"), "rabbitpass2");
-    env::set_var(&OsStr::new("COREMGR_MQ_RABBITMQ_TTL"), "21");
-    env::set_var(&OsStr::new("COREMGR_MQ_RABBITMQ_LENGTH"), "22");
-    env::set_var(
-        &OsStr::new("COREMGR_MQ_RABBITMQ_HOSTS"),
+    set_env_var("COREMGR_AUTH", "sylvia21");
+    set_env_var("COREMGR_BROKER", "sylvia22");
+    set_env_var("COREMGR_MQ_ENGINE_AMQP", "rabbitmq");
+    set_env_var("COREMGR_MQ_ENGINE_MQTT", "rumqttd");
+    set_env_var("COREMGR_MQ_RABBITMQ_USERNAME", "rabbituser2");
+    set_env_var("COREMGR_MQ_RABBITMQ_PASSWORD", "rabbitpass2");
+    set_env_var("COREMGR_MQ_RABBITMQ_TTL", "21");
+    set_env_var("COREMGR_MQ_RABBITMQ_LENGTH", "22");
+    set_env_var(
+        "COREMGR_MQ_RABBITMQ_HOSTS",
         "[{\"name\":\"name21\",\"host\":\"host21\",\"external\":\"external21\",\"active\":false}]",
     );
-    env::set_var(&OsStr::new("COREMGR_MQ_EMQX_APIKEY"), "emqxkey2");
-    env::set_var(&OsStr::new("COREMGR_MQ_EMQX_APISECRET"), "emqxsecret2");
-    env::set_var(
-        &OsStr::new("COREMGR_MQ_EMQX_HOSTS"),
+    set_env_var("COREMGR_MQ_EMQX_APIKEY", "emqxkey2");
+    set_env_var("COREMGR_MQ_EMQX_APISECRET", "emqxsecret2");
+    set_env_var(
+        "COREMGR_MQ_EMQX_HOSTS",
         "[{\"name\":\"name22\",\"host\":\"host22\",\"external\":\"external22\",\"active\":true}]",
     );
-    env::set_var(&OsStr::new("COREMGR_MQ_RUMQTTD_MQTT_PORT"), "121");
-    env::set_var(&OsStr::new("COREMGR_MQ_RUMQTTD_MQTTS_PORT"), "122");
-    env::set_var(&OsStr::new("COREMGR_MQ_RUMQTTD_CONSOLE_PORT"), "123");
-    env::set_var(&OsStr::new("COREMGR_MQCHANNELS_DATA_URL"), "url2");
-    env::set_var(&OsStr::new("COREMGR_MQCHANNELS_DATA_PERSISTENT"), "false");
+    set_env_var("COREMGR_MQ_RUMQTTD_MQTT_PORT", "121");
+    set_env_var("COREMGR_MQ_RUMQTTD_MQTTS_PORT", "122");
+    set_env_var("COREMGR_MQ_RUMQTTD_CONSOLE_PORT", "123");
+    set_env_var("COREMGR_MQCHANNELS_DATA_URL", "url2");
+    set_env_var("COREMGR_MQCHANNELS_DATA_PERSISTENT", "false");
     let conf = config::read_args(&args);
     expect(conf.auth.is_some()).to_equal(true)?;
     expect(conf.auth.as_ref().unwrap().as_str()).to_equal("sylvia21")?;
@@ -267,8 +267,8 @@ pub fn read_args(_context: &mut SpecContext<TestState>) -> Result<(), String> {
     expect(data_conf.persistent.is_some()).to_equal(true)?;
     expect(data_conf.persistent.unwrap()).to_equal(false)?;
 
-    env::set_var(&OsStr::new("COREMGR_MQ_RABBITMQ_HOSTS"), "");
-    env::set_var(&OsStr::new("COREMGR_MQ_EMQX_HOSTS"), "");
+    set_env_var("COREMGR_MQ_RABBITMQ_HOSTS", "");
+    set_env_var("COREMGR_MQ_EMQX_HOSTS", "");
     let conf = config::read_args(&args);
     expect(conf.mq.as_ref().unwrap().rabbitmq.is_some()).to_equal(true)?;
     let rabbitmq = conf.mq.as_ref().unwrap().rabbitmq.as_ref().unwrap();
@@ -278,16 +278,16 @@ pub fn read_args(_context: &mut SpecContext<TestState>) -> Result<(), String> {
     expect(emqx.hosts.is_none()).to_equal(true)?;
 
     // Test wrong environment variables.
-    env::set_var(&OsStr::new("COREMGR_MQ_ENGINE_AMQP"), "rabbitmq1");
-    env::set_var(&OsStr::new("COREMGR_MQ_ENGINE_MQTT"), "emqx1");
-    env::set_var(&OsStr::new("COREMGR_MQ_RABBITMQ_TTL"), "12_000");
-    env::set_var(&OsStr::new("COREMGR_MQ_RABBITMQ_LENGTH"), "12_000");
-    env::set_var(&OsStr::new("COREMGR_MQ_RABBITMQ_HOSTS"), "}");
-    env::set_var(&OsStr::new("COREMGR_MQ_EMQX_HOSTS"), "{");
-    env::set_var(&OsStr::new("COREMGR_MQ_RUMQTTD_MQTT_PORT"), "12_000");
-    env::set_var(&OsStr::new("COREMGR_MQ_RUMQTTD_MQTTS_PORT"), "12_000");
-    env::set_var(&OsStr::new("COREMGR_MQ_RUMQTTD_CONSOLE_PORT"), "12_000");
-    env::set_var(&OsStr::new("COREMGR_MQCHANNELS_DATA_PERSISTENT"), "0");
+    set_env_var("COREMGR_MQ_ENGINE_AMQP", "rabbitmq1");
+    set_env_var("COREMGR_MQ_ENGINE_MQTT", "emqx1");
+    set_env_var("COREMGR_MQ_RABBITMQ_TTL", "12_000");
+    set_env_var("COREMGR_MQ_RABBITMQ_LENGTH", "12_000");
+    set_env_var("COREMGR_MQ_RABBITMQ_HOSTS", "}");
+    set_env_var("COREMGR_MQ_EMQX_HOSTS", "{");
+    set_env_var("COREMGR_MQ_RUMQTTD_MQTT_PORT", "12_000");
+    set_env_var("COREMGR_MQ_RUMQTTD_MQTTS_PORT", "12_000");
+    set_env_var("COREMGR_MQ_RUMQTTD_CONSOLE_PORT", "12_000");
+    set_env_var("COREMGR_MQCHANNELS_DATA_PERSISTENT", "0");
     let conf = config::read_args(&args);
     expect(conf.mq.is_some()).to_equal(true)?;
     expect(conf.mq.as_ref().unwrap().engine.is_some()).to_equal(true)?;
@@ -351,29 +351,29 @@ pub fn read_args(_context: &mut SpecContext<TestState>) -> Result<(), String> {
         "--coremgr.mq-channels.data.persistent",
         "false",
     ];
-    env::set_var(&OsStr::new("COREMGR_AUTH"), "sylvia41");
-    env::set_var(&OsStr::new("COREMGR_BROKER"), "sylvia42");
-    env::set_var(&OsStr::new("COREMGR_MQ_ENGINE_AMQP"), "rabbitmq");
-    env::set_var(&OsStr::new("COREMGR_MQ_ENGINE_MQTT"), "rumqttd");
-    env::set_var(&OsStr::new("COREMGR_MQ_RABBITMQ_USERNAME"), "rabbituser4");
-    env::set_var(&OsStr::new("COREMGR_MQ_RABBITMQ_PASSWORD"), "rabbitpass4");
-    env::set_var(&OsStr::new("COREMGR_MQ_RABBITMQ_TTL"), "41");
-    env::set_var(&OsStr::new("COREMGR_MQ_RABBITMQ_LENGTH"), "42");
-    env::set_var(
-        &OsStr::new("COREMGR_MQ_RABBITMQ_HOSTS"),
+    set_env_var("COREMGR_AUTH", "sylvia41");
+    set_env_var("COREMGR_BROKER", "sylvia42");
+    set_env_var("COREMGR_MQ_ENGINE_AMQP", "rabbitmq");
+    set_env_var("COREMGR_MQ_ENGINE_MQTT", "rumqttd");
+    set_env_var("COREMGR_MQ_RABBITMQ_USERNAME", "rabbituser4");
+    set_env_var("COREMGR_MQ_RABBITMQ_PASSWORD", "rabbitpass4");
+    set_env_var("COREMGR_MQ_RABBITMQ_TTL", "41");
+    set_env_var("COREMGR_MQ_RABBITMQ_LENGTH", "42");
+    set_env_var(
+        "COREMGR_MQ_RABBITMQ_HOSTS",
         "[{\"name\":\"name41\",\"host\":\"host41\",\"external\":\"external41\",\"active\":false}]",
     );
-    env::set_var(&OsStr::new("COREMGR_MQ_EMQX_APIKEY"), "emqxkey4");
-    env::set_var(&OsStr::new("COREMGR_MQ_EMQX_APISECRET"), "emqxsecret4");
-    env::set_var(
-        &OsStr::new("COREMGR_MQ_EMQX_HOSTS"),
+    set_env_var("COREMGR_MQ_EMQX_APIKEY", "emqxkey4");
+    set_env_var("COREMGR_MQ_EMQX_APISECRET", "emqxsecret4");
+    set_env_var(
+        "COREMGR_MQ_EMQX_HOSTS",
         "[{\"name\":\"name42\",\"host\":\"host42\",\"external\":\"external42\",\"active\":true}]",
     );
-    env::set_var(&OsStr::new("COREMGR_MQ_RUMQTTD_MQTT_PORT"), "141");
-    env::set_var(&OsStr::new("COREMGR_MQ_RUMQTTD_MQTTS_PORT"), "142");
-    env::set_var(&OsStr::new("COREMGR_MQ_RUMQTTD_CONSOLE_PORT"), "143");
-    env::set_var(&OsStr::new("COREMGR_MQCHANNELS_DATA_URL"), "url4");
-    env::set_var(&OsStr::new("COREMGR_MQCHANNELS_DATA_PERSISTENT"), "true");
+    set_env_var("COREMGR_MQ_RUMQTTD_MQTT_PORT", "141");
+    set_env_var("COREMGR_MQ_RUMQTTD_MQTTS_PORT", "142");
+    set_env_var("COREMGR_MQ_RUMQTTD_CONSOLE_PORT", "143");
+    set_env_var("COREMGR_MQCHANNELS_DATA_URL", "url4");
+    set_env_var("COREMGR_MQCHANNELS_DATA_PERSISTENT", "true");
     let args = config::reg_args(Command::new("test")).get_matches_from(args);
     let conf = config::read_args(&args);
     expect(conf.auth.is_some()).to_equal(true)?;
@@ -700,4 +700,10 @@ pub fn apply_default(_context: &mut SpecContext<TestState>) -> Result<(), String
     expect(data_conf.url.as_ref().unwrap().as_str()).to_equal("url9")?;
     expect(data_conf.persistent.is_some()).to_equal(true)?;
     expect(data_conf.persistent.unwrap()).to_equal(false)
+}
+
+fn set_env_var(key: &str, val: &str) {
+    unsafe {
+        env::set_var(&OsStr::new(key), val);
+    }
 }

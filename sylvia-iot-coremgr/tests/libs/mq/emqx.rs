@@ -1,7 +1,7 @@
 use std::{collections::HashMap, sync::Arc, time::Duration};
 
 use async_trait::async_trait;
-use base64::{engine::general_purpose, Engine};
+use base64::{Engine, engine::general_purpose};
 use laboratory::SpecContext;
 use reqwest::{Client, Method, StatusCode};
 use serde::{Deserialize, Serialize};
@@ -9,14 +9,14 @@ use serde_json;
 use tokio::time;
 
 use general_mq::{
+    MqttConnection, MqttConnectionOptions, MqttQueue, MqttQueueOptions,
     connection::{GmqConnection, Status as ConnStatus},
     queue::{GmqQueue, Message, MessageHandler, Status as QueueStatus},
-    MqttConnection, MqttConnectionOptions, MqttQueue, MqttQueueOptions,
 };
 use sylvia_iot_corelib::err::ErrResp;
 use sylvia_iot_coremgr::libs::mq::{
-    emqx::{self, ManagementOpts},
     QueueType,
+    emqx::{self, ManagementOpts},
 };
 
 use super::STATE;
@@ -174,7 +174,7 @@ pub async fn login() -> Result<String, String> {
                     return Err(format!(
                         "execute login request with status: {}",
                         resp.status()
-                    ))
+                    ));
                 }
             },
         },
@@ -362,7 +362,7 @@ pub fn post_user(context: &mut SpecContext<TestState>) -> Result<(), String> {
                 return Err(format!(
                     "post_user get wrong result status: {}, body: {}",
                     status, body
-                ))
+                ));
             }
         }
         match emqx::post_user(client, opts, host, user, pass, false).await {
@@ -481,7 +481,7 @@ pub fn delete_user(context: &mut SpecContext<TestState>) -> Result<(), String> {
                 return Err(format!(
                     "post_user get wrong result status: {}, body: {}",
                     status, body
-                ))
+                ));
             }
         }
         if let Err(e) = emqx::delete_user(client, opts, host, user).await {
@@ -506,7 +506,7 @@ pub fn delete_user(context: &mut SpecContext<TestState>) -> Result<(), String> {
                 return Err(format!(
                     "post_user get wrong result status: {}, body: {}",
                     status, body
-                ))
+                ));
             }
         }
         if let Err(e) = emqx::delete_user(client, opts, host, user).await {
@@ -573,7 +573,7 @@ pub fn post_acl(context: &mut SpecContext<TestState>) -> Result<(), String> {
                 return Err(format!(
                     "post_acl get wrong result status: {}, body: {}",
                     status, body
-                ))
+                ));
             }
         }
         let q_type = QueueType::Network;
@@ -660,7 +660,7 @@ pub fn delete_acl(context: &mut SpecContext<TestState>) -> Result<(), String> {
                 return Err(format!(
                     "delete_acl get wrong result status: {}, body: {}",
                     status, body
-                ))
+                ));
             }
         }
         let q_type = QueueType::Network;

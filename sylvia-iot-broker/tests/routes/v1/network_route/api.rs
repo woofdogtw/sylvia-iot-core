@@ -1,12 +1,12 @@
 use std::cmp::Ordering;
 
 use axum::{
-    http::{header, HeaderValue, Method, StatusCode},
     Router,
+    http::{HeaderValue, Method, StatusCode, header},
 };
 use axum_test::TestServer;
 use chrono::{DateTime, SubsecRound, TimeDelta, TimeZone, Utc};
-use laboratory::{expect, SpecContext};
+use laboratory::{SpecContext, expect};
 use serde_json::{Map, Value};
 use tokio::runtime::Runtime;
 
@@ -16,11 +16,11 @@ use sylvia_iot_corelib::err;
 use super::{
     super::{
         super::libs::{
-            add_application_model, add_network_model, add_network_route_model, add_unit_model,
-            create_network_route, get_application_model, get_network_model,
-            get_network_route_model, test_get_400, test_invalid_token, ApiError,
+            ApiError, add_application_model, add_network_model, add_network_route_model,
+            add_unit_model, create_network_route, get_application_model, get_network_model,
+            get_network_route_model, test_get_400, test_invalid_token,
         },
-        TestState, STATE, TOKEN_MANAGER, TOKEN_MEMBER, TOKEN_OWNER,
+        STATE, TOKEN_MANAGER, TOKEN_MEMBER, TOKEN_OWNER, TestState,
     },
     request, response,
 };

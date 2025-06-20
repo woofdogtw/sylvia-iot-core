@@ -1,13 +1,13 @@
 use std::collections::HashMap;
 
 use chrono::{SubsecRound, Utc};
-use laboratory::{expect, SpecContext};
+use laboratory::{SpecContext, expect};
 use serde_json::{Map, Value};
-use sql_builder::{quote, SqlBuilder};
+use sql_builder::{SqlBuilder, quote};
 
-use sylvia_iot_auth::models::{user::QueryCond, Model};
+use sylvia_iot_auth::models::{Model, user::QueryCond};
 
-use super::{super::common::user as common_test, TestState, STATE};
+use super::{super::common::user as common_test, STATE, TestState};
 
 const TABLE_NAME: &'static str = "user";
 const FIELDS: &'static [&'static str] = &[

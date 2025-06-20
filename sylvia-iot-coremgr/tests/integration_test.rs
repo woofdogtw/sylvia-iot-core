@@ -1,6 +1,6 @@
 use std::thread::JoinHandle as ThreadHandle;
 
-use laboratory::{describe, LabResult};
+use laboratory::{LabResult, describe};
 use reqwest::Client;
 use tokio::{
     runtime::Runtime,
@@ -15,7 +15,7 @@ use sylvia_iot_coremgr::{
     libs::{
         config::Rumqttd as RumqttdOpts,
         mq::{
-            emqx::ManagementOpts as EmqxOpts, rabbitmq::ManagementOpts as RabbitMqOpts, Connection,
+            Connection, emqx::ManagementOpts as EmqxOpts, rabbitmq::ManagementOpts as RabbitMqOpts,
         },
     },
     routes::State,

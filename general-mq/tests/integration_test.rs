@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use laboratory::{describe, LabResult};
+use laboratory::{LabResult, describe};
 use tokio::{runtime::Runtime, task};
 
 use general_mq::{connection::GmqConnection, queue::GmqQueue};
