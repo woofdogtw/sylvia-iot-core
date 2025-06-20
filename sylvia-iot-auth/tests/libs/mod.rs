@@ -1,4 +1,4 @@
-use laboratory::{describe, Suite};
+use laboratory::{Suite, describe};
 
 use crate::TestState;
 

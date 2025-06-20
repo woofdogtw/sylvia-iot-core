@@ -1,7 +1,7 @@
 use std::{env, ffi::OsStr};
 
 use clap::Command;
-use laboratory::{expect, SpecContext};
+use laboratory::{SpecContext, expect};
 
 use sylvia_iot_corelib::constants::DbEngine;
 use sylvia_iot_data::libs::config::{self, Config};
@@ -124,25 +124,19 @@ pub fn read_args(_context: &mut SpecContext<TestState>) -> Result<(), String> {
     // Clear command-line arguments.
     let args = config::reg_args(Command::new("test")).get_matches_from(vec!["test"]);
 
-    env::set_var(&OsStr::new("DATA_AUTH"), "sylvia21");
-    env::set_var(&OsStr::new("DATA_BROKER"), "sylvia22");
-    env::set_var(&OsStr::new("DATA_DB_ENGINE"), "sqlite");
-    env::set_var(&OsStr::new("DATA_DB_MONGODB_URL"), "url21");
-    env::set_var(&OsStr::new("DATA_DB_MONGODB_DATABASE"), "db2");
-    env::set_var(&OsStr::new("DATA_DB_MONGODB_POOLSIZE"), "21");
-    env::set_var(&OsStr::new("DATA_DB_SQLITE_PATH"), "path2");
-    env::set_var(&OsStr::new("DATA_MQCHANNELS_BROKER_URL"), "url22");
-    env::set_var(&OsStr::new("DATA_MQCHANNELS_BROKER_PREFETCH"), "22");
-    env::set_var(
-        &OsStr::new("DATA_MQCHANNELS_BROKER_SHAREDPREFIX"),
-        "prefix22",
-    );
-    env::set_var(&OsStr::new("DATA_MQCHANNELS_COREMGR_URL"), "url23");
-    env::set_var(&OsStr::new("DATA_MQCHANNELS_COREMGR_PREFETCH"), "23");
-    env::set_var(
-        &OsStr::new("DATA_MQCHANNELS_COREMGR_SHAREDPREFIX"),
-        "prefix23",
-    );
+    set_env_var("DATA_AUTH", "sylvia21");
+    set_env_var("DATA_BROKER", "sylvia22");
+    set_env_var("DATA_DB_ENGINE", "sqlite");
+    set_env_var("DATA_DB_MONGODB_URL", "url21");
+    set_env_var("DATA_DB_MONGODB_DATABASE", "db2");
+    set_env_var("DATA_DB_MONGODB_POOLSIZE", "21");
+    set_env_var("DATA_DB_SQLITE_PATH", "path2");
+    set_env_var("DATA_MQCHANNELS_BROKER_URL", "url22");
+    set_env_var("DATA_MQCHANNELS_BROKER_PREFETCH", "22");
+    set_env_var("DATA_MQCHANNELS_BROKER_SHAREDPREFIX", "prefix22");
+    set_env_var("DATA_MQCHANNELS_COREMGR_URL", "url23");
+    set_env_var("DATA_MQCHANNELS_COREMGR_PREFETCH", "23");
+    set_env_var("DATA_MQCHANNELS_COREMGR_SHAREDPREFIX", "prefix23");
     let conf = config::read_args(&args);
     expect(conf.auth.is_some()).to_equal(true)?;
     expect(conf.auth.as_ref().unwrap().as_str()).to_equal("sylvia21")?;
@@ -179,10 +173,10 @@ pub fn read_args(_context: &mut SpecContext<TestState>) -> Result<(), String> {
     expect(data_conf.shared_prefix.as_ref().unwrap().as_str()).to_equal("prefix23")?;
 
     // Test wrong environment variables.
-    env::set_var(&OsStr::new("DATA_DB_ENGINE"), "mongodb1");
-    env::set_var(&OsStr::new("DATA_DB_MONGODB_POOLSIZE"), "12_000");
-    env::set_var(&OsStr::new("DATA_MQCHANNELS_BROKER_PREFETCH"), "12_000");
-    env::set_var(&OsStr::new("DATA_MQCHANNELS_COREMGR_PREFETCH"), "12_000");
+    set_env_var("DATA_DB_ENGINE", "mongodb1");
+    set_env_var("DATA_DB_MONGODB_POOLSIZE", "12_000");
+    set_env_var("DATA_MQCHANNELS_BROKER_PREFETCH", "12_000");
+    set_env_var("DATA_MQCHANNELS_COREMGR_PREFETCH", "12_000");
     let conf = config::read_args(&args);
     expect(conf.db.is_some()).to_equal(true)?;
     expect(conf.db.as_ref().unwrap().engine.as_ref().unwrap().as_str())
@@ -230,25 +224,19 @@ pub fn read_args(_context: &mut SpecContext<TestState>) -> Result<(), String> {
         "--data.mq-channels.coremgr.sharedprefix",
         "prefix33",
     ];
-    env::set_var(&OsStr::new("DATA_AUTH"), "sylvia41");
-    env::set_var(&OsStr::new("DATA_BROKER"), "sylvia42");
-    env::set_var(&OsStr::new("DATA_DB_ENGINE"), "sqlite");
-    env::set_var(&OsStr::new("DATA_DB_MONGODB_URL"), "url41");
-    env::set_var(&OsStr::new("DATA_DB_MONGODB_DATABASE"), "db4");
-    env::set_var(&OsStr::new("DATA_DB_MONGODB_POOLSIZE"), "41");
-    env::set_var(&OsStr::new("DATA_DB_SQLITE_PATH"), "path4");
-    env::set_var(&OsStr::new("DATA_MQCHANNELS_BROKER_URL"), "url42");
-    env::set_var(&OsStr::new("DATA_MQCHANNELS_BROKER_PREFETCH"), "42");
-    env::set_var(
-        &OsStr::new("DATA_MQCHANNELS_BROKER_SHAREDPREFIX"),
-        "prefix42",
-    );
-    env::set_var(&OsStr::new("DATA_MQCHANNELS_COREMGR_URL"), "url43");
-    env::set_var(&OsStr::new("DATA_MQCHANNELS_COREMGR_PREFETCH"), "43");
-    env::set_var(
-        &OsStr::new("DATA_MQCHANNELS_COREMGR_SHAREDPREFIX"),
-        "prefix43",
-    );
+    set_env_var("DATA_AUTH", "sylvia41");
+    set_env_var("DATA_BROKER", "sylvia42");
+    set_env_var("DATA_DB_ENGINE", "sqlite");
+    set_env_var("DATA_DB_MONGODB_URL", "url41");
+    set_env_var("DATA_DB_MONGODB_DATABASE", "db4");
+    set_env_var("DATA_DB_MONGODB_POOLSIZE", "41");
+    set_env_var("DATA_DB_SQLITE_PATH", "path4");
+    set_env_var("DATA_MQCHANNELS_BROKER_URL", "url42");
+    set_env_var("DATA_MQCHANNELS_BROKER_PREFETCH", "42");
+    set_env_var("DATA_MQCHANNELS_BROKER_SHAREDPREFIX", "prefix42");
+    set_env_var("DATA_MQCHANNELS_COREMGR_URL", "url43");
+    set_env_var("DATA_MQCHANNELS_COREMGR_PREFETCH", "43");
+    set_env_var("DATA_MQCHANNELS_COREMGR_SHAREDPREFIX", "prefix43");
     let args = config::reg_args(Command::new("test")).get_matches_from(args);
     let conf = config::read_args(&args);
     expect(conf.auth.is_some()).to_equal(true)?;
@@ -480,4 +468,10 @@ pub fn apply_default(_context: &mut SpecContext<TestState>) -> Result<(), String
     expect(data_conf.prefetch.unwrap()).to_equal(14)?;
     expect(data_conf.shared_prefix.is_some()).to_equal(true)?;
     expect(data_conf.shared_prefix.as_ref().unwrap().as_str()).to_equal("$shared/group4")
+}
+
+fn set_env_var(key: &str, val: &str) {
+    unsafe {
+        env::set_var(&OsStr::new(key), val);
+    }
 }

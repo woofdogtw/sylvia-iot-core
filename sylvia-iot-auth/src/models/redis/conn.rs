@@ -1,6 +1,6 @@
 use std::error::Error as StdError;
 
-use redis::{aio::MultiplexedConnection, Client};
+use redis::{Client, aio::MultiplexedConnection};
 
 /// Redis connection options.
 pub struct Options {

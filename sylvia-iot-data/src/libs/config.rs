@@ -2,7 +2,7 @@
 
 use std::env;
 
-use clap::{builder::RangedU64ValueParser, Arg, ArgMatches, Command};
+use clap::{Arg, ArgMatches, Command, builder::RangedU64ValueParser};
 use serde::Deserialize;
 
 use sylvia_iot_corelib::constants::DbEngine;

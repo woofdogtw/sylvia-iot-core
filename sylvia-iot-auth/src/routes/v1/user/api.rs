@@ -1,11 +1,11 @@
 use std::{collections::HashMap, error::Error as StdError, sync::Arc};
 
 use axum::{
+    Extension,
     body::{Body, Bytes},
     extract::State,
-    http::{header, StatusCode},
+    http::{StatusCode, header},
     response::IntoResponse,
-    Extension,
 };
 use chrono::{DateTime, Utc};
 use log::{error, warn};
@@ -24,9 +24,8 @@ use super::{
     request, response,
 };
 use crate::models::{
-    access_token, authorization_code, refresh_token,
+    Model, access_token, authorization_code, refresh_token,
     user::{ListOptions, ListQueryCond, QueryCond, SortCond, SortKey, Updates, User},
-    Model,
 };
 
 #[derive(Default)]
@@ -121,7 +120,7 @@ pub async fn post_admin_user(
                     ErrReq::USER_EXIST.0,
                     ErrReq::USER_EXIST.1,
                     None,
-                ))
+                ));
             }
         },
     }
@@ -248,13 +247,13 @@ pub async fn get_admin_user_list(
         Ok((list, cursor)) => match cursor {
             None => match query.format {
                 Some(request::ListFormat::Array) => {
-                    return Ok(Json(user_list_transform(&list, &fields_cond)).into_response())
+                    return Ok(Json(user_list_transform(&list, &fields_cond)).into_response());
                 }
                 _ => {
                     return Ok(Json(response::GetAdminUserList {
                         data: user_list_transform(&list, &fields_cond),
                     })
-                    .into_response())
+                    .into_response());
                 }
             },
             Some(_) => (list, cursor),
@@ -468,7 +467,7 @@ fn get_sort_cond(sort_args: &Option<String>) -> Result<Vec<SortCond>, ErrResp> {
                             return Err(ErrResp::ErrParam(Some(format!(
                                 "invalid sort key {}",
                                 field
-                            ))))
+                            ))));
                         }
                     },
                 };
@@ -481,7 +480,7 @@ fn get_sort_cond(sort_args: &Option<String>) -> Result<Vec<SortCond>, ErrResp> {
                             return Err(ErrResp::ErrParam(Some(format!(
                                 "invalid sort asc {}",
                                 asc
-                            ))))
+                            ))));
                         }
                     },
                 };
@@ -538,7 +537,7 @@ fn get_admin_updates<'a>(
                         return Err(ErrResp::ErrParam(Some(format!(
                             "wrong `verified_at`: {}",
                             e
-                        ))))
+                        ))));
                     }
                     Ok(time) => Some(time.into()),
                 };

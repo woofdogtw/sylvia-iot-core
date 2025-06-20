@@ -201,7 +201,7 @@ pub fn add_bulk(runtime: &Runtime, model: &dyn DeviceModel) -> Result<(), String
             return Err(format!(
                 "model.list() after add_bulk duplicate error: {}",
                 e
-            ))
+            ));
         }
         Ok((items, _)) => {
             let mut i = 0;

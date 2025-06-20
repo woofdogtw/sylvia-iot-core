@@ -3,10 +3,10 @@ use std::{borrow::Cow, str};
 use axum::{
     body::Bytes,
     extract::{Form, FromRequest, Query, Request},
-    http::{header, Method},
+    http::{Method, header},
     response::{IntoResponse, Response},
 };
-use base64::{engine::general_purpose, Engine};
+use base64::{Engine, engine::general_purpose};
 use oxide_auth::code_grant::{
     accesstoken::{Authorization, Request as OxideAccessTokenRequest},
     authorization::Request as OxideAuthorizationRequest,
@@ -337,7 +337,7 @@ fn parse_basic_auth(req: &Request) -> Result<Option<(String, Vec<u8>)>, OAuth2Er
                 return Err(OAuth2Error::new_request(Some(format!(
                     "invalid Basic content: {}",
                     e
-                ))))
+                ))));
             }
             Ok(auth) => auth,
         },
@@ -348,7 +348,7 @@ fn parse_basic_auth(req: &Request) -> Result<Option<(String, Vec<u8>)>, OAuth2Er
         None => {
             return Err(OAuth2Error::new_request(Some(
                 "invalid Basic content".to_string(),
-            )))
+            )));
         }
         Some(user) => user,
     };
@@ -356,7 +356,7 @@ fn parse_basic_auth(req: &Request) -> Result<Option<(String, Vec<u8>)>, OAuth2Er
         None => {
             return Err(OAuth2Error::new_request(Some(
                 "invalid Basic content".to_string(),
-            )))
+            )));
         }
         Some(pass) => pass,
     };
@@ -365,7 +365,7 @@ fn parse_basic_auth(req: &Request) -> Result<Option<(String, Vec<u8>)>, OAuth2Er
             return Err(OAuth2Error::new_request(Some(format!(
                 "invalid Basic content: {}",
                 e
-            ))))
+            ))));
         }
         Ok(user) => user,
     };

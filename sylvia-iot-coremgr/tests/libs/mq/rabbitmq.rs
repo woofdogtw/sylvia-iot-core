@@ -1,7 +1,7 @@
 use std::{collections::HashMap, sync::Arc, time::Duration};
 
 use async_trait::async_trait;
-use base64::{engine::general_purpose, Engine};
+use base64::{Engine, engine::general_purpose};
 use chrono::Utc;
 use laboratory::SpecContext;
 use reqwest::{Client, Method, StatusCode};
@@ -10,12 +10,12 @@ use serde_json;
 use tokio::time;
 
 use general_mq::{
+    AmqpConnection, AmqpConnectionOptions, AmqpQueue, AmqpQueueOptions,
     connection::{GmqConnection, Status as ConnStatus},
     queue::{GmqQueue, Message, MessageHandler, Status as QueueStatus},
-    AmqpConnection, AmqpConnectionOptions, AmqpQueue, AmqpQueueOptions,
 };
 use sylvia_iot_corelib::err::ErrResp;
-use sylvia_iot_coremgr::libs::mq::{rabbitmq, QueueType};
+use sylvia_iot_coremgr::libs::mq::{QueueType, rabbitmq};
 
 use super::STATE;
 use crate::TestState;
@@ -134,7 +134,7 @@ pub fn put_user(context: &mut SpecContext<TestState>) -> Result<(), String> {
                     return Err(format!(
                         "put_user deserialize user {} error: {}, body: {}",
                         user, e, body
-                    ))
+                    ));
                 }
                 Ok(user) => user.password_hash,
             },
@@ -142,7 +142,7 @@ pub fn put_user(context: &mut SpecContext<TestState>) -> Result<(), String> {
                 return Err(format!(
                     "put_user get wrong result status: {}, body: {}",
                     status, body
-                ))
+                ));
             }
         };
         if let Err(e) = rabbitmq::put_user(client, opts, host, user, "changed password").await {
@@ -154,7 +154,7 @@ pub fn put_user(context: &mut SpecContext<TestState>) -> Result<(), String> {
                     return Err(format!(
                         "put_user deserialize user {} error: {}, body: {}",
                         user, e, body
-                    ))
+                    ));
                 }
                 Ok(user) => user.password_hash,
             },
@@ -162,7 +162,7 @@ pub fn put_user(context: &mut SpecContext<TestState>) -> Result<(), String> {
                 return Err(format!(
                     "put_user get wrong result status: {}, body: {}",
                     status, body
-                ))
+                ));
             }
         };
         if first_password.as_str().eq(second_password.as_str()) {
@@ -427,7 +427,7 @@ pub fn put_policies(context: &mut SpecContext<TestState>) -> Result<(), String> 
                     return Err(format!(
                         "get unexpected policies status: {}, body: {}",
                         status, body
-                    ))
+                    ));
                 }
             },
         }

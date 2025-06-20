@@ -1,10 +1,10 @@
 use std::{borrow::Cow, sync::Arc};
 
 use axum::{
-    extract::State,
-    http::{header, StatusCode},
-    response::{IntoResponse, Response},
     Extension,
+    extract::State,
+    http::{StatusCode, header},
+    response::{IntoResponse, Response},
 };
 use chrono::{TimeDelta, Utc};
 use log::{error, warn};
@@ -36,10 +36,10 @@ use super::{
     response::OAuth2Error,
 };
 use crate::models::{
+    Model,
     client::QueryCond as ClientQueryCond,
     login_session::{self, LoginSession, QueryCond as SessionQueryCond},
     user::QueryCond as UserQueryCond,
-    Model,
 };
 
 pub const TMPL_LOGIN: &'static str = "login";
@@ -372,7 +372,7 @@ pub async fn post_token(
             }
             // TODO: handle this
             AccessTokenError::Primitive(_e) => {
-                return StatusCode::SERVICE_UNAVAILABLE.into_response()
+                return StatusCode::SERVICE_UNAVAILABLE.into_response();
             }
         },
         Ok(token) => token,

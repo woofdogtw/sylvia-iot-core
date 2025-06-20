@@ -1,11 +1,11 @@
 use std::error::Error as StdError;
 
 use axum::{
+    Extension,
     body::{Body, Bytes},
     extract::State,
     http::header,
     response::IntoResponse,
-    Extension,
 };
 use chrono::{TimeZone, Utc};
 use csv::WriterBuilder;
@@ -21,7 +21,7 @@ use sylvia_iot_corelib::{
 
 use super::{
     super::{
-        super::{middleware::GetTokenInfoData, State as AppState},
+        super::{State as AppState, middleware::GetTokenInfoData},
         get_unit_cond,
     },
     request, response,
@@ -119,7 +119,7 @@ pub async fn get_list(
         Ok((list, cursor)) => match cursor {
             None => match query.format.as_ref() {
                 Some(request::ListFormat::Array) => {
-                    return Ok(Json(list_transform(&list)).into_response())
+                    return Ok(Json(list_transform(&list)).into_response());
                 }
                 Some(request::ListFormat::Csv) => {
                     let bytes = match list_transform_bytes(&list, true, true, query.format.as_ref())
@@ -146,7 +146,7 @@ pub async fn get_list(
                     return Ok(Json(response::GetList {
                         data: list_transform(&list),
                     })
-                    .into_response())
+                    .into_response());
                 }
             },
             Some(_) => (list, cursor),
@@ -291,7 +291,7 @@ fn get_sort_cond(sort_args: &Option<String>) -> Result<Vec<SortCond>, ErrResp> {
                             return Err(ErrResp::ErrParam(Some(format!(
                                 "invalid sort key {}",
                                 field
-                            ))))
+                            ))));
                         }
                     },
                 };
@@ -304,7 +304,7 @@ fn get_sort_cond(sort_args: &Option<String>) -> Result<Vec<SortCond>, ErrResp> {
                             return Err(ErrResp::ErrParam(Some(format!(
                                 "invalid sort asc {}",
                                 asc
-                            ))))
+                            ))));
                         }
                     },
                 };

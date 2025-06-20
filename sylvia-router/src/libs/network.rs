@@ -384,8 +384,14 @@ pub fn set_lan_conf(lan_id: &str, conf: &LanConf4) -> Result<Option<()>, IoError
         "default-lease-time {};\nmax-lease-time {};\nlog-facility local7;\n\
         subnet {} netmask {} {{\n  range {} {};\n  option routers {};\n  option domain-name-servers {};\n\
         }}\n",
-        conf.lease_time, conf.lease_time, addr_net.network(), addr_net.netmask(),
-        conf.dhcp_start, conf.dhcp_end, addr_net.addr(), addr_net.addr()
+        conf.lease_time,
+        conf.lease_time,
+        addr_net.network(),
+        addr_net.netmask(),
+        conf.dhcp_start,
+        conf.dhcp_end,
+        addr_net.addr(),
+        addr_net.addr()
     );
     fs::write(DHCPD_CONF_PATH, dhcp_conf_str.as_bytes())?;
 

@@ -1,11 +1,12 @@
 use std::error::Error as StdError;
 
 use axum::{
+    Router,
     body::Body,
     extract::{Path, Request, State},
-    http::{header, HeaderValue},
+    http::{HeaderValue, header},
     response::{IntoResponse, Response},
-    routing, Router,
+    routing,
 };
 use bytes::{Bytes, BytesMut};
 use csv::WriterBuilder;
@@ -19,9 +20,9 @@ use sylvia_iot_corelib::err::ErrResp;
 
 use super::{
     super::{AmqpState, MqttState, State as AppState},
-    api_bridge, get_stream_resp, get_unit_inner, list_api_bridge, response, ListResp,
+    ListResp, api_bridge, get_stream_resp, get_unit_inner, list_api_bridge, response,
 };
-use crate::libs::mq::{self, emqx, rabbitmq, QueueType};
+use crate::libs::mq::{self, QueueType, emqx, rabbitmq};
 
 #[derive(Deserialize)]
 struct UnitIdPath {

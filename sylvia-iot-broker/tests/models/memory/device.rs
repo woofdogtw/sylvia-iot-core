@@ -1,14 +1,14 @@
 use std::collections::HashMap;
 
 use chrono::Utc;
-use laboratory::{expect, SpecContext};
+use laboratory::{SpecContext, expect};
 use serde_json::{Map, Value};
 
 use sylvia_iot_broker::models::device::{
     DelCacheQueryCond, Device, GetCacheQueryCond, QueryCond, QueryOneCond,
 };
 
-use super::{TestState, STATE};
+use super::{STATE, TestState};
 
 pub fn after_each_fn(state: &mut HashMap<&'static str, TestState>) -> () {
     let state = state.get_mut(STATE).unwrap();

@@ -7,8 +7,8 @@ use std::{
 use url::Url;
 
 use general_mq::{
-    connection::GmqConnection, AmqpConnection, AmqpConnectionOptions, MqttConnection,
-    MqttConnectionOptions,
+    AmqpConnection, AmqpConnectionOptions, MqttConnection, MqttConnectionOptions,
+    connection::GmqConnection,
 };
 
 pub mod data;

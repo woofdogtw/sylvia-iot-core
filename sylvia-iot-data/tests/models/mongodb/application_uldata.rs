@@ -2,16 +2,16 @@ use std::{collections::HashMap, error::Error as StdError};
 
 use async_trait::async_trait;
 use futures::TryStreamExt;
-use laboratory::{expect, SpecContext};
+use laboratory::{SpecContext, expect};
 use mongodb::{
-    bson::{self, doc, DateTime, Document},
     Database,
+    bson::{self, DateTime, Document, doc},
 };
 use serde::Deserialize;
 
-use sylvia_iot_data::models::{application_uldata::ApplicationUlData, Model};
+use sylvia_iot_data::models::{Model, application_uldata::ApplicationUlData};
 
-use super::{super::common::application_uldata as common_test, TestState, STATE};
+use super::{super::common::application_uldata as common_test, STATE, TestState};
 
 struct Db<'a> {
     conn: &'a Database,

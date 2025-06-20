@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use chrono::Utc;
-use laboratory::{describe, Suite};
+use laboratory::{Suite, describe};
 use reqwest::{Client, Method, StatusCode};
 use serde::Deserialize;
 
@@ -10,13 +10,13 @@ use sylvia_iot_broker::models::Model as BrokerModel;
 
 use super::{
     libs::{
-        create_application, create_client, create_device, create_device_route,
+        TOKEN_MANAGER, create_application, create_client, create_device, create_device_route,
         create_dldata_buffer, create_network, create_network_route, create_unit, create_user,
-        create_users_tokens, new_state, TOKEN_MANAGER,
+        create_users_tokens, new_state,
     },
     stop_auth_broker_svc,
 };
-use crate::{libs::mq::emqx, TestState, TEST_BROKER_BASE};
+use crate::{TEST_BROKER_BASE, TestState, libs::mq::emqx};
 
 mod application;
 mod auth;

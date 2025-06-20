@@ -6,30 +6,31 @@ use std::{
 
 use async_trait::async_trait;
 use axum::{
-    http::{header, HeaderValue, StatusCode},
+    Router,
+    http::{HeaderValue, StatusCode, header},
     response::IntoResponse,
-    routing, Router,
+    routing,
 };
 use axum_test::TestServer;
-use laboratory::{describe, expect, SpecContext, Suite};
+use laboratory::{SpecContext, Suite, describe, expect};
 use serde::Deserialize;
 use serde_json::{Map, Value};
 
 use general_mq::{
-    connection::GmqConnection,
-    queue::{GmqQueue, Message, MessageHandler},
     AmqpConnection, AmqpConnectionOptions, AmqpQueueOptions, MqttConnection, MqttConnectionOptions,
     MqttQueueOptions, Queue, QueueOptions,
+    connection::GmqConnection,
+    queue::{GmqQueue, Message, MessageHandler},
 };
 use sylvia_iot_coremgr::{libs::mq::Connection, routes::middleware::LogService};
 use tokio::time;
 
 use super::{
     clear_state,
-    libs::{create_users_tokens, new_state, TOKEN_MANAGER},
+    libs::{TOKEN_MANAGER, create_users_tokens, new_state},
     stop_auth_broker_svc,
 };
-use crate::{libs::mq::emqx, TestState, WAIT_COUNT, WAIT_TICK};
+use crate::{TestState, WAIT_COUNT, WAIT_TICK, libs::mq::emqx};
 
 #[derive(Deserialize)]
 #[serde(tag = "kind")]

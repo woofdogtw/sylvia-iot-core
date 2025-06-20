@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use laboratory::{describe, Suite};
+use laboratory::{Suite, describe};
 use reqwest::{self, Method, StatusCode};
 use serde::Deserialize;
 use tokio::runtime::Runtime;
@@ -10,10 +10,9 @@ use sylvia_iot_corelib::constants::MqEngine;
 use sylvia_iot_data::{
     libs::mq::Connection,
     models::{
-        application_dldata::QueryCond as AppDlDataCond,
+        Model, SqliteModel, SqliteOptions, application_dldata::QueryCond as AppDlDataCond,
         application_uldata::QueryCond as AppUlDataCond, coremgr_opdata::QueryCond as CmOpDataCond,
         network_dldata::QueryCond as NetDlDataCond, network_uldata::QueryCond as NetUlDataCond,
-        Model, SqliteModel, SqliteOptions,
     },
 };
 

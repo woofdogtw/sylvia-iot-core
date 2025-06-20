@@ -6,14 +6,14 @@ use std::{
 };
 
 use async_trait::async_trait;
-use laboratory::{expect, SpecContext};
+use laboratory::{SpecContext, expect};
 use tokio::time;
 
 use general_mq::queue::{EventHandler, GmqQueue, Message, MessageHandler, Status};
-use sylvia_iot_broker::libs::mq::{control, Connection};
+use sylvia_iot_broker::libs::mq::{Connection, control};
 
 use super::STATE;
-use crate::{libs::libs::conn_host_uri, TestState, WAIT_COUNT, WAIT_TICK};
+use crate::{TestState, WAIT_COUNT, WAIT_TICK, libs::libs::conn_host_uri};
 
 struct TestHandler {
     // Use Mutex to implement interior mutability.

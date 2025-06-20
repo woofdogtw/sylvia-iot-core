@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use laboratory::{describe, Suite};
+use laboratory::{Suite, describe};
 use tokio::runtime::Runtime;
 
 use sylvia_iot_data::models::{SqliteModel, SqliteOptions};

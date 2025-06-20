@@ -2,7 +2,7 @@ use std::error::Error as StdError;
 
 use chrono::DateTime;
 use clap::{ArgMatches, Command};
-use reqwest::{header, Response};
+use reqwest::{Response, header};
 use serde::{Deserialize, Serialize};
 use serde_json::{Map, Value};
 

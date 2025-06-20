@@ -3,15 +3,15 @@ use std::{error::Error as StdError, sync::Arc};
 use async_trait::async_trait;
 use futures::TryStreamExt;
 use mongodb::{
-    action::Find,
-    bson::{self, doc, Bson, DateTime, Document},
     Cursor as MongoDbCursor, Database,
+    action::Find,
+    bson::{self, Bson, DateTime, Document, doc},
 };
 use serde::{Deserialize, Serialize};
 
 use super::super::coremgr_opdata::{
-    CoremgrOpData, CoremgrOpDataModel, Cursor, ListOptions, ListQueryCond, QueryCond, SortKey,
-    EXPIRES,
+    CoremgrOpData, CoremgrOpDataModel, Cursor, EXPIRES, ListOptions, ListQueryCond, QueryCond,
+    SortKey,
 };
 
 /// Model instance.

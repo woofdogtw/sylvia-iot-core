@@ -15,15 +15,15 @@ use tokio::task;
 use url::Url;
 
 use general_mq::{
+    Queue,
     queue::{
         EventHandler as QueueEventHandler, GmqQueue, Message, MessageHandler, Status as QueueStatus,
     },
-    Queue,
 };
 
 use super::{
-    get_connection, new_data_queues, remove_connection, Connection, DataMqStatus, MgrStatus,
-    Options,
+    Connection, DataMqStatus, MgrStatus, Options, get_connection, new_data_queues,
+    remove_connection,
 };
 
 /// Uplink data from broker to application.
@@ -160,8 +160,7 @@ struct DlDataInner<'a> {
 
 const QUEUE_PREFIX: &'static str = "broker.application";
 const ERR_PARAM_CORR_ID: &'static str = "the `correlation_id` must be a non-empty string";
-const ERR_PARAM_DEV: &'static str =
-    "one of `device_id` or [`network_code`, `network_addr`] pair must be provided with non-empty string";
+const ERR_PARAM_DEV: &'static str = "one of `device_id` or [`network_code`, `network_addr`] pair must be provided with non-empty string";
 
 impl ApplicationMgr {
     /// To create a manager instance.

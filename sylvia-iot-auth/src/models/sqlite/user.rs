@@ -4,7 +4,7 @@ use async_trait::async_trait;
 use chrono::{TimeZone, Utc};
 use futures::TryStreamExt;
 use serde_json;
-use sql_builder::{quote, SqlBuilder};
+use sql_builder::{SqlBuilder, quote};
 use sqlx::SqlitePool;
 
 use super::{

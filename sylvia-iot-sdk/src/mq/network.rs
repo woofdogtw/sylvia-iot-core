@@ -15,17 +15,17 @@ use tokio::task;
 use url::Url;
 
 use general_mq::{
+    Queue,
     queue::{
         EventHandler as QueueEventHandler, GmqQueue, Message, MessageHandler, Status as QueueStatus,
     },
-    Queue,
 };
 
 use crate::util::strings;
 
 use super::{
-    get_connection, new_data_queues, remove_connection, Connection, DataMqStatus, MgrStatus,
-    Options,
+    Connection, DataMqStatus, MgrStatus, Options, get_connection, new_data_queues,
+    remove_connection,
 };
 
 /// Uplink data from network to broker.

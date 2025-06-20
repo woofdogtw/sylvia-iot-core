@@ -144,7 +144,7 @@ pub fn add_bulk(runtime: &Runtime, model: &dyn DeviceRouteModel) -> Result<(), S
             return Err(format!(
                 "model.list() after add_bulk duplicate error: {}",
                 e
-            ))
+            ));
         }
         Ok((items, _)) => {
             let mut i = 0;
@@ -622,7 +622,7 @@ pub fn del_by_network_addrs(runtime: &Runtime, model: &dyn DeviceRouteModel) -> 
             return Err(format!(
                 "model.count() after delete wrong unit error: {}",
                 e
-            ))
+            ));
         }
         Ok(count) => {
             if count as usize != 100 {
@@ -1705,7 +1705,7 @@ pub fn list_sort(runtime: &Runtime, model: &dyn DeviceRouteModel) -> Result<(), 
             return Err(format!(
                 "list app-asc-code-asc-addr-asc result error: {}",
                 e
-            ))
+            ));
         }
         Ok((list, _)) => list,
     };
@@ -1736,7 +1736,7 @@ pub fn list_sort(runtime: &Runtime, model: &dyn DeviceRouteModel) -> Result<(), 
             return Err(format!(
                 "list app-asc-code-asc-addr-asc result error: {}",
                 e
-            ))
+            ));
         }
         Ok((list, _)) => list,
     };

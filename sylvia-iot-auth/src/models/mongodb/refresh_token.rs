@@ -4,14 +4,14 @@ use async_trait::async_trait;
 use chrono::TimeDelta;
 use futures::TryStreamExt;
 use mongodb::{
-    bson::{doc, DateTime, Document},
     Database,
+    bson::{DateTime, Document, doc},
 };
 use serde::{Deserialize, Serialize};
 
 use sylvia_iot_corelib::err::E_UNKNOWN;
 
-use super::super::refresh_token::{QueryCond, RefreshToken, RefreshTokenModel, EXPIRES};
+use super::super::refresh_token::{EXPIRES, QueryCond, RefreshToken, RefreshTokenModel};
 
 /// Model instance.
 pub struct Model {

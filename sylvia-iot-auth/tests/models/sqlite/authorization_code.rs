@@ -1,12 +1,12 @@
 use std::collections::HashMap;
 
 use chrono::{SubsecRound, Utc};
-use laboratory::{expect, SpecContext};
-use sql_builder::{quote, SqlBuilder};
+use laboratory::{SpecContext, expect};
+use sql_builder::{SqlBuilder, quote};
 
 use sylvia_iot_auth::models::Model;
 
-use super::{super::common::authorization_code as common_test, TestState, STATE};
+use super::{super::common::authorization_code as common_test, STATE, TestState};
 
 const TABLE_NAME: &'static str = "authorization_code";
 const FIELDS: &'static [&'static str] = &[

@@ -1,15 +1,15 @@
 [package]
 name = "general-mq"
-version = "0.2.2"
+version = "0.3.0"
 authors = ["Chien-Hong Chan"]
 categories = ["network-programming"]
 description = "General purposed interfaces for message queues."
-edition = "2021"
+edition = "2024"
 keywords = ["amqp", "mq", "mqtt"]
 license = "MIT"
 readme = "README.md"
 repository = "https://github.com/woofdogtw/sylvia-iot-core.git"
-rust-version = "1.81"
+rust-version = "1.85.1"
 
 [dependencies]
 amqprs = { version = "2.1.2", features = ["tls", "urispec"] }

@@ -5,9 +5,9 @@ use std::{
 };
 
 use async_trait::async_trait;
-use axum::{http::StatusCode, routing, Router};
+use axum::{Router, http::StatusCode, routing};
 use axum_test::TestServer;
-use laboratory::{describe, expect, SpecContext, Suite};
+use laboratory::{SpecContext, Suite, describe, expect};
 use reqwest;
 use url::Url;
 
@@ -19,7 +19,7 @@ use sylvia_iot_auth::libs::config::{self as sylvia_iot_auth_config};
 use sylvia_iot_broker::{
     libs::{
         config::{self, Config},
-        mq::{control, data, Connection},
+        mq::{Connection, control, data},
     },
     models::{self, ConnOptions, Model, MongoDbModel, MongoDbOptions, SqliteModel, SqliteOptions},
     routes,

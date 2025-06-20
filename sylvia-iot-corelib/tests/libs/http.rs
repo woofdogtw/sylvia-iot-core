@@ -1,10 +1,11 @@
 use axum::{
+    Router,
     extract::Request,
-    http::{header, StatusCode},
-    routing, Router,
+    http::{StatusCode, header},
+    routing,
 };
 use axum_test::TestServer;
-use laboratory::{expect, SpecContext};
+use laboratory::{SpecContext, expect};
 use serde::{Deserialize, Serialize};
 use tokio::runtime::Runtime;
 

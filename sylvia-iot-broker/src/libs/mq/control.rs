@@ -6,11 +6,11 @@ use std::{
 use url::Url;
 
 use general_mq::{
-    queue::{EventHandler, GmqQueue, MessageHandler},
     AmqpQueueOptions, MqttQueueOptions, Queue, QueueOptions,
+    queue::{EventHandler, GmqQueue, MessageHandler},
 };
 
-use super::{get_connection, Connection};
+use super::{Connection, get_connection};
 
 const QUEUE_PREFIX: &'static str = "broker.ctrl";
 

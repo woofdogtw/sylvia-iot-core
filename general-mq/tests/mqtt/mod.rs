@@ -1,6 +1,6 @@
-use laboratory::{describe, Suite};
+use laboratory::{Suite, describe};
 
-use crate::{clear_state, new_state, TestState, STATE};
+use crate::{STATE, TestState, clear_state, new_state};
 
 mod connection;
 mod queue;

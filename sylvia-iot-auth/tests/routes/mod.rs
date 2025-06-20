@@ -1,11 +1,12 @@
 use std::{collections::HashMap, env, fs};
 
 use axum::{
-    http::{header, StatusCode},
-    routing, Router,
+    Router,
+    http::{StatusCode, header},
+    routing,
 };
 use axum_test::{TestResponse, TestServer};
-use laboratory::{describe, expect, SpecContext, Suite};
+use laboratory::{SpecContext, Suite, describe, expect};
 use url::Url;
 
 use sylvia_iot_auth::{

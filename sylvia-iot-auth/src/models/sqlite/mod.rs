@@ -5,7 +5,7 @@
 //! The cursor is the **simulated** implementation. It only works when there are no add/delete
 //! operations during a list operation.
 
-use sql_builder::{esc, SqlBuilder};
+use sql_builder::{SqlBuilder, esc};
 
 pub mod access_token;
 pub mod authorization_code;

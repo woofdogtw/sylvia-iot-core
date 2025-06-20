@@ -1,11 +1,11 @@
 use std::collections::HashMap;
 
 use chrono::Utc;
-use laboratory::{expect, SpecContext};
+use laboratory::{SpecContext, expect};
 
 use sylvia_iot_broker::models::network_route::{NetworkRoute, QueryCond};
 
-use super::{TestState, STATE};
+use super::{STATE, TestState};
 
 pub fn after_each_fn(state: &mut HashMap<&'static str, TestState>) -> () {
     let state = state.get_mut(STATE).unwrap();

@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use laboratory::{describe, Suite};
+use laboratory::{Suite, describe};
 
 use super::{libs::new_state, remove_sqlite};
 use crate::TestState;

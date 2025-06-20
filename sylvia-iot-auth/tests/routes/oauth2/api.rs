@@ -1,12 +1,13 @@
 use std::collections::HashMap;
 
 use axum::{
-    http::{header, HeaderValue, Method, StatusCode},
+    Router,
+    http::{HeaderValue, Method, StatusCode, header},
     response::IntoResponse,
-    routing, Router,
+    routing,
 };
 use axum_test::TestServer;
-use laboratory::{expect, SpecContext};
+use laboratory::{SpecContext, expect};
 use tokio::runtime::Runtime;
 
 use sylvia_iot_auth::routes::{
@@ -16,9 +17,8 @@ use sylvia_iot_auth::routes::{
 
 use super::{
     super::read_location,
-    request,
+    STATE, TestState, request,
     response::{self, OAuth2Error},
-    TestState, STATE,
 };
 
 const ACCESS_DENIED: &'static str = "access_denied";

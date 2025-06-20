@@ -1,11 +1,11 @@
-use laboratory::{describe, expect, SpecContext, Suite};
+use laboratory::{SpecContext, Suite, describe, expect};
 use reqwest::Client;
 use tokio::runtime::Runtime;
 
 use sylvia_iot_coremgr::libs::{
     config::Rumqttd as RumqttdOpts,
     mq::{
-        self, emqx::ManagementOpts as EmqxOpts, rabbitmq::ManagementOpts as RabbitMqOpts, QueueType,
+        self, QueueType, emqx::ManagementOpts as EmqxOpts, rabbitmq::ManagementOpts as RabbitMqOpts,
     },
 };
 

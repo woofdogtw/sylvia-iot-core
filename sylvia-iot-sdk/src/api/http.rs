@@ -39,7 +39,7 @@ use std::{
 };
 
 use bytes::Bytes;
-use reqwest::{header, Client as ReqwestClient, Method, StatusCode};
+use reqwest::{Client as ReqwestClient, Method, StatusCode, header};
 use serde::Deserialize;
 
 /// The HTTP client to request Sylvia-IoT APIs. With this client, you do not need to handle 401

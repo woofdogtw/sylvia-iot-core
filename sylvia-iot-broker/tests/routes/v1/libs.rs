@@ -1,6 +1,6 @@
 use axum::{
-    http::{header, HeaderValue, StatusCode},
     Router,
+    http::{HeaderValue, StatusCode, header},
 };
 use axum_test::TestServer;
 use mongodb::bson::Document;

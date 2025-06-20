@@ -1,10 +1,10 @@
 use std::error::Error as StdError;
 
 use clap::{ArgMatches, Command};
-use reqwest::{header, Client, Method, StatusCode};
+use reqwest::{Client, Method, StatusCode, header};
 use serde::{Deserialize, Serialize};
 
-use sylvia_iot_coremgr_cli::libs::cli::{auth, config, Config as CoremgrCliConfig};
+use sylvia_iot_coremgr_cli::libs::cli::{Config as CoremgrCliConfig, auth, config};
 use sylvia_iot_sdk::util::err::ErrResp;
 
 use super::{super::config::Config, API_RETRY};

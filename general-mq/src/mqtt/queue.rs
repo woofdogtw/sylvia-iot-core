@@ -13,11 +13,11 @@ use tokio::{
 
 use super::connection::{MqttConnection, PacketHandler};
 use crate::{
+    Error,
     connection::{GmqConnection, Status as ConnStatus},
     queue::{
-        name_validate, EventHandler, GmqQueue, Message, MessageHandler, Status, QUEUE_NAME_PATTERN,
+        EventHandler, GmqQueue, Message, MessageHandler, QUEUE_NAME_PATTERN, Status, name_validate,
     },
-    Error,
 };
 
 /// Manages a MQTT queue.

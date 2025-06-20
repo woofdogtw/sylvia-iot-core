@@ -1,10 +1,10 @@
 use std::collections::HashMap;
 
-use axum::{http::Method, routing, Router};
+use axum::{Router, http::Method, routing};
 
 use super::super::{
-    middleware::{AuthService, RoleScopeType},
     State,
+    middleware::{AuthService, RoleScopeType},
 };
 
 mod api;

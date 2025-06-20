@@ -15,18 +15,18 @@ use tokio::time;
 use url::Url;
 
 use general_mq::{
-    connection::GmqConnection,
-    queue::{EventHandler, GmqQueue, Message, MessageHandler, Status},
     AmqpConnection, AmqpConnectionOptions, AmqpQueueOptions, MqttConnection, MqttConnectionOptions,
     MqttQueueOptions, Queue, QueueOptions,
+    connection::GmqConnection,
+    queue::{EventHandler, GmqQueue, Message, MessageHandler, Status},
 };
 use sylvia_iot_broker::libs::{
     config,
-    mq::{data, Connection, MgrStatus},
+    mq::{Connection, MgrStatus, data},
 };
 use sylvia_iot_corelib::strings::time_str;
 
-use super::{application, device, device_route, libs, network, unit, STATE, TOKEN_MANAGER};
+use super::{STATE, TOKEN_MANAGER, application, device, device_route, libs, network, unit};
 use crate::{TestState, WAIT_COUNT, WAIT_TICK};
 
 /// Uplink data from network to broker.

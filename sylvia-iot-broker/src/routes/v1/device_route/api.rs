@@ -9,11 +9,11 @@ use std::{
 
 use async_trait::async_trait;
 use axum::{
+    Extension,
     body::{Body, Bytes},
     extract::State,
-    http::{header, StatusCode},
+    http::{StatusCode, header},
     response::IntoResponse,
-    Extension,
 };
 use chrono::Utc;
 use log::{debug, error, info, warn};
@@ -23,8 +23,8 @@ use tokio::time;
 use url::Url;
 
 use general_mq::{
-    queue::{EventHandler as QueueEventHandler, GmqQueue, Message, MessageHandler, Status},
     Queue,
+    queue::{EventHandler as QueueEventHandler, GmqQueue, Message, MessageHandler, Status},
 };
 use sylvia_iot_corelib::{
     constants::ContentType,
@@ -36,7 +36,7 @@ use sylvia_iot_corelib::{
 
 use super::{
     super::{
-        super::{middleware::GetTokenInfoData, ErrReq, State as AppState},
+        super::{ErrReq, State as AppState, middleware::GetTokenInfoData},
         lib::{check_application, check_device, check_network, check_unit},
     },
     request, response,
@@ -47,9 +47,9 @@ use crate::{
         mq::{self, Connection},
     },
     models::{
+        Cache,
         device::{ListOptions as DeviceListOptions, ListQueryCond as DeviceListQueryCond},
         device_route::{DeviceRoute, ListOptions, ListQueryCond, QueryCond, SortCond, SortKey},
-        Cache,
     },
 };
 
@@ -164,7 +164,7 @@ pub fn new_ctrl_sender(
             return Err(Box::new(IoError::new(
                 ErrorKind::InvalidInput,
                 "empty control url",
-            )))
+            )));
         }
         Some(url) => match Url::parse(url.as_str()) {
             Err(e) => return Err(Box::new(e)),
@@ -195,7 +195,7 @@ pub fn new_ctrl_receiver(state: &AppState, config: &CfgCtrl) -> Result<Queue, Bo
             return Err(Box::new(IoError::new(
                 ErrorKind::InvalidInput,
                 "empty control url",
-            )))
+            )));
         }
         Some(url) => match Url::parse(url.as_str()) {
             Err(e) => return Err(Box::new(e)),
@@ -247,7 +247,7 @@ pub async fn post_device_route(
                 ErrReq::DEVICE_NOT_EXIST.0,
                 ErrReq::DEVICE_NOT_EXIST.1,
                 None,
-            ))
+            ));
         }
         Some(device) => device,
     };
@@ -258,7 +258,7 @@ pub async fn post_device_route(
                     ErrReq::APPLICATION_NOT_EXIST.0,
                     ErrReq::APPLICATION_NOT_EXIST.1,
                     None,
-                ))
+                ));
             }
             Some(application) => application,
         };
@@ -293,7 +293,7 @@ pub async fn post_device_route(
                     ErrReq::ROUTE_EXIST.0,
                     ErrReq::ROUTE_EXIST.1,
                     None,
-                ))
+                ));
             }
         },
     }
@@ -382,7 +382,7 @@ pub async fn post_device_route_bulk(
                     ErrReq::APPLICATION_NOT_EXIST.0,
                     ErrReq::APPLICATION_NOT_EXIST.1,
                     None,
-                ))
+                ));
             }
             Some(application) => application,
         };
@@ -628,7 +628,7 @@ pub async fn post_device_route_range(
                     ErrReq::APPLICATION_NOT_EXIST.0,
                     ErrReq::APPLICATION_NOT_EXIST.1,
                     None,
-                ))
+                ));
             }
             Some(application) => application,
         };
@@ -872,7 +872,7 @@ pub async fn get_device_route_count(
                             ErrReq::UNIT_NOT_EXIST.0,
                             ErrReq::UNIT_NOT_EXIST.1,
                             None,
-                        ))
+                        ));
                     }
                     Some(_) => Some(unit_id.as_str()),
                 }
@@ -947,7 +947,7 @@ pub async fn get_device_route_list(
                             ErrReq::UNIT_NOT_EXIST.0,
                             ErrReq::UNIT_NOT_EXIST.1,
                             None,
-                        ))
+                        ));
                     }
                     Some(_) => Some(unit_id.as_str()),
                 }
@@ -1002,13 +1002,13 @@ pub async fn get_device_route_list(
         Ok((list, cursor)) => match cursor {
             None => match query.format {
                 Some(request::ListFormat::Array) => {
-                    return Ok(Json(route_list_transform(&list)).into_response())
+                    return Ok(Json(route_list_transform(&list)).into_response());
                 }
                 _ => {
                     return Ok(Json(response::GetDeviceRouteList {
                         data: route_list_transform(&list),
                     })
-                    .into_response())
+                    .into_response());
                 }
             },
             Some(_) => (list, cursor),
@@ -1158,7 +1158,7 @@ fn get_sort_cond(sort_args: &Option<String>) -> Result<Vec<SortCond>, ErrResp> {
                             return Err(ErrResp::ErrParam(Some(format!(
                                 "invalid sort key {}",
                                 field
-                            ))))
+                            ))));
                         }
                     },
                 };
@@ -1171,7 +1171,7 @@ fn get_sort_cond(sort_args: &Option<String>) -> Result<Vec<SortCond>, ErrResp> {
                             return Err(ErrResp::ErrParam(Some(format!(
                                 "invalid sort asc {}",
                                 asc
-                            ))))
+                            ))));
                         }
                     },
                 };

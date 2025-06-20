@@ -1,6 +1,6 @@
-use axum::{routing, Router};
+use axum::{Router, routing};
 
-use super::super::{middleware::AuthService, State};
+use super::super::{State, middleware::AuthService};
 
 mod api;
 mod request;

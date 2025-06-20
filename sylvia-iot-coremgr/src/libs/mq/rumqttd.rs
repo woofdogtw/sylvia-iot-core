@@ -11,7 +11,7 @@ use rumqttd::{
 use sylvia_iot_corelib::server_config::Config as SylviaServerConfig;
 
 use super::super::config::{
-    Rumqttd, DEF_RUMQTTD_CONSOLE_PORT, DEF_RUMQTTD_MQTTS_PORT, DEF_RUMQTTD_MQTT_PORT,
+    DEF_RUMQTTD_CONSOLE_PORT, DEF_RUMQTTD_MQTT_PORT, DEF_RUMQTTD_MQTTS_PORT, Rumqttd,
 };
 
 /// To start a rumqttd broker.
@@ -107,9 +107,11 @@ pub fn start_rumqttd(
         let _ = broker.start();
     });
     let _ = link_tx.subscribe("#");
-    let rx_handle = thread::spawn(move || loop {
-        let _ = link_rx.id(); // XXX: add this line to prevent not ACK notifications.
-        let _ = link_rx.recv().unwrap();
+    let rx_handle = thread::spawn(move || {
+        loop {
+            let _ = link_rx.id(); // XXX: add this line to prevent not ACK notifications.
+            let _ = link_rx.recv().unwrap();
+        }
     });
 
     (router_handle, rx_handle)

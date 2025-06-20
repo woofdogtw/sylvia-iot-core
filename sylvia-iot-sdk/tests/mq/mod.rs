@@ -4,16 +4,16 @@ use std::{
     time::Duration,
 };
 
-use laboratory::{describe, Suite};
+use laboratory::{Suite, describe};
 use reqwest::{Method, StatusCode};
 use serde::Deserialize;
 use tokio::{runtime::Runtime, time};
 use url::Url;
 
 use general_mq::{
+    AmqpConnection, AmqpConnectionOptions, MqttConnection, MqttConnectionOptions,
     connection::{GmqConnection, Status},
     queue::GmqQueue,
-    AmqpConnection, AmqpConnectionOptions, MqttConnection, MqttConnectionOptions,
 };
 use sylvia_iot_sdk::mq::Connection;
 

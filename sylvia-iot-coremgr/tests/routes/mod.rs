@@ -3,9 +3,9 @@ use std::{
     sync::{Arc, Mutex},
 };
 
-use axum::{http::StatusCode, routing, Router};
+use axum::{Router, http::StatusCode, routing};
 use axum_test::TestServer;
-use laboratory::{describe, expect, SpecContext, Suite};
+use laboratory::{SpecContext, Suite, describe, expect};
 use reqwest;
 
 use general_mq::queue::GmqQueue;
@@ -19,7 +19,7 @@ use sylvia_iot_coremgr::{
     routes::{self, AmqpState, MqttState},
 };
 
-use crate::{libs::mq::emqx, TestState};
+use crate::{TestState, libs::mq::emqx};
 
 mod libs;
 pub mod middleware;

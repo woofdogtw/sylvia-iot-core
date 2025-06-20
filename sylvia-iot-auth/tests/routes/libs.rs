@@ -7,7 +7,7 @@ use tokio::runtime::Runtime;
 use sylvia_iot_auth::{
     libs::config::{Config, Db as DbConfig, MongoDb as MongoDbConfig, Sqlite as SqliteConfig},
     models::{
-        client::Client, user::User, MongoDbModel, MongoDbOptions, SqliteModel, SqliteOptions,
+        MongoDbModel, MongoDbOptions, SqliteModel, SqliteOptions, client::Client, user::User,
     },
     routes,
 };

@@ -1,4 +1,4 @@
-use laboratory::{describe, LabResult};
+use laboratory::{LabResult, describe};
 use redis::aio::MultiplexedConnection as RedisConn;
 use tokio::{runtime::Runtime, task};
 

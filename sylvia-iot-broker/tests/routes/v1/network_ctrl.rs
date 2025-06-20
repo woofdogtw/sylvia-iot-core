@@ -7,23 +7,23 @@ use std::{
 
 use async_trait::async_trait;
 use chrono::{DateTime, SubsecRound, Utc};
-use laboratory::{expect, SpecContext};
+use laboratory::{SpecContext, expect};
 use serde::Deserialize;
 
 use general_mq::{
-    connection::GmqConnection,
-    queue::{EventHandler, GmqQueue, Message, MessageHandler, Status},
     AmqpConnection, AmqpConnectionOptions, AmqpQueueOptions, MqttConnection, MqttConnectionOptions,
     MqttQueueOptions, Queue, QueueOptions,
+    connection::GmqConnection,
+    queue::{EventHandler, GmqQueue, Message, MessageHandler, Status},
 };
 use sylvia_iot_broker::{
     libs::mq::MgrStatus,
-    models::{device::QueryCond, device_route::QueryCond as RouteQueryCond, Model},
+    models::{Model, device::QueryCond, device_route::QueryCond as RouteQueryCond},
 };
 use tokio::time;
 
-use super::{device, libs, network, unit, STATE, TOKEN_MANAGER};
-use crate::{TestState, TEST_AMQP_HOST_URI, TEST_MQTT_HOST_URI, WAIT_COUNT, WAIT_TICK};
+use super::{STATE, TOKEN_MANAGER, device, libs, network, unit};
+use crate::{TEST_AMQP_HOST_URI, TEST_MQTT_HOST_URI, TestState, WAIT_COUNT, WAIT_TICK};
 
 #[derive(Clone, Deserialize)]
 #[serde(tag = "operation")]

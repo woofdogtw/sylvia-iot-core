@@ -1,7 +1,7 @@
 use std::{collections::HashMap, env, ffi::OsStr};
 
 use clap::Command;
-use laboratory::{expect, SpecContext};
+use laboratory::{SpecContext, expect};
 
 use sylvia_iot_auth::libs::config::{self, Config};
 use sylvia_iot_corelib::constants::DbEngine;
@@ -99,13 +99,13 @@ pub fn read_args(_context: &mut SpecContext<TestState>) -> Result<(), String> {
     let args = config::reg_args(Command::new("test")).get_matches_from(vec!["test"]);
 
     // Modified default by environment variables.
-    env::set_var(&OsStr::new("AUTH_DB_ENGINE"), "mongodb");
-    env::set_var(&OsStr::new("AUTH_DB_MONGODB_URL"), "url2");
-    env::set_var(&OsStr::new("AUTH_DB_MONGODB_DATABASE"), "db2");
-    env::set_var(&OsStr::new("AUTH_DB_MONGODB_POOLSIZE"), "12");
-    env::set_var(&OsStr::new("AUTH_DB_SQLITE_PATH"), "path2");
-    env::set_var(&OsStr::new("AUTH_API_SCOPES"), "{\"key21\":[\"value21\"]}");
-    env::set_var(&OsStr::new("AUTH_TEMPLATES"), "{\"key22\":\"value22\"}");
+    set_env_var("AUTH_DB_ENGINE", "mongodb");
+    set_env_var("AUTH_DB_MONGODB_URL", "url2");
+    set_env_var("AUTH_DB_MONGODB_DATABASE", "db2");
+    set_env_var("AUTH_DB_MONGODB_POOLSIZE", "12");
+    set_env_var("AUTH_DB_SQLITE_PATH", "path2");
+    set_env_var("AUTH_API_SCOPES", "{\"key21\":[\"value21\"]}");
+    set_env_var("AUTH_TEMPLATES", "{\"key22\":\"value22\"}");
     let conf = config::read_args(&args);
     expect(conf.db.is_some()).to_equal(true)?;
     expect(conf.db.as_ref().unwrap().engine.as_ref().unwrap().as_str())
@@ -125,9 +125,9 @@ pub fn read_args(_context: &mut SpecContext<TestState>) -> Result<(), String> {
     map.insert("key22".to_string(), "value22".to_string());
     expect(conf.templates.as_ref()).to_equal(Some(&map))?;
 
-    env::set_var(&OsStr::new("AUTH_DB_ENGINE"), "sqlite");
-    env::set_var(&OsStr::new("AUTH_API_SCOPES"), "");
-    env::set_var(&OsStr::new("AUTH_TEMPLATES"), "");
+    set_env_var("AUTH_DB_ENGINE", "sqlite");
+    set_env_var("AUTH_API_SCOPES", "");
+    set_env_var("AUTH_TEMPLATES", "");
     let conf = config::read_args(&args);
     expect(conf.db.is_some()).to_equal(true)?;
     expect(conf.db.as_ref().unwrap().engine.as_ref().unwrap().as_str())
@@ -136,10 +136,10 @@ pub fn read_args(_context: &mut SpecContext<TestState>) -> Result<(), String> {
     expect(conf.templates.as_ref()).to_equal(Some(&HashMap::new()))?;
 
     // Test wrong environment variables.
-    env::set_var(&OsStr::new("AUTH_DB_ENGINE"), "test2");
-    env::set_var(&OsStr::new("AUTH_DB_MONGODB_POOLSIZE"), "12_000");
-    env::set_var(&OsStr::new("AUTH_API_SCOPES"), "}");
-    env::set_var(&OsStr::new("AUTH_TEMPLATES"), "{");
+    set_env_var("AUTH_DB_ENGINE", "test2");
+    set_env_var("AUTH_DB_MONGODB_POOLSIZE", "12_000");
+    set_env_var("AUTH_API_SCOPES", "}");
+    set_env_var("AUTH_TEMPLATES", "{");
     let args = config::reg_args(Command::new("test")).get_matches_from(vec!["test"]);
     let conf = config::read_args(&args);
     expect(conf.db.is_some()).to_equal(true)?;
@@ -170,13 +170,13 @@ pub fn read_args(_context: &mut SpecContext<TestState>) -> Result<(), String> {
         "--auth.templates",
         "{\"key32\":\"value32\"}",
     ];
-    env::set_var(&OsStr::new("AUTH_DB_ENGINE"), "sqlite");
-    env::set_var(&OsStr::new("AUTH_DB_MONGODB_URL"), "url4");
-    env::set_var(&OsStr::new("AUTH_DB_MONGODB_DATABASE"), "db4");
-    env::set_var(&OsStr::new("AUTH_DB_MONGODB_POOLSIZE"), "14");
-    env::set_var(&OsStr::new("AUTH_DB_SQLITE_PATH"), "path4");
-    env::set_var(&OsStr::new("AUTH_API_SCOPES"), "{\"key41\":[\"value41\"]}");
-    env::set_var(&OsStr::new("AUTH_TEMPLATES"), "{\"key42\":\"value42\"}");
+    set_env_var("AUTH_DB_ENGINE", "sqlite");
+    set_env_var("AUTH_DB_MONGODB_URL", "url4");
+    set_env_var("AUTH_DB_MONGODB_DATABASE", "db4");
+    set_env_var("AUTH_DB_MONGODB_POOLSIZE", "14");
+    set_env_var("AUTH_DB_SQLITE_PATH", "path4");
+    set_env_var("AUTH_API_SCOPES", "{\"key41\":[\"value41\"]}");
+    set_env_var("AUTH_TEMPLATES", "{\"key42\":\"value42\"}");
     let args = config::reg_args(Command::new("test")).get_matches_from(args);
     let conf = config::read_args(&args);
     expect(conf.db.is_some()).to_equal(true)?;
@@ -284,4 +284,10 @@ pub fn apply_default(_context: &mut SpecContext<TestState>) -> Result<(), String
     expect(db_conf.path.as_ref().unwrap().as_str()).to_equal("path")?;
     expect(conf.api_scopes.as_ref()).to_equal(Some(&api_scopes))?;
     expect(conf.templates.as_ref()).to_equal(Some(&templates))
+}
+
+fn set_env_var(key: &str, val: &str) {
+    unsafe {
+        env::set_var(&OsStr::new(key), val);
+    }
 }

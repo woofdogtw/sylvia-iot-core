@@ -827,7 +827,7 @@ pub fn list_sort(runtime: &Runtime, model: &dyn ApplicationUlDataModel) -> Resul
             return Err(format!(
                 "list code-asc-addr-asc-proc-asc result error: {}",
                 e
-            ))
+            ));
         }
         Ok((list, _)) => list,
     };
@@ -858,7 +858,7 @@ pub fn list_sort(runtime: &Runtime, model: &dyn ApplicationUlDataModel) -> Resul
             return Err(format!(
                 "list code-asc-addr-asc-proc-desc result error: {}",
                 e
-            ))
+            ));
         }
         Ok((list, _)) => list,
     };
@@ -889,7 +889,7 @@ pub fn list_sort(runtime: &Runtime, model: &dyn ApplicationUlDataModel) -> Resul
             return Err(format!(
                 "list code-desc-addr-asc-proc-asc result error: {}",
                 e
-            ))
+            ));
         }
         Ok((list, _)) => list,
     };
@@ -920,7 +920,7 @@ pub fn list_sort(runtime: &Runtime, model: &dyn ApplicationUlDataModel) -> Resul
             return Err(format!(
                 "list code-desc-addr-desc-proc-asc result error: {}",
                 e
-            ))
+            ));
         }
         Ok((list, _)) => list,
     };

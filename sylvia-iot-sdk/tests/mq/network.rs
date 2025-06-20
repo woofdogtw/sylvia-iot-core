@@ -7,27 +7,27 @@ use std::{
 
 use async_trait::async_trait;
 use chrono::{TimeZone, Utc};
-use laboratory::{expect, SpecContext};
+use laboratory::{SpecContext, expect};
 use serde::{self, Deserialize, Serialize};
 use serde_json::{self, Map, Value};
 use tokio::time;
 
 use general_mq::{
+    AmqpQueueOptions, MqttQueueOptions, Queue, QueueOptions,
     queue::{
         EventHandler as MqEventHandler, GmqQueue, Message, MessageHandler as MqMessageHandler,
         Status as MqStatus,
     },
-    AmqpQueueOptions, MqttQueueOptions, Queue, QueueOptions,
 };
 use sylvia_iot_sdk::{
     mq::{
-        network::{DlData, DlDataResult, EventHandler, NetworkCtrlMsg, NetworkMgr, UlData},
         Connection, MgrStatus, Options,
+        network::{DlData, DlDataResult, EventHandler, NetworkCtrlMsg, NetworkMgr, UlData},
     },
     util::strings,
 };
 
-use super::{conn_host_uri, new_connection, MqEngine, STATE};
+use super::{MqEngine, STATE, conn_host_uri, new_connection};
 use crate::{TestState, WAIT_COUNT, WAIT_TICK};
 
 /// Uplink data from network to broker.

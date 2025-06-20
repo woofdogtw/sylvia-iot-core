@@ -1,8 +1,8 @@
-use laboratory::{expect, SpecContext};
+use laboratory::{SpecContext, expect};
 
 use sylvia_iot_auth::models::redis::conn::{self, Options};
 
-use super::{get_test_db_path, TestState, STATE};
+use super::{STATE, TestState, get_test_db_path};
 
 /// Generate spec for models::conn::connect().
 pub fn conn(context: &mut SpecContext<TestState>) -> Result<(), String> {

@@ -1,10 +1,10 @@
 use std::{collections::HashMap, error::Error as StdError, fs};
 
 use clap::{
-    builder::{BoolValueParser, RangedU64ValueParser},
     Arg, ArgMatches, Command,
+    builder::{BoolValueParser, RangedU64ValueParser},
 };
-use reqwest::{header, Client, Method, StatusCode};
+use reqwest::{Client, Method, StatusCode, header};
 use serde::{Deserialize, Serialize};
 use serde_json::{Map, Value};
 use serde_urlencoded;
@@ -12,7 +12,7 @@ use serde_urlencoded;
 use sylvia_iot_corelib::err::ErrResp;
 
 use super::{
-    config, get_csv_filename, refresh, validate_json, validate_timestr, Config, API_RETRY,
+    API_RETRY, Config, config, get_csv_filename, refresh, validate_json, validate_timestr,
 };
 
 #[derive(Serialize)]

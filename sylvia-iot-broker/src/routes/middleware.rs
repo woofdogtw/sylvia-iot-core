@@ -146,7 +146,7 @@ where
                 }
                 Ok(resp) => match resp.status() {
                     reqwest::StatusCode::UNAUTHORIZED => {
-                        return Ok(ErrResp::ErrAuth(None).into_response())
+                        return Ok(ErrResp::ErrAuth(None).into_response());
                     }
                     reqwest::StatusCode::OK => resp,
                     _ => {
@@ -172,7 +172,7 @@ where
                         .data
                         .roles
                         .iter()
-                        .filter(|(_, &v)| v)
+                        .filter(|(_, v)| **v)
                         .map(|(k, _)| k.as_str())
                         .collect();
                     if api_roles.is_disjoint(&roles) {

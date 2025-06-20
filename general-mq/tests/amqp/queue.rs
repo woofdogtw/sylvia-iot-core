@@ -6,16 +6,16 @@ use std::{
 };
 
 use async_trait::async_trait;
-use laboratory::{expect, SpecContext};
+use laboratory::{SpecContext, expect};
 use tokio::{task, time};
 
 use general_mq::{
+    AmqpConnection, AmqpConnectionOptions, AmqpQueue, AmqpQueueOptions, Queue, QueueOptions,
     connection::GmqConnection,
     queue::{EventHandler, GmqQueue, Message, MessageHandler, Status},
-    AmqpConnection, AmqpConnectionOptions, AmqpQueue, AmqpQueueOptions, Queue, QueueOptions,
 };
 
-use super::{TestState, STATE};
+use super::{STATE, TestState};
 
 #[derive(Default)]
 struct Resources {

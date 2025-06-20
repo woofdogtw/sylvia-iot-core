@@ -985,7 +985,7 @@ pub fn list_sort(runtime: &Runtime, model: &dyn NetworkRouteModel) -> Result<(),
             return Err(format!(
                 "list application-asc-network-asc result error: {}",
                 e
-            ))
+            ));
         }
         Ok((list, _)) => list,
     };
@@ -1020,7 +1020,7 @@ pub fn list_sort(runtime: &Runtime, model: &dyn NetworkRouteModel) -> Result<(),
             return Err(format!(
                 "list application-desc-network-asc result error: {}",
                 e
-            ))
+            ));
         }
         Ok((list, _)) => list,
     };
@@ -1055,7 +1055,7 @@ pub fn list_sort(runtime: &Runtime, model: &dyn NetworkRouteModel) -> Result<(),
             return Err(format!(
                 "list application-asc-network-desc result error: {}",
                 e
-            ))
+            ));
         }
         Ok((list, _)) => list,
     };
@@ -1090,7 +1090,7 @@ pub fn list_sort(runtime: &Runtime, model: &dyn NetworkRouteModel) -> Result<(),
             return Err(format!(
                 "list application-desc-network-desc result error: {}",
                 e
-            ))
+            ));
         }
         Ok((list, _)) => list,
     };

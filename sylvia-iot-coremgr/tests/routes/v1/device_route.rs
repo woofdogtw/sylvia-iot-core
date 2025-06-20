@@ -2,7 +2,7 @@ use axum::http::Method;
 use laboratory::SpecContext;
 
 use super::{
-    super::libs::{test_invalid_token, test_list, TOKEN_MANAGER},
+    super::libs::{TOKEN_MANAGER, test_invalid_token, test_list},
     STATE,
 };
 use crate::TestState;

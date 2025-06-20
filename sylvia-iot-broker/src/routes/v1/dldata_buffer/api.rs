@@ -1,11 +1,11 @@
 use std::{collections::HashMap, error::Error as StdError};
 
 use axum::{
+    Extension,
     body::{Body, Bytes},
     extract::State,
-    http::{header, StatusCode},
+    http::{StatusCode, header},
     response::IntoResponse,
-    Extension,
 };
 use log::error;
 use serde_json;
@@ -20,7 +20,7 @@ use sylvia_iot_corelib::{
 
 use super::{
     super::{
-        super::{middleware::GetTokenInfoData, ErrReq, State as AppState},
+        super::{ErrReq, State as AppState, middleware::GetTokenInfoData},
         lib::check_unit,
     },
     request, response,
@@ -64,7 +64,7 @@ pub async fn get_dldata_buffer_count(
                             ErrReq::UNIT_NOT_EXIST.0,
                             ErrReq::UNIT_NOT_EXIST.1,
                             None,
-                        ))
+                        ));
                     }
                     Some(_) => Some(unit_id.as_str()),
                 }
@@ -139,7 +139,7 @@ pub async fn get_dldata_buffer_list(
                             ErrReq::UNIT_NOT_EXIST.0,
                             ErrReq::UNIT_NOT_EXIST.1,
                             None,
-                        ))
+                        ));
                     }
                     Some(_) => Some(unit_id.as_str()),
                 }
@@ -194,13 +194,13 @@ pub async fn get_dldata_buffer_list(
         Ok((list, cursor)) => match cursor {
             None => match query.format {
                 Some(request::ListFormat::Array) => {
-                    return Ok(Json(data_list_transform(&list)).into_response())
+                    return Ok(Json(data_list_transform(&list)).into_response());
                 }
                 _ => {
                     return Ok(Json(response::GetDlDataBufferList {
                         data: data_list_transform(&list),
                     })
-                    .into_response())
+                    .into_response());
                 }
             },
             Some(_) => (list, cursor),
@@ -331,7 +331,7 @@ fn get_sort_cond(sort_args: &Option<String>) -> Result<Vec<SortCond>, ErrResp> {
                             return Err(ErrResp::ErrParam(Some(format!(
                                 "invalid sort key {}",
                                 field
-                            ))))
+                            ))));
                         }
                     },
                 };
@@ -344,7 +344,7 @@ fn get_sort_cond(sort_args: &Option<String>) -> Result<Vec<SortCond>, ErrResp> {
                             return Err(ErrResp::ErrParam(Some(format!(
                                 "invalid sort asc {}",
                                 asc
-                            ))))
+                            ))));
                         }
                     },
                 };

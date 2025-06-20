@@ -1,11 +1,11 @@
 use std::error::Error as StdError;
 
 use axum::{
+    Extension,
     body::{Body, Bytes},
     extract::State,
-    http::{header, HeaderValue},
+    http::{HeaderValue, header},
     response::{IntoResponse, Response},
-    Extension,
 };
 use chrono::{TimeZone, Utc};
 use csv::WriterBuilder;
@@ -22,7 +22,7 @@ use sylvia_iot_corelib::{
 
 use super::{
     super::{
-        super::{middleware::GetTokenInfoData, ErrReq, State as AppState},
+        super::{ErrReq, State as AppState, middleware::GetTokenInfoData},
         get_user_inner,
     },
     request, response,
@@ -103,7 +103,7 @@ pub async fn get_list(
         Ok((list, cursor)) => match cursor {
             None => match query.format.as_ref() {
                 Some(request::ListFormat::Array) => {
-                    return Ok(Json(list_transform(&list)).into_response())
+                    return Ok(Json(list_transform(&list)).into_response());
                 }
                 Some(request::ListFormat::Csv) => {
                     let bytes = match list_transform_bytes(&list, true, true, query.format.as_ref())
@@ -130,7 +130,7 @@ pub async fn get_list(
                     return Ok(Json(response::GetList {
                         data: list_transform(&list),
                     })
-                    .into_response())
+                    .into_response());
                 }
             },
             Some(_) => (list, cursor),
@@ -268,7 +268,7 @@ async fn get_user_cond(
                                 ErrReq::USER_NOT_EXIST.1,
                                 None,
                             )
-                            .into_response())
+                            .into_response());
                         }
                         Some(_) => Ok(Some(user_id.clone())),
                     },
@@ -299,7 +299,7 @@ fn get_sort_cond(sort_args: &Option<String>) -> Result<Vec<SortCond>, ErrResp> {
                             return Err(ErrResp::ErrParam(Some(format!(
                                 "invalid sort key {}",
                                 field
-                            ))))
+                            ))));
                         }
                     },
                 };
@@ -312,7 +312,7 @@ fn get_sort_cond(sort_args: &Option<String>) -> Result<Vec<SortCond>, ErrResp> {
                             return Err(ErrResp::ErrParam(Some(format!(
                                 "invalid sort asc {}",
                                 asc
-                            ))))
+                            ))));
                         }
                     },
                 };

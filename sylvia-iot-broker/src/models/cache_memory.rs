@@ -5,13 +5,13 @@ use std::{error::Error as StdError, sync::Arc};
 use async_trait::async_trait;
 
 use super::{
-    device, device_route,
+    Model, device, device_route,
     memory::{
         device::{Cache as DeviceCache, Options as DeviceOptions},
         device_route::{Cache as DeviceRouteCache, Options as DeviceRouteOptions},
         network_route::{Cache as NetworkRouteCache, Options as NetworkRouteOptions},
     },
-    network_route, Model,
+    network_route,
 };
 
 /// Pure memory cache.

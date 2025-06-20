@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use chrono::Utc;
-use laboratory::{expect, SpecContext};
+use laboratory::{SpecContext, expect};
 use serde_json::{Map, Value};
 
 use sylvia_iot_broker::models::{
@@ -12,7 +12,7 @@ use sylvia_iot_broker::models::{
     },
 };
 
-use super::{TestState, STATE};
+use super::{STATE, TestState};
 
 pub fn after_each_fn(state: &mut HashMap<&'static str, TestState>) -> () {
     let state = state.get_mut(STATE).unwrap();
@@ -431,7 +431,7 @@ pub fn get_dldata_pub(context: &mut SpecContext<TestState>) -> Result<(), String
             return Err(format!(
                 "get_dldata_pub() again get correct pub error: {}",
                 e
-            ))
+            ));
         }
         Ok(route) => route,
     };

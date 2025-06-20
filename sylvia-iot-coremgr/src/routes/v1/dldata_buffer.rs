@@ -1,10 +1,11 @@
 use std::error::Error as StdError;
 
 use axum::{
+    Router,
     body::Body,
     extract::{Path, Request, State},
     response::IntoResponse,
-    routing, Router,
+    routing,
 };
 use bytes::{Bytes, BytesMut};
 use csv::WriterBuilder;
@@ -15,7 +16,7 @@ use serde_json::Deserializer;
 
 use sylvia_iot_corelib::err::ErrResp;
 
-use super::{super::State as AppState, api_bridge, list_api_bridge, ListResp};
+use super::{super::State as AppState, ListResp, api_bridge, list_api_bridge};
 
 #[derive(Deserialize)]
 struct DataIdPath {

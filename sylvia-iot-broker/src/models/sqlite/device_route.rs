@@ -3,7 +3,7 @@ use std::{error::Error as StdError, sync::Arc};
 use async_trait::async_trait;
 use chrono::{TimeZone, Utc};
 use futures::TryStreamExt;
-use sql_builder::{quote, SqlBuilder};
+use sql_builder::{SqlBuilder, quote};
 use sqlx::SqlitePool;
 
 use super::super::device_route::{

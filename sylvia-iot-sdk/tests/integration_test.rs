@@ -3,7 +3,7 @@ use std::{
     sync::{Arc, Mutex},
 };
 
-use laboratory::{describe, LabResult};
+use laboratory::{LabResult, describe};
 use tokio::{
     runtime::Runtime,
     task::{self, JoinHandle},
@@ -11,7 +11,7 @@ use tokio::{
 
 use general_mq::Queue;
 use sylvia_iot_auth::models::SqliteModel as AuthDbModel;
-use sylvia_iot_sdk::mq::{application::ApplicationMgr, network::NetworkMgr, Connection};
+use sylvia_iot_sdk::mq::{Connection, application::ApplicationMgr, network::NetworkMgr};
 
 mod api;
 mod middlewares;

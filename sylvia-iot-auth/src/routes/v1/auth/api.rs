@@ -1,8 +1,8 @@
 use axum::{
-    extract::{Request, State},
-    http::{header, StatusCode},
-    response::IntoResponse,
     Extension,
+    extract::{Request, State},
+    http::{StatusCode, header},
+    response::IntoResponse,
 };
 use axum_extra::headers::authorization::{Bearer, Credentials};
 use log::error;
@@ -37,7 +37,7 @@ pub async fn post_logout(state: State<AppState>, req: Request) -> impl IntoRespo
         None => {
             return Err(ErrResp::ErrUnknown(Some(
                 "no Authorization header".to_string(),
-            )))
+            )));
         }
         Some(auth) => match Bearer::decode(auth) {
             None => return Err(ErrResp::ErrUnknown(Some("no Bearer token".to_string()))),

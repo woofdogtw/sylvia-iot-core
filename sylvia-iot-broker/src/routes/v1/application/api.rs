@@ -8,11 +8,11 @@ use std::{
 
 use async_trait::async_trait;
 use axum::{
+    Extension,
     body::{Body, Bytes},
     extract::State,
-    http::{header, StatusCode},
+    http::{StatusCode, header},
     response::IntoResponse,
-    Extension,
 };
 use chrono::{DateTime, TimeZone, Utc};
 use log::{debug, error, info, warn};
@@ -22,8 +22,8 @@ use tokio::time;
 use url::Url;
 
 use general_mq::{
-    queue::{EventHandler as QueueEventHandler, GmqQueue, Message, MessageHandler, Status},
     Queue,
+    queue::{EventHandler as QueueEventHandler, GmqQueue, Message, MessageHandler, Status},
 };
 use sylvia_iot_corelib::{
     constants::ContentType,
@@ -35,7 +35,7 @@ use sylvia_iot_corelib::{
 
 use super::{
     super::{
-        super::{middleware::GetTokenInfoData, ErrReq, State as AppState},
+        super::{ErrReq, State as AppState, middleware::GetTokenInfoData},
         lib::{check_application, check_unit, gen_mgr_key},
     },
     request, response,
@@ -44,18 +44,18 @@ use crate::{
     libs::{
         config::BrokerCtrl as CfgCtrl,
         mq::{
-            self,
+            self, Connection, MgrStatus, Options as MgrOptions,
             application::{ApplicationMgr, DlData, DlDataResp, EventHandler},
             network::{DlData as NetworkDlData, NetworkMgr},
-            Connection, MgrStatus, Options as MgrOptions,
         },
     },
     models::{
+        Cache, Model,
         application::{
             Application, ListOptions, ListQueryCond, QueryCond, SortCond, SortKey, UpdateQueryCond,
             Updates,
         },
-        device, device_route, dldata_buffer, network_route, Cache, Model,
+        device, device_route, dldata_buffer, network_route,
     },
 };
 
@@ -306,7 +306,7 @@ pub fn new_ctrl_sender(
             return Err(Box::new(IoError::new(
                 ErrorKind::InvalidInput,
                 "empty control url",
-            )))
+            )));
         }
         Some(url) => match Url::parse(url.as_str()) {
             Err(e) => return Err(Box::new(e)),
@@ -335,7 +335,7 @@ pub fn new_ctrl_receiver(state: &AppState, config: &CfgCtrl) -> Result<Queue, Bo
             return Err(Box::new(IoError::new(
                 ErrorKind::InvalidInput,
                 "empty control url",
-            )))
+            )));
         }
         Some(url) => match Url::parse(url.as_str()) {
             Err(e) => return Err(Box::new(e)),
@@ -388,7 +388,7 @@ pub async fn post_application(
             false => {
                 return Err(ErrResp::ErrParam(Some(
                     "unsupport `hostUri` scheme".to_string(),
-                )))
+                )));
             }
             true => uri,
         },
@@ -414,7 +414,7 @@ pub async fn post_application(
                 ErrReq::UNIT_NOT_EXIST.0,
                 ErrReq::UNIT_NOT_EXIST.1,
                 None,
-            ))
+            ));
         }
         Some(unit) => unit.code,
     };
@@ -497,7 +497,7 @@ pub async fn get_application_count(
                             ErrReq::UNIT_NOT_EXIST.0,
                             ErrReq::UNIT_NOT_EXIST.1,
                             None,
-                        ))
+                        ));
                     }
                     Some(_) => Some(unit_id.as_str()),
                 }
@@ -567,7 +567,7 @@ pub async fn get_application_list(
                             ErrReq::UNIT_NOT_EXIST.0,
                             ErrReq::UNIT_NOT_EXIST.1,
                             None,
-                        ))
+                        ));
                     }
                     Some(_) => Some(unit_id.as_str()),
                 }
@@ -617,13 +617,13 @@ pub async fn get_application_list(
         Ok((list, cursor)) => match cursor {
             None => match query.format {
                 Some(request::ListFormat::Array) => {
-                    return Ok(Json(application_list_transform(&list)).into_response())
+                    return Ok(Json(application_list_transform(&list)).into_response());
                 }
                 _ => {
                     return Ok(Json(response::GetApplicationList {
                         data: application_list_transform(&list),
                     })
-                    .into_response())
+                    .into_response());
                 }
             },
             Some(_) => (list, cursor),
@@ -812,7 +812,7 @@ fn get_sort_cond(sort_args: &Option<String>) -> Result<Vec<SortCond>, ErrResp> {
                             return Err(ErrResp::ErrParam(Some(format!(
                                 "invalid sort key {}",
                                 field
-                            ))))
+                            ))));
                         }
                     },
                 };
@@ -825,7 +825,7 @@ fn get_sort_cond(sort_args: &Option<String>) -> Result<Vec<SortCond>, ErrResp> {
                             return Err(ErrResp::ErrParam(Some(format!(
                                 "invalid sort asc {}",
                                 asc
-                            ))))
+                            ))));
                         }
                     },
                 };

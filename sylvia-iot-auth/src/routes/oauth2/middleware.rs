@@ -8,7 +8,7 @@ use std::{
 
 use axum::{
     extract::{FromRequest, Request},
-    http::{header, Method, StatusCode},
+    http::{Method, StatusCode, header},
     response::{IntoResponse, Response},
 };
 use futures::future::BoxFuture;
@@ -20,7 +20,7 @@ use sylvia_iot_corelib::{err::ErrResp, http::parse_header_auth};
 
 use super::endpoint::Endpoint;
 use crate::models::{
-    client::QueryCond as ClientQueryCond, user::QueryCond as UserQueryCond, Model,
+    Model, client::QueryCond as ClientQueryCond, user::QueryCond as UserQueryCond,
 };
 
 pub type RoleScopeType = (Vec<&'static str>, Vec<String>);
@@ -141,7 +141,7 @@ where
                                 let roles: HashSet<&str> = user
                                     .roles
                                     .iter()
-                                    .filter(|(_, &v)| v)
+                                    .filter(|(_, v)| **v)
                                     .map(|(k, _)| k.as_str())
                                     .collect();
                                 if api_roles.is_disjoint(&roles) {

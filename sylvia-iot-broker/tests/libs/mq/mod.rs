@@ -4,13 +4,13 @@ use std::{
     time::Duration,
 };
 
-use laboratory::{describe, Suite};
+use laboratory::{Suite, describe};
 use tokio::{runtime::Runtime, time};
 
 use general_mq::{
+    AmqpConnection, AmqpConnectionOptions, MqttConnection, MqttConnectionOptions,
     connection::{GmqConnection, Status},
     queue::GmqQueue,
-    AmqpConnection, AmqpConnectionOptions, MqttConnection, MqttConnectionOptions,
 };
 use sylvia_iot_broker::libs::mq::Connection;
 use sylvia_iot_corelib::constants::MqEngine;

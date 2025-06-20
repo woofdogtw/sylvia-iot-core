@@ -1,10 +1,9 @@
-use std::{env, ffi::OsStr};
-
 use clap::Command;
-use laboratory::{expect, SpecContext};
+use laboratory::{SpecContext, expect};
 
 use sylvia_iot_corelib::server_config::{self, Config};
 
+use super::set_env_var;
 use crate::TestState;
 
 /// Test [`server_config::reg_args`].
@@ -58,12 +57,12 @@ pub fn read_args(_context: &mut SpecContext<TestState>) -> Result<(), String> {
     let args = server_config::reg_args(Command::new("test")).get_matches_from(vec!["test"]);
 
     // Modified default by environment variables.
-    env::set_var(&OsStr::new("SERVER_HTTP_PORT"), "1081");
-    env::set_var(&OsStr::new("SERVER_HTTPS_PORT"), "1444");
-    env::set_var(&OsStr::new("SERVER_CACERT_FILE"), "cacert");
-    env::set_var(&OsStr::new("SERVER_CERT_FILE"), "cert");
-    env::set_var(&OsStr::new("SERVER_KEY_FILE"), "key");
-    env::set_var(&OsStr::new("SERVER_STATIC_PATH"), "static");
+    set_env_var("SERVER_HTTP_PORT", "1081");
+    set_env_var("SERVER_HTTPS_PORT", "1444");
+    set_env_var("SERVER_CACERT_FILE", "cacert");
+    set_env_var("SERVER_CERT_FILE", "cert");
+    set_env_var("SERVER_KEY_FILE", "key");
+    set_env_var("SERVER_STATIC_PATH", "static");
     let conf = server_config::read_args(&args);
     expect(conf.http_port).to_equal(Some(1081))?;
     expect(conf.https_port).to_equal(Some(1444))?;
@@ -93,12 +92,12 @@ pub fn read_args(_context: &mut SpecContext<TestState>) -> Result<(), String> {
         "static2",
     ];
     let args = server_config::reg_args(Command::new("test")).get_matches_from(args);
-    env::set_var(&OsStr::new("SERVER_HTTP_PORT"), "1084");
-    env::set_var(&OsStr::new("SERVER_HTTPS_PORT"), "1447");
-    env::set_var(&OsStr::new("SERVER_CACERT_FILE"), "cacert3");
-    env::set_var(&OsStr::new("SERVER_CERT_FILE"), "cert3");
-    env::set_var(&OsStr::new("SERVER_KEY_FILE"), "key3");
-    env::set_var(&OsStr::new("SERVER_STATIC_PATH"), "static3");
+    set_env_var("SERVER_HTTP_PORT", "1084");
+    set_env_var("SERVER_HTTPS_PORT", "1447");
+    set_env_var("SERVER_CACERT_FILE", "cacert3");
+    set_env_var("SERVER_CERT_FILE", "cert3");
+    set_env_var("SERVER_KEY_FILE", "key3");
+    set_env_var("SERVER_STATIC_PATH", "static3");
     let conf = server_config::read_args(&args);
     expect(conf.http_port).to_equal(Some(1083))?;
     expect(conf.https_port).to_equal(Some(1446))?;

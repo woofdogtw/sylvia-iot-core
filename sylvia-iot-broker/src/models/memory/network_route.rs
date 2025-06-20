@@ -5,8 +5,8 @@ use lru::LruCache;
 use tokio::sync::RwLock;
 
 use super::super::{
-    network_route::{ListOptions, ListQueryCond, NetworkRouteCache, NetworkRouteCacheUlData},
     Model,
+    network_route::{ListOptions, ListQueryCond, NetworkRouteCache, NetworkRouteCacheUlData},
 };
 
 pub struct Cache {

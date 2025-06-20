@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use laboratory::{describe, SpecContext, Suite};
+use laboratory::{SpecContext, Suite, describe};
 use tokio::runtime::Runtime;
 
 use sylvia_iot_broker::models::{

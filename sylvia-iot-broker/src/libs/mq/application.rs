@@ -14,15 +14,15 @@ use tokio::task;
 use url::Url;
 
 use general_mq::{
+    Queue,
     queue::{
         EventHandler as QueueEventHandler, GmqQueue, Message, MessageHandler, Status as QueueStatus,
     },
-    Queue,
 };
 use sylvia_iot_corelib::{err, strings};
 
 use super::{
-    get_connection, new_data_queues, remove_connection, Connection, MgrMqStatus, MgrStatus, Options,
+    Connection, MgrMqStatus, MgrStatus, Options, get_connection, new_data_queues, remove_connection,
 };
 
 /// Uplink data from broker to application.

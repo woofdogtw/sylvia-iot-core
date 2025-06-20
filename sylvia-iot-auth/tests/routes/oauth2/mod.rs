@@ -1,12 +1,12 @@
 use std::collections::HashMap;
 
 use chrono::{TimeDelta, Utc};
-use laboratory::{describe, Suite};
+use laboratory::{Suite, describe};
 use tokio::runtime::Runtime;
 
 use sylvia_iot_auth::models::{
-    mongodb_conn::{self, Options as MongoDbOptions},
     Model,
+    mongodb_conn::{self, Options as MongoDbOptions},
 };
 
 use super::{

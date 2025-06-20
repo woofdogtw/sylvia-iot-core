@@ -6,17 +6,17 @@ use std::{
 };
 
 use async_trait::async_trait;
-use laboratory::{expect, SpecContext};
+use laboratory::{SpecContext, expect};
 use tokio::{task, time};
 
 use general_mq::{
+    MqttConnection, MqttConnectionOptions, MqttQueue, MqttQueueOptions, Queue, QueueOptions,
     connection::GmqConnection,
     queue::{EventHandler, GmqQueue, Message, MessageHandler, Status},
-    randomstring, MqttConnection, MqttConnectionOptions, MqttQueue, MqttQueueOptions, Queue,
-    QueueOptions,
+    randomstring,
 };
 
-use super::{TestState, STATE};
+use super::{STATE, TestState};
 
 #[derive(Default)]
 struct Resources {

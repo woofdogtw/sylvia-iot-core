@@ -1,8 +1,8 @@
 use std::collections::HashMap;
 
-use axum::{http::StatusCode, routing, Router};
+use axum::{Router, http::StatusCode, routing};
 use axum_test::TestServer;
-use laboratory::{describe, expect, SpecContext, Suite};
+use laboratory::{SpecContext, Suite, describe, expect};
 use reqwest;
 
 use general_mq::Queue;

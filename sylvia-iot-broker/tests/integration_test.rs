@@ -1,15 +1,15 @@
 use std::{collections::HashMap, sync::Arc};
 
-use laboratory::{describe, LabResult};
+use laboratory::{LabResult, describe};
 use tokio::{
     runtime::Runtime,
     task::{self, JoinHandle},
 };
 
-use general_mq::{connection::GmqConnection, queue::GmqQueue, Queue};
+use general_mq::{Queue, connection::GmqConnection, queue::GmqQueue};
 use sylvia_iot_auth::models::SqliteModel as AuthDbModel;
 use sylvia_iot_broker::{
-    libs::mq::{application::ApplicationMgr, network::NetworkMgr, Connection},
+    libs::mq::{Connection, application::ApplicationMgr, network::NetworkMgr},
     models::{Cache, Model, MongoDbModel, SqliteModel},
     routes::State,
 };

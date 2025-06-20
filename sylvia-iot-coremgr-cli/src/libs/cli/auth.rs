@@ -1,13 +1,13 @@
 use std::{collections::HashMap, error::Error as StdError};
 
 use clap::{ArgMatches, Command};
-use reqwest::{header, Client, Method, StatusCode};
+use reqwest::{Client, Method, StatusCode, header};
 use serde::{Deserialize, Serialize};
 use serde_json;
 
 use sylvia_iot_corelib::err::ErrResp;
 
-use super::{config, AccessToken, Config, Storage, API_RETRY};
+use super::{API_RETRY, AccessToken, Config, Storage, config};
 
 #[derive(Deserialize, Serialize)]
 struct GetTokenInfo {

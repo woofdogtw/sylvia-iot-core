@@ -1,13 +1,13 @@
 use std::{error::Error as StdError, fs};
 
-use clap::{builder::RangedU64ValueParser, Arg, ArgMatches, Command};
-use reqwest::{header, Client, Method, StatusCode};
+use clap::{Arg, ArgMatches, Command, builder::RangedU64ValueParser};
+use reqwest::{Client, Method, StatusCode, header};
 use serde::{Deserialize, Serialize};
 use serde_urlencoded;
 
 use sylvia_iot_corelib::err::ErrResp;
 
-use super::{config, get_csv_filename, refresh, Config, API_RETRY};
+use super::{API_RETRY, Config, config, get_csv_filename, refresh};
 
 #[derive(Serialize)]
 struct GetCountReq<'a> {

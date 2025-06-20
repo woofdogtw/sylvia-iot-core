@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use axum::http::{header, HeaderValue, Method, StatusCode};
+use axum::http::{HeaderValue, Method, StatusCode, header};
 use laboratory::SpecContext;
 
 use sylvia_iot_broker::models::Model;
@@ -12,7 +12,7 @@ use super::{
     },
     STATE, TOKEN_MANAGER,
 };
-use crate::{routes::libs::new_test_server, TestState};
+use crate::{TestState, routes::libs::new_test_server};
 
 const DELETE_UNIT_ID: &'static str = "unit_delete";
 

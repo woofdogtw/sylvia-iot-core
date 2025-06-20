@@ -1,12 +1,12 @@
 use std::collections::HashMap;
 
-use axum::{http::Method, routing, Router};
+use axum::{Router, http::Method, routing};
 
 use sylvia_iot_corelib::role::Role;
 
 use super::super::{
-    middleware::{AuthService, RoleScopeType},
     State,
+    middleware::{AuthService, RoleScopeType},
 };
 
 mod api;

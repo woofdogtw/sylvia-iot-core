@@ -1,13 +1,14 @@
 use std::error::Error as StdError;
 
 use axum::{
+    Router,
     body::Body,
     extract::{Request, State},
-    http::{header, HeaderMap, HeaderValue, StatusCode},
+    http::{HeaderMap, HeaderValue, StatusCode, header},
     response::{IntoResponse, Response},
-    routing, Router,
+    routing,
 };
-use base64::{engine::general_purpose, Engine};
+use base64::{Engine, engine::general_purpose};
 use bytes::{Bytes, BytesMut};
 use chrono::Utc;
 use csv::WriterBuilder;
@@ -28,12 +29,12 @@ use sylvia_iot_corelib::{
 
 use super::{
     super::{AmqpState, ErrReq, MqttState, State as AppState},
-    api_bridge, clear_patch_host, clear_queue_rsc, cmp_host_uri, create_queue_rsc,
-    get_device_inner, get_stream_resp, get_tokeninfo_inner, get_unit_inner, list_api_bridge,
-    request, response, transfer_host_uri, trunc_host_uri, ClearQueueResource, CreateQueueResource,
-    ListResp, PatchHost,
+    ClearQueueResource, CreateQueueResource, ListResp, PatchHost, api_bridge, clear_patch_host,
+    clear_queue_rsc, cmp_host_uri, create_queue_rsc, get_device_inner, get_stream_resp,
+    get_tokeninfo_inner, get_unit_inner, list_api_bridge, request, response, transfer_host_uri,
+    trunc_host_uri,
 };
-use crate::libs::mq::{self, emqx, rabbitmq, QueueType};
+use crate::libs::mq::{self, QueueType, emqx, rabbitmq};
 
 enum ListFormat {
     Array,
@@ -167,7 +168,7 @@ async fn post_network(
                             ErrReq::UNIT_NOT_EXIST.1,
                             None,
                         )
-                        .into_response()
+                        .into_response();
                     }
                     Some(unit) => unit,
                 },
@@ -192,7 +193,7 @@ async fn post_network(
             0 => (),
             _ => {
                 return ErrResp::Custom(ErrReq::NETWORK_EXIST.0, ErrReq::NETWORK_EXIST.1, None)
-                    .into_response()
+                    .into_response();
             }
         },
     }
@@ -995,7 +996,7 @@ async fn post_network_uldata(
                     ErrReq::DEVICE_NOT_EXIST.1,
                     None,
                 )
-                .into_response()
+                .into_response();
             }
             Some(device) => device,
         },
