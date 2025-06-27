@@ -1,6 +1,6 @@
 [package]
 name = "sylvia-iot-broker"
-version = "0.3.0"
+version = "0.3.1"
 authors = ["Chien-Hong Chan"]
 categories = ["web-programming::http-server"]
 description = "The message broker module of the Sylvia-IoT platform."
@@ -30,7 +30,7 @@ general-mq = { path = "../general-mq" }
 hex = "0.4.3"
 json5 = "0.4.1"
 log = "0.4.27"
-lru = "0.14.0"
+lru = "0.15.0"
 mongodb = "3.2.3"
 reqwest = { version = "0.12.20", default-features = false, features = [
     "json",

@@ -7,6 +7,7 @@
 - **breaking**: Upgrade Rust to 2024 edition and modify MSRV to 1.85.1.
 - Run rustfmt with 2024 edition.
 - Update dependencies.
+- Release using Ubuntu 24.04.
 
 ## 0.2.1 - 2025-01-10
 
