@@ -1,6 +1,6 @@
 [package]
 name = "sylvia-iot-auth"
-version = "0.3.2"
+version = "0.3.3"
 authors = ["Chien-Hong Chan"]
 categories = ["web-programming::http-server"]
 description = "The authentication/authorization module of the Sylvia-IoT platform."
