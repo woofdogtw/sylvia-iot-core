@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.3.1 - 2025-06-29
+
+### Changed
+
+- Switched from GLIBC to MUSL for improved Linux distribution compatibility.
+- Added pre-built binaries for the `arm64` architecture.
+- Provided multi-architecture Docker images supporting both `amd64` and `arm64`.
+
 ## 0.3.0 - 2025-06-20
 
 ### Changed

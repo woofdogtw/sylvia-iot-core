@@ -1,0 +1,88 @@
+name: Build and push multi-arch Docker images
+description: Build and push multi-arch Docker images (scratch/alpine) for a project
+inputs:
+  proj:
+    description: Project name
+    required: true
+  bin_dir:
+    description: Directory containing binaries
+    required: true
+  cli:
+    description: CLI binary name
+    required: false
+runs:
+  using: "composite"
+  steps:
+    - shell: bash
+      run: |
+        set -e
+        PROJ="${{ inputs.proj }}"
+        CLI="${{ inputs.cli }}"
+        BIN_DIR="${{ inputs.bin_dir }}"
+        VERSION="${GITHUB_REF_NAME#v}"
+        MAJOR=$(echo $VERSION | cut -d. -f1)
+        MINOR=$(echo $VERSION | cut -d. -f2)
+        PATCH=$(echo $VERSION | cut -d. -f3)
+        TAGS="latest $MAJOR $MAJOR.$MINOR $MAJOR.$MINOR.$PATCH"
+        ALPINE_TAGS="alpine $MAJOR-alpine $MAJOR.$MINOR-alpine $MAJOR.$MINOR.$PATCH-alpine"
+        REPOS="woofdogtw ghcr.io/${GITHUB_REPOSITORY_OWNER}"
+
+        if [ -n "$CLI" ]; then
+          DOCKERFILE_STD=files/Dockerfile.cli
+          DOCKERFILE_ALPINE=files/Dockerfile.alpine.cli
+        else
+          DOCKERFILE_STD=files/Dockerfile
+          DOCKERFILE_ALPINE=files/Dockerfile.alpine
+        fi
+
+        # build/push scratch images
+        for ARCH in x86_64 arm64; do
+          DOCKER_ARCH=$([ "$ARCH" = "x86_64" ] && echo "amd64" || echo "arm64")
+          for REPO in $REPOS; do
+            for TAG in $TAGS; do
+              docker build --platform=linux/$DOCKER_ARCH -f $DOCKERFILE_STD \
+                --build-arg BIN_DIR=$BIN_DIR \
+                --build-arg PROJ=$PROJ \
+                --build-arg CLI=$CLI \
+                --build-arg ARCH=$ARCH \
+                -t $REPO/$PROJ:$TAG-$DOCKER_ARCH .
+              docker push $REPO/$PROJ:$TAG-$DOCKER_ARCH
+            done
+          done
+        done
+
+        # build/push alpine images
+        for ARCH in x86_64 arm64; do
+          DOCKER_ARCH=$([ "$ARCH" = "x86_64" ] && echo "amd64" || echo "arm64")
+          for REPO in $REPOS; do
+            for TAG in $ALPINE_TAGS; do
+              docker build --platform=linux/$DOCKER_ARCH -f $DOCKERFILE_ALPINE \
+                --build-arg BIN_DIR=$BIN_DIR \
+                --build-arg PROJ=$PROJ \
+                --build-arg CLI=$CLI \
+                --build-arg ARCH=$ARCH \
+                -t $REPO/$PROJ:$TAG-$DOCKER_ARCH .
+              docker push $REPO/$PROJ:$TAG-$DOCKER_ARCH
+            done
+          done
+        done
+
+        # merge multi-arch manifest (scratch)
+        for REPO in $REPOS; do
+          for TAG in $TAGS; do
+            docker manifest create $REPO/$PROJ:$TAG \
+              --amend $REPO/$PROJ:$TAG-amd64 \
+              --amend $REPO/$PROJ:$TAG-arm64
+            docker manifest push $REPO/$PROJ:$TAG
+          done
+        done
+
+        # merge multi-arch manifest (alpine)
+        for REPO in $REPOS; do
+          for TAG in $ALPINE_TAGS; do
+            docker manifest create $REPO/$PROJ:$TAG \
+              --amend $REPO/$PROJ:$TAG-amd64 \
+              --amend $REPO/$PROJ:$TAG-arm64
+            docker manifest push $REPO/$PROJ:$TAG
+          done
+        done
