@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.3.3 - 2025-06-30
+
+### Fixed
+
+- Fix CI bugs.
+
 ## 0.3.2 - 2025-06-29
 
 ### Fixed
