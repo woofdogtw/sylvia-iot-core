@@ -49,7 +49,7 @@ jobs:
   release:
     name: Publish GitHub Releases and Docker Hub
     needs: crates
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     env:
       TARGET_X86_64: x86_64-unknown-linux-musl
       TARGET_ARM64: aarch64-unknown-linux-musl
@@ -106,8 +106,6 @@ jobs:
       - name: Build router arm64
         run: cross build -p sylvia-router --release --target ${TARGET_ARM64}
       - name: Prepare assets
-        env:
-          RELEASE_VER: ${{ github.ref_name }}
         run: |
           mkdir -p ${BIN_DIR}
           BINARIES="sylvia-iot-auth sylvia-iot-broker sylvia-iot-coremgr sylvia-iot-coremgr-cli sylvia-iot-data sylvia-iot-core sylvia-router sylvia-router-cli"
@@ -133,7 +131,7 @@ jobs:
         run: |
           mkdir -p ${SBOM_DIR}
           curl -kLo cargo-sbom https://github.com/psastras/sbom-rs/releases/download/cargo-sbom-${SBOM_VER}/cargo-sbom-x86_64-unknown-linux-gnu
-          chmod +x ./cargo-sbom
+          chmod +x cargo-sbom
           PKGS="general-mq sylvia-iot-auth sylvia-iot-broker sylvia-iot-coremgr sylvia-iot-coremgr-cli sylvia-iot-data sylvia-iot-sdk sylvia-router"
           FORMATS="spdx_json_2_3 cyclone_dx_json_1_4"
           for PKG in $PKGS; do
@@ -151,6 +149,8 @@ jobs:
           xz -z -9 -e sbom.tar
           mv sbom.tar.xz ${BIN_DIR}/
       - name: Prepare SHA256SUMS and VERSION
+        env:
+          RELEASE_VER: ${{ github.ref_name }}
         run: |
           cd ${BIN_DIR}
           sha256sum * > SHA256SUMS
