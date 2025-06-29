@@ -6,7 +6,7 @@ on:
 env:
   GHR_VER: v0.17.0
   BIN_DIR: dist
-  SBOM_VER: v0.10.1
+  SBOM_VER: v0.10.0
   SBOM_DIR: sbom
 jobs:
   crates:
