@@ -6,7 +6,7 @@ on:
 env:
   GHR_VER: v0.17.0
   BIN_DIR: dist
-  SBOM_VER: v0.9.1
+  SBOM_VER: v0.10.1
   SBOM_DIR: sbom
 jobs:
   crates:
@@ -49,185 +49,154 @@ jobs:
   release:
     name: Publish GitHub Releases and Docker Hub
     needs: crates
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-22.04
+    env:
+      TARGET_X86_64: x86_64-unknown-linux-musl
+      TARGET_ARM64: aarch64-unknown-linux-musl
     steps:
+      - name: Install tools
+        run: |
+          sudo apt update
+          sudo apt -y install gcc-aarch64-linux-gnu
+          cargo install cross --git https://github.com/cross-rs/cross
       - name: Check out repository
         uses: actions/checkout@v4
         with:
           ref: ${{ github.ref_name }}
-      - name: Build general-mq
-        run: cargo build -p general-mq --release
-      - name: Build corelib
-        run: cargo build -p sylvia-iot-corelib --release
-      - name: Build auth
-        run: cargo build -p sylvia-iot-auth --release
-      - name: Build broker
-        run: cargo build -p sylvia-iot-broker --release
-      - name: Build coremgr
-        run: cargo build -p sylvia-iot-coremgr --release
-      - name: Build coremgr-cli
-        run: cargo build -p sylvia-iot-coremgr-cli --release
-      - name: Build data
-        run: cargo build -p sylvia-iot-data --release
-      - name: Build sdk
-        run: cargo build -p sylvia-iot-sdk --release
-      - name: Build router
-        run: cargo build -p sylvia-router --release
+      - name: Clear release target for x86_64
+        run: |
+          rm -rf target/release
+      - name: Build general-mq x86_64
+        run: cross build -p general-mq --release --target ${TARGET_X86_64}
+      - name: Build corelib x86_64
+        run: cross build -p sylvia-iot-corelib --release --target ${TARGET_X86_64}
+      - name: Build auth x86_64
+        run: cross build -p sylvia-iot-auth --release --target ${TARGET_X86_64}
+      - name: Build broker x86_64
+        run: cross build -p sylvia-iot-broker --release --target ${TARGET_X86_64}
+      - name: Build coremgr x86_64
+        run: cross build -p sylvia-iot-coremgr --release --target ${TARGET_X86_64}
+      - name: Build coremgr-cli x86_64
+        run: cross build -p sylvia-iot-coremgr-cli --release --target ${TARGET_X86_64}
+      - name: Build data x86_64
+        run: cross build -p sylvia-iot-data --release --target ${TARGET_X86_64}
+      - name: Build sdk x86_64
+        run: cross build -p sylvia-iot-sdk --release --target ${TARGET_X86_64}
+      - name: Build router x86_64
+        run: cross build -p sylvia-router --release --target ${TARGET_X86_64}
+      - name: Clear release target for arm64
+        run: |
+          rm -rf target/release
+      - name: Build general-mq arm64
+        run: cross build -p general-mq --release --target ${TARGET_ARM64}
+      - name: Build corelib arm64
+        run: cross build -p sylvia-iot-corelib --release --target ${TARGET_ARM64}
+      - name: Build auth arm64
+        run: cross build -p sylvia-iot-auth --release --target ${TARGET_ARM64}
+      - name: Build broker arm64
+        run: cross build -p sylvia-iot-broker --release --target ${TARGET_ARM64}
+      - name: Build coremgr arm64
+        run: cross build -p sylvia-iot-coremgr --release --target ${TARGET_ARM64}
+      - name: Build coremgr-cli arm64
+        run: cross build -p sylvia-iot-coremgr-cli --release --target ${TARGET_ARM64}
+      - name: Build data arm64
+        run: cross build -p sylvia-iot-data --release --target ${TARGET_ARM64}
+      - name: Build sdk arm64
+        run: cross build -p sylvia-iot-sdk --release --target ${TARGET_ARM64}
+      - name: Build router arm64
+        run: cross build -p sylvia-router --release --target ${TARGET_ARM64}
       - name: Prepare assets
         env:
           RELEASE_VER: ${{ github.ref_name }}
         run: |
           mkdir -p ${BIN_DIR}
-          cp target/release/sylvia-iot-auth target/release/sylvia-iot-broker target/release/sylvia-iot-coremgr target/release/sylvia-iot-coremgr-cli target/release/sylvia-iot-data target/release/sylvia-iot-core target/release/sylvia-router target/release/sylvia-router-cli ${BIN_DIR}/
-          cd ${BIN_DIR}
-          strip -o sylvia-iot-auth sylvia-iot-auth && tar cf sylvia-iot-auth.tar sylvia-iot-auth && rm sylvia-iot-auth
-          strip -o sylvia-iot-broker sylvia-iot-broker && tar cf sylvia-iot-broker.tar sylvia-iot-broker && rm sylvia-iot-broker
-          strip -o sylvia-iot-coremgr sylvia-iot-coremgr && tar cf sylvia-iot-coremgr.tar sylvia-iot-coremgr && rm sylvia-iot-coremgr
-          strip -o sylvia-iot-coremgr-cli sylvia-iot-coremgr-cli && tar cf sylvia-iot-coremgr-cli.tar sylvia-iot-coremgr-cli && rm sylvia-iot-coremgr-cli
-          strip -o sylvia-iot-data sylvia-iot-data && tar cf sylvia-iot-data.tar sylvia-iot-data && rm sylvia-iot-data
-          strip -o sylvia-iot-core sylvia-iot-core && tar cf sylvia-iot-core.tar sylvia-iot-core && rm sylvia-iot-core
-          strip -o sylvia-router sylvia-router && tar cf sylvia-router.tar sylvia-router && rm sylvia-router
-          strip -o sylvia-router-cli sylvia-router-cli && tar cf sylvia-router-cli.tar sylvia-router-cli && rm sylvia-router-cli
-          cd ..
+          BINARIES="sylvia-iot-auth sylvia-iot-broker sylvia-iot-coremgr sylvia-iot-coremgr-cli sylvia-iot-data sylvia-iot-core sylvia-router sylvia-router-cli"
+          for TARGET in ${TARGET_X86_64} ${TARGET_ARM64}; do
+            cd target/${TARGET}/release
+            cp $BINARIES ../../../${BIN_DIR}/
+            cd ../../../${BIN_DIR}
+            for BIN in $BINARIES; do
+              ARCH_SUFFIX=$(echo $TARGET | grep -q "aarch64" && echo "arm64" || echo "x86_64")
+              echo "Packing $BIN for $ARCH_SUFFIX"
+              if [ "$ARCH_SUFFIX" = "x86_64" ]; then
+                strip -o $BIN $BIN
+              elif [ "$ARCH_SUFFIX" = "arm64" ]; then
+                aarch64-linux-gnu-strip -o $BIN $BIN
+              fi
+              tar cf ${BIN}-${ARCH_SUFFIX}.tar $BIN
+              rm $BIN
+            done
+            cd ..
+          done
           xz -z -9 -e ${BIN_DIR}/*
-          echo -n ${RELEASE_VER:1} > ${BIN_DIR}/VERSION
       - name: Prepare SBOM
         run: |
           mkdir -p ${SBOM_DIR}
           curl -kLo cargo-sbom https://github.com/psastras/sbom-rs/releases/download/cargo-sbom-${SBOM_VER}/cargo-sbom-x86_64-unknown-linux-gnu
-          chmod +x cargo-sbom
-          ./cargo-sbom --cargo-package general-mq --output-format spdx_json_2_3 > ${SBOM_DIR}/general-mq.spdx.json
-          ./cargo-sbom --cargo-package general-mq --output-format cyclone_dx_json_1_4 > ${SBOM_DIR}/general-mq.cdx.json
-          ./cargo-sbom --cargo-package sylvia-iot-auth --output-format spdx_json_2_3 > ${SBOM_DIR}/sylvia-iot-auth.spdx.json
-          ./cargo-sbom --cargo-package sylvia-iot-auth --output-format cyclone_dx_json_1_4 > ${SBOM_DIR}/sylvia-iot-auth.cdx.json
-          ./cargo-sbom --cargo-package sylvia-iot-broker --output-format spdx_json_2_3 > ${SBOM_DIR}/sylvia-iot-broker.spdx.json
-          ./cargo-sbom --cargo-package sylvia-iot-broker --output-format cyclone_dx_json_1_4 > ${SBOM_DIR}/sylvia-iot-broker.cdx.json
-          ./cargo-sbom --cargo-package sylvia-iot-coremgr --output-format spdx_json_2_3 > ${SBOM_DIR}/sylvia-iot-coremgr.spdx.json
-          ./cargo-sbom --cargo-package sylvia-iot-coremgr --output-format cyclone_dx_json_1_4 > ${SBOM_DIR}/sylvia-iot-coremgr.cdx.json
-          ./cargo-sbom --cargo-package sylvia-iot-coremgr-cli --output-format spdx_json_2_3 > ${SBOM_DIR}/sylvia-iot-coremgr-cli.spdx.json
-          ./cargo-sbom --cargo-package sylvia-iot-coremgr-cli --output-format cyclone_dx_json_1_4 > ${SBOM_DIR}/sylvia-iot-coremgr-cli.cdx.json
-          ./cargo-sbom --cargo-package sylvia-iot-data --output-format spdx_json_2_3 > ${SBOM_DIR}/sylvia-iot-data.spdx.json
-          ./cargo-sbom --cargo-package sylvia-iot-data --output-format cyclone_dx_json_1_4 > ${SBOM_DIR}/sylvia-iot-data.cdx.json
-          ./cargo-sbom --cargo-package sylvia-iot-sdk --output-format spdx_json_2_3 > ${SBOM_DIR}/sylvia-iot-sdk.spdx.json
-          ./cargo-sbom --cargo-package sylvia-iot-sdk --output-format cyclone_dx_json_1_4 > ${SBOM_DIR}/sylvia-iot-sdk.cdx.json
-          ./cargo-sbom --cargo-package sylvia-router --output-format spdx_json_2_3 > ${SBOM_DIR}/sylvia-router.spdx.json
-          ./cargo-sbom --cargo-package sylvia-router --output-format cyclone_dx_json_1_4 > ${SBOM_DIR}/sylvia-router.cdx.json
-          ./cargo-sbom --output-format spdx_json_2_3 > ${SBOM_DIR}/sylvia-iot-core.spdx.json
-          ./cargo-sbom --output-format cyclone_dx_json_1_4 > ${SBOM_DIR}/sylvia-iot-core.cdx.json
+          chmod +x ./cargo-sbom
+          PKGS="general-mq sylvia-iot-auth sylvia-iot-broker sylvia-iot-coremgr sylvia-iot-coremgr-cli sylvia-iot-data sylvia-iot-sdk sylvia-router"
+          FORMATS="spdx_json_2_3 cyclone_dx_json_1_4"
+          for PKG in $PKGS; do
+            for FMT in $FORMATS; do
+              EXT=$(echo $FMT | grep -q spdx && echo "spdx.json" || echo "cdx.json")
+              ./cargo-sbom --cargo-package $PKG --output-format $FMT > ${SBOM_DIR}/$PKG.$EXT
+            done
+          done
+          # sylvia-iot-core (workspace root)
+          for FMT in $FORMATS; do
+            EXT=$(echo $FMT | grep -q spdx && echo "spdx.json" || echo "cdx.json")
+            ./cargo-sbom --output-format $FMT > ${SBOM_DIR}/sylvia-iot-core.$EXT
+          done
           tar cf sbom.tar sbom
           xz -z -9 -e sbom.tar
           mv sbom.tar.xz ${BIN_DIR}/
+      - name: Prepare SHA256SUMS and VERSION
+        run: |
+          cd ${BIN_DIR}
+          sha256sum * > SHA256SUMS
+          echo -n ${RELEASE_VER:1} > ${BIN_DIR}/VERSION
+          cd ..
       - name: Login to Docker Hub
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
-      - name: Docker meta auth
-        id: meta-auth
-        uses: docker/metadata-action@v5
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
         with:
-          images: |
-            woofdogtw/sylvia-iot-auth
-          tags: |
-            type=semver,pattern={{version}}
-            type=semver,pattern={{major}}.{{minor}}
-            type=semver,pattern={{major}}
-      - name: Create auth Docker image
-        uses: docker/build-push-action@v6
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      - name: Build and push multi-arch Docker images for auth
+        uses: ./.github/actions/docker-multiarch
         with:
-          build-args: |
-            BIN_DIR=${{ env.BIN_DIR }}
-            PROJ=sylvia-iot-auth
-          context: .
-          file: ./files/Dockerfile
-          platforms: linux/amd64
-          push: true
-          tags: ${{ steps.meta-auth.outputs.tags }}
-      - name: Docker meta broker
-        id: meta-broker
-        uses: docker/metadata-action@v5
+          proj: sylvia-iot-auth
+          bin_dir: ${{ env.BIN_DIR }}
+      - name: Build and push multi-arch Docker images for broker
+        uses: ./.github/actions/docker-multiarch
         with:
-          images: |
-            woofdogtw/sylvia-iot-broker
-          tags: |
-            type=semver,pattern={{version}}
-            type=semver,pattern={{major}}.{{minor}}
-            type=semver,pattern={{major}}
-      - name: Create broker Docker image
-        uses: docker/build-push-action@v6
+          proj: sylvia-iot-broker
+          bin_dir: ${{ env.BIN_DIR }}
+      - name: Build and push multi-arch Docker images for coremgr
+        uses: ./.github/actions/docker-multiarch
         with:
-          build-args: |
-            BIN_DIR=${{ env.BIN_DIR }}
-            PROJ=sylvia-iot-broker
-          context: .
-          file: ./files/Dockerfile
-          platforms: linux/amd64
-          push: true
-          tags: ${{ steps.meta-broker.outputs.tags }}
-      - name: Docker meta coremgr
-        id: meta-coremgr
-        uses: docker/metadata-action@v5
+          proj: sylvia-iot-coremgr
+          bin_dir: ${{ env.BIN_DIR }}
+      - name: Build and push multi-arch Docker images for data
+        uses: ./.github/actions/docker-multiarch
         with:
-          images: |
-            woofdogtw/sylvia-iot-coremgr
-          tags: |
-            type=semver,pattern={{version}}
-            type=semver,pattern={{major}}.{{minor}}
-            type=semver,pattern={{major}}
-      - name: Create coremgr Docker
-        uses: docker/build-push-action@v6
+          proj: sylvia-iot-data
+          bin_dir: ${{ env.BIN_DIR }}
+      - name: Build and push multi-arch Docker images for core
+        uses: ./.github/actions/docker-multiarch
         with:
-          build-args: |
-            BIN_DIR=${{ env.BIN_DIR }}
-            PROJ=sylvia-iot-coremgr
-          context: .
-          file: ./files/Dockerfile
-          platforms: linux/amd64
-          push: true
-          tags: ${{ steps.meta-coremgr.outputs.tags }}
-      - name: Docker meta data
-        id: meta-data
-        uses: docker/metadata-action@v5
-        with:
-          images: |
-            woofdogtw/sylvia-iot-data
-          tags: |
-            type=semver,pattern={{version}}
-            type=semver,pattern={{major}}.{{minor}}
-            type=semver,pattern={{major}}
-      - name: Create data Docker
-        uses: docker/build-push-action@v6
-        with:
-          build-args: |
-            BIN_DIR=${{ env.BIN_DIR }}
-            PROJ=sylvia-iot-data
-          context: .
-          file: ./files/Dockerfile
-          platforms: linux/amd64
-          push: true
-          tags: ${{ steps.meta-data.outputs.tags }}
-      - name: Docker meta core
-        id: meta-core
-        uses: docker/metadata-action@v5
-        with:
-          images: |
-            woofdogtw/sylvia-iot-core
-          tags: |
-            type=semver,pattern={{version}}
-            type=semver,pattern={{major}}.{{minor}}
-            type=semver,pattern={{major}}
-      - name: Create core Docker
-        uses: docker/build-push-action@v6
-        with:
-          build-args: |
-            BIN_DIR=${{ env.BIN_DIR }}
-            PROJ=sylvia-iot-core
-            CLI=sylvia-iot-coremgr-cli
-          context: .
-          file: ./files/Dockerfile-cli
-          platforms: linux/amd64
-          push: true
-          tags: ${{ steps.meta-core.outputs.tags }}
+          proj: sylvia-iot-core
+          cli: sylvia-iot-coremgr-cli
+          bin_dir: ${{ env.BIN_DIR }}
       - name: Create releases, assets and version
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -1,7 +1,0 @@
-FROM frolvlad/alpine-glibc:alpine-3.18_glibc-2.34
-ARG BIN_DIR
-ARG PROJ
-ARG CLI
-ENV BIN_FILE=${PROJ}
-ADD ${BIN_DIR}/${PROJ}.tar.xz ${BIN_DIR}/${CLI}.tar.xz /usr/local/bin/
-CMD ${BIN_FILE}

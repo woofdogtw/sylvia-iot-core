@@ -1,0 +1,12 @@
+FROM alpine AS builder
+ARG BIN_DIR
+ARG PROJ
+ARG CLI
+ARG ARCH
+ADD ${BIN_DIR}/${PROJ}-${ARCH}.tar.xz ${BIN_DIR}/${CLI}-${ARCH}.tar.xz /
+RUN mv /${PROJ} /app
+RUN mv /${CLI} /app-cli
+
+FROM scratch
+COPY --from=builder /app /app-cli /
+CMD [ "/app" ]
