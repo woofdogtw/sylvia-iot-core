@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.3.5 - 2025-06-30
+
+### Fixed
+
+- Fix CI bugs.
+
 ## 0.3.4 - 2025-06-30
 
 ### Fixed
@@ -32,6 +38,7 @@
 
 - **breaking**: Upgrade Rust to 2024 edition and modify MSRV to 1.85.1.
 - Run rustfmt with 2024 edition.
+- Update Rust to 1.87.0 with GitHub Actions runner image 20250622.1.0.
 - Update dependencies.
 - Release using Ubuntu 24.04.
 

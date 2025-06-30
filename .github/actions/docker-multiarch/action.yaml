@@ -29,7 +29,7 @@ runs:
 
         if [ -n "$CLI" ]; then
           DOCKERFILE_STD=files/Dockerfile.cli
-          DOCKERFILE_ALPINE=files/Dockerfile.alpine.cli
+          DOCKERFILE_ALPINE=files/Dockerfile.cli.alpine
         else
           DOCKERFILE_STD=files/Dockerfile
           DOCKERFILE_ALPINE=files/Dockerfile.alpine
