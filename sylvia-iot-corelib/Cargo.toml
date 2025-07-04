@@ -41,7 +41,7 @@ url = "2.5.4"
 [dev-dependencies]
 axum-test = "17.3.0"
 laboratory = "2.0.0"
-tokio = { version = "1.45.1", features = ["rt-multi-thread"] }
+tokio = { version = "1.46.0", features = ["rt-multi-thread"] }
 
 [profile.release]
 codegen-units = 1
