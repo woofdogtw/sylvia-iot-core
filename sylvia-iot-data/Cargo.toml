@@ -30,8 +30,8 @@ futures = "0.3.31"
 general-mq = { path = "../general-mq" }
 json5 = "0.4.1"
 log = "0.4.27"
-mongodb = "3.2.3"
-reqwest = { version = "0.12.20", default-features = false, features = [
+mongodb = "3.2.4"
+reqwest = { version = "0.12.22", default-features = false, features = [
     "json",
     "rustls-tls",
 ] }
@@ -48,7 +48,7 @@ sylvia-iot-auth = { path = "../sylvia-iot-auth" }
 sylvia-iot-broker = { path = "../sylvia-iot-broker" }
 sylvia-iot-corelib = { path = "../sylvia-iot-corelib" }
 sylvia-iot-coremgr = { path = "../sylvia-iot-coremgr" }
-tokio = { version = "1.45.1", features = [
+tokio = { version = "1.46.0", features = [
     "io-util",
     "macros",
     "rt-multi-thread",

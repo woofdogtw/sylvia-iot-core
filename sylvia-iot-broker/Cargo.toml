@@ -30,9 +30,9 @@ general-mq = { path = "../general-mq" }
 hex = "0.4.3"
 json5 = "0.4.1"
 log = "0.4.27"
-lru = "0.15.0"
-mongodb = "3.2.3"
-reqwest = { version = "0.12.20", default-features = false, features = [
+lru = "0.16.0"
+mongodb = "3.2.4"
+reqwest = { version = "0.12.22", default-features = false, features = [
     "json",
     "rustls-tls",
 ] }
@@ -46,7 +46,7 @@ sqlx = { version = "0.8.6", default-features = false, features = [
     "sqlite",
 ] }
 sylvia-iot-corelib = { path = "../sylvia-iot-corelib" }
-tokio = { version = "1.45.1", features = [
+tokio = { version = "1.46.0", features = [
     "io-util",
     "macros",
     "rt-multi-thread",
