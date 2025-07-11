@@ -18,7 +18,7 @@ lapin = { version = "3.0.0", features = ["rustls"] }
 rand = "0.9.1"
 regex = "1.11.1"
 rumqttc = "0.24.0"
-tokio = { version = "1.46.0", features = [
+tokio = { version = "1.46.1", features = [
     "io-util",
     "macros",
     "rt-multi-thread",
