@@ -1,6 +1,6 @@
 [package]
 name = "sylvia-router"
-version = "0.3.5"
+version = "0.3.6"
 authors = ["Chien-Hong Chan"]
 categories = ["web-programming::http-server"]
 description = "A simple router application with full Sylvia-IoT core components."
@@ -16,7 +16,7 @@ axum = "0.8.4"
 axum-prometheus = "0.8.0"
 axum-server = { version = "0.7.2", features = ["tls-rustls"] }
 chrono = { version = "0.4.41", default-features = false, features = ["serde"] }
-clap = { version = "4.5.40", default-features = false, features = [
+clap = { version = "4.5.41", default-features = false, features = [
     "std",
     "help",
     "usage",
@@ -25,13 +25,13 @@ clap = { version = "4.5.40", default-features = false, features = [
 ipnet = "2.11.0"
 json5 = "0.4.1"
 log = "0.4.27"
-reqwest = { version = "0.12.20", default-features = false, features = [
+reqwest = { version = "0.12.22", default-features = false, features = [
     "json",
     "rustls-tls",
 ] }
-rustls = "0.23.28"
+rustls = "0.23.29"
 serde = { version = "1.0.219", features = ["derive"] }
-serde_json = "1.0.140"
+serde_json = "1.0.141"
 serde_urlencoded = "0.7.1"
 shell-escape = "0.1.5"
 sylvia-iot-auth = "0.3.5"
@@ -41,8 +41,8 @@ sylvia-iot-coremgr = "0.3.5"
 sylvia-iot-coremgr-cli = "0.3.5"
 sylvia-iot-data = "0.3.5"
 sylvia-iot-sdk = "0.3.5"
-sysinfo = "0.35.2"
-tokio = { version = "1.45.1", features = [
+sysinfo = "0.36.1"
+tokio = { version = "1.46.1", features = [
     "io-util",
     "macros",
     "rt-multi-thread",

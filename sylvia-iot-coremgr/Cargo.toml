@@ -1,6 +1,6 @@
 [package]
 name = "sylvia-iot-coremgr"
-version = "0.3.5"
+version = "0.3.6"
 authors = ["Chien-Hong Chan"]
 categories = ["web-programming::http-server"]
 description = "The manager of Sylvia-IoT core modules."
@@ -20,7 +20,7 @@ axum-server = { version = "0.7.2", features = ["tls-rustls"] }
 base64 = "0.22.1"
 bytes = "1.10.1"
 chrono = { version = "0.4.41", default-features = false, features = ["serde"] }
-clap = { version = "4.5.40", default-features = false, features = [
+clap = { version = "4.5.41", default-features = false, features = [
     "std",
     "help",
     "usage",
@@ -33,20 +33,20 @@ general-mq = "0.3.5"
 hex = "0.4.3"
 json5 = "0.4.1"
 log = "0.4.27"
-reqwest = { version = "0.12.20", default-features = false, features = [
+reqwest = { version = "0.12.22", default-features = false, features = [
     "json",
     "rustls-tls",
     "stream",
 ] }
 rumqttd = "0.19.0"
-rustls = "0.23.28"
+rustls = "0.23.29"
 serde = { version = "1.0.219", features = ["derive"] }
-serde_json = "1.0.140"
+serde_json = "1.0.141"
 serde_urlencoded = "0.7.1"
 sylvia-iot-auth = "0.3.5"
 sylvia-iot-broker = "0.3.5"
 sylvia-iot-corelib = "0.3.5"
-tokio = { version = "1.45.1", features = [
+tokio = { version = "1.46.1", features = [
     "io-util",
     "macros",
     "rt-multi-thread",
