@@ -5,16 +5,10 @@ use std::{env, error::Error as StdError, fs};
 use clap::ArgMatches;
 use dirs;
 use serde_json;
-use validators::prelude::*;
+
+use sylvia_iot_corelib::strings;
 
 use super::{Config, Storage};
-
-#[derive(Validator)]
-#[validator(http_ftp_url(local(Allow)))]
-struct HttpFtpURL {
-    url: url::Url,
-    protocol: validators::models::Protocol,
-}
 
 const DEF_AUTH: &'static str = "http://localhost:1080/auth";
 const DEF_COREMGR: &'static str = "http://localhost:3080/coremgr";
@@ -37,40 +31,40 @@ pub fn read_args(args: &ArgMatches) -> Config {
         auth: match args.get_one::<String>("coremgr-cli.auth") {
             None => match env::var("COREMGRCLI_AUTH") {
                 Err(_) => DEF_AUTH.to_string(),
-                Ok(v) => match HttpFtpURL::parse_string(v.as_str()) {
-                    Err(_) => panic!("invalid `coremgr-cli.auth"),
-                    Ok(_) => v,
+                Ok(v) => match strings::is_uri(v.as_str()) {
+                    false => panic!("invalid `coremgr-cli.auth"),
+                    true => v,
                 },
             },
-            Some(v) => match HttpFtpURL::parse_string(v) {
-                Err(_) => panic!("invalid `coremgr-cli.auth"),
-                Ok(_) => v.clone(),
+            Some(v) => match strings::is_uri(v) {
+                false => panic!("invalid `coremgr-cli.auth"),
+                true => v.clone(),
             },
         },
         coremgr: match args.get_one::<String>("coremgr-cli.coremgr") {
             None => match env::var("COREMGRCLI_COREMGR") {
                 Err(_) => DEF_COREMGR.to_string(),
-                Ok(v) => match HttpFtpURL::parse_string(v.as_str()) {
-                    Err(_) => panic!("invalid `coremgr-cli.coremgr"),
-                    Ok(_) => v,
+                Ok(v) => match strings::is_uri(v.as_str()) {
+                    false => panic!("invalid `coremgr-cli.coremgr"),
+                    true => v,
                 },
             },
-            Some(v) => match HttpFtpURL::parse_string(v) {
-                Err(_) => panic!("invalid `coremgr-cli.coremgr"),
-                Ok(_) => v.clone(),
+            Some(v) => match strings::is_uri(v) {
+                false => panic!("invalid `coremgr-cli.coremgr"),
+                true => v.clone(),
             },
         },
         data: match args.get_one::<String>("coremgr-cli.data") {
             None => match env::var("COREMGRCLI_DATA") {
                 Err(_) => DEF_DATA.to_string(),
-                Ok(v) => match HttpFtpURL::parse_string(v.as_str()) {
-                    Err(_) => panic!("invalid `coremgr-cli.data"),
-                    Ok(_) => v,
+                Ok(v) => match strings::is_uri(v.as_str()) {
+                    false => panic!("invalid `coremgr-cli.data"),
+                    true => v,
                 },
             },
-            Some(v) => match HttpFtpURL::parse_string(v) {
-                Err(_) => panic!("invalid `coremgr-cli.data"),
-                Ok(_) => v.clone(),
+            Some(v) => match strings::is_uri(v) {
+                false => panic!("invalid `coremgr-cli.data"),
+                true => v.clone(),
             },
         },
         client_id: match args.get_one::<String>("coremgr-cli.client-id") {
@@ -81,22 +75,19 @@ pub fn read_args(args: &ArgMatches) -> Config {
                     _ => v,
                 },
             },
-            Some(v) => match HttpFtpURL::parse_string(v) {
-                Err(_) => panic!("invalid `coremgr-cli.client-id"),
-                Ok(_) => v.clone(),
-            },
+            Some(v) => v.to_string(),
         },
         redirect_uri: match args.get_one::<String>("coremgr-cli.redirect-uri") {
             None => match env::var("COREMGRCLI_REDIRECT_URI") {
                 Err(_) => panic!("missing `coremgr-cli.redirect-uri` or `COREMGRCLI_REDIRECT_URI`"),
-                Ok(v) => match HttpFtpURL::parse_string(v.as_str()) {
-                    Err(_) => panic!("invalid `coremgr-cli.redirect-uri"),
-                    Ok(_) => v,
+                Ok(v) => match strings::is_uri(v.as_str()) {
+                    false => panic!("invalid `coremgr-cli.redirect-uri"),
+                    true => v,
                 },
             },
-            Some(v) => match HttpFtpURL::parse_string(v) {
-                Err(_) => panic!("invalid `coremgr-cli.redirect-uri"),
-                Ok(_) => v.clone(),
+            Some(v) => match strings::is_uri(v) {
+                false => panic!("invalid `coremgr-cli.redirect-uri"),
+                true => v.clone(),
             },
         },
     }

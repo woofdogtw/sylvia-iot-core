@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.3.6 - 2025-07-25
+
+### Changed
+
+- Update dependencies and fix vulnerabilities.
+- Update Rust to 1.88.0 with GitHub Actions runner image 20250720.1.0.
+
+### Fixed
+
+- **sylvia-iot-core-cli**: Fix client ID validation.
+
 ## 0.3.5 - 2025-06-30
 
 ### Fixed
