@@ -1,6 +1,6 @@
 [package]
 name = "sylvia-iot-data"
-version = "0.3.5"
+version = "0.3.6"
 authors = ["Chien-Hong Chan"]
 categories = ["web-programming::http-server"]
 description = "The data storage of Sylvia-IoT core modules."
@@ -37,7 +37,7 @@ reqwest = { version = "0.12.22", default-features = false, features = [
 ] }
 rustls = "0.23.29"
 serde = { version = "1.0.219", features = ["derive"] }
-serde_json = "1.0.140"
+serde_json = "1.0.141"
 sql-builder = "3.1.1"
 sqlx = { version = "0.8.6", default-features = false, features = [
     "macros",
