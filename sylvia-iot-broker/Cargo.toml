@@ -19,7 +19,7 @@ axum-prometheus = "0.8.0"
 axum-server = { version = "0.7.2", features = ["tls-rustls"] }
 bson = { version = "2.15.0", features = ["chrono-0_4"] }
 chrono = { version = "0.4.41", default-features = false, features = ["serde"] }
-clap = { version = "4.5.42", default-features = false, features = [
+clap = { version = "4.5.43", default-features = false, features = [
     "std",
     "help",
     "usage",
@@ -46,7 +46,7 @@ sqlx = { version = "0.8.6", default-features = false, features = [
     "sqlite",
 ] }
 sylvia-iot-corelib = { path = "../sylvia-iot-corelib" }
-tokio = { version = "1.47.0", features = [
+tokio = { version = "1.47.1", features = [
     "io-util",
     "macros",
     "rt-multi-thread",
