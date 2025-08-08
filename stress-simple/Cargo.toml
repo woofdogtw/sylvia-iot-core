@@ -11,7 +11,7 @@ chrono = { version = "0.4.41" }
 general-mq = { path = "../general-mq" }
 serde = { version = "1.0.219", features = ["derive"] }
 serde_json = "1.0.142"
-tokio = { version = "1.47.0", features = [
+tokio = { version = "1.47.1", features = [
     "io-util",
     "macros",
     "rt-multi-thread",
