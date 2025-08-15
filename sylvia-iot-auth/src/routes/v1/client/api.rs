@@ -481,7 +481,10 @@ fn get_sort_cond(sort_args: &Option<String>) -> Result<Vec<SortCond>, ErrResp> {
     }
 }
 
-fn get_updates(body: &request::PatchClientBody, has_secret: bool) -> Result<Updates, ErrResp> {
+fn get_updates(
+    body: &'_ request::PatchClientBody,
+    has_secret: bool,
+) -> Result<Updates<'_>, ErrResp> {
     let mut updates = Updates {
         ..Default::default()
     };

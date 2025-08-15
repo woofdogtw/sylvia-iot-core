@@ -63,7 +63,7 @@ pub fn to_json(code: &str, message: Option<&str>) -> String {
 }
 
 impl ErrResp {
-    fn resp_json(&self) -> RespJson {
+    fn resp_json(&'_ self) -> RespJson<'_> {
         match *self {
             ErrResp::ErrAuth(ref desc) => RespJson {
                 code: E_AUTH,

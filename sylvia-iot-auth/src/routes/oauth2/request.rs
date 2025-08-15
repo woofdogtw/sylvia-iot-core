@@ -154,33 +154,33 @@ impl OxideAuthorizationRequest for AuthorizationRequest {
         true
     }
 
-    fn client_id(&self) -> Option<Cow<str>> {
+    fn client_id(&'_ self) -> Option<Cow<'_, str>> {
         Some(Cow::from(self.client_id.as_str()))
     }
 
-    fn scope(&self) -> Option<Cow<str>> {
+    fn scope(&'_ self) -> Option<Cow<'_, str>> {
         match self.scope.as_ref() {
             None => None,
             Some(scope) => Some(Cow::from(scope)),
         }
     }
 
-    fn redirect_uri(&self) -> Option<Cow<str>> {
+    fn redirect_uri(&'_ self) -> Option<Cow<'_, str>> {
         Some(Cow::from(&self.redirect_uri))
     }
 
-    fn state(&self) -> Option<Cow<str>> {
+    fn state(&'_ self) -> Option<Cow<'_, str>> {
         match self.state.as_ref() {
             None => None,
             Some(state) => Some(Cow::from(state)),
         }
     }
 
-    fn response_type(&self) -> Option<Cow<str>> {
+    fn response_type(&'_ self) -> Option<Cow<'_, str>> {
         Some(Cow::from(&self.response_type))
     }
 
-    fn extension(&self, _key: &str) -> Option<Cow<str>> {
+    fn extension(&'_ self, _key: &str) -> Option<Cow<'_, str>> {
         None
     }
 }
@@ -211,14 +211,14 @@ impl OxideAccessTokenRequest for AccessTokenRequest {
         true
     }
 
-    fn code(&self) -> Option<Cow<str>> {
+    fn code(&'_ self) -> Option<Cow<'_, str>> {
         match self.code.as_ref() {
             None => None,
             Some(code) => Some(Cow::from(code)),
         }
     }
 
-    fn authorization(&self) -> Authorization {
+    fn authorization(&'_ self) -> Authorization<'_> {
         match self.authorization.as_ref() {
             None => Authorization::None,
             Some(auth) => match auth.1.len() {
@@ -231,25 +231,25 @@ impl OxideAccessTokenRequest for AccessTokenRequest {
         }
     }
 
-    fn client_id(&self) -> Option<Cow<str>> {
+    fn client_id(&'_ self) -> Option<Cow<'_, str>> {
         match self.client_id.as_ref() {
             None => None,
             Some(id) => Some(Cow::from(id)),
         }
     }
 
-    fn redirect_uri(&self) -> Option<Cow<str>> {
+    fn redirect_uri(&'_ self) -> Option<Cow<'_, str>> {
         match self.redirect_uri.as_ref() {
             None => None,
             Some(uri) => Some(Cow::from(uri)),
         }
     }
 
-    fn grant_type(&self) -> Option<Cow<str>> {
+    fn grant_type(&'_ self) -> Option<Cow<'_, str>> {
         Some(Cow::from(&self.grant_type))
     }
 
-    fn extension(&self, _key: &str) -> Option<Cow<str>> {
+    fn extension(&'_ self, _key: &str) -> Option<Cow<'_, str>> {
         None
     }
 
@@ -286,29 +286,29 @@ impl OxideRefreshTokenRequest for RefreshTokenRequest {
         true
     }
 
-    fn refresh_token(&self) -> Option<Cow<str>> {
+    fn refresh_token(&'_ self) -> Option<Cow<'_, str>> {
         Some(Cow::from(&self.refresh_token))
     }
 
-    fn scope(&self) -> Option<Cow<str>> {
+    fn scope(&'_ self) -> Option<Cow<'_, str>> {
         match self.scope.as_ref() {
             None => None,
             Some(scope) => Some(Cow::from(scope)),
         }
     }
 
-    fn grant_type(&self) -> Option<Cow<str>> {
+    fn grant_type(&'_ self) -> Option<Cow<'_, str>> {
         Some(Cow::from(&self.grant_type))
     }
 
-    fn authorization(&self) -> Option<(Cow<str>, Cow<[u8]>)> {
+    fn authorization(&'_ self) -> Option<(Cow<'_, str>, Cow<'_, [u8]>)> {
         match self.authorization.as_ref() {
             None => None,
             Some(auth) => Some((Cow::from(auth.0.as_str()), Cow::from(auth.1.as_slice()))),
         }
     }
 
-    fn extension(&self, _key: &str) -> Option<Cow<str>> {
+    fn extension(&'_ self, _key: &str) -> Option<Cow<'_, str>> {
         None
     }
 }
