@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.3.7 - 2025-08-15
+
+### Changed
+
+- Update dependencies and fix vulnerabilities.
+- Update Rust to 1.89.0 with GitHub Actions runner image 20250810.1.0.
+
 ## 0.3.6 - 2025-07-25
 
 ### Changed

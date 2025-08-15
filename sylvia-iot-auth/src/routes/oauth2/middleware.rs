@@ -221,7 +221,7 @@ impl OxideResourceRequest for ResourceRequest {
         true
     }
 
-    fn token(&self) -> Option<Cow<str>> {
+    fn token(&'_ self) -> Option<Cow<'_, str>> {
         match self.authorization.as_deref() {
             None => None,
             Some(auth) => Some(Cow::from(auth)),

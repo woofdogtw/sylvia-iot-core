@@ -404,7 +404,7 @@ pub async fn delete_admin_user(
     Ok(StatusCode::NO_CONTENT)
 }
 
-fn get_updates(body: &request::PatchUserData) -> Result<Updates, ErrResp> {
+fn get_updates(body: &'_ request::PatchUserData) -> Result<Updates<'_>, ErrResp> {
     let mut updates = Updates {
         ..Default::default()
     };
