@@ -7,6 +7,6 @@ ADD ${BIN_DIR}/${PROJ}-${ARCH}.tar.xz ${BIN_DIR}/${CLI}-${ARCH}.tar.xz /
 RUN mv /${PROJ} /app
 RUN mv /${CLI} /app-cli
 
-FROM alpine:3.22.0
+FROM alpine:3.22.1
 COPY --from=builder /app /app-cli /usr/local/bin/
 CMD [ "/usr/local/bin/app" ]

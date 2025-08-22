@@ -1,6 +1,6 @@
 [package]
 name = "sylvia-iot-coremgr"
-version = "0.3.7"
+version = "0.3.8"
 authors = ["Chien-Hong Chan"]
 categories = ["web-programming::http-server"]
 description = "The manager of Sylvia-IoT core modules."
@@ -41,7 +41,7 @@ reqwest = { version = "0.12.23", default-features = false, features = [
 rumqttd = "0.19.0"
 rustls = "0.23.31"
 serde = { version = "1.0.219", features = ["derive"] }
-serde_json = "1.0.142"
+serde_json = "1.0.143"
 serde_urlencoded = "0.7.1"
 sylvia-iot-auth = { path = "../sylvia-iot-auth" }
 sylvia-iot-broker = { path = "../sylvia-iot-broker" }
@@ -59,10 +59,10 @@ tower-http = { version = "0.6.6", default-features = false, features = [
     "normalize-path",
     "timeout",
 ] }
-url = "2.5.4"
+url = "2.5.6"
 
 [dev-dependencies]
-axum-test = "17.3.0"
+axum-test = "18.0.0"
 laboratory = "2.0.0"
 
 [profile.release]

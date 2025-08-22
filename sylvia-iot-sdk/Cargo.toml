@@ -1,6 +1,6 @@
 [package]
 name = "sylvia-iot-sdk"
-version = "0.3.7"
+version = "0.3.8"
 authors = ["Chien-Hong Chan"]
 categories = ["web-programming::http-server"]
 description = "SDK for developing networks (adapters) and applications on Sylvia-IoT."
@@ -21,7 +21,7 @@ general-mq = { path = "../general-mq" }
 hex = "0.4.3"
 reqwest = { version = "0.12.23", default-features = false, features = ["json"] }
 serde = { version = "1.0.219", features = ["derive"] }
-serde_json = "1.0.142"
+serde_json = "1.0.143"
 sylvia-iot-corelib = { path = "../sylvia-iot-corelib" }
 tokio = { version = "1.47.1", features = [
     "io-util",
@@ -30,10 +30,10 @@ tokio = { version = "1.47.1", features = [
     "time",
 ] }
 tower = "0.5.2"
-url = "2.5.4"
+url = "2.5.6"
 
 [dev-dependencies]
-axum-test = "17.3.0"
+axum-test = "18.0.0"
 laboratory = "2.0.0"
 sylvia-iot-auth = { path = "../sylvia-iot-auth" }
 sylvia-iot-broker = { path = "../sylvia-iot-broker" }
