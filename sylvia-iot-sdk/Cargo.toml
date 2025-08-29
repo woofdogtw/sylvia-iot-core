@@ -30,10 +30,10 @@ tokio = { version = "1.47.1", features = [
     "time",
 ] }
 tower = "0.5.2"
-url = "2.5.6"
+url = "2.5.7"
 
 [dev-dependencies]
-axum-test = "18.0.0"
+axum-test = "18.0.1"
 laboratory = "2.0.0"
 sylvia-iot-auth = { path = "../sylvia-iot-auth" }
 sylvia-iot-broker = { path = "../sylvia-iot-broker" }
