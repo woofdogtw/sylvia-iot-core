@@ -19,7 +19,7 @@ axum-prometheus = "0.9.0"
 axum-server = { version = "0.7.2", features = ["tls-rustls"] }
 bson = { version = "2.15.0", features = ["chrono-0_4"] }
 chrono = { version = "0.4.41", default-features = false, features = ["serde"] }
-clap = { version = "4.5.45", default-features = false, features = [
+clap = { version = "4.5.46", default-features = false, features = [
     "std",
     "help",
     "usage",
@@ -60,10 +60,10 @@ tower-http = { version = "0.6.6", default-features = false, features = [
     "normalize-path",
     "timeout",
 ] }
-url = "2.5.6"
+url = "2.5.7"
 
 [dev-dependencies]
-axum-test = "18.0.0"
+axum-test = "18.0.1"
 laboratory = "2.0.0"
 serde_urlencoded = "0.7.1"
 sylvia-iot-auth = { path = "../sylvia-iot-auth" }

@@ -16,7 +16,7 @@ axum = "0.8.4"
 axum-prometheus = "0.9.0"
 axum-server = { version = "0.7.2", features = ["tls-rustls"] }
 chrono = { version = "0.4.41", default-features = false, features = ["serde"] }
-clap = { version = "4.5.45", default-features = false, features = [
+clap = { version = "4.5.46", default-features = false, features = [
     "std",
     "help",
     "usage",
