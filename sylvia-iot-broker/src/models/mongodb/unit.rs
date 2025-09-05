@@ -5,7 +5,7 @@ use futures::TryStreamExt;
 use mongodb::{
     Cursor as MongoDbCursor, Database,
     action::Find,
-    bson::{self, DateTime, Document, Regex, doc},
+    bson::{self, DateTime, Document, Regex, doc, raw::CString},
 };
 use serde::{Deserialize, Serialize};
 
@@ -133,7 +133,7 @@ impl UnitModel for Model {
                 owner_id: item.owner_id,
                 member_ids: item.member_ids,
                 name: item.name,
-                info: bson::from_document(item.info)?,
+                info: bson::deserialize_from_document(item.info)?,
             }));
         }
         Ok(None)
@@ -148,7 +148,7 @@ impl UnitModel for Model {
             owner_id: unit.owner_id.clone(),
             member_ids: unit.member_ids.clone(),
             name: unit.name.clone(),
-            info: bson::to_document(&unit.info)?,
+            info: bson::serialize_to_document(&unit.info)?,
         };
         self.conn
             .collection::<Schema>(COL_NAME)
@@ -202,7 +202,7 @@ impl Cursor for DbCursor {
                 owner_id: item.owner_id,
                 member_ids: item.member_ids,
                 name: item.name,
-                info: bson::from_document(item.info)?,
+                info: bson::deserialize_from_document(item.info)?,
             }));
         }
         Ok(None)
@@ -244,22 +244,18 @@ fn get_list_query_filter(cond: &ListQueryCond) -> Document {
         filter.insert("unitId", value);
     }
     if let Some(value) = cond.code_contains {
-        filter.insert(
-            "code",
-            Regex {
-                pattern: value.to_string(),
-                options: "i".to_string(),
-            },
-        );
+        if let Ok(pattern) = CString::try_from(value) {
+            if let Ok(options) = CString::try_from("i") {
+                filter.insert("code", Regex { pattern, options });
+            }
+        }
     }
     if let Some(value) = cond.name_contains {
-        filter.insert(
-            "name",
-            Regex {
-                pattern: value.to_string(),
-                options: "i".to_string(),
-            },
-        );
+        if let Ok(pattern) = CString::try_from(value) {
+            if let Ok(options) = CString::try_from("i") {
+                filter.insert("name", Regex { pattern, options });
+            }
+        }
     }
     filter
 }
@@ -330,7 +326,7 @@ fn get_update_doc(updates: &Updates) -> Option<Document> {
     if let Some(value) = updates.info {
         document.insert(
             "info",
-            match bson::to_document(value) {
+            match bson::serialize_to_document(value) {
                 Err(_) => return None,
                 Ok(doc) => doc,
             },

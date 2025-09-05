@@ -138,7 +138,7 @@ impl CoremgrOpDataModel for Model {
             path: data.path.clone(),
             body: match data.body.as_ref() {
                 None => None,
-                Some(body) => Some(bson::to_document(body)?),
+                Some(body) => Some(bson::serialize_to_document(body)?),
             },
             user_id: data.user_id.clone(),
             client_id: data.client_id.clone(),
@@ -185,7 +185,7 @@ impl Cursor for DbCursor {
                 path: item.path,
                 body: match item.body {
                     None => None,
-                    Some(body) => bson::from_document(body)?,
+                    Some(body) => bson::deserialize_from_document(body)?,
                 },
                 user_id: item.user_id,
                 client_id: item.client_id,

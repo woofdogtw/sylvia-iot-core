@@ -20,7 +20,7 @@ axum-server = { version = "0.7.2", features = ["tls-rustls"] }
 base64 = "0.22.1"
 bytes = "1.10.1"
 chrono = { version = "0.4.41", default-features = false, features = ["serde"] }
-clap = { version = "4.5.46", default-features = false, features = [
+clap = { version = "4.5.47", default-features = false, features = [
     "std",
     "help",
     "usage",
@@ -32,7 +32,7 @@ futures-util = "0.3.31"
 general-mq = { path = "../general-mq" }
 hex = "0.4.3"
 json5 = "0.4.1"
-log = "0.4.27"
+log = "0.4.28"
 reqwest = { version = "0.12.23", default-features = false, features = [
     "json",
     "rustls-tls",
@@ -62,7 +62,7 @@ tower-http = { version = "0.6.6", default-features = false, features = [
 url = "2.5.7"
 
 [dev-dependencies]
-axum-test = "18.0.1"
+axum-test = "18.0.2"
 laboratory = "2.0.0"
 
 [profile.release]
