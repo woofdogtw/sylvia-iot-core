@@ -141,7 +141,7 @@ impl ApplicationDlDataModel for Model {
             data: data.data.clone(),
             extension: match data.extension.as_ref() {
                 None => None,
-                Some(extension) => Some(bson::to_document(extension)?),
+                Some(extension) => Some(bson::serialize_to_document(extension)?),
             },
         };
         self.conn
@@ -204,7 +204,7 @@ impl Cursor for DbCursor {
                 data: item.data,
                 extension: match item.extension {
                     None => None,
-                    Some(extension) => Some(bson::from_document(extension)?),
+                    Some(extension) => Some(bson::deserialize_from_document(extension)?),
                 },
             }));
         }

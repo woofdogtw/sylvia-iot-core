@@ -14,7 +14,7 @@ rust-version = "1.85.1"
 [dependencies]
 amqprs = { version = "2.1.2", features = ["tls", "urispec"] }
 async-trait = "0.1.89"
-lapin = { version = "3.2.1", features = ["rustls"] }
+lapin = { version = "3.4.0", features = ["rustls"] }
 rand = "0.9.2"
 regex = "1.11.2"
 rumqttc = "0.24.0"

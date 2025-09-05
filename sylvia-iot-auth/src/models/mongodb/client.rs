@@ -5,7 +5,7 @@ use futures::TryStreamExt;
 use mongodb::{
     Cursor as MongoDbCursor, Database,
     action::Find,
-    bson::{Bson, DateTime, Document, Regex, doc},
+    bson::{Bson, DateTime, Document, Regex, doc, raw::CString},
 };
 use serde::{Deserialize, Serialize};
 
@@ -239,13 +239,11 @@ fn get_list_query_filter(cond: &ListQueryCond) -> Document {
         filter.insert("clientId", value);
     }
     if let Some(value) = cond.name_contains {
-        filter.insert(
-            "name",
-            Regex {
-                pattern: value.to_string(),
-                options: "i".to_string(),
-            },
-        );
+        if let Ok(pattern) = CString::try_from(value) {
+            if let Ok(options) = CString::try_from("i") {
+                filter.insert("name", Regex { pattern, options });
+            }
+        }
     }
     filter
 }
