@@ -1,6 +1,6 @@
 [package]
 name = "sylvia-iot-broker"
-version = "0.3.8"
+version = "0.3.9"
 authors = ["Chien-Hong Chan"]
 categories = ["web-programming::http-server"]
 description = "The message broker module of the Sylvia-IoT platform."
