@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.3.9 - 2025-09-19
+
+### Fixed
+
+- Fix CI bugs.
+
 ## 0.3.8 - 2025-09-19
 
 ### Changed
