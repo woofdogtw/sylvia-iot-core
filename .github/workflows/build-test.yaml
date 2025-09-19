@@ -18,7 +18,7 @@ jobs:
     runs-on: ubuntu-24.04
     services:
       rabbitmq:
-        image: rabbitmq:4.1.3-management-alpine
+        image: rabbitmq:4.1.4-management-alpine
         ports:
           - 5671:5671
           - 5672:5672
@@ -81,7 +81,7 @@ jobs:
     runs-on: ubuntu-24.04
     services:
       mongo:
-        image: mongo:8.0.12
+        image: mongo:8.0.13
         ports:
           - 27017:27017
       redis:
@@ -140,11 +140,11 @@ jobs:
     runs-on: ubuntu-24.04
     services:
       mongo:
-        image: mongo:8.0.12
+        image: mongo:8.0.13
         ports:
           - 27017:27017
       rabbitmq:
-        image: rabbitmq:4.1.3-management-alpine
+        image: rabbitmq:4.1.4-management-alpine
         ports:
           - 5671:5671
           - 5672:5672
@@ -257,11 +257,11 @@ jobs:
     runs-on: ubuntu-24.04
     services:
       mongo:
-        image: mongo:8.0.12
+        image: mongo:8.0.13
         ports:
           - 27017:27017
       rabbitmq:
-        image: rabbitmq:4.1.3-management-alpine
+        image: rabbitmq:4.1.4-management-alpine
         ports:
           - 5671:5671
           - 5672:5672
@@ -339,11 +339,11 @@ jobs:
     runs-on: ubuntu-24.04
     services:
       mongo:
-        image: mongo:8.0.12
+        image: mongo:8.0.13
         ports:
           - 27017:27017
       rabbitmq:
-        image: rabbitmq:4.1.3-management-alpine
+        image: rabbitmq:4.1.4-management-alpine
         ports:
           - 5671:5671
           - 5672:5672
@@ -406,7 +406,7 @@ jobs:
     runs-on: ubuntu-24.04
     services:
       rabbitmq:
-        image: rabbitmq:4.1.3-management-alpine
+        image: rabbitmq:4.1.4-management-alpine
         ports:
           - 5671:5671
           - 5672:5672

@@ -201,7 +201,7 @@ impl<'a> common_test::Db for Db<'a> {
                 data: item.data,
                 extension: match item.extension {
                     None => None,
-                    Some(extension) => Some(bson::from_document(extension)?),
+                    Some(extension) => Some(bson::deserialize_from_document(extension)?),
                 },
             }));
         }

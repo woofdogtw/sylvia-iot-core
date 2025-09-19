@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.3.8 - 2025-09-19
+
+### Changed
+
+- Update dependencies.
+- Use Docker buildx for multi-arch Docker images.
+
 ## 0.3.7 - 2025-08-15
 
 ### Changed
