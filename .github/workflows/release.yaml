@@ -171,10 +171,12 @@ jobs:
         uses: docker/setup-qemu-action@v3
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
-      - name: Docker meta auth
+      - name: Docker meta auth - scratch
         id: meta-auth
         uses: docker/metadata-action@v5
         with:
+          flavor: |
+            latest=true
           images: |
             woofdogtw/sylvia-iot-auth
             ghcr.io/woofdogtw/sylvia-iot-auth
@@ -194,6 +196,19 @@ jobs:
           push: true
           tags: ${{ steps.meta-auth.outputs.tags }}
           target: scratch
+      - name: Docker meta auth - alpine
+        id: meta-auth-alpine
+        uses: docker/metadata-action@v5
+        with:
+          flavor: |
+            latest=false
+          images: |
+            woofdogtw/sylvia-iot-auth
+            ghcr.io/woofdogtw/sylvia-iot-auth
+          tags: |
+            type=semver,pattern={{version}}-alpine
+            type=semver,pattern={{major}}.{{minor}}-alpine
+            type=semver,pattern={{major}}-alpine
       - name: Create auth Docker image - alpine
         uses: docker/build-push-action@v6
         with:
@@ -204,12 +219,14 @@ jobs:
           file: ./files/Dockerfile
           platforms: linux/amd64,linux/arm64
           push: true
-          tags: ${{ steps.meta-auth.outputs.tags }}-alpine
+          tags: ${{ steps.meta-auth-alpine.outputs.tags }}
           target: alpine
-      - name: Docker meta broker
+      - name: Docker meta broker - scratch
         id: meta-broker
         uses: docker/metadata-action@v5
         with:
+          flavor: |
+            latest=true
           images: |
             woofdogtw/sylvia-iot-broker
             ghcr.io/woofdogtw/sylvia-iot-broker
@@ -229,6 +246,19 @@ jobs:
           push: true
           tags: ${{ steps.meta-broker.outputs.tags }}
           target: scratch
+      - name: Docker meta broker - alpine
+        id: meta-broker-alpine
+        uses: docker/metadata-action@v5
+        with:
+          flavor: |
+            latest=false
+          images: |
+            woofdogtw/sylvia-iot-broker
+            ghcr.io/woofdogtw/sylvia-iot-broker
+          tags: |
+            type=semver,pattern={{version}}-alpine
+            type=semver,pattern={{major}}.{{minor}}-alpine
+            type=semver,pattern={{major}}-alpine
       - name: Create broker Docker image - alpine
         uses: docker/build-push-action@v6
         with:
@@ -239,12 +269,14 @@ jobs:
           file: ./files/Dockerfile
           platforms: linux/amd64,linux/arm64
           push: true
-          tags: ${{ steps.meta-broker.outputs.tags }}-alpine
+          tags: ${{ steps.meta-broker-alpine.outputs.tags }}
           target: alpine
-      - name: Docker meta coremgr
+      - name: Docker meta coremgr - scratch
         id: meta-coremgr
         uses: docker/metadata-action@v5
         with:
+          flavor: |
+            latest=true
           images: |
             woofdogtw/sylvia-iot-coremgr
             ghcr.io/woofdogtw/sylvia-iot-coremgr
@@ -264,6 +296,19 @@ jobs:
           push: true
           tags: ${{ steps.meta-coremgr.outputs.tags }}
           target: scratch
+      - name: Docker meta coremgr - alpine
+        id: meta-coremgr-alpine
+        uses: docker/metadata-action@v5
+        with:
+          flavor: |
+            latest=false
+          images: |
+            woofdogtw/sylvia-iot-coremgr
+            ghcr.io/woofdogtw/sylvia-iot-coremgr
+          tags: |
+            type=semver,pattern={{version}}-alpine
+            type=semver,pattern={{major}}.{{minor}}-alpine
+            type=semver,pattern={{major}}-alpine
       - name: Create coremgr Docker image - alpine
         uses: docker/build-push-action@v6
         with:
@@ -274,12 +319,14 @@ jobs:
           file: ./files/Dockerfile
           platforms: linux/amd64,linux/arm64
           push: true
-          tags: ${{ steps.meta-coremgr.outputs.tags }}-alpine
+          tags: ${{ steps.meta-coremgr-alpine.outputs.tags }}
           target: alpine
-      - name: Docker meta data
+      - name: Docker meta data - scratch
         id: meta-data
         uses: docker/metadata-action@v5
         with:
+          flavor: |
+            latest=true
           images: |
             woofdogtw/sylvia-iot-data
             ghcr.io/woofdogtw/sylvia-iot-data
@@ -299,6 +346,19 @@ jobs:
           push: true
           tags: ${{ steps.meta-data.outputs.tags }}
           target: scratch
+      - name: Docker meta data - alpine
+        id: meta-data-alpine
+        uses: docker/metadata-action@v5
+        with:
+          flavor: |
+            latest=false
+          images: |
+            woofdogtw/sylvia-iot-data
+            ghcr.io/woofdogtw/sylvia-iot-data
+          tags: |
+            type=semver,pattern={{version}}-alpine
+            type=semver,pattern={{major}}.{{minor}}-alpine
+            type=semver,pattern={{major}}-alpine
       - name: Create data Docker image - alpine
         uses: docker/build-push-action@v6
         with:
@@ -309,12 +369,14 @@ jobs:
           file: ./files/Dockerfile
           platforms: linux/amd64,linux/arm64
           push: true
-          tags: ${{ steps.meta-data.outputs.tags }}-alpine
+          tags: ${{ steps.meta-data-alpine.outputs.tags }}
           target: alpine
-      - name: Docker meta core
+      - name: Docker meta core - scratch
         id: meta-core
         uses: docker/metadata-action@v5
         with:
+          flavor: |
+            latest=true
           images: |
             woofdogtw/sylvia-iot-core
             ghcr.io/woofdogtw/sylvia-iot-core
@@ -334,6 +396,19 @@ jobs:
           push: true
           tags: ${{ steps.meta-core.outputs.tags }}
           target: scratch
+      - name: Docker meta core - alpine
+        id: meta-core-alpine
+        uses: docker/metadata-action@v5
+        with:
+          flavor: |
+            latest=false
+          images: |
+            woofdogtw/sylvia-iot-core
+            ghcr.io/woofdogtw/sylvia-iot-core
+          tags: |
+            type=semver,pattern={{version}}-alpine
+            type=semver,pattern={{major}}.{{minor}}-alpine
+            type=semver,pattern={{major}}-alpine
       - name: Create core Docker image - alpine
         uses: docker/build-push-action@v6
         with:
@@ -345,7 +420,7 @@ jobs:
           file: ./files/Dockerfile.cli
           platforms: linux/amd64,linux/arm64
           push: true
-          tags: ${{ steps.meta-core.outputs.tags }}-alpine
+          tags: ${{ steps.meta-core-alpine.outputs.tags }}
           target: alpine
       - name: Create releases, assets and version
         env:
