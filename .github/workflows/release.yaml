@@ -170,33 +170,183 @@ jobs:
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-      - name: Build and push multi-arch Docker images for auth
-        uses: ./.github/actions/docker-multiarch
+        uses: docker/setup-buildx-action@3
+      - name: Docker meta auth
+        id: meta-auth
+        uses: docker/metadata-action@v5
         with:
-          proj: sylvia-iot-auth
-          bin_dir: ${{ env.BIN_DIR }}
-      - name: Build and push multi-arch Docker images for broker
-        uses: ./.github/actions/docker-multiarch
+          images: |
+            woofdogtw/sylvia-iot-auth
+            ghcr.io/woofdogtw/sylvia-iot-auth
+          tags: |
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=semver,pattern={{major}}
+      - name: Create auth Docker image - scratch
+        uses: docker/build-push-action@v6
         with:
-          proj: sylvia-iot-broker
-          bin_dir: ${{ env.BIN_DIR }}
-      - name: Build and push multi-arch Docker images for coremgr
-        uses: ./.github/actions/docker-multiarch
+          build-args: |
+            BIN_DIR=${{ env.BIN_DIR }}
+            PROJ=sylvia-iot-auth
+          context: .
+          file: ./files/Dockerfile
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ steps.meta-auth.outputs.tags }}
+          target: scratch
+      - name: Create auth Docker image - alpine
+        uses: docker/build-push-action@v6
         with:
-          proj: sylvia-iot-coremgr
-          bin_dir: ${{ env.BIN_DIR }}
-      - name: Build and push multi-arch Docker images for data
-        uses: ./.github/actions/docker-multiarch
+          build-args: |
+            BIN_DIR=${{ env.BIN_DIR }}
+            PROJ=sylvia-iot-auth
+          context: .
+          file: ./files/Dockerfile
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ steps.meta-auth.outputs.tags }}-alpine
+          target: alpine
+      - name: Docker meta broker
+        id: meta-broker
+        uses: docker/metadata-action@v5
         with:
-          proj: sylvia-iot-data
-          bin_dir: ${{ env.BIN_DIR }}
-      - name: Build and push multi-arch Docker images for core
-        uses: ./.github/actions/docker-multiarch
+          images: |
+            woofdogtw/sylvia-iot-broker
+            ghcr.io/woofdogtw/sylvia-iot-broker
+          tags: |
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=semver,pattern={{major}}
+      - name: Create broker Docker image - scratch
+        uses: docker/build-push-action@v6
         with:
-          proj: sylvia-iot-core
-          cli: sylvia-iot-coremgr-cli
-          bin_dir: ${{ env.BIN_DIR }}
+          build-args: |
+            BIN_DIR=${{ env.BIN_DIR }}
+            PROJ=sylvia-iot-broker
+          context: .
+          file: ./files/Dockerfile
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ steps.meta-broker.outputs.tags }}
+          target: scratch
+      - name: Create broker Docker image - alpine
+        uses: docker/build-push-action@v6
+        with:
+          build-args: |
+            BIN_DIR=${{ env.BIN_DIR }}
+            PROJ=sylvia-iot-broker
+          context: .
+          file: ./files/Dockerfile
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ steps.meta-broker.outputs.tags }}-alpine
+          target: alpine
+      - name: Docker meta coremgr
+        id: meta-coremgr
+        uses: docker/metadata-action@v5
+        with:
+          images: |
+            woofdogtw/sylvia-iot-coremgr
+            ghcr.io/woofdogtw/sylvia-iot-coremgr
+          tags: |
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=semver,pattern={{major}}
+      - name: Create coremgr Docker image - scratch
+        uses: docker/build-push-action@v6
+        with:
+          build-args: |
+            BIN_DIR=${{ env.BIN_DIR }}
+            PROJ=sylvia-iot-coremgr
+          context: .
+          file: ./files/Dockerfile
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ steps.meta-coremgr.outputs.tags }}
+          target: scratch
+      - name: Create coremgr Docker image - alpine
+        uses: docker/build-push-action@v6
+        with:
+          build-args: |
+            BIN_DIR=${{ env.BIN_DIR }}
+            PROJ=sylvia-iot-coremgr
+          context: .
+          file: ./files/Dockerfile
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ steps.meta-coremgr.outputs.tags }}-alpine
+          target: alpine
+      - name: Docker meta data
+        id: meta-data
+        uses: docker/metadata-action@v5
+        with:
+          images: |
+            woofdogtw/sylvia-iot-data
+            ghcr.io/woofdogtw/sylvia-iot-data
+          tags: |
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=semver,pattern={{major}}
+      - name: Create data Docker image - scratch
+        uses: docker/build-push-action@v6
+        with:
+          build-args: |
+            BIN_DIR=${{ env.BIN_DIR }}
+            PROJ=sylvia-iot-data
+          context: .
+          file: ./files/Dockerfile
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ steps.meta-data.outputs.tags }}
+          target: scratch
+      - name: Create data Docker image - alpine
+        uses: docker/build-push-action@v6
+        with:
+          build-args: |
+            BIN_DIR=${{ env.BIN_DIR }}
+            PROJ=sylvia-iot-data
+          context: .
+          file: ./files/Dockerfile
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ steps.meta-data.outputs.tags }}-alpine
+          target: alpine
+      - name: Docker meta core
+        id: meta-core
+        uses: docker/metadata-action@v5
+        with:
+          images: |
+            woofdogtw/sylvia-iot-core
+            ghcr.io/woofdogtw/sylvia-iot-core
+          tags: |
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=semver,pattern={{major}}
+      - name: Create core Docker image - scratch
+        uses: docker/build-push-action@v6
+        with:
+          build-args: |
+            BIN_DIR=${{ env.BIN_DIR }}
+            PROJ=sylvia-iot-core
+          context: .
+          file: ./files/Dockerfile
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ steps.meta-core.outputs.tags }}
+          target: scratch
+      - name: Create core Docker image - alpine
+        uses: docker/build-push-action@v6
+        with:
+          build-args: |
+            BIN_DIR=${{ env.BIN_DIR }}
+            PROJ=sylvia-iot-core
+            CLI=sylvia-iot-coremgr-cli
+          context: .
+          file: ./files/Dockerfile.cli
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ steps.meta-core.outputs.tags }}-alpine
+          target: alpine
       - name: Create releases, assets and version
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
