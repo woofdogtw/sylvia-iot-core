@@ -53,7 +53,7 @@ sqlx = { version = "0.8.6", default-features = false, features = [
     "runtime-tokio",
     "sqlite",
 ] }
-sylvia-iot-corelib = "0.3.7"
+sylvia-iot-corelib = "0.3.8"
 tera = "1.20.0"
 tokio = { version = "1.47.1", features = [
     "io-util",
