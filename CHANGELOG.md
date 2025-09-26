@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.3.11 - 2025-09-26
+
+### Changed
+
+- Update dependencies.
+- Add `alpine` tag for the latest alpine Docker images.
+
 ## 0.3.10 - 2025-09-19
 
 ### Changed
