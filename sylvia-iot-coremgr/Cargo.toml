@@ -1,6 +1,6 @@
 [package]
 name = "sylvia-iot-coremgr"
-version = "0.3.10"
+version = "0.3.11"
 authors = ["Chien-Hong Chan"]
 categories = ["web-programming::http-server"]
 description = "The manager of Sylvia-IoT core modules."
@@ -9,7 +9,7 @@ keywords = ["iot"]
 license = "MIT"
 readme = "README.md"
 repository = "https://github.com/woofdogtw/sylvia-iot-core.git"
-rust-version = "1.85.1"
+rust-version = "1.88.0"
 
 [dependencies]
 async-stream = "0.3.6"
@@ -20,7 +20,7 @@ axum-server = { version = "0.7.2", features = ["tls-rustls"] }
 base64 = "0.22.1"
 bytes = "1.10.1"
 chrono = { version = "0.4.42", default-features = false, features = ["serde"] }
-clap = { version = "4.5.47", default-features = false, features = [
+clap = { version = "4.5.48", default-features = false, features = [
     "std",
     "help",
     "usage",
@@ -40,7 +40,7 @@ reqwest = { version = "0.12.23", default-features = false, features = [
 ] }
 rumqttd = "0.19.0"
 rustls = "0.23.32"
-serde = { version = "1.0.225", features = ["derive"] }
+serde = { version = "1.0.227", features = ["derive"] }
 serde_json = "1.0.145"
 serde_urlencoded = "0.7.1"
 sylvia-iot-auth = { path = "../sylvia-iot-auth" }

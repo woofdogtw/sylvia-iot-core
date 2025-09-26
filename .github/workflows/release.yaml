@@ -209,6 +209,7 @@ jobs:
             type=semver,pattern={{version}}-alpine
             type=semver,pattern={{major}}.{{minor}}-alpine
             type=semver,pattern={{major}}-alpine
+            type=raw,value=alpine
       - name: Create auth Docker image - alpine
         uses: docker/build-push-action@v6
         with:
@@ -259,6 +260,7 @@ jobs:
             type=semver,pattern={{version}}-alpine
             type=semver,pattern={{major}}.{{minor}}-alpine
             type=semver,pattern={{major}}-alpine
+            type=raw,value=alpine
       - name: Create broker Docker image - alpine
         uses: docker/build-push-action@v6
         with:
@@ -309,6 +311,7 @@ jobs:
             type=semver,pattern={{version}}-alpine
             type=semver,pattern={{major}}.{{minor}}-alpine
             type=semver,pattern={{major}}-alpine
+            type=raw,value=alpine
       - name: Create coremgr Docker image - alpine
         uses: docker/build-push-action@v6
         with:
@@ -359,6 +362,7 @@ jobs:
             type=semver,pattern={{version}}-alpine
             type=semver,pattern={{major}}.{{minor}}-alpine
             type=semver,pattern={{major}}-alpine
+            type=raw,value=alpine
       - name: Create data Docker image - alpine
         uses: docker/build-push-action@v6
         with:
@@ -409,6 +413,7 @@ jobs:
             type=semver,pattern={{version}}-alpine
             type=semver,pattern={{major}}.{{minor}}-alpine
             type=semver,pattern={{major}}-alpine
+            type=raw,value=alpine
       - name: Create core Docker image - alpine
         uses: docker/build-push-action@v6
         with:
