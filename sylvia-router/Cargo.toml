@@ -1,6 +1,6 @@
 [package]
 name = "sylvia-router"
-version = "0.3.11"
+version = "0.3.12"
 authors = ["Chien-Hong Chan"]
 categories = ["web-programming::http-server"]
 description = "A simple router application with full Sylvia-IoT core components."
@@ -12,7 +12,7 @@ repository = "https://github.com/woofdogtw/sylvia-iot-core.git"
 rust-version = "1.88.0"
 
 [dependencies]
-axum = "0.8.4"
+axum = "0.8.6"
 axum-prometheus = "0.9.0"
 axum-server = { version = "0.7.2", features = ["tls-rustls"] }
 chrono = { version = "0.4.42", default-features = false, features = ["serde"] }
@@ -30,7 +30,7 @@ reqwest = { version = "0.12.23", default-features = false, features = [
     "rustls-tls",
 ] }
 rustls = "0.23.32"
-serde = { version = "1.0.227", features = ["derive"] }
+serde = { version = "1.0.228", features = ["derive"] }
 serde_json = "1.0.145"
 serde_urlencoded = "0.7.1"
 shell-escape = "0.1.5"
@@ -41,7 +41,7 @@ sylvia-iot-coremgr = { path = "../sylvia-iot-coremgr" }
 sylvia-iot-coremgr-cli = { path = "../sylvia-iot-coremgr-cli" }
 sylvia-iot-data = { path = "../sylvia-iot-data" }
 sylvia-iot-sdk = { path = "../sylvia-iot-sdk" }
-sysinfo = "0.37.0"
+sysinfo = "0.37.2"
 tokio = { version = "1.47.1", features = [
     "io-util",
     "macros",
