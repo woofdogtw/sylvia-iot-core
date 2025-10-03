@@ -1,6 +1,6 @@
 [package]
 name = "sylvia-iot-auth"
-version = "0.3.11"
+version = "0.3.12"
 authors = ["Chien-Hong Chan"]
 categories = ["web-programming::http-server"]
 description = "The authentication/authorization module of the Sylvia-IoT platform."
@@ -14,8 +14,8 @@ rust-version = "1.88.0"
 [dependencies]
 async-stream = "0.3.6"
 async-trait = "0.1.89"
-axum = "0.8.4"
-axum-extra = { version = "0.10.1", default-features = false, features = [
+axum = "0.8.6"
+axum-extra = { version = "0.10.3", default-features = false, features = [
     "tracing",
     "typed-header",
 ] }
@@ -41,9 +41,9 @@ mongodb = { version = "3.3.0", default-features = false, features = [
 ] }
 oxide-auth = "0.6.1"
 oxide-auth-async = "0.2.1"
-redis = { version = "0.32.5", features = ["tokio-comp"] }
+redis = { version = "0.32.6", features = ["tokio-comp"] }
 rustls = "0.23.32"
-serde = { version = "1.0.227", features = ["derive"] }
+serde = { version = "1.0.228", features = ["derive"] }
 serde_json = "1.0.145"
 serde_urlencoded = "0.7.1"
 serde_with = { version = "3.14.1", features = ["json"] }

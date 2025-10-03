@@ -1,6 +1,6 @@
 [package]
 name = "sylvia-iot-coremgr-cli"
-version = "0.3.11"
+version = "0.3.12"
 authors = ["Chien-Hong Chan"]
 categories = ["web-programming::http-client"]
 description = "The command-line tool for Sylvia-IoT core manager."
@@ -27,7 +27,7 @@ reqwest = { version = "0.12.23", default-features = false, features = [
     "rustls-tls",
     "stream",
 ] }
-serde = { version = "1.0.227", features = ["derive"] }
+serde = { version = "1.0.228", features = ["derive"] }
 serde_json = "1.0.145"
 serde_urlencoded = "0.7.1"
 serde_with = { version = "3.14.1", features = ["json"] }
