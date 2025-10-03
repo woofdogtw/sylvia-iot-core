@@ -1,6 +1,6 @@
 [package]
 name = "sylvia-iot-broker"
-version = "0.3.11"
+version = "0.3.12"
 authors = ["Chien-Hong Chan"]
 categories = ["web-programming::http-server"]
 description = "The message broker module of the Sylvia-IoT platform."
@@ -14,7 +14,7 @@ rust-version = "1.88.0"
 [dependencies]
 async-stream = "0.3.6"
 async-trait = "0.1.89"
-axum = "0.8.4"
+axum = "0.8.6"
 axum-prometheus = "0.9.0"
 axum-server = { version = "0.7.2", features = ["tls-rustls"] }
 bson = { version = "3.0.0", features = ["chrono-0_4"] }
@@ -42,7 +42,7 @@ reqwest = { version = "0.12.23", default-features = false, features = [
     "rustls-tls",
 ] }
 rustls = "0.23.32"
-serde = { version = "1.0.227", features = ["derive"] }
+serde = { version = "1.0.228", features = ["derive"] }
 serde_json = "1.0.145"
 sql-builder = "3.1.1"
 sqlx = { version = "0.8.6", default-features = false, features = [

@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.3.12 - 2025-10-03
+
+### Changed
+
+- Update dependencies and fix vulnerabilities.
+
 ## 0.3.11 - 2025-09-26
 
 ### Changed
