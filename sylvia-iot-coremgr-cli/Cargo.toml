@@ -1,6 +1,6 @@
 [package]
 name = "sylvia-iot-coremgr-cli"
-version = "0.3.12"
+version = "0.3.13"
 authors = ["Chien-Hong Chan"]
 categories = ["web-programming::http-client"]
 description = "The command-line tool for Sylvia-IoT core manager."
@@ -30,7 +30,7 @@ reqwest = { version = "0.12.23", default-features = false, features = [
 serde = { version = "1.0.228", features = ["derive"] }
 serde_json = "1.0.145"
 serde_urlencoded = "0.7.1"
-serde_with = { version = "3.14.1", features = ["json"] }
+serde_with = { version = "3.15.0", features = ["json"] }
 sylvia-iot-corelib = { path = "../sylvia-iot-corelib" }
 tokio = { version = "1.47.1", features = [
     "io-util",
