@@ -24,7 +24,7 @@ axum-server = { version = "0.7.2", features = ["tls-rustls"] }
 base64 = "0.22.1"
 bson = { version = "3.0.0", features = ["chrono-0_4"] }
 chrono = { version = "0.4.42", default-features = false, features = ["serde"] }
-clap = { version = "4.5.48", default-features = false, features = [
+clap = { version = "4.5.49", default-features = false, features = [
     "std",
     "help",
     "usage",
@@ -42,7 +42,7 @@ mongodb = { version = "3.3.0", default-features = false, features = [
 oxide-auth = "0.6.1"
 oxide-auth-async = "0.2.1"
 redis = { version = "0.32.7", features = ["tokio-comp"] }
-rustls = "0.23.32"
+rustls = "0.23.33"
 serde = { version = "1.0.228", features = ["derive"] }
 serde_json = "1.0.145"
 serde_urlencoded = "0.7.1"
@@ -55,7 +55,7 @@ sqlx = { version = "0.8.6", default-features = false, features = [
 ] }
 sylvia-iot-corelib = { path = "../sylvia-iot-corelib" }
 tera = "1.20.0"
-tokio = { version = "1.47.1", features = [
+tokio = { version = "1.48.0", features = [
     "io-util",
     "macros",
     "rt-multi-thread",

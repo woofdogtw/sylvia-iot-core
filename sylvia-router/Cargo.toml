@@ -16,7 +16,7 @@ axum = "0.8.6"
 axum-prometheus = "0.9.0"
 axum-server = { version = "0.7.2", features = ["tls-rustls"] }
 chrono = { version = "0.4.42", default-features = false, features = ["serde"] }
-clap = { version = "4.5.48", default-features = false, features = [
+clap = { version = "4.5.49", default-features = false, features = [
     "std",
     "help",
     "usage",
@@ -25,11 +25,11 @@ clap = { version = "4.5.48", default-features = false, features = [
 ipnet = "2.11.0"
 json5 = "0.4.1"
 log = "0.4.28"
-reqwest = { version = "0.12.23", default-features = false, features = [
+reqwest = { version = "0.12.24", default-features = false, features = [
     "json",
     "rustls-tls",
 ] }
-rustls = "0.23.32"
+rustls = "0.23.33"
 serde = { version = "1.0.228", features = ["derive"] }
 serde_json = "1.0.145"
 serde_urlencoded = "0.7.1"
@@ -42,7 +42,7 @@ sylvia-iot-coremgr-cli = { path = "../sylvia-iot-coremgr-cli" }
 sylvia-iot-data = { path = "../sylvia-iot-data" }
 sylvia-iot-sdk = { path = "../sylvia-iot-sdk" }
 sysinfo = "0.37.2"
-tokio = { version = "1.47.1", features = [
+tokio = { version = "1.48.0", features = [
     "io-util",
     "macros",
     "rt-multi-thread",
