@@ -24,7 +24,7 @@ axum-server = { version = "0.7.2", features = ["tls-rustls"] }
 base64 = "0.22.1"
 bson = { version = "3.0.0", features = ["chrono-0_4"] }
 chrono = { version = "0.4.42", default-features = false, features = ["serde"] }
-clap = { version = "4.5.49", default-features = false, features = [
+clap = { version = "4.5.50", default-features = false, features = [
     "std",
     "help",
     "usage",
@@ -42,11 +42,11 @@ mongodb = { version = "3.3.0", default-features = false, features = [
 oxide-auth = "0.6.1"
 oxide-auth-async = "0.2.1"
 redis = { version = "0.32.7", features = ["tokio-comp"] }
-rustls = "0.23.33"
+rustls = "0.23.34"
 serde = { version = "1.0.228", features = ["derive"] }
 serde_json = "1.0.145"
 serde_urlencoded = "0.7.1"
-serde_with = { version = "3.15.0", features = ["json"] }
+serde_with = { version = "3.15.1", features = ["json"] }
 sql-builder = "3.1.1"
 sqlx = { version = "0.8.6", default-features = false, features = [
     "macros",
