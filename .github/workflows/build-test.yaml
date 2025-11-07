@@ -85,7 +85,7 @@ jobs:
         ports:
           - 27017:27017
       redis:
-        image: redis:8.2.2-alpine
+        image: redis:8.2.3-alpine
         ports:
           - 6379:6379
     env:
