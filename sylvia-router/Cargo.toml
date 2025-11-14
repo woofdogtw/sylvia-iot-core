@@ -12,9 +12,9 @@ repository = "https://github.com/woofdogtw/sylvia-iot-core.git"
 rust-version = "1.88.0"
 
 [dependencies]
-axum = "0.8.6"
+axum = "0.8.7"
 axum-prometheus = "0.9.0"
-axum-server = { version = "0.7.2", features = ["tls-rustls"] }
+axum-server = { version = "0.7.3", features = ["tls-rustls"] }
 chrono = { version = "0.4.42", default-features = false, features = ["serde"] }
 clap = { version = "4.5.51", default-features = false, features = [
     "std",

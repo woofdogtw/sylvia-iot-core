@@ -13,8 +13,8 @@ rust-version = "1.88.0"
 
 [dependencies]
 async-trait = "0.1.89"
-axum = "0.8.6"
-bytes = "1.10.1"
+axum = "0.8.7"
+bytes = "1.11.0"
 chrono = { version = "0.4.42", default-features = false, features = ["serde"] }
 futures = "0.3.31"
 general-mq = { path = "../general-mq" }
