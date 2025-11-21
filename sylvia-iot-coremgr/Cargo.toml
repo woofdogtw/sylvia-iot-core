@@ -20,7 +20,7 @@ axum-server = { version = "0.7.3", features = ["tls-rustls"] }
 base64 = "0.22.1"
 bytes = "1.11.0"
 chrono = { version = "0.4.42", default-features = false, features = ["serde"] }
-clap = { version = "4.5.51", default-features = false, features = [
+clap = { version = "4.5.53", default-features = false, features = [
     "std",
     "help",
     "usage",

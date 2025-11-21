@@ -9,7 +9,7 @@ Below is the author's development environment for your reference:
 
 - VSCode Extensions
     - **CodeLLDB** (Vadim Chugunov)
-    - **crates** (Seray Uzgur)
+    - **Dependi** (Fill Labs)
     - **Docker** (Microsoft)
     - **GitHub Actions** (Mathieu Dutour)
     - **rust-analyzer** (The Rust Programming Language)
