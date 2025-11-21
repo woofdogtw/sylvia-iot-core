@@ -168,13 +168,6 @@
                     <main>
                         <h1 id="quick-start"><a class="header" href="#quick-start">Quick Start</a></h1>
 <p>This chapter describes the quick installation steps in the Ubuntu 22.04 environment.</p>
-<blockquote>
-<p>The current executable is compiled using GLIBC 2.31 and can be executed on Ubuntu 22.04 or later
-OS versions.
-Older OS versions can use the <a href="https://hub.docker.com/r/woofdogtw/sylvia-iot-core"><strong>Docker image</strong></a>.
-Related configurations and environment variables will be explained in the
-<a href="configuration.html"><strong>Configuration</strong></a> section.</p>
-</blockquote>
 <h2 id="install-tools"><a class="header" href="#install-tools">Install Tools</a></h2>
 <pre><code class="language-shell">sudo apt -y install curl jq
 </code></pre>
@@ -192,9 +185,9 @@ sudo usermod -aG docker $USER
 </blockquote>
 <h2 id="install-mongodbrabbitmqemqx"><a class="header" href="#install-mongodbrabbitmqemqx">Install MongoDB、RabbitMQ、EMQX</a></h2>
 <p>Start the services (versions and data storage folders can be adjusted as needed):</p>
-<pre><code class="language-shell">export MONGODB_VER=7.0.9
-export RABBITMQ_VER=3.13.2
-export EMQX_VER=5.6.1
+<pre><code class="language-shell">export MONGODB_VER=8.2.2
+export RABBITMQ_VER=4.2.0
+export EMQX_VER=6.0.1
 
 export MONGODB_DIR=$HOME/db/mongodb
 export RABBITMQ_DIR=$HOME/db/rabbitmq
@@ -226,11 +219,12 @@ docker run --rm --name emqx -d \
 the following demonstrations. You can also choose not to start EMQX at this stage.</p>
 </blockquote>
 <h2 id="download-sylvia-iot"><a class="header" href="#download-sylvia-iot">Download Sylvia-IoT</a></h2>
-<pre><code class="language-shell">curl -LO https://github.com/woofdogtw/sylvia-iot-core/releases/latest/download/sylvia-iot-core.tar.xz
-curl -LO https://github.com/woofdogtw/sylvia-iot-core/releases/latest/download/sylvia-iot-coremgr-cli.tar.xz
+<pre><code class="language-shell">ARCH=x86_64 # x86_64 or arm64
+curl -LO https://github.com/woofdogtw/sylvia-iot-core/releases/latest/download/sylvia-iot-core-$ARCH.tar.xz
+curl -LO https://github.com/woofdogtw/sylvia-iot-core/releases/latest/download/sylvia-iot-coremgr-cli-$ARCH.tar.xz
 curl -L -o config.json5 https://github.com/woofdogtw/sylvia-iot-core/raw/main/files/config.json5.example
-tar xf sylvia-iot-core.tar.xz
-tar xf sylvia-iot-coremgr-cli.tar.xz
+tar xf sylvia-iot-core-$ARCH.tar.xz
+tar xf sylvia-iot-coremgr-cli-$ARCH.tar.xz
 </code></pre>
 <h2 id="modify-configjson5"><a class="header" href="#modify-configjson5">Modify config.json5</a></h2>
 <p>For demonstration purposes, we make some modifications to the example config.json5:</p>
