@@ -8,7 +8,7 @@
 
 - VSCode 擴充
     - **CodeLLDB** (Vadim Chugunov)
-    - **crates** (Seray Uzgur)
+    - **Dependi** (Fill Labs)
     - **Docker** (Microsoft)
     - **GitHub Actions** (Mathieu Dutour)
     - **rust-analyzer** (The Rust Programming Language)

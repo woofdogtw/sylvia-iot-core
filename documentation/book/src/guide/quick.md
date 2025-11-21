@@ -2,12 +2,6 @@
 
 This chapter describes the quick installation steps in the Ubuntu 22.04 environment.
 
-> The current executable is compiled using GLIBC 2.31 and can be executed on Ubuntu 22.04 or later
-  OS versions.
-> Older OS versions can use the [**Docker image**](https://hub.docker.com/r/woofdogtw/sylvia-iot-core).
-> Related configurations and environment variables will be explained in the
-  [**Configuration**](configuration.md) section.
-
 ## Install Tools
 
 ```shell
@@ -34,9 +28,9 @@ sudo usermod -aG docker $USER
 Start the services (versions and data storage folders can be adjusted as needed):
 
 ```shell
-export MONGODB_VER=7.0.9
-export RABBITMQ_VER=3.13.2
-export EMQX_VER=5.6.1
+export MONGODB_VER=8.2.2
+export RABBITMQ_VER=4.2.0
+export EMQX_VER=6.0.1
 
 export MONGODB_DIR=$HOME/db/mongodb
 export RABBITMQ_DIR=$HOME/db/rabbitmq
@@ -70,11 +64,12 @@ docker run --rm --name emqx -d \
 ## Download Sylvia-IoT
 
 ```shell
-curl -LO https://github.com/woofdogtw/sylvia-iot-core/releases/latest/download/sylvia-iot-core.tar.xz
-curl -LO https://github.com/woofdogtw/sylvia-iot-core/releases/latest/download/sylvia-iot-coremgr-cli.tar.xz
+ARCH=x86_64 # x86_64 or arm64
+curl -LO https://github.com/woofdogtw/sylvia-iot-core/releases/latest/download/sylvia-iot-core-$ARCH.tar.xz
+curl -LO https://github.com/woofdogtw/sylvia-iot-core/releases/latest/download/sylvia-iot-coremgr-cli-$ARCH.tar.xz
 curl -L -o config.json5 https://github.com/woofdogtw/sylvia-iot-core/raw/main/files/config.json5.example
-tar xf sylvia-iot-core.tar.xz
-tar xf sylvia-iot-coremgr-cli.tar.xz
+tar xf sylvia-iot-core-$ARCH.tar.xz
+tar xf sylvia-iot-coremgr-cli-$ARCH.tar.xz
 ```
 
 ## Modify config.json5
