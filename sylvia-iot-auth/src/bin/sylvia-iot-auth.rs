@@ -5,7 +5,7 @@ use std::{
     time::Duration,
 };
 
-use axum::{Router, routing};
+use axum::{Router, http::StatusCode, routing};
 use axum_prometheus::PrometheusMetricLayer;
 use axum_server::{self, tls_rustls::RustlsConfig};
 use clap::{Arg as ClapArg, Command};
@@ -76,7 +76,10 @@ async fn main() -> std::io::Result<()> {
             routing::get(|| async move { metric_handle.render() }),
         )
         .fallback_service(ServeDir::new(static_path))
-        .layer(TimeoutLayer::new(Duration::from_secs(60)))
+        .layer(TimeoutLayer::with_status_code(
+            StatusCode::REQUEST_TIMEOUT,
+            Duration::from_secs(60),
+        ))
         .layer(CorsLayer::permissive())
         .layer(NormalizePathLayer::trim_trailing_slash())
         .layer(prometheus_layer)
