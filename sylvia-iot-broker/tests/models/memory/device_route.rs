@@ -162,20 +162,12 @@ pub fn del_uldata(context: &mut SpecContext<TestState>) -> Result<(), String> {
         return Err(format!("create device_route 4 error: {}", e));
     }
 
-    let mut cond = GetCacheQueryCond {
-        unit_code: "unit_code",
-        network_code: "network_code",
-        network_addr: "network_addr",
-    };
     if let Err(e) = runtime.block_on(async { cache.get_uldata("device_id").await }) {
         return Err(format!("get_uldata() get correct 1 error: {}", e));
     }
-    cond.network_code = "network_code1";
-    cond.network_addr = "network_addr1";
     if let Err(e) = runtime.block_on(async { cache.get_uldata("device_id1").await }) {
         return Err(format!("get_uldata() get correct 2 error: {}", e));
     }
-    cond.network_addr = "network_addr2";
     if let Err(e) = runtime.block_on(async { cache.get_uldata("device_id2").await }) {
         return Err(format!("get_uldata() get correct 3 error: {}", e));
     }
