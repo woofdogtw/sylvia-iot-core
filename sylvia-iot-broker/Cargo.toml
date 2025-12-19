@@ -37,7 +37,7 @@ mongodb = { version = "3.4.1", default-features = false, features = [
     "dns-resolver",
     "rustls-tls",
 ] }
-reqwest = { version = "0.12.25", default-features = false, features = [
+reqwest = { version = "0.12.26", default-features = false, features = [
     "json",
     "rustls-tls",
 ] }
