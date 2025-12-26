@@ -20,6 +20,6 @@ COPY --from=builder /app /
 CMD ["/app"]
 
 # ---- alpine ----
-FROM alpine:3.22.1 AS alpine
+FROM alpine:3.23.2 AS alpine
 COPY --from=builder /app /usr/local/bin/
 CMD ["/usr/local/bin/app"]

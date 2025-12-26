@@ -14,7 +14,7 @@ rust-version = "1.88.0"
 [dependencies]
 anyhow = "1.0.100"
 async-trait = "0.1.89"
-axum = "0.8.7"
+axum = "0.8.8"
 bytes = "1.11.0"
 chrono = { version = "0.4.42", default-features = false, features = ["serde"] }
 clap = { version = "4.5.53", default-features = false, features = [
@@ -32,7 +32,7 @@ pbkdf2 = "0.12.2"
 rand = "0.9.2"
 regex = "1.12.2"
 serde = { version = "1.0.228", features = ["derive"] }
-serde_json = "1.0.145"
+serde_json = "1.0.147"
 sha2 = "0.10.9"
 tower = "0.5.2"
 tower-layer = "0.3.3"
