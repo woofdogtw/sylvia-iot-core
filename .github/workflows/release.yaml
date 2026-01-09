@@ -132,7 +132,7 @@ jobs:
           mkdir -p ${SBOM_DIR}
           curl -kLo cargo-sbom https://github.com/psastras/sbom-rs/releases/download/cargo-sbom-${SBOM_VER}/cargo-sbom-x86_64-unknown-linux-gnu
           chmod +x cargo-sbom
-          PKGS="general-mq sylvia-iot-auth sylvia-iot-broker sylvia-iot-coremgr sylvia-iot-coremgr-cli sylvia-iot-data sylvia-iot-sdk sylvia-router"
+          PKGS="general-mq sylvia-iot-auth sylvia-iot-broker sylvia-iot-corelib sylvia-iot-coremgr sylvia-iot-coremgr-cli sylvia-iot-data sylvia-iot-sdk sylvia-router"
           FORMATS="spdx_json_2_3 cyclone_dx_json_1_4"
           for PKG in $PKGS; do
             for FMT in $FORMATS; do
