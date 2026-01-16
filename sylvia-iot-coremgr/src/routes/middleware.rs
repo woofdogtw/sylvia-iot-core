@@ -35,6 +35,7 @@ pub struct GetTokenInfoData {
 
 #[derive(Clone)]
 pub struct LogService {
+    client: reqwest::Client,
     auth_uri: String,
     queue: Option<Queue>,
 }
@@ -114,8 +115,12 @@ impl DataMsgKind {
 }
 
 impl LogService {
-    pub fn new(auth_uri: String, queue: Option<Queue>) -> Self {
-        LogService { auth_uri, queue }
+    pub fn new(client: reqwest::Client, auth_uri: String, queue: Option<Queue>) -> Self {
+        LogService {
+            client,
+            auth_uri,
+            queue,
+        }
     }
 }
 
@@ -124,7 +129,7 @@ impl<S> Layer<S> for LogService {
 
     fn layer(&self, inner: S) -> Self::Service {
         LogMiddleware {
-            client: reqwest::Client::new(),
+            client: self.client.clone(),
             auth_uri: self.auth_uri.clone(),
             queue: self.queue.clone(),
             service: inner,

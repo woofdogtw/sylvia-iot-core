@@ -210,6 +210,7 @@ pub fn new_service(state: &State) -> Router {
                 state,
             ))
             .layer(middleware::LogService::new(
+                state.client.clone(),
                 auth_uri,
                 state.data_sender.clone(),
             )),

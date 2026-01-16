@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 
 use laboratory::{LabResult, describe};
+use reqwest::Client;
 use tokio::{
     runtime::Runtime,
     task::{self, JoinHandle},
@@ -35,6 +36,7 @@ pub struct TestState {
     pub mq_conn: Option<Box<dyn GmqConnection>>, // connection for send queue.
     pub data_queue: Option<Queue>, // queue for sending data.
     pub routes_state: Option<State>,
+    pub client: Option<Client>, // HTTP client.
 }
 
 pub const WAIT_COUNT: isize = 100;

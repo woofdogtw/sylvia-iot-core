@@ -191,10 +191,15 @@ fn test_get(context: &mut SpecContext<TestState>) -> Result<(), String> {
     let runtime = state.runtime.as_ref().unwrap();
     let auth_uri = state.auth_uri.as_ref().unwrap();
     let data_sender = state.routes_state.as_ref().unwrap().data_sender.clone();
+    let client = state.client.as_ref().unwrap();
 
     let app = Router::new()
         .route("/", routing::get(dummy_handler))
-        .layer(LogService::new(auth_uri.clone(), data_sender));
+        .layer(LogService::new(
+            client.clone(),
+            auth_uri.clone(),
+            data_sender,
+        ));
     let server = match TestServer::new(app) {
         Err(e) => return Err(format!("new server error: {}", e)),
         Ok(server) => server,
@@ -233,10 +238,15 @@ fn test_post(context: &mut SpecContext<TestState>) -> Result<(), String> {
     let runtime = state.runtime.as_ref().unwrap();
     let auth_uri = state.auth_uri.as_ref().unwrap();
     let data_sender = state.routes_state.as_ref().unwrap().data_sender.clone();
+    let client = state.client.as_ref().unwrap();
 
     let app = Router::new()
         .route("/", routing::post(dummy_handler))
-        .layer(LogService::new(auth_uri.clone(), data_sender));
+        .layer(LogService::new(
+            client.clone(),
+            auth_uri.clone(),
+            data_sender,
+        ));
     let server = match TestServer::new(app) {
         Err(e) => return Err(format!("new server error: {}", e)),
         Ok(server) => server,
@@ -291,10 +301,15 @@ fn test_patch_password(context: &mut SpecContext<TestState>) -> Result<(), Strin
     let runtime = state.runtime.as_ref().unwrap();
     let auth_uri = state.auth_uri.as_ref().unwrap();
     let data_sender = state.routes_state.as_ref().unwrap().data_sender.clone();
+    let client = state.client.as_ref().unwrap();
 
     let app = Router::new()
         .route("/", routing::patch(dummy_handler))
-        .layer(LogService::new(auth_uri.clone(), data_sender));
+        .layer(LogService::new(
+            client.clone(),
+            auth_uri.clone(),
+            data_sender,
+        ));
     let server = match TestServer::new(app) {
         Err(e) => return Err(format!("new server error: {}", e)),
         Ok(server) => server,
@@ -352,10 +367,15 @@ fn test_delete_cover(context: &mut SpecContext<TestState>) -> Result<(), String>
     let runtime = state.runtime.as_ref().unwrap();
     let auth_uri = state.auth_uri.as_ref().unwrap();
     let data_sender = state.routes_state.as_ref().unwrap().data_sender.clone();
+    let client = state.client.as_ref().unwrap();
 
     let app = Router::new()
         .route("/", routing::delete(dummy_err_handler))
-        .layer(LogService::new(auth_uri.clone(), data_sender));
+        .layer(LogService::new(
+            client.clone(),
+            auth_uri.clone(),
+            data_sender,
+        ));
     let server = match TestServer::new(app) {
         Err(e) => return Err(format!("new server error: {}", e)),
         Ok(server) => server,

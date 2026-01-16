@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.4.0
+
+### Changed
+
+- **breaking**: Modify `sylvia-iot-sdk` auth middleware by adding `reqwest::Client` for internal HTTP requests.
+- Update dependencies and fix vulnerabilities.
+- Update Rust to 1.92.0 with GitHub Actions runner image 20260105.202.1.
+
 ## 0.3.12 - 2025-10-03
 
 ### Changed

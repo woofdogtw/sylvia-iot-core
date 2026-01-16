@@ -4,6 +4,7 @@ use std::{
 };
 
 use laboratory::{LabResult, describe};
+use reqwest::Client;
 use tokio::{
     runtime::Runtime,
     task::{self, JoinHandle},
@@ -31,6 +32,7 @@ pub struct TestState {
     pub app_net_conn: Option<Connection>, // application/network side connection.
     pub app_net_queues: Option<Vec<Queue>>, // application/network side queues.
     pub mqtt_shared_prefix: Option<String>,
+    pub client: Option<Client>, // HTTP client.
 }
 
 pub const WAIT_COUNT: isize = 100;

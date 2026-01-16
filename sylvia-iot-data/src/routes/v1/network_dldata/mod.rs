@@ -13,11 +13,13 @@ pub fn new_service(scope_path: &str, state: &State) -> Router {
         Router::new()
             .route(
                 "/count",
-                routing::get(api::get_count).layer(AuthService::new(auth_uri.clone())),
+                routing::get(api::get_count)
+                    .layer(AuthService::new(state.client.clone(), auth_uri.clone())),
             )
             .route(
                 "/list",
-                routing::get(api::get_list).layer(AuthService::new(auth_uri.clone())),
+                routing::get(api::get_list)
+                    .layer(AuthService::new(state.client.clone(), auth_uri.clone())),
             )
             .with_state(state.clone()),
     )

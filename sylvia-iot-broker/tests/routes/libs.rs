@@ -722,10 +722,12 @@ pub fn new_state(
         Err(e) => panic!("create runtime error: {}", e),
         Ok(runtime) => runtime,
     };
+    let client = reqwest::Client::new();
 
     if db_engine.is_none() {
         return TestState {
             runtime: Some(runtime),
+            client: Some(client.clone()),
             ..Default::default()
         };
     }
@@ -870,6 +872,7 @@ pub fn new_state(
             Some(host) => Some(host.to_string()),
         },
         routes_state: Some(state),
+        client: Some(client),
         test_values: Some(HashMap::new()),
         ..Default::default()
     }
