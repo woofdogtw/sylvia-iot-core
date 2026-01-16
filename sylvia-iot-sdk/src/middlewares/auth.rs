@@ -9,13 +9,15 @@
 //!     response::{IntoResponse, Response},
 //!     routing, Extension, Router,
 //! };
+//! use reqwest;
 //! use sylvia_iot_sdk::middlewares::auth::{AuthService, GetTokenInfoData};
 //!
 //! fn new_service() -> Router {
 //!     let auth_uri = "http://localhost:1080/auth/api/v1/auth/tokeninfo";
+//!     let client = reqwest::Client::new();
 //!     Router::new()
 //!         .route("/api", routing::get(api))
-//!         .layer(AuthService::new(auth_uri.clone()))
+//!         .layer(AuthService::new(client, auth_uri.clone()))
 //! }
 //!
 //! async fn api(Extension(token_info): Extension<GetTokenInfoData>) -> impl IntoResponse {
@@ -53,6 +55,7 @@ pub struct GetTokenInfoData {
 
 #[derive(Clone)]
 pub struct AuthService {
+    client: reqwest::Client,
     auth_uri: String,
 }
 
@@ -82,8 +85,8 @@ struct GetTokenInfoDataInner {
 }
 
 impl AuthService {
-    pub fn new(auth_uri: String) -> Self {
-        AuthService { auth_uri }
+    pub fn new(client: reqwest::Client, auth_uri: String) -> Self {
+        AuthService { client, auth_uri }
     }
 }
 
@@ -92,7 +95,7 @@ impl<S> Layer<S> for AuthService {
 
     fn layer(&self, inner: S) -> Self::Service {
         AuthMiddleware {
-            client: reqwest::Client::new(),
+            client: self.client.clone(),
             auth_uri: self.auth_uri.clone(),
             service: inner,
         }

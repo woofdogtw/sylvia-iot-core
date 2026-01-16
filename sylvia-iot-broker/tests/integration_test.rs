@@ -1,6 +1,7 @@
 use std::{collections::HashMap, sync::Arc};
 
 use laboratory::{LabResult, describe};
+use reqwest::Client;
 use tokio::{
     runtime::Runtime,
     task::{self, JoinHandle},
@@ -37,6 +38,7 @@ pub struct TestState {
     pub data_queue: Option<Queue>, // receive queue to test data channel.
     pub data_ch_host: Option<String>, // receive queue host.
     pub routes_state: Option<State>,
+    pub client: Option<Client>, // HTTP client.
     pub test_values: Option<HashMap<String, String>>,
     pub test_conns: Option<Vec<Box<dyn GmqConnection>>>,
     pub test_device_id: Option<String>,

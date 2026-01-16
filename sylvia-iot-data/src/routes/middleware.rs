@@ -30,6 +30,7 @@ pub struct GetTokenInfoData {
 
 #[derive(Clone)]
 pub struct AuthService {
+    client: reqwest::Client,
     auth_uri: String,
 }
 
@@ -59,8 +60,8 @@ struct GetTokenInfoDataInner {
 }
 
 impl AuthService {
-    pub fn new(auth_uri: String) -> Self {
-        AuthService { auth_uri }
+    pub fn new(client: reqwest::Client, auth_uri: String) -> Self {
+        AuthService { client, auth_uri }
     }
 }
 
@@ -69,7 +70,7 @@ impl<S> Layer<S> for AuthService {
 
     fn layer(&self, inner: S) -> Self::Service {
         AuthMiddleware {
-            client: reqwest::Client::new(),
+            client: self.client.clone(),
             auth_uri: self.auth_uri.clone(),
             service: inner,
         }

@@ -34,6 +34,7 @@ pub struct GetTokenInfoData {
 
 #[derive(Clone)]
 pub struct AuthService {
+    client: reqwest::Client,
     auth_uri: String,
     role_scopes: HashMap<Method, RoleScopeType>,
 }
@@ -65,10 +66,15 @@ struct GetTokenInfoDataInner {
 }
 
 impl AuthService {
-    pub fn new(auth_uri: String, role_scopes: HashMap<Method, RoleScopeType>) -> Self {
+    pub fn new(
+        client: reqwest::Client,
+        auth_uri: String,
+        role_scopes: HashMap<Method, RoleScopeType>,
+    ) -> Self {
         AuthService {
-            role_scopes,
+            client,
             auth_uri,
+            role_scopes,
         }
     }
 }
@@ -89,7 +95,7 @@ impl<S> Layer<S> for AuthService {
         }
 
         AuthMiddleware {
-            client: reqwest::Client::new(),
+            client: self.client.clone(),
             auth_uri: self.auth_uri.clone(),
             role_scopes,
             service: inner,

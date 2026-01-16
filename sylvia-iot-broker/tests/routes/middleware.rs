@@ -70,6 +70,7 @@ fn test_200(context: &mut SpecContext<TestState>) -> Result<(), String> {
     let runtime = state.runtime.as_ref().unwrap();
     let auth_db = state.auth_db.as_ref().unwrap();
     let auth_uri = state.auth_uri.as_ref().unwrap();
+    let client = state.client.as_ref().unwrap();
 
     let result: Result<(), Box<dyn StdError>> = runtime.block_on(async move {
         let now = Utc::now();
@@ -87,7 +88,11 @@ fn test_200(context: &mut SpecContext<TestState>) -> Result<(), String> {
     let role_scopes_root: HashMap<Method, RoleScopeType> = HashMap::new();
     let app = Router::new()
         .route("/", routing::get(test_200_handler))
-        .layer(AuthService::new(auth_uri.clone(), role_scopes_root));
+        .layer(AuthService::new(
+            client.clone(),
+            auth_uri.clone(),
+            role_scopes_root,
+        ));
     let server = match TestServer::new(app) {
         Err(e) => return Err(format!("new server error: {}", e)),
         Ok(server) => server,
@@ -111,11 +116,16 @@ fn test_400(context: &mut SpecContext<TestState>) -> Result<(), String> {
     let state = state.get(STATE).unwrap();
     let runtime = state.runtime.as_ref().unwrap();
     let auth_uri = state.auth_uri.as_ref().unwrap();
+    let client = state.client.as_ref().unwrap();
 
     let role_scopes_root: HashMap<Method, RoleScopeType> = HashMap::new();
     let app = Router::new()
         .route("/", routing::get(dummy_handler))
-        .layer(AuthService::new(auth_uri.clone(), role_scopes_root));
+        .layer(AuthService::new(
+            client.clone(),
+            auth_uri.clone(),
+            role_scopes_root,
+        ));
     let server = match TestServer::new(app) {
         Err(e) => return Err(format!("new server error: {}", e)),
         Ok(server) => server,
@@ -144,11 +154,16 @@ fn test_401(context: &mut SpecContext<TestState>) -> Result<(), String> {
     let state = state.get(STATE).unwrap();
     let runtime = state.runtime.as_ref().unwrap();
     let auth_uri = state.auth_uri.as_ref().unwrap();
+    let client = state.client.as_ref().unwrap();
 
     let role_scopes_root: HashMap<Method, RoleScopeType> = HashMap::new();
     let app = Router::new()
         .route("/", routing::get(dummy_handler))
-        .layer(AuthService::new(auth_uri.clone(), role_scopes_root));
+        .layer(AuthService::new(
+            client.clone(),
+            auth_uri.clone(),
+            role_scopes_root,
+        ));
     let server = match TestServer::new(app) {
         Err(e) => return Err(format!("new server error: {}", e)),
         Ok(server) => server,
@@ -168,6 +183,7 @@ fn test_403(context: &mut SpecContext<TestState>) -> Result<(), String> {
     let runtime = state.runtime.as_ref().unwrap();
     let auth_db = state.auth_db.as_ref().unwrap();
     let auth_uri = state.auth_uri.as_ref().unwrap();
+    let client = state.client.as_ref().unwrap();
 
     let result: Result<(), Box<dyn StdError>> = runtime.block_on(async move {
         let now = Utc::now();
@@ -200,7 +216,11 @@ fn test_403(context: &mut SpecContext<TestState>) -> Result<(), String> {
                 .post(dummy_handler)
                 .patch(dummy_handler),
         )
-        .layer(AuthService::new(auth_uri.clone(), role_scopes_root));
+        .layer(AuthService::new(
+            client.clone(),
+            auth_uri.clone(),
+            role_scopes_root,
+        ));
     let server = match TestServer::new(app) {
         Err(e) => return Err(format!("new server error: {}", e)),
         Ok(server) => server,
@@ -276,11 +296,16 @@ fn test_503(context: &mut SpecContext<TestState>) -> Result<(), String> {
     let state = state.get(STATE).unwrap();
     let runtime = state.runtime.as_ref().unwrap();
     let auth_uri = "http://localhost:65535";
+    let client = state.client.as_ref().unwrap();
 
     let role_scopes_root: HashMap<Method, RoleScopeType> = HashMap::new();
     let app = Router::new()
         .route("/", routing::get(dummy_handler))
-        .layer(AuthService::new(auth_uri.to_string(), role_scopes_root));
+        .layer(AuthService::new(
+            client.clone(),
+            auth_uri.to_string(),
+            role_scopes_root,
+        ));
     let server = match TestServer::new(app) {
         Err(e) => return Err(format!("new server error: {}", e)),
         Ok(server) => server,

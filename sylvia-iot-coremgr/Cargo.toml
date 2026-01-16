@@ -1,6 +1,6 @@
 [package]
 name = "sylvia-iot-coremgr"
-version = "0.3.13"
+version = "0.4.0"
 authors = ["Chien-Hong Chan"]
 categories = ["web-programming::http-server"]
 description = "The manager of Sylvia-IoT core modules."
@@ -19,7 +19,7 @@ axum-prometheus = "0.10.0"
 axum-server = { version = "0.8.0", features = ["tls-rustls"] }
 base64 = "0.22.1"
 bytes = "1.11.0"
-chrono = { version = "0.4.42", default-features = false, features = ["serde"] }
+chrono = { version = "0.4.43", default-features = false, features = ["serde"] }
 clap = { version = "4.5.54", default-features = false, features = [
     "std",
     "help",
@@ -33,9 +33,10 @@ general-mq = { path = "../general-mq" }
 hex = "0.4.3"
 json5 = "1.3.0"
 log = "0.4.29"
-reqwest = { version = "0.12.28", default-features = false, features = [
+reqwest = { version = "0.13.1", default-features = false, features = [
     "json",
-    "rustls-tls",
+    "query",
+    "rustls",
     "stream",
 ] }
 rumqttd = "0.20.0"
@@ -52,7 +53,7 @@ tokio = { version = "1.49.0", features = [
     "rt-multi-thread",
     "time",
 ] }
-tower = "0.5.2"
+tower = "0.5.3"
 tower-http = { version = "0.6.8", default-features = false, features = [
     "cors",
     "fs",
@@ -62,7 +63,7 @@ tower-http = { version = "0.6.8", default-features = false, features = [
 url = "2.5.8"
 
 [dev-dependencies]
-axum-test = "18.5.0"
+axum-test = "18.6.0"
 laboratory = "2.0.0"
 
 [profile.release]

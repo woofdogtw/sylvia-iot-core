@@ -67,47 +67,70 @@ pub fn new_service(scope_path: &str, state: &State) -> Router {
         Router::new()
             .route(
                 "/",
-                routing::post(api::post_device)
-                    .layer(AuthService::new(auth_uri.clone(), role_scopes_root)),
+                routing::post(api::post_device).layer(AuthService::new(
+                    state.client.clone(),
+                    auth_uri.clone(),
+                    role_scopes_root,
+                )),
             )
             .route(
                 "/bulk",
-                routing::post(api::post_device_bulk)
-                    .layer(AuthService::new(auth_uri.clone(), role_scopes_bulk.clone())),
+                routing::post(api::post_device_bulk).layer(AuthService::new(
+                    state.client.clone(),
+                    auth_uri.clone(),
+                    role_scopes_bulk.clone(),
+                )),
             )
             .route(
                 "/bulk-delete",
                 routing::post(api::post_device_bulk_del).layer(AuthService::new(
+                    state.client.clone(),
                     auth_uri.clone(),
                     role_scopes_bulk_del.clone(),
                 )),
             )
             .route(
                 "/range",
-                routing::post(api::post_device_range)
-                    .layer(AuthService::new(auth_uri.clone(), role_scopes_bulk)),
+                routing::post(api::post_device_range).layer(AuthService::new(
+                    state.client.clone(),
+                    auth_uri.clone(),
+                    role_scopes_bulk,
+                )),
             )
             .route(
                 "/range-delete",
-                routing::post(api::post_device_range_del)
-                    .layer(AuthService::new(auth_uri.clone(), role_scopes_bulk_del)),
+                routing::post(api::post_device_range_del).layer(AuthService::new(
+                    state.client.clone(),
+                    auth_uri.clone(),
+                    role_scopes_bulk_del,
+                )),
             )
             .route(
                 "/count",
-                routing::get(api::get_device_count)
-                    .layer(AuthService::new(auth_uri.clone(), role_scopes_count)),
+                routing::get(api::get_device_count).layer(AuthService::new(
+                    state.client.clone(),
+                    auth_uri.clone(),
+                    role_scopes_count,
+                )),
             )
             .route(
                 "/list",
-                routing::get(api::get_device_list)
-                    .layer(AuthService::new(auth_uri.clone(), role_scopes_list)),
+                routing::get(api::get_device_list).layer(AuthService::new(
+                    state.client.clone(),
+                    auth_uri.clone(),
+                    role_scopes_list,
+                )),
             )
             .route(
                 "/{device_id}",
                 routing::get(api::get_device)
                     .patch(api::patch_device)
                     .delete(api::delete_device)
-                    .layer(AuthService::new(auth_uri.clone(), role_scopes_param)),
+                    .layer(AuthService::new(
+                        state.client.clone(),
+                        auth_uri.clone(),
+                        role_scopes_param,
+                    )),
             )
             .with_state(state.clone()),
     )

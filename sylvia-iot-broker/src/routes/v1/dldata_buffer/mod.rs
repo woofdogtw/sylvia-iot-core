@@ -51,18 +51,27 @@ pub fn new_service(scope_path: &str, state: &State) -> Router {
         Router::new()
             .route(
                 "/count",
-                routing::get(api::get_dldata_buffer_count)
-                    .layer(AuthService::new(auth_uri.clone(), role_scopes_count)),
+                routing::get(api::get_dldata_buffer_count).layer(AuthService::new(
+                    state.client.clone(),
+                    auth_uri.clone(),
+                    role_scopes_count,
+                )),
             )
             .route(
                 "/list",
-                routing::get(api::get_dldata_buffer_list)
-                    .layer(AuthService::new(auth_uri.clone(), role_scopes_list)),
+                routing::get(api::get_dldata_buffer_list).layer(AuthService::new(
+                    state.client.clone(),
+                    auth_uri.clone(),
+                    role_scopes_list,
+                )),
             )
             .route(
                 "/{data_id}",
-                routing::delete(api::delete_dldata_buffer)
-                    .layer(AuthService::new(auth_uri.clone(), role_scopes_param)),
+                routing::delete(api::delete_dldata_buffer).layer(AuthService::new(
+                    state.client.clone(),
+                    auth_uri.clone(),
+                    role_scopes_param,
+                )),
             )
             .with_state(state.clone()),
     )
