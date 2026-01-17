@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.4.1
+
+### Fix
+
+- Add **ca-certificates.crt** to scratch Docker images.
+
 ## 0.4.0
 
 ### Changed
