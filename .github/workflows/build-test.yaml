@@ -18,7 +18,7 @@ jobs:
     runs-on: ubuntu-24.04
     services:
       rabbitmq:
-        image: rabbitmq:4.2.2-management-alpine
+        image: rabbitmq:4.2.3-management-alpine
         ports:
           - 5671:5671
           - 5672:5672
@@ -144,7 +144,7 @@ jobs:
         ports:
           - 27017:27017
       rabbitmq:
-        image: rabbitmq:4.2.2-management-alpine
+        image: rabbitmq:4.2.3-management-alpine
         ports:
           - 5671:5671
           - 5672:5672
@@ -261,7 +261,7 @@ jobs:
         ports:
           - 27017:27017
       rabbitmq:
-        image: rabbitmq:4.2.2-management-alpine
+        image: rabbitmq:4.2.3-management-alpine
         ports:
           - 5671:5671
           - 5672:5672
@@ -343,7 +343,7 @@ jobs:
         ports:
           - 27017:27017
       rabbitmq:
-        image: rabbitmq:4.2.2-management-alpine
+        image: rabbitmq:4.2.3-management-alpine
         ports:
           - 5671:5671
           - 5672:5672
@@ -406,7 +406,7 @@ jobs:
     runs-on: ubuntu-24.04
     services:
       rabbitmq:
-        image: rabbitmq:4.2.2-management-alpine
+        image: rabbitmq:4.2.3-management-alpine
         ports:
           - 5671:5671
           - 5672:5672
