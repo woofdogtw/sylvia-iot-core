@@ -1,6 +1,6 @@
 [package]
 name = "sylvia-router"
-version = "0.4.1"
+version = "0.4.2"
 authors = ["Chien-Hong Chan"]
 categories = ["web-programming::http-server"]
 description = "A simple router application with full Sylvia-IoT core components."
@@ -16,7 +16,7 @@ axum = "0.8.8"
 axum-prometheus = "0.10.0"
 axum-server = { version = "0.8.0", features = ["tls-rustls"] }
 chrono = { version = "0.4.43", default-features = false, features = ["serde"] }
-clap = { version = "4.5.54", default-features = false, features = [
+clap = { version = "4.5.57", default-features = false, features = [
     "std",
     "help",
     "usage",
@@ -41,7 +41,7 @@ sylvia-iot-coremgr = "0.4.1"
 sylvia-iot-coremgr-cli = "0.4.1"
 sylvia-iot-data = "0.4.1"
 sylvia-iot-sdk = "0.4.1"
-sysinfo = "0.37.2"
+sysinfo = "0.38.0"
 tokio = { version = "1.49.0", features = [
     "io-util",
     "macros",

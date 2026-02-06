@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.4.2
+
+### Changed
+
+- Update dependencies and fix vulnerabilities.
+- Update Rust to 1.93.0 with GitHub Actions runner image 20260126.10.1.
+
 ## 0.4.1
 
 ### Fix

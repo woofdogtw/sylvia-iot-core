@@ -1,6 +1,6 @@
 [package]
 name = "sylvia-iot-coremgr-cli"
-version = "0.4.1"
+version = "0.4.2"
 authors = ["Chien-Hong Chan"]
 categories = ["web-programming::http-client"]
 description = "The command-line tool for Sylvia-IoT core manager."
@@ -13,7 +13,7 @@ rust-version = "1.88.0"
 
 [dependencies]
 chrono = { version = "0.4.43", default-features = false, features = ["serde"] }
-clap = { version = "4.5.54", default-features = false, features = [
+clap = { version = "4.5.57", default-features = false, features = [
     "std",
     "help",
     "usage",
