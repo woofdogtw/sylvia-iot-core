@@ -1,19 +1,19 @@
 # Changelog
 
-## 0.4.2
+## 0.4.2 - 2026-02-06
 
 ### Changed
 
 - Update dependencies and fix vulnerabilities.
 - Update Rust to 1.93.0 with GitHub Actions runner image 20260126.10.1.
 
-## 0.4.1
+## 0.4.1 - 2026-01-17
 
 ### Fix
 
 - Add **ca-certificates.crt** to scratch Docker images.
 
-## 0.4.0
+## 0.4.0 - 2026-01-16
 
 ### Changed
 

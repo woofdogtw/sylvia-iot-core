@@ -81,11 +81,11 @@ jobs:
     runs-on: ubuntu-24.04
     services:
       mongo:
-        image: mongo:8.2.4
+        image: mongo:8.2.5
         ports:
           - 27017:27017
       redis:
-        image: redis:8.4.0-alpine
+        image: redis:8.6.0-alpine
         ports:
           - 6379:6379
     env:
@@ -140,7 +140,7 @@ jobs:
     runs-on: ubuntu-24.04
     services:
       mongo:
-        image: mongo:8.2.4
+        image: mongo:8.2.5
         ports:
           - 27017:27017
       rabbitmq:
@@ -257,7 +257,7 @@ jobs:
     runs-on: ubuntu-24.04
     services:
       mongo:
-        image: mongo:8.2.4
+        image: mongo:8.2.5
         ports:
           - 27017:27017
       rabbitmq:
@@ -339,7 +339,7 @@ jobs:
     runs-on: ubuntu-24.04
     services:
       mongo:
-        image: mongo:8.2.4
+        image: mongo:8.2.5
         ports:
           - 27017:27017
       rabbitmq:
