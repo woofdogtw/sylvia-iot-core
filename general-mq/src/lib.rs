@@ -61,7 +61,7 @@
 use std::{error::Error as StdError, fmt, sync::Arc};
 
 use async_trait::async_trait;
-use rand::{Rng, distr::Alphanumeric};
+use rand::{RngExt, distr::Alphanumeric};
 
 pub mod connection;
 pub mod queue;

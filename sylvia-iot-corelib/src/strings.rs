@@ -4,7 +4,7 @@ use chrono::{DateTime, SecondsFormat, Utc};
 use hex;
 use hmac::Hmac;
 use pbkdf2;
-use rand::{Rng, distr::Alphanumeric};
+use rand::{RngExt, distr::Alphanumeric};
 use regex::Regex;
 use sha2::{Digest, Sha256};
 use url::Url;
