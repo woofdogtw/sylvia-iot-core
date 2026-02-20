@@ -17,13 +17,13 @@ async-trait = "0.1.89"
 axum = "0.8.8"
 bytes = "1.11.1"
 chrono = { version = "0.4.43", default-features = false, features = ["serde"] }
-clap = { version = "4.5.58", default-features = false, features = [
+clap = { version = "4.5.60", default-features = false, features = [
     "std",
     "help",
     "usage",
     "error-context",
 ] }
-futures = "0.3.31"
+futures = "0.3.32"
 hex = "0.4.3"
 hmac = "0.12.1"
 log = "0.4.29"

@@ -16,7 +16,7 @@ axum = "0.8.8"
 axum-prometheus = "0.10.0"
 axum-server = { version = "0.8.0", features = ["tls-rustls"] }
 chrono = { version = "0.4.43", default-features = false, features = ["serde"] }
-clap = { version = "4.5.58", default-features = false, features = [
+clap = { version = "4.5.60", default-features = false, features = [
     "std",
     "help",
     "usage",
@@ -41,7 +41,7 @@ sylvia-iot-coremgr = { path = "../sylvia-iot-coremgr" }
 sylvia-iot-coremgr-cli = { path = "../sylvia-iot-coremgr-cli" }
 sylvia-iot-data = { path = "../sylvia-iot-data" }
 sylvia-iot-sdk = { path = "../sylvia-iot-sdk" }
-sysinfo = "0.38.1"
+sysinfo = "0.38.2"
 tokio = { version = "1.49.0", features = [
     "io-util",
     "macros",
