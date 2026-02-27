@@ -18,7 +18,7 @@ axum = "0.8.8"
 axum-prometheus = "0.10.0"
 axum-server = { version = "0.8.0", features = ["tls-rustls"] }
 bson = { version = "3.1.0", features = ["chrono-0_4"] }
-chrono = { version = "0.4.43", default-features = false, features = ["serde"] }
+chrono = { version = "0.4.44", default-features = false, features = ["serde"] }
 clap = { version = "4.5.60", default-features = false, features = [
     "std",
     "help",
@@ -41,7 +41,7 @@ reqwest = { version = "0.13.2", default-features = false, features = [
     "json",
     "rustls",
 ] }
-rustls = "0.23.36"
+rustls = "0.23.37"
 serde = { version = "1.0.228", features = ["derive"] }
 serde_json = "1.0.149"
 sql-builder = "3.1.1"

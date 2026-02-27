@@ -504,7 +504,7 @@ Send downlink data to a device.
     {
         "data": {
             "deviceId": "1640924274329-yESwHhKO",
-            "data": "74657374"
+            "payload": "74657374"
         }
     }
     ```
@@ -850,7 +850,7 @@ Simulate uplink data from a device.
     {
         "data": {
             "deviceId": "1640924274329-yESwHhKO",
-            "data": "74657374"
+            "payload": "74657374"
         }
     }
     ```
