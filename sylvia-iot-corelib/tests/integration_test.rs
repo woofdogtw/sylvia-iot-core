@@ -2,7 +2,7 @@ use laboratory::{LabResult, describe};
 
 mod libs;
 
-use libs::{err, http, logger, role, server_config, strings};
+use libs::{err, http, logger, role, server_config, strings, version};
 
 pub struct TestState;
 
@@ -50,6 +50,10 @@ pub fn integration_test() -> LabResult {
             context.it("randomstring", strings::randomstring);
             context.it("time_str", strings::time_str);
             context.it("u128_to_addr", strings::u128_to_addr);
+        });
+
+        context.describe("version", |context| {
+            context.it("gen_get_version", version::gen_get_version);
         });
     })
     .run()

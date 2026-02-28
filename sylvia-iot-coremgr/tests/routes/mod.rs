@@ -3,8 +3,6 @@ use std::{
     sync::{Arc, Mutex},
 };
 
-use axum::{Router, http::StatusCode, routing};
-use axum_test::TestServer;
 use laboratory::{SpecContext, Suite, describe, expect};
 use reqwest;
 
@@ -33,8 +31,6 @@ pub fn suite() -> Suite<TestState> {
     describe("routes", |context| {
         context.it("new_state", fn_new_state);
         context.it("new_service", fn_new_service);
-        context.it("GET /version", api_get_version);
-
         context
             .before_all(|state| {
                 state.insert(STATE, new_state(None, None));
@@ -86,57 +82,6 @@ fn fn_new_service(_context: &mut SpecContext<TestState>) -> Result<(), String> {
         data_sender: None,
     });
     Ok(())
-}
-
-fn api_get_version(context: &mut SpecContext<TestState>) -> Result<(), String> {
-    let state = context.state.borrow();
-    let state = state.get(STATE).unwrap();
-    let runtime = state.runtime.as_ref().unwrap();
-
-    const SERV_NAME: &'static str = env!("CARGO_PKG_NAME");
-    const SERV_VER: &'static str = env!("CARGO_PKG_VERSION");
-
-    let app = Router::new().route("/version", routing::get(routes::get_version));
-    let server = match TestServer::new(app) {
-        Err(e) => return Err(format!("new server error: {}", e)),
-        Ok(server) => server,
-    };
-
-    // Default.
-    let req = server.get("/version");
-    let resp = runtime.block_on(async { req.await });
-    expect(resp.status_code()).to_equal(StatusCode::OK)?;
-    let body = resp.text();
-    let expect_body = format!(
-        "{{\"data\":{{\"name\":\"{}\",\"version\":\"{}\"}}}}",
-        SERV_NAME, SERV_VER
-    );
-    expect(body.as_ref()).to_equal(expect_body.as_str().as_bytes())?;
-
-    // Invalid query.
-    let req = server.get("/version").add_query_param("q", "test");
-    let resp = runtime.block_on(async { req.await });
-    expect(resp.status_code()).to_equal(StatusCode::OK)?;
-    let body = resp.text();
-    let expect_body = format!(
-        "{{\"data\":{{\"name\":\"{}\",\"version\":\"{}\"}}}}",
-        SERV_NAME, SERV_VER
-    );
-    expect(body.as_ref()).to_equal(expect_body.as_str().as_bytes())?;
-
-    // Query service name.
-    let req = server.get("/version").add_query_param("q", "name");
-    let resp = runtime.block_on(async { req.await });
-    expect(resp.status_code()).to_equal(StatusCode::OK)?;
-    let body = resp.text();
-    expect(body.as_ref()).to_equal(SERV_NAME.as_bytes())?;
-
-    // Query service version.
-    let req = server.get("/version").add_query_param("q", "version");
-    let resp = runtime.block_on(async { req.await });
-    expect(resp.status_code()).to_equal(StatusCode::OK)?;
-    let body = resp.text();
-    expect(body.as_ref()).to_equal(SERV_VER.as_bytes())
 }
 
 fn remove_sqlite(path: &str) {

@@ -223,10 +223,7 @@ pub fn post_dup(context: &mut SpecContext<TestState>) -> Result<(), String> {
     let token = get_token(runtime, routes_state, user_id)?;
 
     let app = Router::new().merge(routes::new_service(routes_state));
-    let server = match TestServer::new(app) {
-        Err(e) => return Err(format!("new server error: {}", e)),
-        Ok(server) => server,
-    };
+    let server = TestServer::new(app);
 
     let param = request::PostClient {
         data: request::PostClientData {
@@ -905,10 +902,7 @@ pub fn get_wrong_id(context: &mut SpecContext<TestState>) -> Result<(), String> 
     let routes_state = state.routes_state.as_ref().unwrap();
 
     let app = Router::new().merge(routes::new_service(routes_state));
-    let server = match TestServer::new(app) {
-        Err(e) => return Err(format!("new server error: {}", e)),
-        Ok(server) => server,
-    };
+    let server = TestServer::new(app);
 
     let admin_token = get_token(runtime, routes_state, "admin")?;
     let req = server.get("/auth/api/v1/client/id").add_header(
@@ -1016,10 +1010,7 @@ pub fn patch_wrong_id(context: &mut SpecContext<TestState>) -> Result<(), String
     let public_token = get_token(runtime, routes_state, "public")?;
 
     let app = Router::new().merge(routes::new_service(routes_state));
-    let server = match TestServer::new(app) {
-        Err(e) => return Err(format!("new server error: {}", e)),
-        Ok(server) => server,
-    };
+    let server = TestServer::new(app);
 
     let param = request::PatchClient {
         data: Some(request::PatchClientData {
@@ -1234,10 +1225,7 @@ pub fn delete(context: &mut SpecContext<TestState>) -> Result<(), String> {
     let public_token = get_token(runtime, routes_state, "public")?;
 
     let app = Router::new().merge(routes::new_service(routes_state));
-    let server = match TestServer::new(app) {
-        Err(e) => return Err(format!("new server error: {}", e)),
-        Ok(server) => server,
-    };
+    let server = TestServer::new(app);
 
     let req = server.delete("/auth/api/v1/client/id").add_header(
         header::AUTHORIZATION,
@@ -1345,10 +1333,7 @@ pub fn delete_user(context: &mut SpecContext<TestState>) -> Result<(), String> {
     let token = get_token(runtime, routes_state, "admin")?;
 
     let app = Router::new().merge(routes::new_service(routes_state));
-    let server = match TestServer::new(app) {
-        Err(e) => return Err(format!("new server error: {}", e)),
-        Ok(server) => server,
-    };
+    let server = TestServer::new(app);
 
     let req = server.delete("/auth/api/v1/client/user/user").add_header(
         header::AUTHORIZATION,
@@ -1408,10 +1393,7 @@ fn test_post(
     expect_code: &str,
 ) -> Result<(), String> {
     let app = Router::new().merge(routes::new_service(state));
-    let server = match TestServer::new(app) {
-        Err(e) => return Err(format!("new server error: {}", e)),
-        Ok(server) => server,
-    };
+    let server = TestServer::new(app);
 
     let time_before = Utc::now().trunc_subsecs(3);
     let req = server
@@ -1501,10 +1483,7 @@ fn test_post_invalid_param(
     param: Option<&request::PostClient>,
 ) -> Result<(), String> {
     let app = Router::new().merge(routes::new_service(state));
-    let server = match TestServer::new(app) {
-        Err(e) => return Err(format!("new server error: {}", e)),
-        Ok(server) => server,
-    };
+    let server = TestServer::new(app);
 
     let mut req = server.post("/auth/api/v1/client").add_header(
         header::AUTHORIZATION,
@@ -1530,10 +1509,7 @@ fn test_get_count(
     expect_count: usize,
 ) -> Result<(), String> {
     let app = Router::new().merge(routes::new_service(&state));
-    let server = match TestServer::new(app) {
-        Err(e) => return Err(format!("new server error: {}", e)),
-        Ok(server) => server,
-    };
+    let server = TestServer::new(app);
 
     let req = server
         .get("/auth/api/v1/client/count")
@@ -1557,10 +1533,7 @@ fn test_get_list(
     expect_count: usize,
 ) -> Result<(), String> {
     let app = Router::new().merge(routes::new_service(state));
-    let server = match TestServer::new(app) {
-        Err(e) => return Err(format!("new server error: {}", e)),
-        Ok(server) => server,
-    };
+    let server = TestServer::new(app);
 
     let req = server
         .get("/auth/api/v1/client/list")
@@ -1597,10 +1570,7 @@ fn test_get_list_sort(
     expect_ids: &[&str],
 ) -> Result<(), String> {
     let app = Router::new().merge(routes::new_service(state));
-    let server = match TestServer::new(app) {
-        Err(e) => return Err(format!("new server error: {}", e)),
-        Ok(server) => server,
-    };
+    let server = TestServer::new(app);
 
     if let Some(sorts) = param.sort_vec.as_ref() {
         let sorts: Vec<String> = sorts
@@ -1659,10 +1629,7 @@ fn test_get_list_offset_limit(
     expect_ids: Vec<i32>,
 ) -> Result<(), String> {
     let app = Router::new().merge(routes::new_service(&state));
-    let server = match TestServer::new(app) {
-        Err(e) => return Err(format!("new server error: {}", e)),
-        Ok(server) => server,
-    };
+    let server = TestServer::new(app);
 
     let req = server
         .get("/auth/api/v1/client/list")
@@ -1693,10 +1660,7 @@ fn test_get_list_format_array(
     expect_ids: Vec<i32>,
 ) -> Result<(), String> {
     let app = Router::new().merge(routes::new_service(&state));
-    let server = match TestServer::new(app) {
-        Err(e) => return Err(format!("new server error: {}", e)),
-        Ok(server) => server,
-    };
+    let server = TestServer::new(app);
 
     let req = server
         .get("/auth/api/v1/client/list")
@@ -1727,10 +1691,7 @@ fn test_get(
     client_id: &str,
 ) -> Result<(), String> {
     let app = Router::new().merge(routes::new_service(&state));
-    let server = match TestServer::new(app) {
-        Err(e) => return Err(format!("new server error: {}", e)),
-        Ok(server) => server,
-    };
+    let server = TestServer::new(app);
 
     let client_info = get_client_model(runtime, state, client_id)?;
 
@@ -1809,10 +1770,7 @@ fn test_patch(
     )?;
 
     let app = Router::new().merge(routes::new_service(state));
-    let server = match TestServer::new(app) {
-        Err(e) => return Err(format!("new server error: {}", e)),
-        Ok(server) => server,
-    };
+    let server = TestServer::new(app);
 
     let time_before = Utc::now().trunc_subsecs(3);
     let mut redirect_uris = vec![
@@ -1931,10 +1889,7 @@ fn test_patch_invalid_param(
     param: Option<&request::PatchClient>,
 ) -> Result<(), String> {
     let app = Router::new().merge(routes::new_service(state));
-    let server = match TestServer::new(app) {
-        Err(e) => return Err(format!("new server error: {}", e)),
-        Ok(server) => server,
-    };
+    let server = TestServer::new(app);
 
     let mut req = server
         .patch(format!("/auth/api/v1/client/{}", client_id).as_str())

@@ -1,12 +1,8 @@
 use std::{collections::HashMap, error::Error as StdError, sync::Arc};
 
-use axum::{Router, response::IntoResponse};
-use serde::{Deserialize, Serialize};
+use axum::Router;
 
-use sylvia_iot_corelib::{
-    constants::DbEngine,
-    http::{Json, Query},
-};
+use sylvia_iot_corelib::constants::DbEngine;
 
 use crate::{
     libs::config::{self, Config},
@@ -37,26 +33,6 @@ pub struct State {
 /// The sylvia-iot module specific error codes in addition to standard
 /// [`sylvia_iot_corelib::err::ErrResp`].
 pub struct ErrReq;
-
-/// Query parameters for `GET /version`
-#[derive(Deserialize)]
-pub struct GetVersionQuery {
-    q: Option<String>,
-}
-
-#[derive(Serialize)]
-struct GetVersionRes<'a> {
-    data: GetVersionResData<'a>,
-}
-
-#[derive(Serialize)]
-struct GetVersionResData<'a> {
-    name: &'a str,
-    version: &'a str,
-}
-
-const SERV_NAME: &'static str = env!("CARGO_PKG_NAME");
-const SERV_VER: &'static str = env!("CARGO_PKG_VERSION");
 
 impl ErrReq {
     pub const USER_EXIST: (u16, &'static str) = (400, "err_auth_user_exist");
@@ -107,22 +83,4 @@ pub fn new_service(state: &State) -> Router {
             .merge(v1::user::new_service("/api/v1/user", state))
             .merge(v1::client::new_service("/api/v1/client", state)),
     )
-}
-
-pub async fn get_version(Query(query): Query<GetVersionQuery>) -> impl IntoResponse {
-    if let Some(q) = query.q.as_ref() {
-        match q.as_str() {
-            "name" => return SERV_NAME.into_response(),
-            "version" => return SERV_VER.into_response(),
-            _ => (),
-        }
-    }
-
-    Json(GetVersionRes {
-        data: GetVersionResData {
-            name: SERV_NAME,
-            version: SERV_VER,
-        },
-    })
-    .into_response()
 }

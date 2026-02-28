@@ -6,20 +6,16 @@ use std::{
 };
 
 use async_trait::async_trait;
-use axum::{Router, response::IntoResponse};
+use axum::Router;
 use log::{error, info, warn};
 use reqwest;
-use serde::{Deserialize, Serialize};
 use url::Url;
 
 use general_mq::{
     Queue,
     queue::{EventHandler as QueueEventHandler, GmqQueue, Message, MessageHandler, Status},
 };
-use sylvia_iot_corelib::{
-    constants::MqEngine,
-    http::{Json, Query},
-};
+use sylvia_iot_corelib::constants::MqEngine;
 
 use crate::libs::{
     config::{self, Config},
@@ -82,26 +78,6 @@ pub enum MqttState {
 pub struct ErrReq;
 
 struct DataSenderHandler;
-
-/// Query parameters for `GET /version`
-#[derive(Deserialize)]
-pub struct GetVersionQuery {
-    q: Option<String>,
-}
-
-#[derive(Serialize)]
-struct GetVersionRes<'a> {
-    data: GetVersionResData<'a>,
-}
-
-#[derive(Serialize)]
-struct GetVersionResData<'a> {
-    name: &'a str,
-    version: &'a str,
-}
-
-const SERV_NAME: &'static str = env!("CARGO_PKG_NAME");
-const SERV_VER: &'static str = env!("CARGO_PKG_VERSION");
 
 impl ErrReq {
     pub const APPLICATION_EXIST: (u16, &'static str) = (400, "err_broker_application_exist");
@@ -243,22 +219,4 @@ fn new_data_sender(
         Err(e) => Err(Box::new(IoError::new(ErrorKind::InvalidInput, e))),
         Ok(q) => Ok(q),
     }
-}
-
-pub async fn get_version(Query(query): Query<GetVersionQuery>) -> impl IntoResponse {
-    if let Some(q) = query.q.as_ref() {
-        match q.as_str() {
-            "name" => return SERV_NAME.into_response(),
-            "version" => return SERV_VER.into_response(),
-            _ => (),
-        }
-    }
-
-    Json(GetVersionRes {
-        data: GetVersionResData {
-            name: SERV_NAME,
-            version: SERV_VER,
-        },
-    })
-    .into_response()
 }

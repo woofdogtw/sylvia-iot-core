@@ -110,10 +110,7 @@ pub fn create_unit(
     param: &unit::request::PostUnit,
 ) -> Result<String, String> {
     let app = Router::new().merge(routes::new_service(&state));
-    let server = match TestServer::new(app) {
-        Err(e) => return Err(format!("new server error: {}", e)),
-        Ok(server) => server,
-    };
+    let server = TestServer::new(app);
 
     let req = server
         .post("/broker/api/v1/unit")
@@ -143,10 +140,7 @@ pub fn create_application(
     param: &application::request::PostApplication,
 ) -> Result<String, String> {
     let app = Router::new().merge(routes::new_service(&state));
-    let server = match TestServer::new(app) {
-        Err(e) => return Err(format!("new server error: {}", e)),
-        Ok(server) => server,
-    };
+    let server = TestServer::new(app);
 
     let req = server
         .post("/broker/api/v1/application")
@@ -176,10 +170,7 @@ pub fn create_network(
     param: &network::request::PostNetwork,
 ) -> Result<String, String> {
     let app = Router::new().merge(routes::new_service(&state));
-    let server = match TestServer::new(app) {
-        Err(e) => return Err(format!("new server error: {}", e)),
-        Ok(server) => server,
-    };
+    let server = TestServer::new(app);
 
     let req = server
         .post("/broker/api/v1/network")
@@ -209,10 +200,7 @@ pub fn create_device(
     param: &device::request::PostDevice,
 ) -> Result<String, String> {
     let app = Router::new().merge(routes::new_service(&state));
-    let server = match TestServer::new(app) {
-        Err(e) => return Err(format!("new server error: {}", e)),
-        Ok(server) => server,
-    };
+    let server = TestServer::new(app);
 
     let req = server
         .post("/broker/api/v1/device")
@@ -242,10 +230,7 @@ pub fn create_device_bulk(
     param: &device::request::PostDeviceBulk,
 ) -> Result<Vec<String>, String> {
     let app = Router::new().merge(routes::new_service(&state));
-    let server = match TestServer::new(app) {
-        Err(e) => return Err(format!("new server error: {}", e)),
-        Ok(server) => server,
-    };
+    let server = TestServer::new(app);
 
     let req = server
         .post("/broker/api/v1/device/bulk")
@@ -293,10 +278,7 @@ pub fn create_device_range(
     param: &device::request::PostDeviceRange,
 ) -> Result<Vec<String>, String> {
     let app = Router::new().merge(routes::new_service(&state));
-    let server = match TestServer::new(app) {
-        Err(e) => return Err(format!("new server error: {}", e)),
-        Ok(server) => server,
-    };
+    let server = TestServer::new(app);
 
     let req = server
         .post("/broker/api/v1/device/range")
@@ -345,10 +327,7 @@ pub fn patch_device(
     param: &device::request::PatchDevice,
 ) -> Result<(), String> {
     let app = Router::new().merge(routes::new_service(&state));
-    let server = match TestServer::new(app) {
-        Err(e) => return Err(format!("new server error: {}", e)),
-        Ok(server) => server,
-    };
+    let server = TestServer::new(app);
 
     let req = server
         .patch(format!("/broker/api/v1/device/{}", device_id).as_str())
@@ -377,10 +356,7 @@ pub fn delete_device(
     device_id: &str,
 ) -> Result<(), String> {
     let app = Router::new().merge(routes::new_service(&state));
-    let server = match TestServer::new(app) {
-        Err(e) => return Err(format!("new server error: {}", e)),
-        Ok(server) => server,
-    };
+    let server = TestServer::new(app);
 
     let req = server
         .delete(format!("/broker/api/v1/device/{}", device_id).as_str())
@@ -408,10 +384,7 @@ pub fn delete_device_bulk(
     param: &device::request::PostDeviceBulk,
 ) -> Result<(), String> {
     let app = Router::new().merge(routes::new_service(&state));
-    let server = match TestServer::new(app) {
-        Err(e) => return Err(format!("new server error: {}", e)),
-        Ok(server) => server,
-    };
+    let server = TestServer::new(app);
 
     let req = server
         .post("/broker/api/v1/device/bulk-delete")
@@ -440,10 +413,7 @@ pub fn delete_device_range(
     param: &device::request::PostDeviceRange,
 ) -> Result<(), String> {
     let app = Router::new().merge(routes::new_service(&state));
-    let server = match TestServer::new(app) {
-        Err(e) => return Err(format!("new server error: {}", e)),
-        Ok(server) => server,
-    };
+    let server = TestServer::new(app);
 
     let req = server
         .post("/broker/api/v1/device/range-delete")
@@ -472,10 +442,7 @@ pub fn create_device_route(
     param: &device_route::request::PostDeviceRoute,
 ) -> Result<String, String> {
     let app = Router::new().merge(routes::new_service(&state));
-    let server = match TestServer::new(app) {
-        Err(e) => return Err(format!("new server error: {}", e)),
-        Ok(server) => server,
-    };
+    let server = TestServer::new(app);
 
     let req = server
         .post("/broker/api/v1/device-route")
@@ -505,10 +472,7 @@ pub fn delete_device_route(
     route_id: &str,
 ) -> Result<(), String> {
     let app = Router::new().merge(routes::new_service(&state));
-    let server = match TestServer::new(app) {
-        Err(e) => return Err(format!("new server error: {}", e)),
-        Ok(server) => server,
-    };
+    let server = TestServer::new(app);
 
     let req = server
         .delete(format!("/broker/api/v1/device-route/{}", route_id).as_str())
@@ -536,10 +500,7 @@ pub fn create_network_route(
     param: &network_route::request::PostNetworkRoute,
 ) -> Result<String, String> {
     let app = Router::new().merge(routes::new_service(&state));
-    let server = match TestServer::new(app) {
-        Err(e) => return Err(format!("new server error: {}", e)),
-        Ok(server) => server,
-    };
+    let server = TestServer::new(app);
 
     let req = server
         .post("/broker/api/v1/network-route")

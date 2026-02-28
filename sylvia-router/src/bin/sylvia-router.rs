@@ -23,7 +23,7 @@ use sylvia_iot_broker::{libs as broker_libs, routes as broker_routes};
 use sylvia_iot_corelib::{
     constants::MqEngine,
     logger::{self, LoggerLayer},
-    server_config,
+    server_config, version,
 };
 use sylvia_iot_coremgr::{libs as coremgr_libs, routes as coremgr_routes};
 use sylvia_iot_data::{libs as data_libs, routes as data_routes};
@@ -124,7 +124,10 @@ async fn main() -> std::io::Result<()> {
         .merge(coremgr_routes::new_service(&coremgr_state))
         .merge(data_routes::new_service(&data_state))
         .merge(routes::new_service(&router_state))
-        .route("/version", routing::get(routes::get_version))
+        .route(
+            "/version",
+            routing::get(version::gen_get_version(PROJ_NAME, PROJ_VER)),
+        )
         .route(
             "/metrics",
             routing::get(|| async move { metric_handle.render() }),

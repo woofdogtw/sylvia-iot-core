@@ -2705,10 +2705,7 @@ pub fn delete(context: &mut SpecContext<TestState>) -> Result<(), String> {
     )?;
 
     let app = Router::new().merge(routes::new_service(routes_state));
-    let server = match TestServer::new(app) {
-        Err(e) => return Err(format!("new server error: {}", e)),
-        Ok(server) => server,
-    };
+    let server = TestServer::new(app);
 
     let req = server.delete("/broker/api/v1/device-route/id").add_header(
         header::AUTHORIZATION,
@@ -2766,10 +2763,7 @@ fn test_post(
     expect_code: &str,
 ) -> Result<(), String> {
     let app = Router::new().merge(routes::new_service(state));
-    let server = match TestServer::new(app) {
-        Err(e) => return Err(format!("new server error: {}", e)),
-        Ok(server) => server,
-    };
+    let server = TestServer::new(app);
 
     let time_before = Utc::now().trunc_subsecs(3);
     let req = server
@@ -2836,10 +2830,7 @@ fn test_post_invalid_param(
     param: Option<&request::PostDeviceRoute>,
 ) -> Result<(), String> {
     let app = Router::new().merge(routes::new_service(state));
-    let server = match TestServer::new(app) {
-        Err(e) => return Err(format!("new server error: {}", e)),
-        Ok(server) => server,
-    };
+    let server = TestServer::new(app);
 
     let req = server
         .post("/broker/api/v1/device-route")
@@ -2867,10 +2858,7 @@ fn test_post_bulk(
     expect_network_addrs: &Vec<String>,
 ) -> Result<(), String> {
     let app = Router::new().merge(routes::new_service(state));
-    let server = match TestServer::new(app) {
-        Err(e) => return Err(format!("new server error: {}", e)),
-        Ok(server) => server,
-    };
+    let server = TestServer::new(app);
 
     let req = match use_post {
         false => server.post("/broker/api/v1/device-route/bulk-delete"),
@@ -2951,10 +2939,7 @@ fn test_post_bulk_invalid_param(
     param: Option<&request::PostDeviceRouteBulk>,
 ) -> Result<(), String> {
     let app = Router::new().merge(routes::new_service(state));
-    let server = match TestServer::new(app) {
-        Err(e) => return Err(format!("new server error: {}", e)),
-        Ok(server) => server,
-    };
+    let server = TestServer::new(app);
 
     let req = match use_post {
         false => server.post("/broker/api/v1/device-route/bulk-delete"),
@@ -2985,10 +2970,7 @@ fn test_post_range(
     expect_network_addrs: &Vec<String>,
 ) -> Result<(), String> {
     let app = Router::new().merge(routes::new_service(state));
-    let server = match TestServer::new(app) {
-        Err(e) => return Err(format!("new server error: {}", e)),
-        Ok(server) => server,
-    };
+    let server = TestServer::new(app);
 
     let req = match use_post {
         false => server.post("/broker/api/v1/device-route/range-delete"),
@@ -3069,10 +3051,7 @@ fn test_post_range_invalid_param(
     param: Option<&request::PostDeviceRouteRange>,
 ) -> Result<(), String> {
     let app = Router::new().merge(routes::new_service(state));
-    let server = match TestServer::new(app) {
-        Err(e) => return Err(format!("new server error: {}", e)),
-        Ok(server) => server,
-    };
+    let server = TestServer::new(app);
 
     let req = match use_post {
         false => server.post("/broker/api/v1/device-route/range-delete"),
@@ -3101,10 +3080,7 @@ fn test_get_count(
     expect_count: usize,
 ) -> Result<(), String> {
     let app = Router::new().merge(routes::new_service(state));
-    let server = match TestServer::new(app) {
-        Err(e) => return Err(format!("new server error: {}", e)),
-        Ok(server) => server,
-    };
+    let server = TestServer::new(app);
 
     let req = server
         .get("/broker/api/v1/device-route/count")
@@ -3127,10 +3103,7 @@ fn test_get_list(
     expect_count: usize,
 ) -> Result<(), String> {
     let app = Router::new().merge(routes::new_service(state));
-    let server = match TestServer::new(app) {
-        Err(e) => return Err(format!("new server error: {}", e)),
-        Ok(server) => server,
-    };
+    let server = TestServer::new(app);
 
     let req = server
         .get("/broker/api/v1/device-route/list")
@@ -3180,10 +3153,7 @@ fn test_get_list_sort(
     expect_ids: &[&str],
 ) -> Result<(), String> {
     let app = Router::new().merge(routes::new_service(state));
-    let server = match TestServer::new(app) {
-        Err(e) => return Err(format!("new server error: {}", e)),
-        Ok(server) => server,
-    };
+    let server = TestServer::new(app);
 
     if let Some(sorts) = param.sort_vec.as_ref() {
         let sorts: Vec<String> = sorts
@@ -3242,10 +3212,7 @@ fn test_get_list_offset_limit(
     expect_ids: Vec<i32>,
 ) -> Result<(), String> {
     let app = Router::new().merge(routes::new_service(state));
-    let server = match TestServer::new(app) {
-        Err(e) => return Err(format!("new server error: {}", e)),
-        Ok(server) => server,
-    };
+    let server = TestServer::new(app);
 
     let req = server
         .get("/broker/api/v1/device-route/list")
@@ -3275,10 +3242,7 @@ fn test_get_list_format_array(
     expect_ids: Vec<i32>,
 ) -> Result<(), String> {
     let app = Router::new().merge(routes::new_service(state));
-    let server = match TestServer::new(app) {
-        Err(e) => return Err(format!("new server error: {}", e)),
-        Ok(server) => server,
-    };
+    let server = TestServer::new(app);
 
     let req = server
         .get("/broker/api/v1/device-route/list")

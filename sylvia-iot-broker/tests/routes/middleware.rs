@@ -93,10 +93,7 @@ fn test_200(context: &mut SpecContext<TestState>) -> Result<(), String> {
             auth_uri.clone(),
             role_scopes_root,
         ));
-    let server = match TestServer::new(app) {
-        Err(e) => return Err(format!("new server error: {}", e)),
-        Ok(server) => server,
-    };
+    let server = TestServer::new(app);
 
     let req = server.get("/").add_header(
         header::AUTHORIZATION,
@@ -126,10 +123,7 @@ fn test_400(context: &mut SpecContext<TestState>) -> Result<(), String> {
             auth_uri.clone(),
             role_scopes_root,
         ));
-    let server = match TestServer::new(app) {
-        Err(e) => return Err(format!("new server error: {}", e)),
-        Ok(server) => server,
-    };
+    let server = TestServer::new(app);
 
     let req = server.get("/");
     let resp = runtime.block_on(async { req.await });
@@ -164,10 +158,7 @@ fn test_401(context: &mut SpecContext<TestState>) -> Result<(), String> {
             auth_uri.clone(),
             role_scopes_root,
         ));
-    let server = match TestServer::new(app) {
-        Err(e) => return Err(format!("new server error: {}", e)),
-        Ok(server) => server,
-    };
+    let server = TestServer::new(app);
 
     let req = server.get("/").add_header(
         header::AUTHORIZATION,
@@ -221,10 +212,7 @@ fn test_403(context: &mut SpecContext<TestState>) -> Result<(), String> {
             auth_uri.clone(),
             role_scopes_root,
         ));
-    let server = match TestServer::new(app) {
-        Err(e) => return Err(format!("new server error: {}", e)),
-        Ok(server) => server,
-    };
+    let server = TestServer::new(app);
 
     let req = server.get("/").add_header(
         header::AUTHORIZATION,
@@ -306,10 +294,7 @@ fn test_503(context: &mut SpecContext<TestState>) -> Result<(), String> {
             auth_uri.to_string(),
             role_scopes_root,
         ));
-    let server = match TestServer::new(app) {
-        Err(e) => return Err(format!("new server error: {}", e)),
-        Ok(server) => server,
-    };
+    let server = TestServer::new(app);
 
     let req = server.get("/").add_header(
         header::AUTHORIZATION,

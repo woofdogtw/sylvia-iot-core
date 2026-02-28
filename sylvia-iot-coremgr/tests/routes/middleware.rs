@@ -200,10 +200,7 @@ fn test_get(context: &mut SpecContext<TestState>) -> Result<(), String> {
             auth_uri.clone(),
             data_sender,
         ));
-    let server = match TestServer::new(app) {
-        Err(e) => return Err(format!("new server error: {}", e)),
-        Ok(server) => server,
-    };
+    let server = TestServer::new(app);
 
     let data_recv_queue = state.data_queue.as_mut().unwrap();
     let handler = TestHandler::new();
@@ -247,10 +244,7 @@ fn test_post(context: &mut SpecContext<TestState>) -> Result<(), String> {
             auth_uri.clone(),
             data_sender,
         ));
-    let server = match TestServer::new(app) {
-        Err(e) => return Err(format!("new server error: {}", e)),
-        Ok(server) => server,
-    };
+    let server = TestServer::new(app);
 
     let data_recv_queue = state.data_queue.as_mut().unwrap();
     let handler = TestHandler::new();
@@ -310,10 +304,7 @@ fn test_patch_password(context: &mut SpecContext<TestState>) -> Result<(), Strin
             auth_uri.clone(),
             data_sender,
         ));
-    let server = match TestServer::new(app) {
-        Err(e) => return Err(format!("new server error: {}", e)),
-        Ok(server) => server,
-    };
+    let server = TestServer::new(app);
 
     let data_recv_queue = state.data_queue.as_mut().unwrap();
     let handler = TestHandler::new();
@@ -376,10 +367,7 @@ fn test_delete_cover(context: &mut SpecContext<TestState>) -> Result<(), String>
             auth_uri.clone(),
             data_sender,
         ));
-    let server = match TestServer::new(app) {
-        Err(e) => return Err(format!("new server error: {}", e)),
-        Ok(server) => server,
-    };
+    let server = TestServer::new(app);
 
     let data_recv_queue = state.data_queue.as_mut().unwrap();
     let handler = TestHandler::new();
