@@ -36,7 +36,7 @@ tower = "0.5.3"
 url = "2.5.8"
 
 [dev-dependencies]
-axum-test = "18.7.0"
+axum-test = "19.0.0"
 laboratory = "2.0.0"
 sylvia-iot-auth = { path = "../sylvia-iot-auth" }
 sylvia-iot-broker = { path = "../sylvia-iot-broker" }

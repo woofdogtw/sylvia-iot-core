@@ -1121,10 +1121,7 @@ pub fn delete(context: &mut SpecContext<TestState>) -> Result<(), String> {
     add_network_model(runtime, routes_state, "owner", "owner2", "amqp://host")?;
 
     let app = Router::new().merge(routes::new_service(routes_state));
-    let server = match TestServer::new(app) {
-        Err(e) => return Err(format!("new server error: {}", e)),
-        Ok(server) => server,
-    };
+    let server = TestServer::new(app);
 
     let req = server.delete("/broker/api/v1/network/id").add_header(
         header::AUTHORIZATION,
@@ -1317,10 +1314,7 @@ fn test_post(
     expect_code: &str,
 ) -> Result<(), String> {
     let app = Router::new().merge(routes::new_service(state));
-    let server = match TestServer::new(app) {
-        Err(e) => return Err(format!("new server error: {}", e)),
-        Ok(server) => server,
-    };
+    let server = TestServer::new(app);
 
     let time_before = Utc::now().trunc_subsecs(3);
     let req = server
@@ -1390,10 +1384,7 @@ fn test_post_invalid_param(
     param: Option<&request::PostNetwork>,
 ) -> Result<(), String> {
     let app = Router::new().merge(routes::new_service(state));
-    let server = match TestServer::new(app) {
-        Err(e) => return Err(format!("new server error: {}", e)),
-        Ok(server) => server,
-    };
+    let server = TestServer::new(app);
 
     let req = server
         .post("/broker/api/v1/network")
@@ -1419,10 +1410,7 @@ fn test_get_count(
     expect_count: usize,
 ) -> Result<(), String> {
     let app = Router::new().merge(routes::new_service(state));
-    let server = match TestServer::new(app) {
-        Err(e) => return Err(format!("new server error: {}", e)),
-        Ok(server) => server,
-    };
+    let server = TestServer::new(app);
 
     let req = server
         .get("/broker/api/v1/network/count")
@@ -1445,10 +1433,7 @@ fn test_get_list(
     expect_count: usize,
 ) -> Result<(), String> {
     let app = Router::new().merge(routes::new_service(state));
-    let server = match TestServer::new(app) {
-        Err(e) => return Err(format!("new server error: {}", e)),
-        Ok(server) => server,
-    };
+    let server = TestServer::new(app);
 
     let req = server
         .get("/broker/api/v1/network/list")
@@ -1484,10 +1469,7 @@ fn test_get_list_sort(
     expect_ids: &[&str],
 ) -> Result<(), String> {
     let app = Router::new().merge(routes::new_service(state));
-    let server = match TestServer::new(app) {
-        Err(e) => return Err(format!("new server error: {}", e)),
-        Ok(server) => server,
-    };
+    let server = TestServer::new(app);
 
     if let Some(sorts) = param.sort_vec.as_ref() {
         let sorts: Vec<String> = sorts
@@ -1546,10 +1528,7 @@ fn test_get_list_offset_limit(
     expect_ids: Vec<i32>,
 ) -> Result<(), String> {
     let app = Router::new().merge(routes::new_service(state));
-    let server = match TestServer::new(app) {
-        Err(e) => return Err(format!("new server error: {}", e)),
-        Ok(server) => server,
-    };
+    let server = TestServer::new(app);
 
     let req = server
         .get("/broker/api/v1/network/list")
@@ -1580,10 +1559,7 @@ fn test_get_list_format_array(
     expect_ids: Vec<i32>,
 ) -> Result<(), String> {
     let app = Router::new().merge(routes::new_service(state));
-    let server = match TestServer::new(app) {
-        Err(e) => return Err(format!("new server error: {}", e)),
-        Ok(server) => server,
-    };
+    let server = TestServer::new(app);
 
     let req = server
         .get("/broker/api/v1/network/list")
@@ -1613,10 +1589,7 @@ fn test_get(
     network_id: &str,
 ) -> Result<(), String> {
     let app = Router::new().merge(routes::new_service(state));
-    let server = match TestServer::new(app) {
-        Err(e) => return Err(format!("new server error: {}", e)),
-        Ok(server) => server,
-    };
+    let server = TestServer::new(app);
 
     let network_info = get_network_model(runtime, state, network_id, true)?.unwrap();
 
@@ -1659,10 +1632,7 @@ fn test_get_wrong_id(
     network_id: &str,
 ) -> Result<(), String> {
     let app = Router::new().merge(routes::new_service(state));
-    let server = match TestServer::new(app) {
-        Err(e) => return Err(format!("new server error: {}", e)),
-        Ok(server) => server,
-    };
+    let server = TestServer::new(app);
 
     let req = server
         .get(format!("/broker/api/v1/network/{}", network_id).as_str())
@@ -1686,10 +1656,7 @@ fn test_patch(
     add_network_model(runtime, state, unit_id, network_id, "amqp://host")?;
 
     let app = Router::new().merge(routes::new_service(state));
-    let server = match TestServer::new(app) {
-        Err(e) => return Err(format!("new server error: {}", e)),
-        Ok(server) => server,
-    };
+    let server = TestServer::new(app);
 
     let time_before = Utc::now().trunc_subsecs(3);
     let mut info = Map::<String, Value>::new();
@@ -1752,10 +1719,7 @@ fn test_patch_wrong_id(
     network_id: &str,
 ) -> Result<(), String> {
     let app = Router::new().merge(routes::new_service(state));
-    let server = match TestServer::new(app) {
-        Err(e) => return Err(format!("new server error: {}", e)),
-        Ok(server) => server,
-    };
+    let server = TestServer::new(app);
 
     let body = request::PatchNetwork {
         data: request::PatchNetworkData {
@@ -1785,10 +1749,7 @@ fn test_patch_invalid_param(
     param: Option<&request::PatchNetwork>,
 ) -> Result<(), String> {
     let app = Router::new().merge(routes::new_service(state));
-    let server = match TestServer::new(app) {
-        Err(e) => return Err(format!("new server error: {}", e)),
-        Ok(server) => server,
-    };
+    let server = TestServer::new(app);
 
     let req = server
         .patch(format!("/broker/api/v1/network/{}", network_id).as_str())

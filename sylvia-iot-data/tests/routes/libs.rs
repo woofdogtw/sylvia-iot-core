@@ -266,10 +266,7 @@ pub fn test_invalid_token(
     uri: &str,
 ) -> Result<(), String> {
     let app = Router::new().merge(routes::new_service(&state));
-    let server = match TestServer::new(app) {
-        Err(e) => return Err(format!("new server error: {}", e)),
-        Ok(server) => server,
-    };
+    let server = TestServer::new(app);
 
     let req = server.get(uri).add_header(
         header::AUTHORIZATION,
@@ -288,10 +285,7 @@ pub fn test_get_400(
     expect_code: &str,
 ) -> Result<(), String> {
     let app = Router::new().merge(routes::new_service(&state));
-    let server = match TestServer::new(app) {
-        Err(e) => return Err(format!("new server error: {}", e)),
-        Ok(server) => server,
-    };
+    let server = TestServer::new(app);
 
     let req = server.get(uri).add_query_params(param).add_header(
         header::AUTHORIZATION,

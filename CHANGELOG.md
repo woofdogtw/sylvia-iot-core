@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.4.3 - 2026-02-28
+
+### Changed
+
+- **sylvia-iot-corelib**: Introduce `gen_get_version` to replace per-service `get_version` implementations, accepting name and version from the caller.
+- **sdk**: Add `util::version`.
+- Update dependencies.
+- Update Rust to 1.93.1 with GitHub Actions runner image 20260224.36.1.
+
+### Fixed
+
+- **sylvia-iot-coremgr**, **sylvia-iot-data**: The `GET /version` endpoint of the composite binary (`sylvia-iot-core`) now returns the correct binary name instead of `sylvia-iot-coremgr`.
+
 ## 0.4.2 - 2026-02-06
 
 ### Changed

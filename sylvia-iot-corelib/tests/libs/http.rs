@@ -65,7 +65,7 @@ pub fn test_json(_context: &mut SpecContext<TestState>) -> Result<(), String> {
         "/",
         routing::post(|Json(_): Json<TestParam>| async { Json(TestParam { param: 2 }) }),
     );
-    let server = TestServer::new(app).unwrap();
+    let server = TestServer::new(app);
 
     let req = server.post("/").json(&TestParam { param: 1 });
     let resp = runtime.block_on(async { req.await });
@@ -88,7 +88,7 @@ pub fn test_path(_context: &mut SpecContext<TestState>) -> Result<(), String> {
         "/{param}",
         routing::get(|Path(_): Path<TestParam>| async { "" }),
     );
-    let server = TestServer::new(app).unwrap();
+    let server = TestServer::new(app);
 
     let req = server.get("/1");
     let resp = runtime.block_on(async { req.await });
@@ -106,7 +106,7 @@ pub fn test_query(_context: &mut SpecContext<TestState>) -> Result<(), String> {
     let runtime = Runtime::new().unwrap();
 
     let app = Router::new().route("/", routing::get(|Query(_): Query<TestParam>| async { "" }));
-    let server = TestServer::new(app).unwrap();
+    let server = TestServer::new(app);
 
     let req = server.get("/").add_query_param("param", 1);
     let resp = runtime.block_on(async { req.await });

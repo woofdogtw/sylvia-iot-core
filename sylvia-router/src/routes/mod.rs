@@ -3,10 +3,8 @@ use std::{
     sync::{Arc, Mutex},
 };
 
-use axum::{Router, response::IntoResponse};
+use axum::Router;
 use reqwest;
-use serde::{Deserialize, Serialize};
-use sylvia_iot_sdk::util::http::{Json, Query};
 use sysinfo::{CpuRefreshKind, Disks, MemoryRefreshKind, RefreshKind, System};
 
 use crate::libs::config::Config;
@@ -30,26 +28,6 @@ pub struct State {
     /// Disk information.
     pub disk_info: Arc<Mutex<Disks>>,
 }
-
-/// Query parameters for `GET /version`
-#[derive(Deserialize)]
-pub struct GetVersionQuery {
-    q: Option<String>,
-}
-
-#[derive(Serialize)]
-struct GetVersionRes<'a> {
-    data: GetVersionResData<'a>,
-}
-
-#[derive(Serialize)]
-struct GetVersionResData<'a> {
-    name: &'a str,
-    version: &'a str,
-}
-
-const SERV_NAME: &'static str = env!("CARGO_PKG_NAME");
-const SERV_VER: &'static str = env!("CARGO_PKG_VERSION");
 
 /// To create resources for the service.
 pub async fn new_state(
@@ -81,22 +59,4 @@ pub fn new_service(state: &State) -> Router {
             .merge(v1::sys::new_service("/api/v1/sys", state))
             .merge(v1::net::new_service("/api/v1/net", state)),
     )
-}
-
-pub async fn get_version(Query(query): Query<GetVersionQuery>) -> impl IntoResponse {
-    if let Some(q) = query.q.as_ref() {
-        match q.as_str() {
-            "name" => return SERV_NAME.into_response(),
-            "version" => return SERV_VER.into_response(),
-            _ => (),
-        }
-    }
-
-    Json(GetVersionRes {
-        data: GetVersionResData {
-            name: SERV_NAME,
-            version: SERV_VER,
-        },
-    })
-    .into_response()
 }

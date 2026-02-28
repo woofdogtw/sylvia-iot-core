@@ -175,10 +175,7 @@ fn test_get_tokeninfo(
     let client_info = get_client_model(runtime, state, "public")?;
 
     let app = Router::new().merge(routes::new_service(&state));
-    let server = match TestServer::new(app) {
-        Err(e) => return Err(format!("new server error: {}", e)),
-        Ok(server) => server,
-    };
+    let server = TestServer::new(app);
 
     let token = get_token(runtime, state, user_id)?;
     let req = server.get("/auth/api/v1/auth/tokeninfo").add_header(
@@ -267,10 +264,7 @@ fn test_post_logout(runtime: &Runtime, state: &routes::State) -> Result<(), Stri
     })?;
 
     let app = Router::new().merge(routes::new_service(&state));
-    let server = match TestServer::new(app) {
-        Err(e) => return Err(format!("new server error: {}", e)),
-        Ok(server) => server,
-    };
+    let server = TestServer::new(app);
 
     let req = server.post("/auth/api/v1/auth/logout").add_header(
         header::AUTHORIZATION,

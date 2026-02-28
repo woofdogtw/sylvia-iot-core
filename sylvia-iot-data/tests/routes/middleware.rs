@@ -87,10 +87,7 @@ fn test_200(context: &mut SpecContext<TestState>) -> Result<(), String> {
     let app = Router::new()
         .route("/", routing::get(dummy_handler))
         .layer(AuthService::new(client.clone(), auth_uri.clone()));
-    let server = match TestServer::new(app) {
-        Err(e) => return Err(format!("new server error: {}", e)),
-        Ok(server) => server,
-    };
+    let server = TestServer::new(app);
 
     let req = server.get("/").add_header(
         header::AUTHORIZATION,
@@ -115,10 +112,7 @@ fn test_400(context: &mut SpecContext<TestState>) -> Result<(), String> {
     let app = Router::new()
         .route("/", routing::get(dummy_handler))
         .layer(AuthService::new(client.clone(), auth_uri.clone()));
-    let server = match TestServer::new(app) {
-        Err(e) => return Err(format!("new server error: {}", e)),
-        Ok(server) => server,
-    };
+    let server = TestServer::new(app);
 
     let req = server.get("/");
     let resp = runtime.block_on(async { req.await });
@@ -148,10 +142,7 @@ fn test_401(context: &mut SpecContext<TestState>) -> Result<(), String> {
     let app = Router::new()
         .route("/", routing::get(dummy_handler))
         .layer(AuthService::new(client.clone(), auth_uri.clone()));
-    let server = match TestServer::new(app) {
-        Err(e) => return Err(format!("new server error: {}", e)),
-        Ok(server) => server,
-    };
+    let server = TestServer::new(app);
 
     let req = server.get("/").add_header(
         header::AUTHORIZATION,
@@ -171,10 +162,7 @@ fn test_503(context: &mut SpecContext<TestState>) -> Result<(), String> {
     let app = Router::new()
         .route("/", routing::get(dummy_handler))
         .layer(AuthService::new(client.clone(), auth_uri.to_string()));
-    let server = match TestServer::new(app) {
-        Err(e) => return Err(format!("new server error: {}", e)),
-        Ok(server) => server,
-    };
+    let server = TestServer::new(app);
 
     let req = server.get("/").add_header(
         header::AUTHORIZATION,

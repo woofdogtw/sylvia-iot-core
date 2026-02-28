@@ -495,10 +495,7 @@ pub fn new_state(
 /// A utility function for [`test_invalid_param`].
 pub fn new_test_server(state: &routes::State) -> Result<TestServer, String> {
     let app = Router::new().merge(routes::new_service(&state));
-    match TestServer::new(app) {
-        Err(e) => Err(format!("new server error: {}", e)),
-        Ok(server) => Ok(server),
-    }
+    Ok(TestServer::new(app))
 }
 
 pub fn test_invalid_token(
