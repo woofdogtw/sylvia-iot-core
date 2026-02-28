@@ -18,7 +18,7 @@ use tower_http::{cors::CorsLayer, normalize_path::NormalizePathLayer, timeout::T
 use sylvia_iot_broker::{libs, routes};
 use sylvia_iot_corelib::{
     logger::{self, LoggerLayer},
-    server_config,
+    server_config, version,
 };
 
 #[derive(Deserialize)]
@@ -62,7 +62,10 @@ async fn main() -> std::io::Result<()> {
 
     let app = Router::new()
         .merge(routes::new_service(&broker_state))
-        .route("/version", routing::get(routes::get_version))
+        .route(
+            "/version",
+            routing::get(version::gen_get_version(PROJ_NAME, PROJ_VER)),
+        )
         .route(
             "/metrics",
             routing::get(|| async move { metric_handle.render() }),

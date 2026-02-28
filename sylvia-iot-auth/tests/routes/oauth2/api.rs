@@ -1441,10 +1441,7 @@ pub fn middleware_api_scope(context: &mut SpecContext<TestState>) -> Result<(), 
     let app = Router::new()
         .route("/", routing::get(dummy_handler).post(dummy_handler))
         .layer(AuthService::new(&model, role_scopes_root));
-    let server = match TestServer::new(app) {
-        Err(e) => return Err(format!("new server error: {}", e)),
-        Ok(server) => server,
-    };
+    let server = TestServer::new(app);
 
     let req = server.get("/");
     let resp = runtime.block_on(async { req.await });
@@ -1506,10 +1503,7 @@ fn test_get_auth(
     expect_error: &str,
 ) -> Result<(), String> {
     let app = Router::new().merge(routes::new_service(&state));
-    let server = match TestServer::new(app) {
-        Err(e) => return Err(format!("new server error: {}", e)),
-        Ok(server) => server,
-    };
+    let server = TestServer::new(app);
 
     let req = server.get("/auth/oauth2/auth").add_query_params(&params);
     let resp = runtime.block_on(async { req.await });
@@ -1575,10 +1569,7 @@ fn test_get_login(
     expect_error: &str,
 ) -> Result<(), String> {
     let app = Router::new().merge(routes::new_service(&state));
-    let server = match TestServer::new(app) {
-        Err(e) => return Err(format!("new server error: {}", e)),
-        Ok(server) => server,
-    };
+    let server = TestServer::new(app);
 
     let mut req = server.get("/auth/oauth2/login");
     match params {
@@ -1659,10 +1650,7 @@ fn test_post_login(
     expect_error: &str,
 ) -> Result<Option<String>, String> {
     let app = Router::new().merge(routes::new_service(&state));
-    let server = match TestServer::new(app) {
-        Err(e) => return Err(format!("new server error: {}", e)),
-        Ok(server) => server,
-    };
+    let server = TestServer::new(app);
 
     let uri = "/auth/oauth2/login";
     let req = match params {
@@ -1737,10 +1725,7 @@ fn test_get_authorize(
     expect_error: &str,
 ) -> Result<(), String> {
     let app = Router::new().merge(routes::new_service(&state));
-    let server = match TestServer::new(app) {
-        Err(e) => return Err(format!("new server error: {}", e)),
-        Ok(server) => server,
-    };
+    let server = TestServer::new(app);
 
     let req = server
         .get("/auth/oauth2/authorize")
@@ -1790,10 +1775,7 @@ fn test_post_authorize(
     expect_error: &str,
 ) -> Result<Option<String>, String> {
     let app = Router::new().merge(routes::new_service(&state));
-    let server = match TestServer::new(app) {
-        Err(e) => return Err(format!("new server error: {}", e)),
-        Ok(server) => server,
-    };
+    let server = TestServer::new(app);
 
     let req = server.post("/auth/oauth2/authorize").form(&params);
     let resp = runtime.block_on(async { req.await });
@@ -1862,10 +1844,7 @@ fn test_post_token(
     expect_error: &str,
 ) -> Result<Option<response::AccessToken>, String> {
     let app = Router::new().merge(routes::new_service(&state));
-    let server = match TestServer::new(app) {
-        Err(e) => return Err(format!("new server error: {}", e)),
-        Ok(server) => server,
-    };
+    let server = TestServer::new(app);
 
     let req = match params {
         None => server.post("/auth/oauth2/token"),
@@ -1969,10 +1948,7 @@ fn test_post_token_client(
     expect_error: &str,
 ) -> Result<Option<response::AccessToken>, String> {
     let app = Router::new().merge(routes::new_service(&state));
-    let server = match TestServer::new(app) {
-        Err(e) => return Err(format!("new server error: {}", e)),
-        Ok(server) => server,
-    };
+    let server = TestServer::new(app);
 
     let params = request::PostTokenClientRequest {
         grant_type: "client_credentials".to_string(),
@@ -2040,10 +2016,7 @@ fn test_post_refresh(
     expect_error: &str,
 ) -> Result<Option<response::AccessToken>, String> {
     let app = Router::new().merge(routes::new_service(&state));
-    let server = match TestServer::new(app) {
-        Err(e) => return Err(format!("new server error: {}", e)),
-        Ok(server) => server,
-    };
+    let server = TestServer::new(app);
 
     let req = match params {
         None => server.post("/auth/oauth2/refresh"),

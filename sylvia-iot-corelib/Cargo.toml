@@ -1,6 +1,6 @@
 [package]
 name = "sylvia-iot-corelib"
-version = "0.4.2"
+version = "0.4.3"
 authors = ["Chien-Hong Chan"]
 categories = ["web-programming::http-server"]
 description = "Common libraries of Sylvia-IoT core modules."
@@ -12,24 +12,24 @@ repository = "https://github.com/woofdogtw/sylvia-iot-core.git"
 rust-version = "1.88.0"
 
 [dependencies]
-anyhow = "1.0.101"
+anyhow = "1.0.102"
 async-trait = "0.1.89"
 axum = "0.8.8"
 bytes = "1.11.1"
-chrono = { version = "0.4.43", default-features = false, features = ["serde"] }
-clap = { version = "4.5.57", default-features = false, features = [
+chrono = { version = "0.4.44", default-features = false, features = ["serde"] }
+clap = { version = "4.5.60", default-features = false, features = [
     "std",
     "help",
     "usage",
     "error-context",
 ] }
-futures = "0.3.31"
+futures = "0.3.32"
 hex = "0.4.3"
 hmac = "0.12.1"
 log = "0.4.29"
 log4rs = "1.4.0"
 pbkdf2 = "0.12.2"
-rand = "0.9.2"
+rand = "0.10.0"
 regex = "1.12.3"
 serde = { version = "1.0.228", features = ["derive"] }
 serde_json = "1.0.149"
@@ -39,7 +39,7 @@ tower-layer = "0.3.3"
 url = "2.5.8"
 
 [dev-dependencies]
-axum-test = "18.7.0"
+axum-test = "19.0.0"
 laboratory = "2.0.0"
 tokio = { version = "1.49.0", features = ["rt-multi-thread"] }
 

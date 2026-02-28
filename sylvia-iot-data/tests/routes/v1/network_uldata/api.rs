@@ -823,10 +823,7 @@ fn test_get_count(
     expect_count: usize,
 ) -> Result<(), String> {
     let app = Router::new().merge(routes::new_service(state));
-    let server = match TestServer::new(app) {
-        Err(e) => return Err(format!("new server error: {}", e)),
-        Ok(server) => server,
-    };
+    let server = TestServer::new(app);
 
     let req = server
         .get("/data/api/v1/network-uldata/count")
@@ -850,10 +847,7 @@ fn test_get_list(
     max_proc: i64,
 ) -> Result<(), String> {
     let app = Router::new().merge(routes::new_service(state));
-    let server = match TestServer::new(app) {
-        Err(e) => return Err(format!("new server error: {}", e)),
-        Ok(server) => server,
-    };
+    let server = TestServer::new(app);
 
     let req = server
         .get("/data/api/v1/network-uldata/list")
@@ -896,10 +890,7 @@ fn test_get_list_sort(
     expect_ids: &[&str],
 ) -> Result<(), String> {
     let app = Router::new().merge(routes::new_service(state));
-    let server = match TestServer::new(app) {
-        Err(e) => return Err(format!("new server error: {}", e)),
-        Ok(server) => server,
-    };
+    let server = TestServer::new(app);
 
     if let Some(sorts) = param.sort_vec.as_ref() {
         let sorts: Vec<String> = sorts
@@ -958,10 +949,7 @@ fn test_get_list_offset_limit(
     expect_ids: Vec<i32>,
 ) -> Result<(), String> {
     let app = Router::new().merge(routes::new_service(state));
-    let server = match TestServer::new(app) {
-        Err(e) => return Err(format!("new server error: {}", e)),
-        Ok(server) => server,
-    };
+    let server = TestServer::new(app);
 
     let req = server
         .get("/data/api/v1/network-uldata/list")
@@ -991,10 +979,7 @@ fn test_get_list_format_array(
     expect_ids: Vec<i32>,
 ) -> Result<(), String> {
     let app = Router::new().merge(routes::new_service(state));
-    let server = match TestServer::new(app) {
-        Err(e) => return Err(format!("new server error: {}", e)),
-        Ok(server) => server,
-    };
+    let server = TestServer::new(app);
 
     param.format = Some("array".to_string());
     let req = server
@@ -1025,10 +1010,7 @@ fn test_get_list_format_csv(
     expect_ids: Vec<i32>,
 ) -> Result<(), String> {
     let app = Router::new().merge(routes::new_service(state));
-    let server = match TestServer::new(app) {
-        Err(e) => return Err(format!("new server error: {}", e)),
-        Ok(server) => server,
-    };
+    let server = TestServer::new(app);
 
     param.format = Some("csv".to_string());
     let req = server

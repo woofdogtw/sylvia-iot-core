@@ -5,9 +5,8 @@ use std::{
     sync::{Arc, Mutex},
 };
 
-use axum::{Router, response::IntoResponse};
+use axum::Router;
 use reqwest;
-use serde::{Deserialize, Serialize};
 use url::Url;
 
 use async_trait::async_trait;
@@ -17,10 +16,7 @@ use general_mq::{
     Queue,
     queue::{EventHandler as QueueEventHandler, GmqQueue, Status},
 };
-use sylvia_iot_corelib::{
-    constants::{CacheEngine, DbEngine},
-    http::{Json, Query},
-};
+use sylvia_iot_corelib::constants::{CacheEngine, DbEngine};
 
 use crate::{
     libs::{
@@ -90,26 +86,6 @@ pub struct CtrlSenders {
 pub struct ErrReq;
 
 struct DataSenderHandler;
-
-/// Query parameters for `GET /version`
-#[derive(Deserialize)]
-pub struct GetVersionQuery {
-    q: Option<String>,
-}
-
-#[derive(Serialize)]
-struct GetVersionRes<'a> {
-    data: GetVersionResData<'a>,
-}
-
-#[derive(Serialize)]
-struct GetVersionResData<'a> {
-    name: &'a str,
-    version: &'a str,
-}
-
-const SERV_NAME: &'static str = env!("CARGO_PKG_NAME");
-const SERV_VER: &'static str = env!("CARGO_PKG_VERSION");
 
 impl ErrReq {
     pub const APPLICATION_EXIST: (u16, &'static str) = (400, "err_broker_application_exist");
@@ -314,20 +290,3 @@ pub fn new_data_sender(
     }
 }
 
-pub async fn get_version(Query(query): Query<GetVersionQuery>) -> impl IntoResponse {
-    if let Some(q) = query.q.as_ref() {
-        match q.as_str() {
-            "name" => return SERV_NAME.into_response(),
-            "version" => return SERV_VER.into_response(),
-            _ => (),
-        }
-    }
-
-    Json(GetVersionRes {
-        data: GetVersionResData {
-            name: SERV_NAME,
-            version: SERV_VER,
-        },
-    })
-    .into_response()
-}

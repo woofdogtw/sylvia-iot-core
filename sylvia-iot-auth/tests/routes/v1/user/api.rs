@@ -106,10 +106,7 @@ pub fn get_invalid_token(context: &mut SpecContext<TestState>) -> Result<(), Str
     let routes_state = state.routes_state.as_ref().unwrap();
 
     let app = Router::new().merge(routes::new_service(routes_state));
-    let server = match TestServer::new(app) {
-        Err(e) => return Err(format!("new server error: {}", e)),
-        Ok(server) => server,
-    };
+    let server = TestServer::new(app);
 
     let req = server.get("/auth/api/v1/user").add_header(
         header::AUTHORIZATION,
@@ -1055,10 +1052,7 @@ pub fn get_admin_wrong_id(context: &mut SpecContext<TestState>) -> Result<(), St
     let admin_token = get_token(runtime, routes_state, user_id)?;
 
     let app = Router::new().merge(routes::new_service(routes_state));
-    let server = match TestServer::new(app) {
-        Err(e) => return Err(format!("new server error: {}", e)),
-        Ok(server) => server,
-    };
+    let server = TestServer::new(app);
 
     let req = server.get("/auth/api/v1/user/id").add_header(
         header::AUTHORIZATION,
@@ -1179,10 +1173,7 @@ pub fn patch_admin_wrong_id(context: &mut SpecContext<TestState>) -> Result<(), 
     let admin_token = get_token(runtime, routes_state, user_id)?;
 
     let app = Router::new().merge(routes::new_service(routes_state));
-    let server = match TestServer::new(app) {
-        Err(e) => return Err(format!("new server error: {}", e)),
-        Ok(server) => server,
-    };
+    let server = TestServer::new(app);
 
     let param = request::PatchAdminUser {
         data: Some(request::PatchAdminUserData {
@@ -1264,10 +1255,7 @@ pub fn delete_admin(context: &mut SpecContext<TestState>) -> Result<(), String> 
     add_user_model(runtime, &routes_state, user_id)?;
 
     let app = Router::new().merge(routes::new_service(routes_state));
-    let server = match TestServer::new(app) {
-        Err(e) => return Err(format!("new server error: {}", e)),
-        Ok(server) => server,
-    };
+    let server = TestServer::new(app);
 
     let req = server.delete("/auth/api/v1/user/id").add_header(
         header::AUTHORIZATION,
@@ -1364,10 +1352,7 @@ fn test_get(runtime: &Runtime, state: &routes::State, user_id: &str) -> Result<(
     let user_info = get_user_model(runtime, state, user_id)?;
 
     let app = Router::new().merge(routes::new_service(&state));
-    let server = match TestServer::new(app) {
-        Err(e) => return Err(format!("new server error: {}", e)),
-        Ok(server) => server,
-    };
+    let server = TestServer::new(app);
 
     let token = get_token(runtime, state, user_id)?;
     let req = server.get("/auth/api/v1/user").add_header(
@@ -1403,10 +1388,7 @@ fn test_patch(
     let user_old = get_user_model(runtime, state, user_id)?;
 
     let app = Router::new().merge(routes::new_service(&state));
-    let server = match TestServer::new(app) {
-        Err(e) => return Err(format!("new server error: {}", e)),
-        Ok(server) => server,
-    };
+    let server = TestServer::new(app);
 
     let mut info = Map::<String, Value>::new();
     info.insert(
@@ -1473,10 +1455,7 @@ fn test_patch_invalid_param(
     param: Option<&Map<String, Value>>,
 ) -> Result<(), String> {
     let app = Router::new().merge(routes::new_service(&state));
-    let server = match TestServer::new(app) {
-        Err(e) => return Err(format!("new server error: {}", e)),
-        Ok(server) => server,
-    };
+    let server = TestServer::new(app);
 
     let mut req = server.patch("/auth/api/v1/user").add_header(
         header::AUTHORIZATION,
@@ -1504,10 +1483,7 @@ fn test_post_admin(
     expect_code: &str,
 ) -> Result<(), String> {
     let app = Router::new().merge(routes::new_service(&state));
-    let server = match TestServer::new(app) {
-        Err(e) => return Err(format!("new server error: {}", e)),
-        Ok(server) => server,
-    };
+    let server = TestServer::new(app);
 
     let time_before = Utc::now();
     let req = server
@@ -1594,10 +1570,7 @@ fn test_post_admin_invalid_param(
     param: Option<&Map<String, Value>>,
 ) -> Result<(), String> {
     let app = Router::new().merge(routes::new_service(&state));
-    let server = match TestServer::new(app) {
-        Err(e) => return Err(format!("new server error: {}", e)),
-        Ok(server) => server,
-    };
+    let server = TestServer::new(app);
 
     let mut req = server.post("/auth/api/v1/user").add_header(
         header::AUTHORIZATION,
@@ -1625,10 +1598,7 @@ fn test_get_admin_count(
     expect_count: usize,
 ) -> Result<(), String> {
     let app = Router::new().merge(routes::new_service(&state));
-    let server = match TestServer::new(app) {
-        Err(e) => return Err(format!("new server error: {}", e)),
-        Ok(server) => server,
-    };
+    let server = TestServer::new(app);
 
     let req = server
         .get("/auth/api/v1/user/count")
@@ -1653,10 +1623,7 @@ fn test_get_admin_list(
     expect_disabled: usize,
 ) -> Result<(), String> {
     let app = Router::new().merge(routes::new_service(&state));
-    let server = match TestServer::new(app) {
-        Err(e) => return Err(format!("new server error: {}", e)),
-        Ok(server) => server,
-    };
+    let server = TestServer::new(app);
 
     if let Some(fields) = param.fields_vec.as_ref() {
         if fields.len() > 0 {
@@ -1723,10 +1690,7 @@ fn test_get_admin_list_sort(
     expect_accounts: &[&str],
 ) -> Result<(), String> {
     let app = Router::new().merge(routes::new_service(&state));
-    let server = match TestServer::new(app) {
-        Err(e) => return Err(format!("new server error: {}", e)),
-        Ok(server) => server,
-    };
+    let server = TestServer::new(app);
 
     if let Some(sorts) = param.sort_vec.as_ref() {
         let sorts: Vec<String> = sorts
@@ -1785,10 +1749,7 @@ fn test_get_admin_list_offset_limit(
     expect_ids: Vec<i32>,
 ) -> Result<(), String> {
     let app = Router::new().merge(routes::new_service(&state));
-    let server = match TestServer::new(app) {
-        Err(e) => return Err(format!("new server error: {}", e)),
-        Ok(server) => server,
-    };
+    let server = TestServer::new(app);
 
     let req = server
         .get("/auth/api/v1/user/list")
@@ -1819,10 +1780,7 @@ fn test_get_admin_list_format_array(
     expect_ids: Vec<i32>,
 ) -> Result<(), String> {
     let app = Router::new().merge(routes::new_service(&state));
-    let server = match TestServer::new(app) {
-        Err(e) => return Err(format!("new server error: {}", e)),
-        Ok(server) => server,
-    };
+    let server = TestServer::new(app);
 
     let req = server
         .get("/auth/api/v1/user/list")
@@ -1852,10 +1810,7 @@ fn test_get_admin(
     user_id: &str,
 ) -> Result<(), String> {
     let app = Router::new().merge(routes::new_service(&state));
-    let server = match TestServer::new(app) {
-        Err(e) => return Err(format!("new server error: {}", e)),
-        Ok(server) => server,
-    };
+    let server = TestServer::new(app);
 
     let user_info = get_user_model(runtime, state, user_id)?;
 
@@ -1916,10 +1871,7 @@ fn test_patch_admin_admin(
     let user_token = get_token(runtime, state, user_id)?;
 
     let app = Router::new().merge(routes::new_service(&state));
-    let server = match TestServer::new(app) {
-        Err(e) => return Err(format!("new server error: {}", e)),
-        Ok(server) => server,
-    };
+    let server = TestServer::new(app);
 
     let time_before = Utc::now().trunc_subsecs(3);
     let mut info = Map::<String, Value>::new();
@@ -2018,10 +1970,7 @@ fn test_patch_admin_manager(
     add_user_model(runtime, state, user_id)?;
 
     let app = Router::new().merge(routes::new_service(&state));
-    let server = match TestServer::new(app) {
-        Err(e) => return Err(format!("new server error: {}", e)),
-        Ok(server) => server,
-    };
+    let server = TestServer::new(app);
 
     let time_before = Utc::now().trunc_subsecs(3);
     let mut roles = HashMap::<String, bool>::new();
@@ -2094,10 +2043,7 @@ fn test_patch_admin_invalid_param(
     param: Option<&Map<String, Value>>,
 ) -> Result<(), String> {
     let app = Router::new().merge(routes::new_service(&state));
-    let server = match TestServer::new(app) {
-        Err(e) => return Err(format!("new server error: {}", e)),
-        Ok(server) => server,
-    };
+    let server = TestServer::new(app);
 
     let mut req = server.patch("/auth/api/v1/user/user").add_header(
         header::AUTHORIZATION,
@@ -2123,10 +2069,7 @@ fn test_patch_admin_manager_invalid_perm(
     token: &str,
 ) -> Result<(), String> {
     let app = Router::new().merge(routes::new_service(&state));
-    let server = match TestServer::new(app) {
-        Err(e) => return Err(format!("new server error: {}", e)),
-        Ok(server) => server,
-    };
+    let server = TestServer::new(app);
 
     let body = request::PatchAdminUser {
         ..Default::default()
