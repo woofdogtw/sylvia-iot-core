@@ -1,6 +1,6 @@
 [package]
 name = "sylvia-iot-broker"
-version = "0.4.3"
+version = "0.4.4"
 authors = ["Chien-Hong Chan"]
 categories = ["web-programming::http-server"]
 description = "The message broker module of the Sylvia-IoT platform."
@@ -51,7 +51,7 @@ sqlx = { version = "0.8.6", default-features = false, features = [
     "sqlite",
 ] }
 sylvia-iot-corelib = { path = "../sylvia-iot-corelib" }
-tokio = { version = "1.49.0", features = [
+tokio = { version = "1.50.0", features = [
     "io-util",
     "macros",
     "rt-multi-thread",
@@ -68,7 +68,7 @@ tower-http = { version = "0.6.8", default-features = false, features = [
 url = "2.5.8"
 
 [dev-dependencies]
-axum-test = "19.0.0"
+axum-test = "19.1.1"
 laboratory = "2.0.0"
 serde_urlencoded = "0.7.1"
 sylvia-iot-auth = { path = "../sylvia-iot-auth" }
