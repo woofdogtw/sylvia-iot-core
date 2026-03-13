@@ -49,6 +49,7 @@ pub fn integration_test() -> LabResult {
             context.it("random_id_sha", strings::random_id_sha);
             context.it("randomstring", strings::randomstring);
             context.it("time_str", strings::time_str);
+            context.it("escape_regex_str", strings::escape_regex_str);
             context.it("u128_to_addr", strings::u128_to_addr);
         });
 

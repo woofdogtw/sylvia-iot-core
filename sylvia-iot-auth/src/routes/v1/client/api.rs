@@ -49,7 +49,7 @@ pub async fn post_client(
     for v in body.data.redirect_uris.iter() {
         if !strings::is_uri(v.as_str()) {
             return Err(ErrResp::ErrParam(Some(
-                "`redirectUris` must with invalid item(s)".to_string(),
+                "`redirectUris` with invalid item(s)".to_string(),
             )));
         }
     }

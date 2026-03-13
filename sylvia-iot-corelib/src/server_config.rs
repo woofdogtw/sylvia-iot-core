@@ -137,29 +137,11 @@ pub fn read_args(args: &ArgMatches) -> Config {
 /// Fill missing configuration with default values.
 pub fn apply_default(config: &Config) -> Config {
     Config {
-        http_port: match config.http_port {
-            None => Some(DEF_HTTP_PORT),
-            Some(v) => Some(v),
-        },
-        https_port: match config.https_port {
-            None => Some(DEF_HTTPS_PORT),
-            Some(v) => Some(v),
-        },
-        cacert_file: match config.cacert_file.as_ref() {
-            None => None,
-            Some(v) => Some(v.clone()),
-        },
-        cert_file: match config.cert_file.as_ref() {
-            None => None,
-            Some(v) => Some(v.clone()),
-        },
-        key_file: match config.key_file.as_ref() {
-            None => None,
-            Some(v) => Some(v.clone()),
-        },
-        static_path: match config.static_path.as_ref() {
-            None => None,
-            Some(v) => Some(v.clone()),
-        },
+        http_port: Some(config.http_port.unwrap_or(DEF_HTTP_PORT)),
+        https_port: Some(config.https_port.unwrap_or(DEF_HTTPS_PORT)),
+        cacert_file: config.cacert_file.clone(),
+        cert_file: config.cert_file.clone(),
+        key_file: config.key_file.clone(),
+        static_path: config.static_path.clone(),
     }
 }

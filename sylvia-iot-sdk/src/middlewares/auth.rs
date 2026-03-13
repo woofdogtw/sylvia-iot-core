@@ -206,7 +206,7 @@ pub fn parse_header_auth(req: &Request) -> Result<Option<String>, ErrResp> {
             Ok(auth) => auth,
         },
     };
-    if auth_all.next() != None {
+    if auth_all.next().is_some() {
         return Err(ErrResp::ErrParam(Some(
             "invalid multiple Authorization header".to_string(),
         )));

@@ -67,59 +67,35 @@ impl ErrResp {
         match *self {
             ErrResp::ErrAuth(ref desc) => RespJson {
                 code: E_AUTH,
-                message: match desc.as_ref() {
-                    None => None,
-                    Some(desc) => Some(desc.as_str()),
-                },
+                message: desc.as_deref(),
             },
             ErrResp::ErrDb(ref desc) => RespJson {
                 code: E_DB,
-                message: match desc.as_ref() {
-                    None => None,
-                    Some(desc) => Some(desc.as_str()),
-                },
+                message: desc.as_deref(),
             },
             ErrResp::ErrIntMsg(ref desc) => RespJson {
                 code: E_INT_MSG,
-                message: match desc.as_ref() {
-                    None => None,
-                    Some(desc) => Some(desc.as_str()),
-                },
+                message: desc.as_deref(),
             },
             ErrResp::ErrNotFound(ref desc) => RespJson {
                 code: E_NOT_FOUND,
-                message: match desc.as_ref() {
-                    None => None,
-                    Some(desc) => Some(desc.as_str()),
-                },
+                message: desc.as_deref(),
             },
             ErrResp::ErrParam(ref desc) => RespJson {
                 code: E_PARAM,
-                message: match desc.as_ref() {
-                    None => None,
-                    Some(desc) => Some(desc.as_str()),
-                },
+                message: desc.as_deref(),
             },
             ErrResp::ErrPerm(ref desc) => RespJson {
                 code: E_PERM,
-                message: match desc.as_ref() {
-                    None => None,
-                    Some(desc) => Some(desc.as_str()),
-                },
+                message: desc.as_deref(),
             },
             ErrResp::ErrRsc(ref desc) => RespJson {
                 code: E_RSC,
-                message: match desc.as_ref() {
-                    None => None,
-                    Some(desc) => Some(desc.as_str()),
-                },
+                message: desc.as_deref(),
             },
             ErrResp::ErrUnknown(ref desc) => RespJson {
                 code: E_UNKNOWN,
-                message: match desc.as_ref() {
-                    None => None,
-                    Some(desc) => Some(desc.as_str()),
-                },
+                message: desc.as_deref(),
             },
             ErrResp::Custom(_, err_code, ref desc) => RespJson {
                 code: err_code,

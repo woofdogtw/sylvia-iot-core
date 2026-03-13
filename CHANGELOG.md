@@ -1,5 +1,25 @@
 # Changelog
 
+## 0.4.4 - 2026-03-13
+
+### Added
+
+- **sylvia-iot-corelib**: add `strings::escape_regex_str()`.
+
+### Changed
+
+- Update dependencies.
+
+### Fixed
+
+- Fix for AI code review.
+    - **sylvia-iot-auth**, **sylvia-iot-broker**: Fix MongoDB injection.
+    - **sylvia-iot-broker**: Fix cache size configuration for `network_routes`.
+    - **sylvia-iot-coremgr**: Fix rumqttd HTTPS listen port configuration.
+    - **sylvia-iot-coremgr**: Fix RabbitMQ queue length checking.
+    - **sylvia-iot-sdk**: Fix non-persistence for `dldata`, `dldata_resp`, `dldata_result`, `ctrl` queues.
+    - **sylvia-router**: Fix PPPoE shell escape bug.
+
 ## 0.4.3 - 2026-02-28
 
 ### Changed
