@@ -70,6 +70,16 @@ pub fn time_str(_context: &mut SpecContext<TestState>) -> Result<(), String> {
     expect(strings::time_str(&time)).to_equal("2021-08-20T14:19:55.228Z".to_string())
 }
 
+/// Test [`strings::escape_regex_str`].
+pub fn escape_regex_str(_context: &mut SpecContext<TestState>) -> Result<(), String> {
+    expect(strings::escape_regex_str("hello")).to_equal("hello".to_string())?;
+    expect(strings::escape_regex_str("a.b")).to_equal("a\\.b".to_string())?;
+    expect(strings::escape_regex_str(".*+?^${}()|[]\\"))
+        .to_equal("\\.\\*\\+\\?\\^\\$\\{\\}\\(\\)\\|\\[\\]\\\\".to_string())?;
+    expect(strings::escape_regex_str("")).to_equal("".to_string())?;
+    expect(strings::escape_regex_str("abc123")).to_equal("abc123".to_string())
+}
+
 /// Test [`strings::u128_to_addr`].
 pub fn u128_to_addr(_context: &mut SpecContext<TestState>) -> Result<(), String> {
     let addr: u128 = 0x0123_4567_89ab_cdef_0123_4567_89ab_cdef;

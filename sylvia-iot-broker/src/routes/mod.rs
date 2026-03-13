@@ -158,7 +158,7 @@ pub async fn new_state(
                         dldata_pub_size: conf.device_route.unwrap(),
                     },
                     network_route: NetworkRouteOptions {
-                        uldata_size: conf.device_route.unwrap(),
+                        uldata_size: conf.network_route.unwrap(),
                     },
                 })
             }
@@ -289,4 +289,3 @@ pub fn new_data_sender(
         Ok(q) => Ok(q),
     }
 }
-

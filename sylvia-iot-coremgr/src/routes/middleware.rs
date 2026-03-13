@@ -181,10 +181,7 @@ where
             let path = req.uri().to_string();
             let auth_token = match sylvia_http::parse_header_auth(&req) {
                 Err(_) => None,
-                Ok(token) => match token {
-                    None => None,
-                    Some(token) => Some(token),
-                },
+                Ok(token) => token,
             };
             let (parts, body) = req.into_parts();
             let body_bytes = match body::to_bytes(body, usize::MAX).await {

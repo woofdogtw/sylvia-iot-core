@@ -229,7 +229,7 @@ fn create_event_loop(conn: &MqttConnection) -> JoinHandle<()> {
     task::spawn(async move {
         loop {
             match this.status() {
-                Status::Closing | Status::Closed => task::yield_now().await,
+                Status::Closing | Status::Closed => break,
                 Status::Connecting | Status::Connected => {
                     let mut opts = RumqttOption::new(
                         this.opts.client_id.as_str(),

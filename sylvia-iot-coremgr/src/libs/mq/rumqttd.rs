@@ -71,7 +71,7 @@ pub fn start_rumqttd(
                         "mqtts".to_string(),
                         ServerSettings {
                             name: "mqtts".to_string(),
-                            listen: match rumqttd_conf.mqtt_port {
+                            listen: match rumqttd_conf.mqtts_port {
                                 None => SocketAddr::new(
                                     IpAddr::V4(Ipv4Addr::new(0, 0, 0, 0)),
                                     DEF_RUMQTTD_MQTTS_PORT,

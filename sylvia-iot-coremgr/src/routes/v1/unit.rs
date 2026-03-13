@@ -336,7 +336,7 @@ async fn delete_application_resources(
                                 emqx::delete_user(&client, opts, host.as_str(), username.as_str())
                                     .await
                             {
-                                let msg = format!("delete RabbitMQ user {} error: {}", username, e);
+                                let msg = format!("delete EMQX user {} error: {}", username, e);
                                 error!("[{}] {}", fn_name, msg);
                                 return Err(ErrResp::ErrIntMsg(Some(msg)).into_response());
                             }
@@ -467,7 +467,7 @@ async fn delete_network_resources(
                                 emqx::delete_user(&client, opts, host.as_str(), username.as_str())
                                     .await
                             {
-                                let msg = format!("delete RabbitMQ user {} error: {}", username, e);
+                                let msg = format!("delete EMQX user {} error: {}", username, e);
                                 error!("[{}] {}", fn_name, msg);
                                 return Err(ErrResp::ErrIntMsg(Some(msg)).into_response());
                             }
