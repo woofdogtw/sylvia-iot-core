@@ -9,6 +9,8 @@ use mongodb::{
 };
 use serde::{Deserialize, Serialize};
 
+use sylvia_iot_corelib::strings;
+
 use super::super::user::{
     Cursor, ListOptions, ListQueryCond, QueryCond, SortKey, Updates, User, UserModel,
 };
@@ -275,7 +277,8 @@ fn get_list_query_filter(cond: &ListQueryCond) -> Document {
         filter.insert("account", value.to_lowercase().as_str());
     }
     if let Some(value) = cond.account_contains {
-        if let Ok(pattern) = CString::try_from(value) {
+        let escaped = strings::escape_regex_str(value);
+        if let Ok(pattern) = CString::try_from(escaped.as_str()) {
             if let Ok(options) = CString::try_from("i") {
                 filter.insert("account", Regex { pattern, options });
             }
@@ -296,7 +299,8 @@ fn get_list_query_filter(cond: &ListQueryCond) -> Document {
         }
     }
     if let Some(value) = cond.name_contains {
-        if let Ok(pattern) = CString::try_from(value) {
+        let escaped = strings::escape_regex_str(value);
+        if let Ok(pattern) = CString::try_from(escaped.as_str()) {
             if let Ok(options) = CString::try_from("i") {
                 filter.insert("name", Regex { pattern, options });
             }

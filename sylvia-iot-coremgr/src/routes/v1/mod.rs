@@ -398,7 +398,7 @@ async fn create_queue_rsc<'a>(
                     );
                     return Err(e.into_response());
                 }
-                if rsc.ttl.is_some() && rsc.ttl.is_some() {
+                if rsc.ttl.is_some() && rsc.length.is_some() {
                     let policies = rabbitmq::BrokerPolicies {
                         ttl: rsc.ttl,
                         length: rsc.length,

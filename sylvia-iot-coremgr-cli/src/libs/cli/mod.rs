@@ -134,7 +134,7 @@ fn get_csv_filename(resp: &Response) -> String {
     if let Some(v) = resp.headers().get(header::CONTENT_DISPOSITION) {
         if let Ok(v) = String::from_utf8(v.as_bytes().to_vec()) {
             let splits = v.split("filename=");
-            for s in splits.into_iter() {
+            for s in splits {
                 if s.contains(".csv") {
                     return s.to_string();
                 }

@@ -37,7 +37,7 @@ pub enum Connection {
 }
 
 /// Manager status.
-#[derive(PartialEq)]
+#[derive(Clone, Copy, PartialEq)]
 pub enum MgrStatus {
     /// One or more queues are not connected.
     NotReady,
@@ -90,14 +90,6 @@ pub const SUPPORT_SCHEMES: &'static [&'static str] = &["amqp", "amqps", "mqtt", 
 const DEF_PREFETCH: u16 = 100;
 /// The default persistent value for AMQP.
 const DEF_PERSISTENT: bool = false;
-
-impl Copy for MgrStatus {}
-
-impl Clone for MgrStatus {
-    fn clone(&self) -> MgrStatus {
-        *self
-    }
-}
 
 /// Utility function to get the message queue connection instance. A new connection will be created
 /// if the host does not exist.
@@ -259,6 +251,7 @@ fn new_data_queues(
                     name: format!("{}.{}.{}.dldata", prefix, unit, opts.name.as_str()),
                     is_recv: is_network,
                     reliable: true,
+                    persistent,
                     broadcast: false,
                     prefetch,
                     ..Default::default()
@@ -270,6 +263,7 @@ fn new_data_queues(
                     name: format!("{}.{}.{}.dldata-resp", prefix, unit, opts.name.as_str()),
                     is_recv: !is_network,
                     reliable: true,
+                    persistent,
                     broadcast: false,
                     prefetch,
                     ..Default::default()
@@ -281,6 +275,7 @@ fn new_data_queues(
                     name: format!("{}.{}.{}.dldata-result", prefix, unit, opts.name.as_str()),
                     is_recv: !is_network,
                     reliable: true,
+                    persistent,
                     broadcast: false,
                     prefetch,
                     ..Default::default()
@@ -292,6 +287,7 @@ fn new_data_queues(
                     name: format!("{}.{}.{}.ctrl", prefix, unit, opts.name.as_str()),
                     is_recv: true,
                     reliable: true,
+                    persistent,
                     broadcast: false,
                     prefetch,
                     ..Default::default()

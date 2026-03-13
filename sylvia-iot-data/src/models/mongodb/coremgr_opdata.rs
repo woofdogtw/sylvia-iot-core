@@ -185,7 +185,7 @@ impl Cursor for DbCursor {
                 path: item.path,
                 body: match item.body {
                     None => None,
-                    Some(body) => bson::deserialize_from_document(body)?,
+                    Some(body) => Some(bson::deserialize_from_document(body)?),
                 },
                 user_id: item.user_id,
                 client_id: item.client_id,

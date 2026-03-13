@@ -1,6 +1,6 @@
 [package]
 name = "sylvia-iot-data"
-version = "0.4.3"
+version = "0.4.4"
 authors = ["Chien-Hong Chan"]
 categories = ["web-programming::http-server"]
 description = "The data storage of Sylvia-IoT core modules."
@@ -19,7 +19,7 @@ axum-prometheus = "0.10.0"
 axum-server = { version = "0.8.0", features = ["tls-rustls"] }
 bson = { version = "3.1.0", features = ["chrono-0_4"] }
 chrono = { version = "0.4.44", default-features = false, features = ["serde"] }
-clap = { version = "4.5.60", default-features = false, features = [
+clap = { version = "4.6.0", default-features = false, features = [
     "std",
     "help",
     "usage",
@@ -53,7 +53,7 @@ sylvia-iot-auth = "0.4.3"
 sylvia-iot-broker = "0.4.3"
 sylvia-iot-corelib = "0.4.3"
 sylvia-iot-coremgr = "0.4.3"
-tokio = { version = "1.49.0", features = [
+tokio = { version = "1.50.0", features = [
     "io-util",
     "macros",
     "rt-multi-thread",
@@ -69,7 +69,7 @@ tower-http = { version = "0.6.8", default-features = false, features = [
 url = "2.5.8"
 
 [dev-dependencies]
-axum-test = "19.0.0"
+axum-test = "19.1.1"
 laboratory = "2.0.0"
 serde_urlencoded = "0.7.1"
 

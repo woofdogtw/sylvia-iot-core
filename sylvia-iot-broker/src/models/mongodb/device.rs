@@ -10,6 +10,8 @@ use mongodb::{
 };
 use serde::{Deserialize, Serialize};
 
+use sylvia_iot_corelib::strings;
+
 use super::super::device::{
     Cursor, Device, DeviceModel, ListOptions, ListQueryCond, QueryCond, SortKey, UpdateQueryCond,
     Updates,
@@ -335,7 +337,8 @@ fn get_list_query_filter(cond: &ListQueryCond) -> Document {
         filter.insert("profile", value);
     }
     if let Some(value) = cond.name_contains {
-        if let Ok(pattern) = CString::try_from(value) {
+        let escaped = strings::escape_regex_str(value);
+        if let Ok(pattern) = CString::try_from(escaped.as_str()) {
             if let Ok(options) = CString::try_from("i") {
                 filter.insert("name", Regex { pattern, options });
             }

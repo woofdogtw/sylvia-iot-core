@@ -14,7 +14,6 @@ use std::{
 use chrono::NaiveDateTime;
 use ipnet::Ipv4Net;
 use serde::{Deserialize, Serialize};
-use shell_escape;
 use sylvia_iot_sdk::util::strings;
 
 /// WAN interface configurations.
@@ -230,10 +229,8 @@ pub fn set_wan_conf(wan_id: &str, wan_ifname: &str, conf: &WanConf) -> Result<Op
             "no",
         ],
         ConnType::PPPOE => {
-            username = shell_escape::escape(conf.pppoe.as_ref().unwrap().username.as_str().into())
-                .to_string();
-            password = shell_escape::escape(conf.pppoe.as_ref().unwrap().password.as_str().into())
-                .to_string();
+            username = conf.pppoe.as_ref().unwrap().username.clone();
+            password = conf.pppoe.as_ref().unwrap().password.clone();
             vec![
                 "c",
                 "add",
@@ -244,27 +241,9 @@ pub fn set_wan_conf(wan_id: &str, wan_ifname: &str, conf: &WanConf) -> Result<Op
                 "ifname",
                 wan_ifname,
                 "username",
-                match username.as_str().strip_prefix("'") {
-                    None => match username.as_str().strip_suffix("'") {
-                        None => username.as_str(),
-                        Some(v) => v,
-                    },
-                    Some(v) => match v.strip_suffix("'") {
-                        None => username.as_str(),
-                        Some(v) => v,
-                    },
-                },
+                username.as_str(),
                 "password",
-                match password.as_str().strip_prefix("'") {
-                    None => match password.as_str().strip_suffix("'") {
-                        None => password.as_str(),
-                        Some(v) => v,
-                    },
-                    Some(v) => match v.strip_suffix("'") {
-                        None => password.as_str(),
-                        Some(v) => v,
-                    },
-                },
+                password.as_str(),
                 "--",
                 "+connection.autoconnect",
                 "yes",

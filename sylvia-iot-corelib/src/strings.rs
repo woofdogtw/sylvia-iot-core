@@ -91,6 +91,21 @@ pub fn time_str(time: &DateTime<Utc>) -> String {
     time.to_rfc3339_opts(SecondsFormat::Millis, true)
 }
 
+/// Escapes regex special characters in a string so it can be used as a literal match pattern.
+pub fn escape_regex_str(value: &str) -> String {
+    let mut escaped = String::with_capacity(value.len());
+    for c in value.chars() {
+        match c {
+            '\\' | '.' | '^' | '$' | '*' | '+' | '?' | '(' | ')' | '[' | ']' | '{' | '}' | '|' => {
+                escaped.push('\\');
+                escaped.push(c);
+            }
+            _ => escaped.push(c),
+        }
+    }
+    escaped
+}
+
 /// To generate hex address string with the specified length (hex string length).
 pub fn u128_to_addr(value: u128, len: usize) -> String {
     match len {

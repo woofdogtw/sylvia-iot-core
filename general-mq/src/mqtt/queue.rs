@@ -293,7 +293,7 @@ fn create_event_loop(queue: &MqttQueue) -> JoinHandle<()> {
     task::spawn(async move {
         loop {
             match this.status() {
-                Status::Closing | Status::Closed => task::yield_now().await,
+                Status::Closing | Status::Closed => break,
                 Status::Connecting => {
                     if this.conn_status() != ConnStatus::Connected {
                         time::sleep(Duration::from_millis(this.opts.reconnect_millis)).await;

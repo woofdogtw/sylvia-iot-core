@@ -24,6 +24,7 @@ pub enum Connection {
 }
 
 /// Broker message queue type.
+#[derive(Clone, Copy)]
 pub enum QueueType {
     Application,
     Network,
@@ -35,14 +36,6 @@ impl fmt::Display for QueueType {
             QueueType::Application => fmt.write_str("application"),
             QueueType::Network => fmt.write_str("network"),
         }
-    }
-}
-
-impl Copy for QueueType {}
-
-impl Clone for QueueType {
-    fn clone(&self) -> QueueType {
-        *self
     }
 }
 
