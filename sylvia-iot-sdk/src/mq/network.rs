@@ -153,6 +153,9 @@ pub struct NetworkMgr {
 /// Event handler trait for the [`NetworkMgr`].
 #[async_trait]
 pub trait EventHandler: Send + Sync {
+    /// Fired when a queue error occurs. Override to handle MQ-level errors.
+    async fn on_error(&self, _mgr: &NetworkMgr, _err: Box<dyn StdError + Send + Sync>) {}
+
     /// Fired when one of the manager's queues encounters a state change.
     async fn on_status_change(&self, mgr: &NetworkMgr, status: MgrStatus);
 
@@ -352,7 +355,10 @@ impl NetworkMgr {
 
 #[async_trait]
 impl QueueEventHandler for MgrMqEventHandler {
-    async fn on_error(&self, _queue: Arc<dyn GmqQueue>, _err: Box<dyn StdError + Send + Sync>) {}
+    async fn on_error(&self, _queue: Arc<dyn GmqQueue>, err: Box<dyn StdError + Send + Sync>) {
+        let handler = { self.mgr.handler.lock().unwrap().clone() };
+        handler.on_error(&self.mgr, err).await;
+    }
 
     async fn on_status(&self, _queue: Arc<dyn GmqQueue>, _status: QueueStatus) {
         let uldata_status = { self.mgr.uldata.lock().unwrap().status() };

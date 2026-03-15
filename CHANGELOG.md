@@ -1,5 +1,25 @@
 # Changelog
 
+## 0.4.5 - 2026-03-15
+
+### Added
+
+- **sylvia-iot-sdk**: Add `on_error` to `EventHandler` for forwarding MQ errors.
+
+### Changed
+
+- Update dependencies.
+
+### Fixed
+
+- Fix for AI code review.
+    - **general-mq**: Fix MQTT subscribe failure not removing packet handler.
+    - **sylvia-iot-corelib**: Use `LazyLock` for regex compilation.
+    - **sylvia-iot-auth**: Fix login not checking `disabled_at`/`expired_at`.
+    - **sylvia-iot-auth**: Fix logout not clearing refresh token.
+    - **sylvia-iot-broker**: Fix `is_public` flag inverted in network uplink data.
+    - **sylvia-iot-coremgr**: Fix `QueueType` hardcoded and missing cleanup on failure.
+
 ## 0.4.4 - 2026-03-13
 
 ### Added
