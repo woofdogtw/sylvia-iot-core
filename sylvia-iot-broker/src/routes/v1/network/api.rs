@@ -1739,7 +1739,7 @@ impl EventHandler for MgrHandler {
                 network_id: mgr.id().to_string(),
                 network_code: mgr.name().to_string(),
                 network_addr: data.network_addr,
-                is_public: mgr.unit_id().len() > 0,
+                is_public: mgr.unit_id().is_empty(),
                 profile: device.profile,
                 data: data.data,
                 extension: data.extension,
