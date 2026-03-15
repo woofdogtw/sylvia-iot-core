@@ -235,6 +235,7 @@ async fn post_network(
         scheme,
         host,
         username,
+        q_type: QueueType::Network,
     };
 
     // Create network instance.
@@ -622,6 +623,7 @@ async fn patch_network(
                 scheme: uri.scheme(),
                 host: uri.host_str().unwrap(),
                 username: username.as_str(),
+                q_type: QueueType::Network,
             };
             let _ = clear_queue_rsc(FN_NAME, &state, &resource).await;
 
@@ -647,7 +649,7 @@ async fn patch_network(
         }
         let api_req = match builder.build() {
             Err(e) => {
-                clear_patch_host(FN_NAME, &state, &patch_host).await;
+                clear_patch_host(FN_NAME, &state, &patch_host, QueueType::Network).await;
                 let e = format!("generate request error: {}", e);
                 error!("[{}] {}", FN_NAME, e);
                 return ErrResp::ErrRsc(Some(e)).into_response();
@@ -656,7 +658,7 @@ async fn patch_network(
         };
         let api_resp = match client.execute(api_req).await {
             Err(e) => {
-                clear_patch_host(FN_NAME, &state, &patch_host).await;
+                clear_patch_host(FN_NAME, &state, &patch_host, QueueType::Network).await;
                 let e = format!("execute request error: {}", e);
                 error!("[{}] {}", FN_NAME, e);
                 return ErrResp::ErrIntMsg(Some(e)).into_response();
@@ -666,7 +668,7 @@ async fn patch_network(
 
         let status_code = api_resp.status();
         if status_code != StatusCode::NO_CONTENT {
-            clear_patch_host(FN_NAME, &state, &patch_host).await;
+            clear_patch_host(FN_NAME, &state, &patch_host, QueueType::Network).await;
             let mut resp_builder = Response::builder().status(status_code);
             for (k, v) in api_resp.headers() {
                 resp_builder = resp_builder.header(k, v);
@@ -687,6 +689,7 @@ async fn patch_network(
             scheme: uri.scheme(),
             host: uri.host_str().unwrap(),
             username: host.username.as_str(),
+            q_type: QueueType::Network,
         };
         let _ = clear_queue_rsc(FN_NAME, &state, &resource).await;
         return StatusCode::NO_CONTENT.into_response();
@@ -798,6 +801,7 @@ async fn delete_network(
         scheme: uri.scheme(),
         host: host.as_str(),
         username: username.as_str(),
+        q_type: QueueType::Network,
     };
     if let Err(e) = clear_queue_rsc(FN_NAME, &state, &clear_rsc).await {
         return e;

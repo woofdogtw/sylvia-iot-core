@@ -1,5 +1,7 @@
 //! String libraries.
 
+use std::sync::LazyLock;
+
 use chrono::{DateTime, SecondsFormat, Utc};
 use hex;
 use hmac::Hmac;
@@ -10,6 +12,19 @@ use sha2::{Digest, Sha256};
 use url::Url;
 
 const PASSWORD_ROUNDS: u32 = 10000;
+
+static CODE_REGEX: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r"^[a-z0-9]{1}[a-z0-9_-]*$").unwrap());
+static EMAIL_REGEX: LazyLock<Regex> = LazyLock::new(|| {
+    Regex::new(
+        r"^([a-z0-9_+]([a-z0-9_+.]*[a-z0-9_+])?)@([a-z0-9]+([\-\.]{1}[a-z0-9]+)*\.[a-z]{2,6})$",
+    )
+    .unwrap()
+});
+static NAME_REGEX: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r"^[a-z0-9]{1}[a-z0-9_-]*$").unwrap());
+static SCOPE_REGEX: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r"^[a-z0-9]+([\.]{1}[a-z0-9]+)*$").unwrap());
 
 /// To transfer hex address string to 128-bit integer.
 pub fn hex_addr_to_u128(addr: &str) -> Result<u128, &'static str> {
@@ -25,25 +40,17 @@ pub fn hex_addr_to_u128(addr: &str) -> Result<u128, &'static str> {
 
 /// To check if the account is valid.
 pub fn is_account(account: &str) -> bool {
-    let name_regex = Regex::new(r"^[a-z0-9]{1}[a-z0-9_-]*$").unwrap();
-    let email_regex = Regex::new(
-        r"^([a-z0-9_+]([a-z0-9_+.]*[a-z0-9_+])?)@([a-z0-9]+([\-\.]{1}[a-z0-9]+)*\.[a-z]{2,6})$",
-    )
-    .unwrap();
-
-    name_regex.is_match(account) || email_regex.is_match(account)
+    NAME_REGEX.is_match(account) || EMAIL_REGEX.is_match(account)
 }
 
 /// To check if the (unit/application/network) code is valid.
 pub fn is_code(code: &str) -> bool {
-    let regex = Regex::new(r"^[a-z0-9]{1}[a-z0-9_-]*$").unwrap();
-    regex.is_match(code)
+    CODE_REGEX.is_match(code)
 }
 
 /// To check if the (client) scope is valid.
 pub fn is_scope(scope: &str) -> bool {
-    let regex = Regex::new(r"^[a-z0-9]+([\.]{1}[a-z0-9]+)*$").unwrap();
-    regex.is_match(scope)
+    SCOPE_REGEX.is_match(scope)
 }
 
 /// To check if the (redirect) URI is valid.

@@ -91,6 +91,9 @@ pub struct ApplicationMgr {
 /// Event handler trait for the [`ApplicationMgr`].
 #[async_trait]
 pub trait EventHandler: Send + Sync {
+    /// Fired when a queue error occurs. Override to handle MQ-level errors.
+    async fn on_error(&self, _mgr: &ApplicationMgr, _err: Box<dyn StdError + Send + Sync>) {}
+
     /// Fired when one of the manager's queues encounters a state change.
     async fn on_status_change(&self, mgr: &ApplicationMgr, status: MgrStatus);
 
@@ -315,7 +318,10 @@ impl ApplicationMgr {
 
 #[async_trait]
 impl QueueEventHandler for MgrMqEventHandler {
-    async fn on_error(&self, _queue: Arc<dyn GmqQueue>, _err: Box<dyn StdError + Send + Sync>) {}
+    async fn on_error(&self, _queue: Arc<dyn GmqQueue>, err: Box<dyn StdError + Send + Sync>) {
+        let handler = { self.mgr.handler.lock().unwrap().clone() };
+        handler.on_error(&self.mgr, err).await;
+    }
 
     async fn on_status(&self, _queue: Arc<dyn GmqQueue>, _status: QueueStatus) {
         let status = match { self.mgr.uldata.lock().unwrap().status() } == QueueStatus::Connected

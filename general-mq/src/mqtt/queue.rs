@@ -309,6 +309,10 @@ fn create_event_loop(queue: &MqttQueue) -> JoinHandle<()> {
                         }
                         if let Some(raw_conn) = raw_conn {
                             if let Err(e) = raw_conn.subscribe(this.topic(), this.qos()).await {
+                                {
+                                    let mut conn = this.conn.lock().unwrap();
+                                    conn.remove_packet_handler(this.opts.name.as_str());
+                                }
                                 this.on_error(Box::new(e));
                                 time::sleep(Duration::from_millis(this.opts.reconnect_millis))
                                     .await;

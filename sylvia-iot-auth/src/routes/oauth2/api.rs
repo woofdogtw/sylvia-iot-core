@@ -181,6 +181,13 @@ pub async fn post_login(State(state): State<AppState>, req: PostLoginRequest) ->
                 return resp_invalid_auth(None);
             }
             Some(user) => {
+                if user.disabled_at.is_some() {
+                    return resp_invalid_auth(None);
+                } else if let Some(expired_at) = user.expired_at
+                    && Utc::now() >= expired_at
+                {
+                    return resp_invalid_auth(None);
+                }
                 let hash = strings::password_hash(req.password.as_str(), user.salt.as_str());
                 if user.password != hash {
                     return resp_invalid_auth(None);

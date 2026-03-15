@@ -49,6 +49,7 @@ struct ClearQueueResource<'a> {
     scheme: &'a str,
     host: &'a str,
     username: &'a str,
+    q_type: QueueType,
 }
 
 struct PatchHost {
@@ -378,6 +379,7 @@ async fn create_queue_rsc<'a>(
                     scheme,
                     host,
                     username,
+                    q_type: rsc.q_type,
                 };
                 if let Err(e) = rabbitmq::put_user(&client, opts, host, username, password).await {
                     error!("[{}] add RabbitMQ user {} error: {}", fn_name, username, e);
@@ -406,6 +408,7 @@ async fn create_queue_rsc<'a>(
                     if let Err(e) =
                         rabbitmq::put_policies(&client, opts, host, username, &policies).await
                     {
+                        let _ = clear_queue_rsc(fn_name, &state, &clear_rsc);
                         error!("[{}] patch RabbitMQ {} error: {}", fn_name, username, e);
                         return Err(e.into_response());
                     }
@@ -422,6 +425,7 @@ async fn create_queue_rsc<'a>(
                     scheme,
                     host,
                     username,
+                    q_type: rsc.q_type,
                 };
                 if let Err(e) = emqx::post_user(
                     &client,
@@ -499,13 +503,13 @@ async fn clear_queue_rsc<'a>(
                     );
                     return Err(e.into_response());
                 }
-                let q_type = QueueType::Application;
                 if let Err(e) = emqx::delete_acl(&client, opts, rsc.host, rsc.username).await {
                     error!("[{}] clear EMQX ACL {} error: {}", fn_name, rsc.username, e);
                     return Err(e.into_response());
                 }
                 if let Err(e) =
-                    emqx::delete_topic_metrics(&client, opts, rsc.host, q_type, rsc.username).await
+                    emqx::delete_topic_metrics(&client, opts, rsc.host, rsc.q_type, rsc.username)
+                        .await
                 {
                     error!(
                         "[{}] clear EMQX topic metrics {} error: {}",
@@ -522,13 +526,19 @@ async fn clear_queue_rsc<'a>(
 }
 
 /// To clear new resources after something wrong when patching the application/network.
-async fn clear_patch_host(fn_name: &str, state: &AppState, patch_host: &Option<PatchHost>) {
+async fn clear_patch_host(
+    fn_name: &str,
+    state: &AppState,
+    patch_host: &Option<PatchHost>,
+    q_type: QueueType,
+) {
     if let Some(patch_host) = patch_host {
         if let Some(host) = patch_host.host_uri.host_str() {
             let clear_rsc = ClearQueueResource {
                 scheme: patch_host.host_uri.scheme(),
                 host,
                 username: patch_host.username.as_str(),
+                q_type,
             };
             let _ = clear_queue_rsc(fn_name, &state, &clear_rsc);
         }
