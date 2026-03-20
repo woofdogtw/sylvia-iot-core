@@ -13,21 +13,20 @@
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="theme-color" content="#ffffff">
 
-        <link rel="icon" href="favicon.svg">
-        <link rel="shortcut icon" href="favicon.png">
-        <link rel="stylesheet" href="css/variables.css">
-        <link rel="stylesheet" href="css/general.css">
-        <link rel="stylesheet" href="css/chrome.css">
-        <link rel="stylesheet" href="css/print.css" media="print">
+        <link rel="icon" href="favicon-de23e50b.svg">
+        <link rel="shortcut icon" href="favicon-8114d1fc.png">
+        <link rel="stylesheet" href="css/variables-8adf115d.css">
+        <link rel="stylesheet" href="css/general-2459343d.css">
+        <link rel="stylesheet" href="css/chrome-ae938929.css">
+        <link rel="stylesheet" href="css/print-9e4910d8.css" media="print">
 
         <!-- Fonts -->
-        <link rel="stylesheet" href="FontAwesome/css/font-awesome.css">
-        <link rel="stylesheet" href="fonts/fonts.css">
+        <link rel="stylesheet" href="fonts/fonts-9644e21d.css">
 
         <!-- Highlight.js Stylesheets -->
-        <link rel="stylesheet" id="highlight-css" href="highlight.css">
-        <link rel="stylesheet" id="tomorrow-night-css" href="tomorrow-night.css">
-        <link rel="stylesheet" id="ayu-highlight-css" href="ayu-highlight.css">
+        <link rel="stylesheet" id="mdbook-highlight-css" href="highlight-493f70e1.css">
+        <link rel="stylesheet" id="mdbook-tomorrow-night-css" href="tomorrow-night-4c0ae647.css">
+        <link rel="stylesheet" id="mdbook-ayu-highlight-css" href="ayu-highlight-3fdfc3ac.css">
 
         <!-- Custom theme stylesheets -->
 
@@ -37,9 +36,10 @@
             const path_to_root = "";
             const default_light_theme = "rust";
             const default_dark_theme = "navy";
+            window.path_to_searchindex_js = "searchindex-44c49986.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="toc.js"></script>
+        <script src="toc-412b9a07.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -53,7 +53,7 @@
             </div>
         </div>
     </div>
-    <div id="body-container">
+    <div id="mdbook-body-container">
         <!-- Work around some values being stored in localStorage wrapped in quotes -->
         <script>
             try {
@@ -82,56 +82,59 @@
             html.classList.add("js");
         </script>
 
-        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+        <input type="checkbox" id="mdbook-sidebar-toggle-anchor" class="hidden">
 
         <!-- Hide / unhide sidebar before it is displayed -->
         <script>
             let sidebar = null;
-            const sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
+            const sidebar_toggle = document.getElementById("mdbook-sidebar-toggle-anchor");
             if (document.body.clientWidth >= 1080) {
                 try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
                 sidebar = sidebar || 'visible';
             } else {
                 sidebar = 'hidden';
+                sidebar_toggle.checked = false;
             }
-            sidebar_toggle.checked = sidebar === 'visible';
-            html.classList.remove('sidebar-visible');
-            html.classList.add("sidebar-" + sidebar);
+            if (sidebar === 'visible') {
+                sidebar_toggle.checked = true;
+            } else {
+                html.classList.remove('sidebar-visible');
+            }
         </script>
 
-        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+        <nav id="mdbook-sidebar" class="sidebar" aria-label="Table of contents">
             <!-- populated by js -->
             <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
             <noscript>
                 <iframe class="sidebar-iframe-outer" src="toc.html"></iframe>
             </noscript>
-            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+            <div id="mdbook-sidebar-resize-handle" class="sidebar-resize-handle">
                 <div class="sidebar-resize-indicator"></div>
             </div>
         </nav>
 
-        <div id="page-wrapper" class="page-wrapper">
+        <div id="mdbook-page-wrapper" class="page-wrapper">
 
             <div class="page">
-                <div id="menu-bar-hover-placeholder"></div>
-                <div id="menu-bar" class="menu-bar sticky">
+                <div id="mdbook-menu-bar-hover-placeholder"></div>
+                <div id="mdbook-menu-bar" class="menu-bar sticky">
                     <div class="left-buttons">
-                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
-                            <i class="fa fa-bars"></i>
+                        <label id="mdbook-sidebar-toggle" class="icon-button" for="mdbook-sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="mdbook-sidebar">
+                            <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M0 96C0 78.3 14.3 64 32 64H416c17.7 0 32 14.3 32 32s-14.3 32-32 32H32C14.3 128 0 113.7 0 96zM0 256c0-17.7 14.3-32 32-32H416c17.7 0 32 14.3 32 32s-14.3 32-32 32H32c-17.7 0-32-14.3-32-32zM448 416c0 17.7-14.3 32-32 32H32c-17.7 0-32-14.3-32-32s14.3-32 32-32H416c17.7 0 32 14.3 32 32z"/></svg></span>
                         </label>
-                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
-                            <i class="fa fa-paint-brush"></i>
+                        <button id="mdbook-theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="mdbook-theme-list">
+                            <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M371.3 367.1c27.3-3.9 51.9-19.4 67.2-42.9L600.2 74.1c12.6-19.5 9.4-45.3-7.6-61.2S549.7-4.4 531.1 9.6L294.4 187.2c-24 18-38.2 46.1-38.4 76.1L371.3 367.1zm-19.6 25.4l-116-104.4C175.9 290.3 128 339.6 128 400c0 3.9 .2 7.8 .6 11.6c1.8 17.5-10.2 36.4-27.8 36.4H96c-17.7 0-32 14.3-32 32s14.3 32 32 32H240c61.9 0 112-50.1 112-112c0-2.5-.1-5-.2-7.5z"/></svg></span>
                         </button>
-                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
-                            <li role="none"><button role="menuitem" class="theme" id="default_theme">Auto</button></li>
-                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
-                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
-                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
-                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
-                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        <ul id="mdbook-theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-default_theme">Auto</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-ayu">Ayu</button></li>
                         </ul>
-                        <button id="search-toggle" class="icon-button" type="button" title="Search (`/`)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="/ s" aria-controls="searchbar">
-                            <i class="fa fa-search"></i>
+                        <button id="mdbook-search-toggle" class="icon-button" type="button" title="Search (`/`)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="/ s" aria-controls="mdbook-searchbar">
+                            <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M416 208c0 45.9-14.9 88.3-40 122.7L502.6 457.4c12.5 12.5 12.5 32.8 0 45.3s-32.8 12.5-45.3 0L330.7 376c-34.4 25.2-76.8 40-122.7 40C93.1 416 0 322.9 0 208S93.1 0 208 0S416 93.1 416 208zM208 352c79.5 0 144-64.5 144-144s-64.5-144-144-144S64 128.5 64 208s64.5 144 144 144z"/></svg></span>
                         </button>
                     </div>
 
@@ -139,35 +142,41 @@
 
                     <div class="right-buttons">
                         <a href="print.html" title="Print this book" aria-label="Print this book">
-                            <i id="print-button" class="fa fa-print"></i>
+                            <span class=fa-svg id="print-button"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M128 0C92.7 0 64 28.7 64 64v96h64V64H354.7L384 93.3V160h64V93.3c0-17-6.7-33.3-18.7-45.3L400 18.7C388 6.7 371.7 0 354.7 0H128zM384 352v32 64H128V384 368 352H384zm64 32h32c17.7 0 32-14.3 32-32V256c0-35.3-28.7-64-64-64H64c-35.3 0-64 28.7-64 64v96c0 17.7 14.3 32 32 32H64v64c0 35.3 28.7 64 64 64H384c35.3 0 64-28.7 64-64V384zm-16-88c-13.3 0-24-10.7-24-24s10.7-24 24-24s24 10.7 24 24s-10.7 24-24 24z"/></svg></span>
                         </a>
 
                     </div>
                 </div>
 
-                <div id="search-wrapper" class="hidden">
-                    <form id="searchbar-outer" class="searchbar-outer">
-                        <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                <div id="mdbook-search-wrapper" class="hidden">
+                    <form id="mdbook-searchbar-outer" class="searchbar-outer">
+                        <div class="search-wrapper">
+                            <input type="search" id="mdbook-searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="mdbook-searchresults-outer" aria-describedby="searchresults-header">
+                            <div class="spinner-wrapper">
+                                <span class=fa-svg id="fa-spin"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M304 48c0-26.5-21.5-48-48-48s-48 21.5-48 48s21.5 48 48 48s48-21.5 48-48zm0 416c0-26.5-21.5-48-48-48s-48 21.5-48 48s21.5 48 48 48s48-21.5 48-48zM48 304c26.5 0 48-21.5 48-48s-21.5-48-48-48s-48 21.5-48 48s21.5 48 48 48zm464-48c0-26.5-21.5-48-48-48s-48 21.5-48 48s21.5 48 48 48s48-21.5 48-48zM142.9 437c18.7-18.7 18.7-49.1 0-67.9s-49.1-18.7-67.9 0s-18.7 49.1 0 67.9s49.1 18.7 67.9 0zm0-294.2c18.7-18.7 18.7-49.1 0-67.9S93.7 56.2 75 75s-18.7 49.1 0 67.9s49.1 18.7 67.9 0zM369.1 437c18.7 18.7 49.1 18.7 67.9 0s18.7-49.1 0-67.9s-49.1-18.7-67.9 0s-18.7 49.1 0 67.9z"/></svg></span>
+                            </div>
+                        </div>
                     </form>
-                    <div id="searchresults-outer" class="searchresults-outer hidden">
-                        <div id="searchresults-header" class="searchresults-header"></div>
-                        <ul id="searchresults">
+                    <div id="mdbook-searchresults-outer" class="searchresults-outer hidden">
+                        <div id="mdbook-searchresults-header" class="searchresults-header"></div>
+                        <ul id="mdbook-searchresults">
                         </ul>
                     </div>
                 </div>
 
                 <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
                 <script>
-                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
-                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
-                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                    document.getElementById('mdbook-sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('mdbook-sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#mdbook-sidebar a')).forEach(function(link) {
                         link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
                     });
                 </script>
 
-                <div id="content" class="content">
+                <div id="mdbook-content" class="content">
                     <main>
-                        <blockquote>
+                        <h1 id="introduction"><a href="#introduction" class="header">Introduction</a></h1>
+<blockquote>
 <p>The English version of this document was translated with the assistance of ChatGPT 😊.</p>
 </blockquote>
 <p>This document will guide you step by step to understand what
@@ -179,11 +188,12 @@ philosophy behind its performance optimization.</p>
 <p>The development guide will explain how third-party developers or providers can develop their
 applications or network services. For those interested in core development with Sylvia-IoT, the
 guide also provides code structure and style.</p>
-<p>Let's get started!</p>
-<div style="break-before: page; page-break-before: always;"></div><h1 id="what-is-sylvia-iot"><a class="header" href="#what-is-sylvia-iot">What is Sylvia-IoT?</a></h1>
+<p>Let’s get started!</p>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="what-is-sylvia-iot"><a class="header" href="#what-is-sylvia-iot">What is Sylvia-IoT?</a></h1>
 <p><strong>Sylvia-IoT</strong> is an IoT (Internet of Things) platform primarily designed to forward device messages
 to applications or enable applications to send commands to devices.</p>
-<p><img src="intro/intro.svg" alt="Introduction" /></p>
+<p><img src="intro/intro.svg" alt="Introduction"></p>
 <p>The diagram above provides a simple explanation. Devices (such as sensors) are bound to specific
 communication modules and transmit data through network gateways or servers. Sylvia-IoT acts as a
 message broker, allowing each application to subscribe to devices they are interested in for data
@@ -205,17 +215,18 @@ analysis or data transmission to the devices.</p>
 <li>Application Providers:
 <ul>
 <li>Specify any number of applications to receive data from the same device.</li>
-<li>Through Sylvia-IoT's communication protocol isolation, devices' network providers can be
+<li>Through Sylvia-IoT’s communication protocol isolation, devices’ network providers can be
 changed without rewriting code.</li>
 </ul>
 </li>
 </ul>
-<div style="break-before: page; page-break-before: always;"></div><h1 id="concept"><a class="header" href="#concept">Concept</a></h1>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="concept"><a class="header" href="#concept">Concept</a></h1>
 <p>Sylvia-IoT provides HTTP APIs to manage the following entities:</p>
 <ul>
 <li>User Account:
 <ul>
-<li>Access to Sylvia-IoT's management interface is possible through user accounts.</li>
+<li>Access to Sylvia-IoT’s management interface is possible through user accounts.</li>
 <li>Clients can obtain access tokens to access HTTP APIs.</li>
 </ul>
 </li>
@@ -272,14 +283,16 @@ and networks:</p>
 <p>Any message queuing model with explicit names (excluding wildcards) can be supported, such as AMQP
 1.0, Apache Kafka, NATS, etc. However, topic publish/subscribe, broadcast, and multicast modes are
 currently not supported.</p>
-<div style="break-before: page; page-break-before: always;"></div><h1 id="user-guide"><a class="header" href="#user-guide">User Guide</a></h1>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="user-guide"><a class="header" href="#user-guide">User Guide</a></h1>
 <p>Chapter Contents:</p>
 <ul>
 <li>Take you through a quick start to set up a functional Sylvia-IoT instance and simulate receiving
 device data.</li>
 <li>Provide complete configuration file content and overview.</li>
 </ul>
-<div style="break-before: page; page-break-before: always;"></div><h1 id="quick-start"><a class="header" href="#quick-start">Quick Start</a></h1>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="quick-start"><a class="header" href="#quick-start">Quick Start</a></h1>
 <p>This chapter describes the quick installation steps in the Ubuntu 22.04 environment.</p>
 <h2 id="install-tools"><a class="header" href="#install-tools">Install Tools</a></h2>
 <pre><code class="language-shell">sudo apt -y install curl jq
@@ -349,13 +362,13 @@ tar xf sylvia-iot-coremgr-cli-$ARCH.tar.xz
 },
 </code></pre>
 </li>
-<li>We don't enable HTTPS for now, so the certificate file settings are commented out:
+<li>We don’t enable HTTPS for now, so the certificate file settings are commented out:
 <pre><code>//"cacertFile": "/etc/ssl/certs/ca-certificates.crt",
 //"certFile": "/home/user/rust/conf/certs/sylvia-iot.crt",
 //"keyFile": "/home/user/rust/conf/certs/sylvia-iot.key",
 </code></pre>
 </li>
-<li>We create a folder to store static files, and in this example, it's <code>/home/user/static</code>.
+<li>We create a folder to store static files, and in this example, it’s <code>/home/user/static</code>.
 <pre><code>"staticPath": "/home/user/static",
 </code></pre>
 </li>
@@ -382,7 +395,7 @@ tar xf sylvia-iot-coremgr-cli-$ARCH.tar.xz
 </li>
 </ul>
 <h2 id="set-up-initial-data"><a class="header" href="#set-up-initial-data">Set Up Initial Data</a></h2>
-<p>First, let's enter the MongoDB shell:</p>
+<p>First, let’s enter the MongoDB shell:</p>
 <pre><code class="language-shell">docker exec -it mongodb mongosh
 </code></pre>
 <p>In the MongoDB shell interface, we create the basic data:</p>
@@ -420,7 +433,7 @@ db.client.insertOne({
 <p>Start Sylvia-IoT core:</p>
 <pre><code class="language-shell">./sylvia-iot-core -f config.json5
 </code></pre>
-<p>If the program doesn't terminate, it means the startup was successful 😊.</p>
+<p>If the program doesn’t terminate, it means the startup was successful 😊.</p>
 <p>Open another command-line window and log in using the CLI:</p>
 <pre><code class="language-shell">./sylvia-iot-coremgr-cli -f config.json5 login -a admin -p admin
 </code></pre>
@@ -476,7 +489,8 @@ slightly different):</p>
 </code></pre>
 <p>If you see the data, congratulations! You have completed the basic use of Sylvia-IoT! (Congratulations! Achievement unlocked!
 😆)</p>
-<div style="break-before: page; page-break-before: always;"></div><h1 id="configuration"><a class="header" href="#configuration">Configuration</a></h1>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="configuration"><a class="header" href="#configuration">Configuration</a></h1>
 <p>This chapter describes the configuration format and usage of Sylvia-IoT.</p>
 <p>Sylvia-IoT supports four sources of configuration, prioritized as follows (from highest to lowest):</p>
 <ul>
@@ -516,7 +530,12 @@ uppercase or with <code>_</code> (underscore) separating words. For example:
 the CLI <strong>help</strong> command to view the supported options.</p>
 </blockquote>
 <h2 id="common-settings"><a class="header" href="#common-settings">Common Settings</a></h2>
-<div class="table-wrapper"><table><thead><tr><th>JSON5</th><th>CLI Parameters</th><th>Environment Variables</th><th>Default</th><th>Description</th></tr></thead><tbody>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>JSON5</th><th>CLI Parameters</th><th>Environment Variables</th><th>Default</th><th>Description</th></tr>
+</thead>
+<tbody>
 <tr><td>log.level</td><td>log.level</td><td>LOG_LEVEL</td><td>info</td><td>Log level. Refer to example</td></tr>
 <tr><td>log.style</td><td>log.style</td><td>LOG_STYLE</td><td>json</td><td>Log style. Refer to example</td></tr>
 <tr><td>server.httpPort</td><td>log.httpport</td><td>SERVER_HTTP_PORT</td><td>1080</td><td>HTTP listening port</td></tr>
@@ -525,7 +544,8 @@ the CLI <strong>help</strong> command to view the supported options.</p>
 <tr><td>server.certFile</td><td>log.certfile</td><td>SERVER_CERT_FILE</td><td></td><td>HTTPS certificate file location</td></tr>
 <tr><td>server.keyFile</td><td>log.keyfile</td><td>SERVER_KEY_FILE</td><td></td><td>HTTPS private key file location</td></tr>
 <tr><td>server.staticPath</td><td>log.static</td><td>SERVER_STATIC_PATH</td><td></td><td>Static files directory location</td></tr>
-</tbody></table>
+</tbody>
+</table>
 </div>
 <h3 id="detailed-explanation"><a class="header" href="#detailed-explanation">Detailed Explanation</a></h3>
 <ul>
@@ -545,7 +565,12 @@ example:</p>
 <p>You can define custom scope names and apply them to various API scopes. You can refer to the example
 provided in the <strong>Authentication Service</strong> section for more details.</p>
 <h2 id="authentication-service-auth"><a class="header" href="#authentication-service-auth">Authentication Service (auth)</a></h2>
-<div class="table-wrapper"><table><thead><tr><th>JSON5</th><th>CLI Parameters</th><th>Environment Variables</th><th>Default</th><th>Description</th></tr></thead><tbody>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>JSON5</th><th>CLI Parameters</th><th>Environment Variables</th><th>Default</th><th>Description</th></tr>
+</thead>
+<tbody>
 <tr><td>auth.db.engine</td><td>auth.db.engine</td><td>AUTH_DB_ENGINE</td><td>sqlite</td><td>Database type</td></tr>
 <tr><td>auth.db.mongodb.url</td><td>auth.db.mongodb.url</td><td>AUTH_DB_MONGODB_URL</td><td>mongodb://localhost:27017</td><td>MongoDB connection URL</td></tr>
 <tr><td>auth.db.mongodb.database</td><td>auth.db.mongodb.database</td><td>AUTH_DB_MONGODB_DATABASE</td><td>auth</td><td>MongoDB database name</td></tr>
@@ -554,7 +579,8 @@ provided in the <strong>Authentication Service</strong> section for more details
 <tr><td>auth.db.templates.login</td><td>auth.db.templates</td><td>AUTH_TEMPLATES</td><td></td><td>Login page template file location</td></tr>
 <tr><td>auth.db.templates.grant</td><td>auth.db.templates</td><td>AUTH_TEMPLATES</td><td></td><td>Authorization page template file location</td></tr>
 <tr><td>auth.db.apiScopes</td><td>auth.api-scopes</td><td>AUTH_API_SCOPES</td><td></td><td>API scope settings</td></tr>
-</tbody></table>
+</tbody>
+</table>
 </div>
 <h3 id="detailed-explanation-1"><a class="header" href="#detailed-explanation-1">Detailed Explanation</a></h3>
 <ul>
@@ -569,7 +595,7 @@ package).</li>
 <pre><code>--auth.templates='{"login":"xxx"}'
 </code></pre>
 </li>
-<li>For more details, please refer to <a href="guide/../dev/oauth2.html"><strong>OAuth2 Authentication</strong></a>.</li>
+<li>For more details, please refer to <a href="#oauth2-authentication"><strong>OAuth2 Authentication</strong></a>.</li>
 </ul>
 </li>
 <li>API scopes
@@ -587,12 +613,12 @@ APIs to limit the scope of access for clients:
 <li><code>POST /auth/api/v1/auth/logout</code></li>
 </ul>
 </li>
-<li><code>user.get</code>: Authorize clients to access current user's profile data.
+<li><code>user.get</code>: Authorize clients to access current user’s profile data.
 <ul>
 <li><code>GET /api/v1/user</code></li>
 </ul>
 </li>
-<li><code>user.path</code>: Authorize clients to modify current user's profile data.
+<li><code>user.path</code>: Authorize clients to modify current user’s profile data.
 <ul>
 <li><code>PATCH /api/v1/user</code></li>
 </ul>
@@ -686,7 +712,12 @@ grant authorization to the client.</li>
 </li>
 </ul>
 <h2 id="message-broker-service-broker"><a class="header" href="#message-broker-service-broker">Message Broker Service (broker)</a></h2>
-<div class="table-wrapper"><table><thead><tr><th>JSON5</th><th>CLI Parameters</th><th>Environment Variables</th><th>Default</th><th>Description</th></tr></thead><tbody>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>JSON5</th><th>CLI Parameters</th><th>Environment Variables</th><th>Default</th><th>Description</th></tr>
+</thead>
+<tbody>
 <tr><td>broker.auth</td><td>broker.auth</td><td>BROKER_AUTH</td><td>http://localhost:1080/auth</td><td>Authentication service URL</td></tr>
 <tr><td>broker.db.engine</td><td>broker.db.engine</td><td>BROKER_DB_ENGINE</td><td>sqlite</td><td>Database type</td></tr>
 <tr><td>broker.db.mongodb.url</td><td>broker.db.mongodb.url</td><td>BROKER_DB_MONGODB_URL</td><td>mongodb://localhost:27017</td><td>MongoDB connection URL</td></tr>
@@ -715,7 +746,8 @@ grant authorization to the client.</li>
 <tr><td>broker.mqChannels.data.url</td><td>broker.mq-channels.data.url</td><td>BROKER_MQCHANNELS_DATA_URL</td><td></td><td>Data message host</td></tr>
 <tr><td>broker.mqChannels.data.persistent</td><td>broker.mq-channels.data.persistent</td><td>BROKER_MQCHANNELS_DATA_PERSISTENT</td><td>false</td><td>Persistent delivery for data messages</td></tr>
 <tr><td>broker.db.apiScopes</td><td>broker.api-scopes</td><td>BROKER_API_SCOPES</td><td></td><td>API scope settings</td></tr>
-</tbody></table>
+</tbody>
+</table>
 </div>
 <h3 id="detailed-explanation-2"><a class="header" href="#detailed-explanation-2">Detailed Explanation</a></h3>
 <ul>
@@ -731,14 +763,14 @@ many configurations are stored in memory. These configurations need to be propag
 various instances of the cluster through <strong>Control Channel Messages</strong> via message queues when
 API changes are made.
 <ul>
-<li>For relevant details, please refer to the <a href="guide/../arch/cache.html"><strong>Cache</strong></a> chapter.</li>
+<li>For relevant details, please refer to the <a href="#cache"><strong>Cache</strong></a> chapter.</li>
 </ul>
 </li>
 <li><strong>data</strong> represents the <strong>Data Channel Message</strong>, which records all data into the
 <strong>sylvia-iot-data</strong> module.
 <ul>
 <li>If no parameters are specified (or JSON5 is set to <strong>null</strong>), no data will be stored.</li>
-<li>For relevant details, please refer to the <a href="guide/../arch/flow.html"><strong>Data Flow</strong></a> chapter.</li>
+<li>For relevant details, please refer to the <a href="#data-flow"><strong>Data Flow</strong></a> chapter.</li>
 </ul>
 </li>
 </ul>
@@ -748,7 +780,12 @@ API changes are made.
 </li>
 </ul>
 <h2 id="core-manager-service-coremgr"><a class="header" href="#core-manager-service-coremgr">Core Manager Service (coremgr)</a></h2>
-<div class="table-wrapper"><table><thead><tr><th>JSON5</th><th>CLI Parameters</th><th>Environment Variables</th><th>Default</th><th>Description</th></tr></thead><tbody>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>JSON5</th><th>CLI Parameters</th><th>Environment Variables</th><th>Default</th><th>Description</th></tr>
+</thead>
+<tbody>
 <tr><td>coremgr.auth</td><td>coremgr.auth</td><td>COREMGR_AUTH</td><td>http://localhost:1080/auth</td><td>Authentication service URL</td></tr>
 <tr><td>coremgr.broker</td><td>coremgr.broker</td><td>COREMGR_BROKER</td><td>http://localhost:2080/broker</td><td>Message broker service URL</td></tr>
 <tr><td>coremgr.mq.engine.amqp</td><td>coremgr.mq.engine.amqp</td><td>COREMGR_MQ_ENGINE_AMQP</td><td>rabbitmq</td><td>AMQP type</td></tr>
@@ -766,7 +803,8 @@ API changes are made.
 <tr><td>coremgr.mq.rumqttd.consolePort</td><td>coremgr.mq.rumqttd.console-port</td><td>COREMGR_MQ_RUMQTTD_CONSOLE_PORT</td><td>18083</td><td>rumqttd management API port</td></tr>
 <tr><td>coremgr.mqChannels.data.url</td><td>coremgr.mq-channels.data.url</td><td>COREMGR_MQCHANNELS_DATA_URL</td><td></td><td>Data message host</td></tr>
 <tr><td>coremgr.mqChannels.data.persistent</td><td>coremgr.mq-channels.data.persistent</td><td>COREMGR_MQCHANNELS_DATA_PERSISTENT</td><td>false</td><td>Persistent delivery for data messages</td></tr>
-</tbody></table>
+</tbody>
+</table>
 </div>
 <h3 id="detailed-explanation-3"><a class="header" href="#detailed-explanation-3">Detailed Explanation</a></h3>
 <ul>
@@ -783,16 +821,27 @@ GET. Enabling the data channel will record the API usage history.</li>
 </li>
 </ul>
 <h2 id="core-manager-command-line-interface-coremgr-cli"><a class="header" href="#core-manager-command-line-interface-coremgr-cli">Core Manager Command-Line Interface (coremgr-cli)</a></h2>
-<div class="table-wrapper"><table><thead><tr><th>JSON5</th><th>CLI Parameters</th><th>Environment Variables</th><th>Default</th><th>Description</th></tr></thead><tbody>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>JSON5</th><th>CLI Parameters</th><th>Environment Variables</th><th>Default</th><th>Description</th></tr>
+</thead>
+<tbody>
 <tr><td>coremgrCli.auth</td><td>coremgr-cli.auth</td><td>COREMGRCLI_AUTH</td><td>http://localhost:1080/auth</td><td>Authentication service URL</td></tr>
 <tr><td>coremgrCli.coremgr</td><td>coremgr-cli.coremgr</td><td>COREMGRCLI_COREMGR</td><td>http://localhost:3080/coremgr</td><td>Core manager service URL</td></tr>
 <tr><td>coremgrCli.data</td><td>coremgr-cli.data</td><td>COREMGRCLI_DATA</td><td>http://localhost:4080/data</td><td>Data service URL</td></tr>
 <tr><td>coremgrCli.clientId</td><td>coremgr-cli.client-id</td><td>COREMGRCLI_CLIENT_ID</td><td></td><td>CLI client ID</td></tr>
 <tr><td>coremgrCli.redirectUri</td><td>coremgr-cli.redirect-uri</td><td>COREMGRCLI_REDIRECT_URI</td><td></td><td>CLI client redirect URI</td></tr>
-</tbody></table>
+</tbody>
+</table>
 </div>
 <h2 id="data-service-data"><a class="header" href="#data-service-data">Data Service (data)</a></h2>
-<div class="table-wrapper"><table><thead><tr><th>JSON5</th><th>CLI Parameters</th><th>Environment Variables</th><th>Default</th><th>Description</th></tr></thead><tbody>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>JSON5</th><th>CLI Parameters</th><th>Environment Variables</th><th>Default</th><th>Description</th></tr>
+</thead>
+<tbody>
 <tr><td>data.auth</td><td>data.auth</td><td>DATA_AUTH</td><td>http://localhost:1080/auth</td><td>Authentication service URL</td></tr>
 <tr><td>data.broker</td><td>data.broker</td><td>DATA_BROKER</td><td>http://localhost:2080/broker</td><td>Message broker service URL</td></tr>
 <tr><td>data.db.engine</td><td>data.db.engine</td><td>DATA_DB_ENGINE</td><td>sqlite</td><td>Database type</td></tr>
@@ -806,16 +855,20 @@ GET. Enabling the data channel will record the API usage history.</li>
 <tr><td>data.mqChannels.coremgr.url</td><td>data.mq-channels.coremgr.url</td><td>DATA_MQCHANNELS_COREMGR_URL</td><td>amqp://localhost</td><td>Data message host</td></tr>
 <tr><td>data.mqChannels.coremgr.prefetch</td><td>data.mq-channels.coremgr.prefetch</td><td>DATA_MQCHANNELS_COREMGR_PREFETCH</td><td>100</td><td>Maximum number of AMQP consumers for data messages</td></tr>
 <tr><td>data.mqChannels.coremgr.sharedPrefix</td><td>data.mq-channels.coremgr.sharedprefix</td><td>DATA_MQCHANNELS_COREMGR_SHAREDPREFIX</td><td>$share/sylvia-iot-data/</td><td>MQTT shared subscription prefix</td></tr>
-</tbody></table>
-</div><div style="break-before: page; page-break-before: always;"></div><h1 id="internal-architecture"><a class="header" href="#internal-architecture">Internal Architecture</a></h1>
+</tbody>
+</table>
+</div>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="internal-architecture"><a class="header" href="#internal-architecture">Internal Architecture</a></h1>
 <p>Chapter Contents:</p>
 <ul>
 <li>Detailed explanation of Sylvia-IoT components.</li>
 <li>Understanding the process of uplink and downlink data.</li>
 <li>Introduction to caching mechanisms.</li>
 </ul>
-<div style="break-before: page; page-break-before: always;"></div><h1 id="architecture"><a class="header" href="#architecture">Architecture</a></h1>
-<p><img src="arch/arch.svg" alt="Architecture" /></p>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="architecture"><a class="header" href="#architecture">Architecture</a></h1>
+<p><img src="arch/arch.svg" alt="Architecture"></p>
 <p>Here is the diagram of Sylvia-IoT components. In this chapter, we will explain each one in detail.</p>
 <h2 id="sylvia-iot-core-components"><a class="header" href="#sylvia-iot-core-components">Sylvia-IoT Core Components</a></h2>
 <p>Abbreviated as ABCD (laughs 😊)</p>
@@ -846,7 +899,7 @@ determine whether to authorize access with the token.</li>
 <ul>
 <li>User accounts
 <ul>
-<li>User's basic information.</li>
+<li>User’s basic information.</li>
 <li>Permissions (roles).</li>
 </ul>
 </li>
@@ -906,7 +959,7 @@ etc.</li>
 (admin/manager roles) to set up.</li>
 <li>Each device has a unique identifier (device ID). If the application relies on this
 identifier, even if the network and address are changed, there is no need to change
-the application's management.</li>
+the application’s management.</li>
 </ul>
 </li>
 <li>Each device can be assigned a device profile based on the data content.
@@ -997,10 +1050,10 @@ through the data channel to the <strong>Data service</strong> for storage or ana
 devices, etc.). It can be categorized as follows:
 <ul>
 <li>Unicast: Each message has only one consumer and is used for Sylvia-IoT to push messages to
-networks or applications, which will be explained in the later <a href="arch/./flow.html"><strong>Data Flow</strong></a>
+networks or applications, which will be explained in the later <a href="#data-flow"><strong>Data Flow</strong></a>
 section.</li>
 <li>Broadcast: Used to broadcast messages to various core processes within the Sylvia-IoT cluster,
-which will be explained in the later <a href="arch/./cache.html"><strong>Cache</strong></a> section.</li>
+which will be explained in the later <a href="#cache"><strong>Cache</strong></a> section.</li>
 </ul>
 </li>
 <li>The data channel is used to transmit device data or historical data.
@@ -1043,7 +1096,7 @@ common rule engine in IoT platforms.</li>
 <h2 id="message-brokers"><a class="header" href="#message-brokers">Message Brokers</a></h2>
 <blockquote>
 <p>Here, message brokers refer to services like RabbitMQ and EMQX, not Sylvia-IoT Broker.
-Unless specifically mentioned, "Broker" in this document refers to Sylvia-IoT Broker.</p>
+Unless specifically mentioned, “Broker” in this document refers to Sylvia-IoT Broker.</p>
 </blockquote>
 <p>Some important points:</p>
 <ul>
@@ -1065,7 +1118,7 @@ consumer).
 </ul>
 </li>
 <li>Publish/Subscribe, used for broadcasting control channel messages. This will be covered in the
-<a href="arch/./cache.html"><strong>Cache</strong></a> section.
+<a href="#cache"><strong>Cache</strong></a> section.
 <ul>
 <li>AMQP is implemented using fanout exchanges and temporary queues.</li>
 </ul>
@@ -1074,14 +1127,14 @@ consumer).
 </li>
 </ul>
 <h3 id="rumqttd"><a class="header" href="#rumqttd">rumqttd</a></h3>
-<p>In the <a href="arch/../guide/quick.html"><strong>Quick Start</strong></a> section, we used <strong>sylvia-iot-core</strong> as an example. This
+<p>In the <a href="#quick-start"><strong>Quick Start</strong></a> section, we used <strong>sylvia-iot-core</strong> as an example. This
 executable includes the complete Auth/Broker/Coremgr/Data and rumqttd.</p>
 <p>To make it possible to run in resource-constrained environments, <strong>sylvia-iot-core</strong> contains the
 <a href="https://github.com/bytebeamio/rumqtt"><strong>rumqttd</strong></a> MQTT broker.
 By configuring it to use SQLite as the database and MQTT for message delivery, the sylvia-iot-core
 achieves the full functionality of Sylvia-IoT in just two files.</p>
 <blockquote>
-<p>The "core" is an executable that contains all the complete functionalities, whereas "coremgr" only
+<p>The “core” is an executable that contains all the complete functionalities, whereas “coremgr” only
 contains management functionalities and does not include rumqttd.</p>
 </blockquote>
 <p>To accommodate this limited environment, Sylvia-IoT adopts rumqttd.
@@ -1096,11 +1149,12 @@ also access Sylvia-IoT HTTP APIs and control channel messages to build their own
 <p>Devices in Sylvia-IoT refer to narrow-definition terminal devices that only process the data
 required by applications, and they are generally bound to network modules. The network module,
 however, can be interchangeable.</p>
-<p>Here's an example of replacing the network module: Suppose the device uses a Raspberry Pi to connect
+<p>Here’s an example of replacing the network module: Suppose the device uses a Raspberry Pi to connect
 sensors for specific application development. The network part can be changed to different protocols
 at any time (e.g., switching from LoRa to WiFi or even using an Ethernet cable). In Sylvia-IoT, you
 only need to modify the corresponding network and address settings for the device.</p>
-<div style="break-before: page; page-break-before: always;"></div><h1 id="data-flow"><a class="header" href="#data-flow">Data Flow</a></h1>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="data-flow"><a class="header" href="#data-flow">Data Flow</a></h1>
 <p>This chapter introduces how Sylvia-IoT handles data flow, including the following scenarios:</p>
 <ul>
 <li>Uplink data: Data sent from devices to applications.</li>
@@ -1109,7 +1163,7 @@ only need to modify the corresponding network and address settings for the devic
 <li>Coremgr operation data: Records of system operation history, including management operations.</li>
 </ul>
 <h2 id="uplink-data"><a class="header" href="#uplink-data">Uplink Data</a></h2>
-<p><img src="arch/flow-uplink.svg" alt="Uplink" /></p>
+<p><img src="arch/flow-uplink.svg" alt="Uplink"></p>
 <p>When device data is sent to the corresponding queue through the network service, the data will be
 processed and sent to the application as follows:</p>
 <ol>
@@ -1136,7 +1190,7 @@ next network route action; if not, continue with the following actions:</li>
 network routes overlap.</p>
 </blockquote>
 <h2 id="downlink-data"><a class="header" href="#downlink-data">Downlink Data</a></h2>
-<p><img src="arch/flow-downlink.svg" alt="Downlink" /></p>
+<p><img src="arch/flow-downlink.svg" alt="Downlink"></p>
 <p>When the application service sends data to be delivered to a device through the queue, the data is
 processed as follows:</p>
 <ol>
@@ -1161,7 +1215,7 @@ is because the Broker, being part of the infrastructure, always ensures data cor
 The network service only needs to focus on delivering the data to the device and reporting the final
 result. Even if the data sent by the Broker is invalid, the network service can directly report it
 through the <code>result</code> queue.</p>
-<p><img src="arch/flow-downlink-result.svg" alt="Downlink-Result" /></p>
+<p><img src="arch/flow-downlink-result.svg" alt="Downlink-Result"></p>
 <p>After processing the data (regardless of success or failure), the network service <strong>MUST</strong> use the
 data ID to report back to the Broker in the following order:</p>
 <ol>
@@ -1178,7 +1232,7 @@ After all, if data is sent by application A, why should application B receive th
 😊?</p>
 </blockquote>
 <h2 id="control-channel"><a class="header" href="#control-channel">Control Channel</a></h2>
-<p><img src="arch/flow-ctrl.svg" alt="Ctrl" /></p>
+<p><img src="arch/flow-ctrl.svg" alt="Ctrl"></p>
 <p>The Broker or coremgr provides APIs that allow the network service to update device data at any
 time. However, relying on periodic API requests for synchronization is inefficient and may impact
 routing performance due to frequent requests.
@@ -1201,7 +1255,7 @@ occurs, the network service will receive the following messages based on differe
 </li>
 </ul>
 <h2 id="operation-data"><a class="header" href="#operation-data">Operation Data</a></h2>
-<p><img src="arch/flow-opdata.svg" alt="OpData" /></p>
+<p><img src="arch/flow-opdata.svg" alt="OpData"></p>
 <p>Coremgr has an optional configuration to store all system operation logs (limited to coremgr HTTP
 APIs, of course). The current scope includes POST/PUT/PATCH/DELETE, etc.</p>
 <p>As shown in the diagram, after each API operation, coremgr records the following data:</p>
@@ -1221,9 +1275,10 @@ content is cleared. The key is retained to indicate that this request involves p
 <li>User ID</li>
 <li>Client ID</li>
 </ul>
-<div style="break-before: page; page-break-before: always;"></div><h1 id="cache"><a class="header" href="#cache">Cache</a></h1>
-<p>In the <a href="arch/flow.html"><strong>Data Flow</strong></a> section, it is mentioned that the main task of the Broker is "to
-match routing rules and forward data".
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="cache"><a class="header" href="#cache">Cache</a></h1>
+<p>In the <a href="#data-flow"><strong>Data Flow</strong></a> section, it is mentioned that the main task of the Broker is “to
+match routing rules and forward data”.
 Typically, routing rules are stored in a database, so the speed of matching becomes a critical
 bottleneck. This is especially true when forwarding thousands or even tens of thousands of data at
 the same time, putting significant pressure on the database.</p>
@@ -1238,8 +1293,8 @@ accesses variables within the process.</p>
 <blockquote>
 <p>Currently, the Broker is implemented using <code>std::collections::HashMap</code>.</p>
 </blockquote>
-<p><img src="arch/cache.svg" alt="Cache" /></p>
-<p>The diagram above provides an overview of Sylvia-IoT's caching mechanism. To meet the requirements
+<p><img src="arch/cache.svg" alt="Cache"></p>
+<p>The diagram above provides an overview of Sylvia-IoT’s caching mechanism. To meet the requirements
 of a cluster architecture, a broadcast queue is introduced to implement the <strong>Control Channel</strong>.</p>
 <p>To ensure data accuracy, updates are first made to the database before updating the cache. Below, we
 outline the steps:</p>
@@ -1256,22 +1311,23 @@ processes in the cluster.</li>
 <p>For simplicity, the current implementation mostly involves deleting cache data (the content of
 step 3 is a deletion action) and then filling it with cache-miss.</p>
 </blockquote>
-<p>Let's discuss a few special situations:</p>
+<p>Let’s discuss a few special situations:</p>
 <ul>
-<li>The caching design of the Broker adopts "eventual consistency." After step 3, there might be a
+<li>The caching design of the Broker adopts “eventual consistency.” After step 3, there might be a
 short period during which the old routing is still in use. However, this period is usually not
 very long (within tens or hundreds of milliseconds, or perhaps even shorter).</li>
-<li>To avoid data inconsistency, when a process detects a reconnection to the control channel's queue,
+<li>To avoid data inconsistency, when a process detects a reconnection to the control channel’s queue,
 it completely clears the cache content. It then reads the data from the database during a
 cache-miss event.</li>
 </ul>
 <blockquote>
-<p>In the <a href="arch/../guide/configuration.html"><strong>Configuration File</strong></a> section, the <code>mqChannels</code> contains
+<p>In the <a href="#configuration"><strong>Configuration File</strong></a> section, the <code>mqChannels</code> contains
 various settings for the control channel corresponding to each API.</p>
 </blockquote>
 <p>Relying on variables within the process as caching allows Sylvia-IoT Broker to achieve efficient
 forwarding capabilities 😊.</p>
-<div style="break-before: page; page-break-before: always;"></div><h1 id="developers-guide"><a class="header" href="#developers-guide">Developer's Guide</a></h1>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="developers-guide"><a class="header" href="#developers-guide">Developer’s Guide</a></h1>
 <p>Chapter Contents:</p>
 <ul>
 <li>OAuth2 authentication process.</li>
@@ -1279,7 +1335,8 @@ forwarding capabilities 😊.</p>
 <li>Developing application services.</li>
 <li>Developing and contributing to the Sylvia-IoT core.</li>
 </ul>
-<div style="break-before: page; page-break-before: always;"></div><h1 id="oauth2-authentication"><a class="header" href="#oauth2-authentication">OAuth2 Authentication</a></h1>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="oauth2-authentication"><a class="header" href="#oauth2-authentication">OAuth2 Authentication</a></h1>
 <p>Sylvia-IoT HTTP APIs require obtaining an access token through OAuth2 for access. The following
 scenarios require using OAuth2 authentication and obtaining access tokens:</p>
 <ul>
@@ -1291,7 +1348,7 @@ user account and token authentication.</li>
 describe how to develop custom pages as needed.</p>
 <h2 id="before-getting-started"><a class="header" href="#before-getting-started">Before Getting Started</a></h2>
 <p>Before proceeding, you need to create the first user account and client. In the
-<a href="dev/../guide/quick.html"><strong>Quick Start</strong></a> guide, we created the following resources:</p>
+<a href="#quick-start"><strong>Quick Start</strong></a> guide, we created the following resources:</p>
 <ul>
 <li>User account: name is <strong>admin</strong>, and the password is <strong>admin</strong>.</li>
 <li>Client: ID is <strong>public</strong>, and the redirect URI is <strong>http://localhost:1080/auth/oauth2/redirect</strong>.</li>
@@ -1303,7 +1360,7 @@ your own user account and client, you can do so using the CLI, or you can follow
 <a href="https://en.wikipedia.org/wiki/PBKDF2"><strong>PBKDF2</strong></a> encryption, with <strong>10000</strong> iterations.
 Replace salt and password with your specified salt and hashed password, respectively. Other fields
 can also be replaced with your specified values.</li>
-<li>For clients, replace <code>clientId</code> and <code>redirectUri</code>. The redirect URI should be set to the client's
+<li>For clients, replace <code>clientId</code> and <code>redirectUri</code>. The redirect URI should be set to the client’s
 address.
 If your service needs to be accessed through <strong>http://localhost</strong> or
 <strong>https://network.example.com</strong>, and it receives the authorization code at the path
@@ -1313,7 +1370,7 @@ If your service needs to be accessed through <strong>http://localhost</strong> o
 <h2 id="using-browser-and-curl"><a class="header" href="#using-browser-and-curl">Using Browser and Curl</a></h2>
 <p>Here, we will explain how to log in with your account credentials and obtain a session ID to access
 the authorization page and obtain the token. The following examples use the user account and client
-created in the <a href="dev/../guide/quick.html"><strong>Quick Start</strong></a> guide.</p>
+created in the <a href="#quick-start"><strong>Quick Start</strong></a> guide.</p>
 <p>Open your browser and enter the URL <code>http://localhost:1080/auth/oauth2/auth?response_type=code&amp;redirect_uri=http%3A%2F%2Flocalhost%3A1080%2Fauth%2Foauth2%2Fredirect&amp;client_id=public</code></p>
 <p>Enter your account credentials. If you are redirected to the authorization page, it means you have
 successfully logged in. The page will display the API scopes required by this client. If you agree,
@@ -1369,7 +1426,7 @@ slightly different):</p>
 <ul>
 <li><code>GET /auth/oauth2/auth</code>
 <ul>
-<li>Verifies the client's basic information and redirects to the next endpoint if successful.</li>
+<li>Verifies the client’s basic information and redirects to the next endpoint if successful.</li>
 <li>Query parameters:
 <ul>
 <li><code>response_type</code>: Must be <code>code</code>.</li>
@@ -1413,7 +1470,7 @@ component (webview).</li>
 </li>
 <li><code>GET /auth/oauth2/authorize</code>
 <ul>
-<li>Authenticates the client parameters and session ID, and displays the client's permission
+<li>Authenticates the client parameters and session ID, and displays the client’s permission
 requirements.</li>
 <li>Query parameters will be automatically populated from the previous step.
 <ul>
@@ -1485,7 +1542,7 @@ the address specified by the client whether successful or failed.</li>
 of the templates and pay attention to the Jinja2 variables to be preserved within <code>{{ }}</code>.</p>
 <p>For the account login page, please reserve the following variables:</p>
 <ul>
-<li><code>scope_path</code>: This will determine the endpoint to send the <code>POST /login</code> request when the "Login"
+<li><code>scope_path</code>: This will determine the endpoint to send the <code>POST /login</code> request when the “Login”
 button is clicked.
 <ul>
 <li>The default for Sylvia-IoT is <code>SCHEME://SERVER_HOST/auth</code>, where <code>SCHEME://SERVER_HOST</code>
@@ -1498,7 +1555,7 @@ includes it in the template.</li>
 <p>For the client authorization page, please reserve the following variables:</p>
 <ul>
 <li><code>scope_path</code>: This will determine the endpoint to send the <code>POST /authorize</code> request when the
-"Login" button is clicked.
+“Login” button is clicked.
 <ul>
 <li>The default for Sylvia-IoT is <code>SCHEME://SERVER_HOST/auth</code>, where <code>SCHEME://SERVER_HOST</code>
 corresponds to the information from the <code>POST /login</code> endpoint.</li>
@@ -1508,12 +1565,13 @@ corresponds to the information from the <code>POST /login</code> endpoint.</li>
 section.</li>
 </ul>
 <p>You can choose to implement the login or authorization web page content and provide the following
-parameters in the <a href="dev/../guide/configuration.html"><strong>Configuration File</strong></a>:</p>
+parameters in the <a href="#configuration"><strong>Configuration File</strong></a>:</p>
 <ul>
 <li><code>auth.db.templates.login</code>: The file path to the login page template.</li>
 <li><code>auth.db.templates.grant</code>: The file path to the authorization page template.</li>
 </ul>
-<div style="break-before: page; page-break-before: always;"></div><h1 id="network-services"><a class="header" href="#network-services">Network Services</a></h1>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="network-services"><a class="header" href="#network-services">Network Services</a></h1>
 <p>This chapter provides a brief overview of key points in developing network services, including:</p>
 <ul>
 <li>Data Channel</li>
@@ -1521,7 +1579,7 @@ parameters in the <a href="dev/../guide/configuration.html"><strong>Configuratio
 <li>Using the <a href="https://crates.io/crates/sylvia-iot-sdk"><strong>SDK</strong></a> to connect channels in Rust</li>
 </ul>
 <p>Before starting this chapter, please make sure you have read and understood the
-<a href="dev/../arch/flow.html"><strong>Data Flow</strong></a> section, and are familiar with the generation and consumption
+<a href="#data-flow"><strong>Data Flow</strong></a> section, and are familiar with the generation and consumption
 timing of queues and related data.</p>
 <h2 id="queues-and-data-formats"><a class="header" href="#queues-and-data-formats">Queues and Data Formats</a></h2>
 <ul>
@@ -1550,12 +1608,12 @@ defines the data content of the queues between the Broker and network services.<
 </ul>
 </li>
 <li>
-<p>In the <a href="dev/../arch/flow.html"><strong>Data Flow</strong></a> section, it is mentioned that network services need to
+<p>In the <a href="#data-flow"><strong>Data Flow</strong></a> section, it is mentioned that network services need to
 retain <code>dataId</code> while processing downlink data for subsequent result reporting.</p>
 <ul>
 <li>For unreported downlink data, it has no impact on the Broker.
 <ul>
-<li>Currently retained for one day. If not reported, it will always be marked as "unreported".</li>
+<li>Currently retained for one day. If not reported, it will always be marked as “unreported”.</li>
 </ul>
 </li>
 <li>The application service can decide how to handle downlink data that has not been reported for
@@ -1592,10 +1650,10 @@ consistent.</p>
 </ul>
 <h2 id="rust-and-using-the-sdk"><a class="header" href="#rust-and-using-the-sdk">Rust and Using the SDK</a></h2>
 <p>For Rust developers, there is an SDK available to assist in developing network services. Usage
-examples can be found in the <a href="dev/../appendex/repo.html"><strong>Appendix</strong></a> chapter. Here are a few tips on how
+examples can be found in the <a href="#supplementary-projects"><strong>Appendix</strong></a> chapter. Here are a few tips on how
 to use it:</p>
 <ul>
-<li>Channel maintenance is handled in the <code>mq</code> module's <code>NetworkMgr</code>.</li>
+<li>Channel maintenance is handled in the <code>mq</code> module’s <code>NetworkMgr</code>.</li>
 <li>One <code>NetworkMgr</code> corresponds to one network service.</li>
 <li>Only manage <code>NetworkMgr</code>; no need to manually manage the connection status of all queues and
 AMQP/MQTT properties.</li>
@@ -1603,14 +1661,15 @@ AMQP/MQTT properties.</li>
 delivered.</li>
 <li>You can use <code>send_uldata()</code> and <code>send_dldata_result()</code> to send data to the Broker.</li>
 </ul>
-<div style="break-before: page; page-break-before: always;"></div><h1 id="application-services"><a class="header" href="#application-services">Application Services</a></h1>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="application-services"><a class="header" href="#application-services">Application Services</a></h1>
 <p>This chapter provides a brief overview of key points in developing network services, including:</p>
 <ul>
 <li>Data Channel</li>
 <li>Using the <a href="https://crates.io/crates/sylvia-iot-sdk"><strong>SDK</strong></a> to connect channels in Rust</li>
 </ul>
 <p>Before starting this chapter, please make sure you have read and understood the
-<a href="dev/../arch/flow.html"><strong>Data Flow</strong></a> section, and are familiar with the generation and consumption
+<a href="#data-flow"><strong>Data Flow</strong></a> section, and are familiar with the generation and consumption
 timing of queues and related data.</p>
 <h2 id="queues-and-data-formats-1"><a class="header" href="#queues-and-data-formats-1">Queues and Data Formats</a></h2>
 <ul>
@@ -1635,7 +1694,7 @@ defines the data content of the queues between the Broker and application servic
 </li>
 </ul>
 </li>
-<li>In the <a href="dev/../arch/flow.html"><strong>Data Flow</strong></a> chapter, it is mentioned that when downlink data is sent
+<li>In the <a href="#data-flow"><strong>Data Flow</strong></a> chapter, it is mentioned that when downlink data is sent
 to the Broker through the <code>dldata</code> queue, the Broker will immediately report the result.
 <ul>
 <li>The <code>correlationId</code> is recommended to be unique. If the application service simultaneously
@@ -1659,10 +1718,10 @@ services to request the Sylvia-IoT HTTP APIs or manage the list of devices thems
 </ul>
 <h2 id="rust-and-using-the-sdk-1"><a class="header" href="#rust-and-using-the-sdk-1">Rust and Using the SDK</a></h2>
 <p>For Rust developers, there is an SDK available to assist in developing application services. Usage
-examples can be found in the <a href="dev/../appendex/repo.html"><strong>Appendix</strong></a> chapter. Here are a few tips on how
+examples can be found in the <a href="#supplementary-projects"><strong>Appendix</strong></a> chapter. Here are a few tips on how
 to use it:</p>
 <ul>
-<li>Channel maintenance is handled in the <code>mq</code> module's <code>ApplicationMgr</code>.</li>
+<li>Channel maintenance is handled in the <code>mq</code> module’s <code>ApplicationMgr</code>.</li>
 <li>One <code>ApplicationMgr</code> corresponds to one application service.</li>
 <li>Only manage <code>ApplicationMgr</code>; no need to manually manage the connection status of all queues and
 AMQP/MQTT properties.</li>
@@ -1670,10 +1729,12 @@ AMQP/MQTT properties.</li>
 delivered.</li>
 <li>You can use <code>send_dldata()</code> to send data to the Broker.</li>
 </ul>
-<div style="break-before: page; page-break-before: always;"></div><h1 id="sylvia-iot-core"><a class="header" href="#sylvia-iot-core">Sylvia-IoT Core</a></h1>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="sylvia-iot-core"><a class="header" href="#sylvia-iot-core">Sylvia-IoT Core</a></h1>
 <p>If you are interested in Sylvia-IoT and would like to develop core functionalities (that is, ABCD
 😊), this chapter will introduce some code structures and important considerations.</p>
-<div style="break-before: page; page-break-before: always;"></div><h1 id="directory-structure"><a class="header" href="#directory-structure">Directory Structure</a></h1>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="directory-structure"><a class="header" href="#directory-structure">Directory Structure</a></h1>
 <p>Here, we explain the directory and file arrangement structure for the various components of
 Sylvia-IoT.</p>
 <pre><code>[project]/
@@ -1777,7 +1838,7 @@ differentiate them.</li>
 <li><code>libs</code> and <code>models</code> do not depend on any other folders.</li>
 <li>In <code>routes</code>
 <ul>
-<li>The entire project's code initialization is centralized in <code>routes/mod.rs</code>.</li>
+<li>The entire project’s code initialization is centralized in <code>routes/mod.rs</code>.</li>
 <li>This approach reduces the workload for <code>main.rs</code> and increases the coverage of integration
 testing.</li>
 </ul>
@@ -1786,11 +1847,12 @@ testing.</li>
 implement them in the parent module and reference them as needed. The same applies to modules
 within <code>routes</code>.</li>
 </ul>
-<div style="break-before: page; page-break-before: always;"></div><h1 id="code-style"><a class="header" href="#code-style">Code Style</a></h1>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="code-style"><a class="header" href="#code-style">Code Style</a></h1>
 <h2 id="using-rustfmt"><a class="header" href="#using-rustfmt">Using rustfmt</a></h2>
 <p>Please make sure to <strong>ALWAYS</strong> use <code>rustfmt</code> to format all files. We recommend using VSCode with the
 <strong>rust-analyzer extension</strong> for writing code.</p>
-<p>Below is the author's development environment for your reference:</p>
+<p>Below is the author’s development environment for your reference:</p>
 <ul>
 <li>
 <p>VSCode Extensions</p>
@@ -1822,7 +1884,7 @@ within <code>routes</code>.</li>
 }
 </code></pre>
 <blockquote>
-<p>The use of the <code>-C instrument-coverage</code> environment variable is due to the author's need to generate coverage reports during testing. Adding this variable prevents recompilation triggered by saving and running tests. Below is the command for running tests:</p>
+<p>The use of the <code>-C instrument-coverage</code> environment variable is due to the author’s need to generate coverage reports during testing. Adding this variable prevents recompilation triggered by saving and running tests. Below is the command for running tests:</p>
 <p><code>RUSTFLAGS="-C instrument-coverage" cargo test -p $PROJ --test integration_test -- --nocapture</code></p>
 </blockquote>
 </li>
@@ -1836,7 +1898,7 @@ API upper layer, aligns well with my personal style. This is the reason behind t
 microservices-based approach (i.e., ABCD), strictly adhering to the principle of hierarchical
 dependencies.</p>
 <p>Even with a microservices architecture, as described in the previous section
-<a href="dev/dir.html"><strong>Directory Structure</strong></a>, when <code>main.rs</code> references the required <code>routes</code>, the entire
+<a href="#directory-structure"><strong>Directory Structure</strong></a>, when <code>main.rs</code> references the required <code>routes</code>, the entire
 project can still be compiled into a single executable file and run on a single machine. This
 design offers several deployment options, such as:</p>
 <ul>
@@ -1848,7 +1910,7 @@ component setting up its own cluster.</li>
 <p>Sylvia-IoT embodies the combination of both MVC and microservices design 😊.</p>
 <h2 id="file-content-arrangement"><a class="header" href="#file-content-arrangement">File Content Arrangement</a></h2>
 <p>Each rs file is structured in the following way, with blank lines separating each section:</p>
-<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>use rust_builtin_modules;
 
@@ -1877,7 +1939,7 @@ pub fn pub_funcs {}
 impl PrvStructEnums {}
 
 fn prv_funcs {}
-<span class="boring">}</span></code></pre></pre>
+<span class="boring">}</span></code></pre>
 <p>The general order is as follows:</p>
 <ul>
 <li>Using modules</li>
@@ -1889,7 +1951,7 @@ fn prv_funcs {}
 <p>Within each section, <code>pub</code> comes before private.</p>
 <h2 id="model"><a class="header" href="#model">Model</a></h2>
 <p>The Model layer must provide a unified struct and trait interface.
-In the design philosophy of Sylvia-IoT, "plug-and-play" is a concept that is highly valued. Users
+In the design philosophy of Sylvia-IoT, “plug-and-play” is a concept that is highly valued. Users
 should be able to choose appropriate implementations in different scenarios.</p>
 <h3 id="database-design"><a class="header" href="#database-design">Database Design</a></h3>
 <p>When providing CRUD operations, the following order must be followed:</p>
@@ -1914,7 +1976,7 @@ made the call.</li>
 </ul>
 </li>
 <li>When data cannot be retrieved, return <code>None</code> or an empty <code>Vec</code>, not an <code>Error</code>.</li>
-<li>Any database that can fulfill the "complex query" condition should be implementable using the same
+<li>Any database that can fulfill the “complex query” condition should be implementable using the same
 trait interface.
 <ul>
 <li>SQL, MongoDB meet this requirement.</li>
@@ -1959,7 +2021,7 @@ the names of actions.</p>
 <p>When mounting routes using axum, the fixed <code>[op]</code> should be placed before the variable
 <code>{id}</code>.</p>
 </blockquote>
-<p>For example, let's consider the Broker's
+<p>For example, let’s consider the Broker’s
 <a href="https://github.com/woofdogtw/sylvia-iot-core/blob/main/sylvia-iot-broker/doc/api.md#contents"><strong>Device API</strong></a>:</p>
 <pre><code>- Device APIs
     - POST /broker/api/v1/device                Create device
@@ -1997,7 +2059,8 @@ struct Get[Function]Query {}
 struct PostDeviceBody {}
 struct GetDeviceListQuery {}
 </code></pre>
-<div style="break-before: page; page-break-before: always;"></div><h1 id="writing-tests"><a class="header" href="#writing-tests">Writing Tests</a></h1>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="writing-tests"><a class="header" href="#writing-tests">Writing Tests</a></h1>
 <p>Sylvia-IoT adopts the BDD (Behavior-Driven Development) approach for writing integration tests, and
 the chosen testing framework <a href="https://enokson.github.io/laboratory/"><strong>laboratory</strong></a> is based on
 <a href="https://mochajs.org/"><strong>Mocha</strong></a>.</p>
@@ -2025,12 +2088,12 @@ queue connections) in <code>before</code> and release them in <code>after</code>
 <li>The test order should be R, C, U, D.
 <ul>
 <li><strong>R</strong>: Use <code>mongodb</code>, <code>sqlx</code>, or other native packages to create a test dataset, then test the
-results of model's get, count, and list functions.</li>
-<li><strong>C</strong>: Use model's add, upsert, or other functions to create data and validate its correctness
+results of model’s get, count, and list functions.</li>
+<li><strong>C</strong>: Use model’s add, upsert, or other functions to create data and validate its correctness
 using get.</li>
-<li><strong>U</strong>: Use model's add, upsert, or other functions to create a test dataset, then use update
+<li><strong>U</strong>: Use model’s add, upsert, or other functions to create a test dataset, then use update
 to modify the data, and finally validate the result using get.</li>
-<li><strong>D</strong>: Use model's add, upsert, or other functions to create a test dataset, then use delete
+<li><strong>D</strong>: Use model’s add, upsert, or other functions to create a test dataset, then use delete
 to delete the data, and finally validate the result using get.</li>
 <li>Test <strong>R</strong> functionalities first to enable writing C, U, D test cases using unified code and
 determine if the same logic results in the same outcome for each database engine. When
@@ -2042,14 +2105,15 @@ functionalities are correctly implemented and tested before testing.</li>
 </ul>
 <h2 id="routes"><a class="header" href="#routes">routes</a></h2>
 <ul>
-<li>Although you can use axum's <code>TestServer::new()</code> as a virtual service, services required by
+<li>Although you can use axum’s <code>TestServer::new()</code> as a virtual service, services required by
 middleware or API bridges need to be started using Tokio Task.</li>
 <li>You can use model trait interfaces for initializing test datasets and data validation after API
 requests.</li>
 <li>You can use model delete to delete test data in <code>after</code>.</li>
 </ul>
-<div style="break-before: page; page-break-before: always;"></div><h1 id="cross-platform-compilation"><a class="header" href="#cross-platform-compilation">Cross-Platform Compilation</a></h1>
-<p>Sylvia-IoT is primarily developed for the x86-64 Linux platform. However, thanks to Rust's inherent
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="cross-platform-compilation"><a class="header" href="#cross-platform-compilation">Cross-Platform Compilation</a></h1>
+<p>Sylvia-IoT is primarily developed for the x86-64 Linux platform. However, thanks to Rust’s inherent
 cross-platform capabilities, Sylvia-IoT can also be compiled into executable binaries for different
 platforms. This chapter will introduce the compilation process for several platforms that the author
 has tested.</p>
@@ -2077,13 +2141,15 @@ sudo apt -y install gcc-arm-linux-gnueabihf
 echo -e "[target.armv7-unknown-linux-gnueabihf]\nlinker = \"arm-linux-gnueabihf-gcc\"\n" &gt;&gt; ~/.cargo/config
 cargo build --target=armv7-unknown-linux-gnueabihf -p sylvia-iot-coremgr
 </code></pre>
-<div style="break-before: page; page-break-before: always;"></div><h1 id="appendix"><a class="header" href="#appendix">Appendix</a></h1>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="appendix"><a class="header" href="#appendix">Appendix</a></h1>
 <p>Chapter Contents:</p>
 <ul>
 <li>Using resource origins.</li>
 <li>Supplementary projects.</li>
 </ul>
-<div style="break-before: page; page-break-before: always;"></div><h1 id="data-sources"><a class="header" href="#data-sources">Data Sources</a></h1>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="data-sources"><a class="header" href="#data-sources">Data Sources</a></h1>
 <h2 id="icons"><a class="header" href="#icons">Icons</a></h2>
 <p>The icons used in this document are sourced from the following locations:</p>
 <ul>
@@ -2100,7 +2166,8 @@ copied from Docker Hub.</li>
 <p>If there is any copyright infringement, please <a href="mailto:woofdogtw@hotmail.com"><strong>contact me</strong></a> to
 inform.</p>
 </blockquote>
-<div style="break-before: page; page-break-before: always;"></div><h1 id="supplementary-projects"><a class="header" href="#supplementary-projects">Supplementary Projects</a></h1>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="supplementary-projects"><a class="header" href="#supplementary-projects">Supplementary Projects</a></h1>
 <ul>
 <li><a href="https://github.com/woofdogtw/sylvia-iot-core/tree/main/sylvia-router">sylvia-router</a>
 <ul>
@@ -2172,6 +2239,11 @@ functions based on the screen layout.</li>
 
         </div>
 
+        <template id=fa-eye><span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M288 32c-80.8 0-145.5 36.8-192.6 80.6C48.6 156 17.3 208 2.5 243.7c-3.3 7.9-3.3 16.7 0 24.6C17.3 304 48.6 356 95.4 399.4C142.5 443.2 207.2 480 288 480s145.5-36.8 192.6-80.6c46.8-43.5 78.1-95.4 93-131.1c3.3-7.9 3.3-16.7 0-24.6c-14.9-35.7-46.2-87.7-93-131.1C433.5 68.8 368.8 32 288 32zM432 256c0 79.5-64.5 144-144 144s-144-64.5-144-144s64.5-144 144-144s144 64.5 144 144zM288 192c0 35.3-28.7 64-64 64c-11.5 0-22.3-3-31.6-8.4c-.2 2.8-.4 5.5-.4 8.4c0 53 43 96 96 96s96-43 96-96s-43-96-96-96c-2.8 0-5.6 .1-8.4 .4c5.3 9.3 8.4 20.1 8.4 31.6z"/></svg></span></template>
+        <template id=fa-eye-slash><span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M38.8 5.1C28.4-3.1 13.3-1.2 5.1 9.2S-1.2 34.7 9.2 42.9l592 464c10.4 8.2 25.5 6.3 33.7-4.1s6.3-25.5-4.1-33.7L525.6 386.7c39.6-40.6 66.4-86.1 79.9-118.4c3.3-7.9 3.3-16.7 0-24.6c-14.9-35.7-46.2-87.7-93-131.1C465.5 68.8 400.8 32 320 32c-68.2 0-125 26.3-169.3 60.8L38.8 5.1zM223.1 149.5C248.6 126.2 282.7 112 320 112c79.5 0 144 64.5 144 144c0 24.9-6.3 48.3-17.4 68.7L408 294.5c5.2-11.8 8-24.8 8-38.5c0-53-43-96-96-96c-2.8 0-5.6 .1-8.4 .4c5.3 9.3 8.4 20.1 8.4 31.6c0 10.2-2.4 19.8-6.6 28.3l-90.3-70.8zm223.1 298L373 389.9c-16.4 6.5-34.3 10.1-53 10.1c-79.5 0-144-64.5-144-144c0-6.9 .5-13.6 1.4-20.2L83.1 161.5C60.3 191.2 44 220.8 34.5 243.7c-3.3 7.9-3.3 16.7 0 24.6c14.9 35.7 46.2 87.7 93 131.1C174.5 443.2 239.2 480 320 480c47.8 0 89.9-12.9 126.2-32.5z"/></svg></span></template>
+        <template id=fa-copy><span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M502.6 70.63l-61.25-61.25C435.4 3.371 427.2 0 418.7 0H255.1c-35.35 0-64 28.66-64 64l.0195 256C192 355.4 220.7 384 256 384h192c35.2 0 64-28.8 64-64V93.25C512 84.77 508.6 76.63 502.6 70.63zM464 320c0 8.836-7.164 16-16 16H255.1c-8.838 0-16-7.164-16-16L239.1 64.13c0-8.836 7.164-16 16-16h128L384 96c0 17.67 14.33 32 32 32h47.1V320zM272 448c0 8.836-7.164 16-16 16H63.1c-8.838 0-16-7.164-16-16L47.98 192.1c0-8.836 7.164-16 16-16H160V128H63.99c-35.35 0-64 28.65-64 64l.0098 256C.002 483.3 28.66 512 64 512h192c35.2 0 64-28.8 64-64v-32h-47.1L272 448z"/></svg></span></template>
+        <template id=fa-play><span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M73 39c-14.8-9.1-33.4-9.4-48.5-.9S0 62.6 0 80V432c0 17.4 9.4 33.4 24.5 41.9s33.7 8.1 48.5-.9L361 297c14.3-8.7 23-24.2 23-41s-8.7-32.2-23-41L73 39z"/></svg></span></template>
+        <template id=fa-clock-rotate-left><span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M75 75L41 41C25.9 25.9 0 36.6 0 57.9V168c0 13.3 10.7 24 24 24H134.1c21.4 0 32.1-25.9 17-41l-30.8-30.8C155 85.5 203 64 256 64c106 0 192 86 192 192s-86 192-192 192c-40.8 0-78.6-12.7-109.7-34.4c-14.5-10.1-34.4-6.6-44.6 7.9s-6.6 34.4 7.9 44.6C151.2 495 201.7 512 256 512c141.4 0 256-114.6 256-256S397.4 0 256 0C185.3 0 121.3 28.7 75 75zm181 53c-13.3 0-24 10.7-24 24V256c0 6.4 2.5 12.5 7 17l72 72c9.4 9.4 24.6 9.4 33.9 0s9.4-24.6 0-33.9l-65-65V152c0-13.3-10.7-24-24-24z"/></svg></span></template>
 
 
 
@@ -2180,13 +2252,13 @@ functions based on the screen layout.</li>
         </script>
 
 
-        <script src="elasticlunr.min.js"></script>
-        <script src="mark.min.js"></script>
-        <script src="searcher.js"></script>
+        <script src="elasticlunr-ef4e11c1.min.js"></script>
+        <script src="mark-09e88c2c.min.js"></script>
+        <script src="searcher-c2a407aa.js"></script>
 
-        <script src="clipboard.min.js"></script>
-        <script src="highlight.js"></script>
-        <script src="book.js"></script>
+        <script src="clipboard-1626706a.min.js"></script>
+        <script src="highlight-abc7f01d.js"></script>
+        <script src="book-a0b12cfe.js"></script>
 
         <!-- Custom JS scripts -->
 
@@ -2195,6 +2267,7 @@ functions based on the screen layout.</li>
             window.setTimeout(window.print, 100);
         });
         </script>
+
 
     </div>
     </body>
