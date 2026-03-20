@@ -1,6 +1,6 @@
 [package]
 name = "sylvia-iot-broker"
-version = "0.4.5"
+version = "0.4.6"
 authors = ["Chien-Hong Chan"]
 categories = ["web-programming::http-server"]
 description = "The message broker module of the Sylvia-IoT platform."
@@ -31,7 +31,7 @@ hex = "0.4.3"
 json5 = "1.3.1"
 log = "0.4.29"
 lru = "0.16.3"
-mongodb = { version = "3.5.1", default-features = false, features = [
+mongodb = { version = "3.5.2", default-features = false, features = [
     "bson-3",
     "compat-3-3-0",
     "dns-resolver",
