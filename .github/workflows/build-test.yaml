@@ -8,8 +8,8 @@ on:
       - main
 env:
   BINUTILS_VER: v0.3.6
-  GRCOV_VER: v0.10.0
-  MDBOOK_VER: v0.4.50
+  GRCOV_VER: v0.10.7
+  MDBOOK_VER: v0.5.2
 jobs:
   general-mq:
     name: Build and test general-mq
@@ -18,7 +18,7 @@ jobs:
     runs-on: ubuntu-24.04
     services:
       rabbitmq:
-        image: rabbitmq:4.2.4-management-alpine
+        image: rabbitmq:4.2.5-management-alpine
         ports:
           - 5671:5671
           - 5672:5672
@@ -43,7 +43,7 @@ jobs:
           mv grcov ~/.cargo/bin/
           mv x86_64-unknown-linux-gnu/* ~/.cargo/bin/
       - name: Check out repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
       - name: Build bin/lib
         run: cargo build -p $PROJ
       - name: Print system info
@@ -102,7 +102,7 @@ jobs:
           mv grcov ~/.cargo/bin/
           mv x86_64-unknown-linux-gnu/* ~/.cargo/bin/
       - name: Check out repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
       - name: Build bin/lib
         run: cargo build -p $PROJ
       - name: Print system info
@@ -144,7 +144,7 @@ jobs:
         ports:
           - 27017:27017
       rabbitmq:
-        image: rabbitmq:4.2.4-management-alpine
+        image: rabbitmq:4.2.5-management-alpine
         ports:
           - 5671:5671
           - 5672:5672
@@ -169,7 +169,7 @@ jobs:
           mv grcov ~/.cargo/bin/
           mv x86_64-unknown-linux-gnu/* ~/.cargo/bin/
       - name: Check out repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
       - name: Build bin/lib
         run: cargo build -p $PROJ
       - name: Print system info
@@ -219,7 +219,7 @@ jobs:
           mv grcov ~/.cargo/bin/
           mv x86_64-unknown-linux-gnu/* ~/.cargo/bin/
       - name: Check out repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
       - name: Build bin/lib
         run: cargo build -p $PROJ
       - name: Print system info
@@ -261,7 +261,7 @@ jobs:
         ports:
           - 27017:27017
       rabbitmq:
-        image: rabbitmq:4.2.4-management-alpine
+        image: rabbitmq:4.2.5-management-alpine
         ports:
           - 5671:5671
           - 5672:5672
@@ -280,7 +280,7 @@ jobs:
           mv grcov ~/.cargo/bin/
           mv x86_64-unknown-linux-gnu/* ~/.cargo/bin/
       - name: Check out repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
       - name: Run EMQX with the specified config file
         run: >
           docker run -d --rm --name emqx
@@ -328,7 +328,7 @@ jobs:
       PROJ: sylvia-iot-coremgr-cli
     steps:
       - name: Check out repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
       - name: Build bin/lib
         run: cargo build -p $PROJ
 
@@ -343,7 +343,7 @@ jobs:
         ports:
           - 27017:27017
       rabbitmq:
-        image: rabbitmq:4.2.4-management-alpine
+        image: rabbitmq:4.2.5-management-alpine
         ports:
           - 5671:5671
           - 5672:5672
@@ -368,7 +368,7 @@ jobs:
           mv grcov ~/.cargo/bin/
           mv x86_64-unknown-linux-gnu/* ~/.cargo/bin/
       - name: Check out repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
       - name: Build bin/lib
         run: cargo build -p $PROJ
       - name: Print system info
@@ -406,7 +406,7 @@ jobs:
     runs-on: ubuntu-24.04
     services:
       rabbitmq:
-        image: rabbitmq:4.2.4-management-alpine
+        image: rabbitmq:4.2.5-management-alpine
         ports:
           - 5671:5671
           - 5672:5672
@@ -431,7 +431,7 @@ jobs:
           mv grcov ~/.cargo/bin/
           mv x86_64-unknown-linux-gnu/* ~/.cargo/bin/
       - name: Check out repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
       - name: Build bin/lib
         run: cargo build -p $PROJ
       - name: Print system info
@@ -469,7 +469,7 @@ jobs:
       PROJ: sylvia-router
     steps:
       - name: Check out repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
       - name: Build bin/lib
         run: cargo build -p $PROJ
 
@@ -478,7 +478,7 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - name: Check out repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
       - name: Install tools
         run: |
           curl -kLO https://github.com/rust-lang/mdBook/releases/download/$MDBOOK_VER/mdbook-$MDBOOK_VER-x86_64-unknown-linux-gnu.tar.gz

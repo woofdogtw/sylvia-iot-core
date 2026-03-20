@@ -4,7 +4,7 @@ on:
     tags:
       - v*
 env:
-  GHR_VER: v0.17.0
+  GHR_VER: v0.18.0
   BIN_DIR: dist
   SBOM_VER: v0.10.0
   SBOM_DIR: sbom
@@ -14,7 +14,7 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - name: Check out repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           ref: ${{ github.ref_name }}
       - name: Login to crates.io
@@ -60,7 +60,7 @@ jobs:
           sudo apt -y install gcc-aarch64-linux-gnu
           cargo install cross --git https://github.com/cross-rs/cross
       - name: Check out repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           ref: ${{ github.ref_name }}
       - name: Clear release target for x86_64
@@ -157,23 +157,23 @@ jobs:
           echo -n ${RELEASE_VER:1} > VERSION
           cd ..
       - name: Login to Docker Hub
-        uses: docker/login-action@v3
+        uses: docker/login-action@v4
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
       - name: Login to GitHub Container Registry
-        uses: docker/login-action@v3
+        uses: docker/login-action@v4
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
       - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
+        uses: docker/setup-qemu-action@v4
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@v4
       - name: Docker meta auth - scratch
         id: meta-auth
-        uses: docker/metadata-action@v5
+        uses: docker/metadata-action@v6
         with:
           flavor: |
             latest=true
@@ -185,7 +185,7 @@ jobs:
             type=semver,pattern={{major}}.{{minor}}
             type=semver,pattern={{major}}
       - name: Create auth Docker image - scratch
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           build-args: |
             BIN_DIR=${{ env.BIN_DIR }}
@@ -198,7 +198,7 @@ jobs:
           target: scratch
       - name: Docker meta auth - alpine
         id: meta-auth-alpine
-        uses: docker/metadata-action@v5
+        uses: docker/metadata-action@v6
         with:
           flavor: |
             latest=false
@@ -211,7 +211,7 @@ jobs:
             type=semver,pattern={{major}}-alpine
             type=raw,value=alpine
       - name: Create auth Docker image - alpine
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           build-args: |
             BIN_DIR=${{ env.BIN_DIR }}
@@ -224,7 +224,7 @@ jobs:
           target: alpine
       - name: Docker meta broker - scratch
         id: meta-broker
-        uses: docker/metadata-action@v5
+        uses: docker/metadata-action@v6
         with:
           flavor: |
             latest=true
@@ -236,7 +236,7 @@ jobs:
             type=semver,pattern={{major}}.{{minor}}
             type=semver,pattern={{major}}
       - name: Create broker Docker image - scratch
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           build-args: |
             BIN_DIR=${{ env.BIN_DIR }}
@@ -249,7 +249,7 @@ jobs:
           target: scratch
       - name: Docker meta broker - alpine
         id: meta-broker-alpine
-        uses: docker/metadata-action@v5
+        uses: docker/metadata-action@v6
         with:
           flavor: |
             latest=false
@@ -262,7 +262,7 @@ jobs:
             type=semver,pattern={{major}}-alpine
             type=raw,value=alpine
       - name: Create broker Docker image - alpine
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           build-args: |
             BIN_DIR=${{ env.BIN_DIR }}
@@ -275,7 +275,7 @@ jobs:
           target: alpine
       - name: Docker meta coremgr - scratch
         id: meta-coremgr
-        uses: docker/metadata-action@v5
+        uses: docker/metadata-action@v6
         with:
           flavor: |
             latest=true
@@ -287,7 +287,7 @@ jobs:
             type=semver,pattern={{major}}.{{minor}}
             type=semver,pattern={{major}}
       - name: Create coremgr Docker image - scratch
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           build-args: |
             BIN_DIR=${{ env.BIN_DIR }}
@@ -300,7 +300,7 @@ jobs:
           target: scratch
       - name: Docker meta coremgr - alpine
         id: meta-coremgr-alpine
-        uses: docker/metadata-action@v5
+        uses: docker/metadata-action@v6
         with:
           flavor: |
             latest=false
@@ -313,7 +313,7 @@ jobs:
             type=semver,pattern={{major}}-alpine
             type=raw,value=alpine
       - name: Create coremgr Docker image - alpine
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           build-args: |
             BIN_DIR=${{ env.BIN_DIR }}
@@ -326,7 +326,7 @@ jobs:
           target: alpine
       - name: Docker meta data - scratch
         id: meta-data
-        uses: docker/metadata-action@v5
+        uses: docker/metadata-action@v6
         with:
           flavor: |
             latest=true
@@ -338,7 +338,7 @@ jobs:
             type=semver,pattern={{major}}.{{minor}}
             type=semver,pattern={{major}}
       - name: Create data Docker image - scratch
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           build-args: |
             BIN_DIR=${{ env.BIN_DIR }}
@@ -351,7 +351,7 @@ jobs:
           target: scratch
       - name: Docker meta data - alpine
         id: meta-data-alpine
-        uses: docker/metadata-action@v5
+        uses: docker/metadata-action@v6
         with:
           flavor: |
             latest=false
@@ -364,7 +364,7 @@ jobs:
             type=semver,pattern={{major}}-alpine
             type=raw,value=alpine
       - name: Create data Docker image - alpine
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           build-args: |
             BIN_DIR=${{ env.BIN_DIR }}
@@ -377,7 +377,7 @@ jobs:
           target: alpine
       - name: Docker meta core - scratch
         id: meta-core
-        uses: docker/metadata-action@v5
+        uses: docker/metadata-action@v6
         with:
           flavor: |
             latest=true
@@ -389,7 +389,7 @@ jobs:
             type=semver,pattern={{major}}.{{minor}}
             type=semver,pattern={{major}}
       - name: Create core Docker image - scratch
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           build-args: |
             BIN_DIR=${{ env.BIN_DIR }}
@@ -402,7 +402,7 @@ jobs:
           target: scratch
       - name: Docker meta core - alpine
         id: meta-core-alpine
-        uses: docker/metadata-action@v5
+        uses: docker/metadata-action@v6
         with:
           flavor: |
             latest=false
@@ -415,7 +415,7 @@ jobs:
             type=semver,pattern={{major}}-alpine
             type=raw,value=alpine
       - name: Create core Docker image - alpine
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           build-args: |
             BIN_DIR=${{ env.BIN_DIR }}
