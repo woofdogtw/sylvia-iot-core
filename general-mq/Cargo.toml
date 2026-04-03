@@ -14,11 +14,11 @@ rust-version = "1.88.0"
 [dependencies]
 amqprs = { version = "2.1.5", features = ["tls", "urispec"] }
 async-trait = "0.1.89"
-lapin = { version = "4.3.0", features = ["rustls"] }
+lapin = { version = "4.4.0", features = ["rustls"] }
 rand = "0.10.0"
 regex = "1.12.3"
 rumqttc = "0.25.1"
-tokio = { version = "1.50.0", features = [
+tokio = { version = "1.51.0", features = [
     "io-util",
     "macros",
     "rt-multi-thread",
