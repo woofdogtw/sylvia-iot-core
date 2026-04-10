@@ -53,7 +53,7 @@ sylvia-iot-auth = { path = "../sylvia-iot-auth" }
 sylvia-iot-broker = { path = "../sylvia-iot-broker" }
 sylvia-iot-corelib = { path = "../sylvia-iot-corelib" }
 sylvia-iot-coremgr = { path = "../sylvia-iot-coremgr" }
-tokio = { version = "1.51.0", features = [
+tokio = { version = "1.51.1", features = [
     "io-util",
     "macros",
     "rt-multi-thread",
