@@ -30,7 +30,7 @@ futures = "0.3.32"
 general-mq = { path = "../general-mq" }
 json5 = "1.3.1"
 log = "0.4.29"
-mongodb = { version = "3.5.2", default-features = false, features = [
+mongodb = { version = "3.6.0", default-features = false, features = [
     "bson-3",
     "compat-3-3-0",
     "dns-resolver",
