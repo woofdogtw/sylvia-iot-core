@@ -19,7 +19,7 @@ chrono = { version = "0.4.44", default-features = false, features = ["serde"] }
 futures = "0.3.32"
 general-mq = { path = "../general-mq" }
 hex = "0.4.3"
-reqwest = { version = "0.13.2", default-features = false, features = [
+reqwest = { version = "0.13.3", default-features = false, features = [
     "form",
     "json",
 ] }
