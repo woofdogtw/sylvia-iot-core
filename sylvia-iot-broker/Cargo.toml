@@ -51,7 +51,7 @@ sqlx = { version = "0.8.6", default-features = false, features = [
     "sqlite",
 ] }
 sylvia-iot-corelib = { path = "../sylvia-iot-corelib" }
-tokio = { version = "1.52.1", features = [
+tokio = { version = "1.52.2", features = [
     "io-util",
     "macros",
     "rt-multi-thread",
@@ -59,7 +59,7 @@ tokio = { version = "1.52.1", features = [
     "time",
 ] }
 tower = "0.5.3"
-tower-http = { version = "0.6.8", default-features = false, features = [
+tower-http = { version = "0.6.10", default-features = false, features = [
     "cors",
     "fs",
     "normalize-path",
