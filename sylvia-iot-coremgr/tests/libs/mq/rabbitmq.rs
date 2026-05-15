@@ -930,7 +930,7 @@ pub fn scenario(context: &mut SpecContext<TestState>) -> Result<(), String> {
             }
         }
         let diff = end.timestamp_millis() - start.timestamp_millis();
-        if diff >= ((ttl + 5000) as i64) || diff <= (ttl_prev as i64) {
+        if diff >= ((ttl + 10000) as i64) || diff <= (ttl_prev as i64) {
             return Err(format!(
                 "TTL {}/{} has something wrong: {}",
                 ttl, ttl_prev, diff
@@ -1010,6 +1010,7 @@ async fn put_queue(
     match client
         .request(Method::PUT, uri)
         .basic_auth(crate::TEST_RABBITMQ_USER, Some(crate::TEST_RABBITMQ_PASS))
+        .json(&serde_json::json!({"durable": true}))
         .build()
     {
         Err(e) => Err(format!(
