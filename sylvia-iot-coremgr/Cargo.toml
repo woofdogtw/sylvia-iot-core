@@ -47,7 +47,7 @@ serde_urlencoded = "0.7.1"
 sylvia-iot-auth = { path = "../sylvia-iot-auth" }
 sylvia-iot-broker = { path = "../sylvia-iot-broker" }
 sylvia-iot-corelib = { path = "../sylvia-iot-corelib" }
-tokio = { version = "1.52.2", features = [
+tokio = { version = "1.52.3", features = [
     "io-util",
     "macros",
     "rt-multi-thread",
