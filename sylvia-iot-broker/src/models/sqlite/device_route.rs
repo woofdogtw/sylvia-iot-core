@@ -4,7 +4,7 @@ use async_trait::async_trait;
 use chrono::{TimeZone, Utc};
 use futures::TryStreamExt;
 use sql_builder::{SqlBuilder, quote};
-use sqlx::SqlitePool;
+use sqlx::{AssertSqlSafe, SqlitePool};
 
 use super::super::device_route::{
     Cursor, DeviceRoute, DeviceRouteModel, ListOptions, ListQueryCond, QueryCond, SortKey,
@@ -103,7 +103,7 @@ impl DeviceRouteModel for Model {
     async fn count(&self, cond: &ListQueryCond) -> Result<u64, Box<dyn StdError>> {
         let sql = build_list_where(SqlBuilder::select_from(TABLE_NAME).count("*"), &cond).sql()?;
 
-        let result: Result<CountSchema, sqlx::Error> = sqlx::query_as(sql.as_str())
+        let result: Result<CountSchema, sqlx::Error> = sqlx::query_as(AssertSqlSafe(sql))
             .fetch_one(self.conn.as_ref())
             .await;
 
@@ -144,7 +144,7 @@ impl DeviceRouteModel for Model {
         build_sort(&mut builder, &opts);
         let sql = build_list_where(&mut builder, opts.cond).sql()?;
 
-        let mut rows = sqlx::query_as::<_, Schema>(sql.as_str()).fetch(self.conn.as_ref());
+        let mut rows = sqlx::query_as::<_, Schema>(AssertSqlSafe(sql)).fetch(self.conn.as_ref());
 
         let mut count: u64 = 0;
         let mut list = vec![];
@@ -190,7 +190,7 @@ impl DeviceRouteModel for Model {
             .and_where_eq("route_id", quote(route_id))
             .sql()?;
 
-        let result: Result<Schema, sqlx::Error> = sqlx::query_as(sql.as_str())
+        let result: Result<Schema, sqlx::Error> = sqlx::query_as(AssertSqlSafe(sql))
             .fetch_one(self.conn.as_ref())
             .await;
 
@@ -237,7 +237,7 @@ impl DeviceRouteModel for Model {
             .fields(FIELDS)
             .values(&values)
             .sql()?;
-        let _ = sqlx::query(sql.as_str())
+        let _ = sqlx::query(AssertSqlSafe(sql))
             .execute(self.conn.as_ref())
             .await?;
         Ok(())
@@ -264,7 +264,7 @@ impl DeviceRouteModel for Model {
             ]);
         }
         let sql = builder.sql()?.replace(");", ") ON CONFLICT DO NOTHING;");
-        let _ = sqlx::query(sql.as_str())
+        let _ = sqlx::query(AssertSqlSafe(sql))
             .execute(self.conn.as_ref())
             .await?;
         Ok(())
@@ -272,7 +272,7 @@ impl DeviceRouteModel for Model {
 
     async fn del(&self, cond: &QueryCond) -> Result<(), Box<dyn StdError>> {
         let sql = build_where(&mut SqlBuilder::delete_from(TABLE_NAME), cond).sql()?;
-        let _ = sqlx::query(sql.as_str())
+        let _ = sqlx::query(AssertSqlSafe(sql))
             .execute(self.conn.as_ref())
             .await?;
         Ok(())
@@ -288,7 +288,7 @@ impl DeviceRouteModel for Model {
             None => return Ok(()),
             Some(builder) => builder.sql()?,
         };
-        let _ = sqlx::query(sql.as_str())
+        let _ = sqlx::query(AssertSqlSafe(sql))
             .execute(self.conn.as_ref())
             .await?;
         Ok(())

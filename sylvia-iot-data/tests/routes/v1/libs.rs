@@ -1,6 +1,6 @@
 use mongodb::bson::Document;
 use sql_builder::SqlBuilder;
-use sqlx;
+use sqlx::{self, AssertSqlSafe};
 use tokio::runtime::Runtime;
 
 use crate::TestState;
@@ -48,15 +48,15 @@ pub fn clear_all_data(runtime: &Runtime, state: &TestState) -> () {
         runtime.block_on(async {
             let conn = model.get_connection();
             let sql = SqlBuilder::delete_from(APP_DLDATA_NAME2).sql().unwrap();
-            let _ = sqlx::query(sql.as_str()).execute(conn).await;
+            let _ = sqlx::query(AssertSqlSafe(sql)).execute(conn).await;
             let sql = SqlBuilder::delete_from(APP_ULDATA_NAME2).sql().unwrap();
-            let _ = sqlx::query(sql.as_str()).execute(conn).await;
+            let _ = sqlx::query(AssertSqlSafe(sql)).execute(conn).await;
             let sql = SqlBuilder::delete_from(NET_DLDATA_NAME2).sql().unwrap();
-            let _ = sqlx::query(sql.as_str()).execute(conn).await;
+            let _ = sqlx::query(AssertSqlSafe(sql)).execute(conn).await;
             let sql = SqlBuilder::delete_from(NET_ULDATA_NAME2).sql().unwrap();
-            let _ = sqlx::query(sql.as_str()).execute(conn).await;
+            let _ = sqlx::query(AssertSqlSafe(sql)).execute(conn).await;
             let sql = SqlBuilder::delete_from(COREMGR_OPDATA_NAME2).sql().unwrap();
-            let _ = sqlx::query(sql.as_str()).execute(conn).await;
+            let _ = sqlx::query(AssertSqlSafe(sql)).execute(conn).await;
         });
     }
 }

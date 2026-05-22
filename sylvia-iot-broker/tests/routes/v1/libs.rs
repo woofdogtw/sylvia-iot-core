@@ -5,7 +5,7 @@ use axum::{
 use axum_test::TestServer;
 use mongodb::bson::Document;
 use sql_builder::SqlBuilder;
-use sqlx;
+use sqlx::{self, AssertSqlSafe};
 use tokio::runtime::Runtime;
 
 use sylvia_iot_broker::routes;
@@ -64,19 +64,19 @@ pub fn clear_all_data(runtime: &Runtime, state: &TestState) -> () {
         runtime.block_on(async {
             let conn = model.get_connection();
             let sql = SqlBuilder::delete_from(UNIT_NAME).sql().unwrap();
-            let _ = sqlx::query(sql.as_str()).execute(conn).await;
+            let _ = sqlx::query(AssertSqlSafe(sql)).execute(conn).await;
             let sql = SqlBuilder::delete_from(APPLICATION_NAME).sql().unwrap();
-            let _ = sqlx::query(sql.as_str()).execute(conn).await;
+            let _ = sqlx::query(AssertSqlSafe(sql)).execute(conn).await;
             let sql = SqlBuilder::delete_from(NETWORK_NAME).sql().unwrap();
-            let _ = sqlx::query(sql.as_str()).execute(conn).await;
+            let _ = sqlx::query(AssertSqlSafe(sql)).execute(conn).await;
             let sql = SqlBuilder::delete_from(DEVICE_NAME).sql().unwrap();
-            let _ = sqlx::query(sql.as_str()).execute(conn).await;
+            let _ = sqlx::query(AssertSqlSafe(sql)).execute(conn).await;
             let sql = SqlBuilder::delete_from(NETWORK_ROUTE_NAME2).sql().unwrap();
-            let _ = sqlx::query(sql.as_str()).execute(conn).await;
+            let _ = sqlx::query(AssertSqlSafe(sql)).execute(conn).await;
             let sql = SqlBuilder::delete_from(DEVICE_ROUTE_NAME2).sql().unwrap();
-            let _ = sqlx::query(sql.as_str()).execute(conn).await;
+            let _ = sqlx::query(AssertSqlSafe(sql)).execute(conn).await;
             let sql = SqlBuilder::delete_from(DLDATA_BUFFER_NAME2).sql().unwrap();
-            let _ = sqlx::query(sql.as_str()).execute(conn).await;
+            let _ = sqlx::query(AssertSqlSafe(sql)).execute(conn).await;
         });
     }
     if let Some(state) = state.routes_state.as_ref() {
