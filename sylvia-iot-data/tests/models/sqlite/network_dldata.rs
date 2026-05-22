@@ -4,7 +4,7 @@ use async_trait::async_trait;
 use chrono::{TimeZone, Utc};
 use laboratory::{SpecContext, expect};
 use sql_builder::{SqlBuilder, quote};
-use sqlx::SqlitePool;
+use sqlx::{AssertSqlSafe, SqlitePool};
 
 use sylvia_iot_data::models::{Model, network_dldata::NetworkDlData};
 
@@ -59,7 +59,7 @@ pub fn after_each_fn(state: &mut HashMap<&'static str, TestState>) -> () {
     let runtime = state.runtime.as_ref().unwrap();
     let conn = state.sqlite.as_ref().unwrap().get_connection();
     let sql = SqlBuilder::delete_from(TABLE_NAME).sql().unwrap();
-    let _ = runtime.block_on(async { sqlx::query(sql.as_str()).execute(conn).await });
+    let _ = runtime.block_on(async { sqlx::query(AssertSqlSafe(sql)).execute(conn).await });
 }
 
 /// Test table initialization.
@@ -238,8 +238,9 @@ impl<'a> common_test::Db for Db<'a> {
             .and_where_eq("data_id", quote(data_id))
             .sql()?;
 
-        let result: Result<Schema, sqlx::Error> =
-            sqlx::query_as(sql.as_str()).fetch_one(self.conn).await;
+        let result: Result<Schema, sqlx::Error> = sqlx::query_as(AssertSqlSafe(sql))
+            .fetch_one(self.conn)
+            .await;
 
         let row = match result {
             Err(e) => match e {
