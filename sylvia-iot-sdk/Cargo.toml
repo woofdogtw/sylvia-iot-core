@@ -19,7 +19,7 @@ chrono = { version = "0.4.44", default-features = false, features = ["serde"] }
 futures = "0.3.32"
 general-mq = { path = "../general-mq" }
 hex = "0.4.3"
-reqwest = { version = "0.13.3", default-features = false, features = [
+reqwest = { version = "0.13.4", default-features = false, features = [
     "form",
     "json",
 ] }
@@ -36,7 +36,7 @@ tower = "0.5.3"
 url = "2.5.8"
 
 [dev-dependencies]
-axum-test = "20.0.0"
+axum-test = "20.1.0"
 laboratory = "2.0.0"
 sylvia-iot-auth = { path = "../sylvia-iot-auth" }
 sylvia-iot-broker = { path = "../sylvia-iot-broker" }
