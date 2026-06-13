@@ -16,7 +16,7 @@ amqprs = { version = "2.1.5", features = ["tls", "urispec"] }
 async-trait = "0.1.89"
 lapin = { version = "4.10.0", features = ["rustls"] }
 rand = "0.10.1"
-regex = "1.12.3"
+regex = "1.12.4"
 rumqttc = "0.25.1"
 tokio = { version = "1.52.3", features = [
     "io-util",
