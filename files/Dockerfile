@@ -21,7 +21,7 @@ COPY --from=builder /app /
 CMD ["/app"]
 
 # ---- alpine ----
-FROM alpine:3.23.3 AS alpine
+FROM alpine:3.24.1 AS alpine
 RUN apk add --no-cache ca-certificates
 COPY --from=builder /app /usr/local/bin/
 CMD ["/usr/local/bin/app"]
