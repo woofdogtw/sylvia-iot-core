@@ -1,7 +1,6 @@
 [book]
 authors = ["Chien-Hong Chan"]
 language = "en"
-multilingual = false
 src = "src"
 title = "Sylvia-IoT Documentation"
 

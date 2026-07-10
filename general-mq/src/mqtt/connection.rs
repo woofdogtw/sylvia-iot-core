@@ -181,18 +181,34 @@ impl GmqConnection for MqttConnection {
     }
 
     async fn close(&mut self) -> Result<(), Box<dyn StdError + Send + Sync>> {
-        match { self.ev_loop.lock().unwrap().take() } {
+        let mut handle = match { self.ev_loop.lock().unwrap().take() } {
             None => return Ok(()),
-            Some(handle) => handle.abort(),
-        }
+            Some(handle) => handle,
+        };
         {
             *self.status.lock().unwrap() = Status::Closing;
         }
 
+        // Enqueue a clean DISCONNECT so the broker deregisters this client (including shared
+        // subscriptions) immediately, then let the event loop actually put it on the wire before
+        // the task ends. Aborting the task first (as before) left the DISCONNECT queued and never
+        // sent, so the broker only dropped us after a delayed TCP-close detection.
         let conn = { self.conn.lock().unwrap().take() };
         let mut result: Result<(), ClientError> = Ok(());
         if let Some(conn) = conn {
             result = conn.disconnect().await;
+        }
+
+        // The event loop sends the DISCONNECT and then exits on the resulting connection error.
+        // Wait for it to finish, but bound the wait and abort as a fallback so close() never hangs.
+        if time::timeout(
+            Duration::from_millis(self.opts.connect_timeout_millis),
+            &mut handle,
+        )
+        .await
+        .is_err()
+        {
+            handle.abort();
         }
 
         {
@@ -309,6 +325,7 @@ fn create_event_loop(conn: &MqttConnection) -> JoinHandle<()> {
                                             }
                                         }
                                     }
+                                    // TODO: handle PubAck and SubAck after rumqttc adds pkid.
                                     _ => {}
                                 }
                             }

@@ -3,7 +3,7 @@ use std::{error::Error as StdError, sync::Arc};
 use async_trait::async_trait;
 use chrono::{TimeZone, Utc};
 use sql_builder::{SqlBuilder, quote};
-use sqlx::SqlitePool;
+use sqlx::{AssertSqlSafe, SqlitePool};
 
 use super::super::authorization_code::{AuthorizationCode, AuthorizationCodeModel, QueryCond};
 
@@ -69,7 +69,7 @@ impl AuthorizationCodeModel for Model {
         };
         let sql = get_query_sql(SqlBuilder::select_from(TABLE_NAME).fields(FIELDS), &cond).sql()?;
 
-        let result: Result<Schema, sqlx::Error> = sqlx::query_as(sql.as_str())
+        let result: Result<Schema, sqlx::Error> = sqlx::query_as(AssertSqlSafe(sql))
             .fetch_one(self.conn.as_ref())
             .await;
 
@@ -107,7 +107,7 @@ impl AuthorizationCodeModel for Model {
             .fields(FIELDS)
             .values(&values)
             .sql()?;
-        let _ = sqlx::query(sql.as_str())
+        let _ = sqlx::query(AssertSqlSafe(sql))
             .execute(self.conn.as_ref())
             .await?;
         Ok(())
@@ -115,7 +115,7 @@ impl AuthorizationCodeModel for Model {
 
     async fn del(&self, cond: &QueryCond) -> Result<(), Box<dyn StdError>> {
         let sql = get_query_sql(&mut SqlBuilder::delete_from(TABLE_NAME), cond).sql()?;
-        let _ = sqlx::query(sql.as_str())
+        let _ = sqlx::query(AssertSqlSafe(sql))
             .execute(self.conn.as_ref())
             .await?;
         Ok(())

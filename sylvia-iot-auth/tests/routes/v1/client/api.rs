@@ -10,7 +10,7 @@ use laboratory::{SpecContext, expect};
 use mongodb::bson::Document;
 use serde_json::{Map, Value};
 use sql_builder::SqlBuilder;
-use sqlx;
+use sqlx::{self, AssertSqlSafe};
 use tokio::runtime::Runtime;
 
 use sylvia_iot_auth::{
@@ -93,7 +93,7 @@ pub fn after_all_fn(state: &mut HashMap<&'static str, TestState>) -> () {
         runtime.block_on(async {
             let conn = model.get_connection();
             let sql = SqlBuilder::delete_from(USER_NAME).sql().unwrap();
-            let _ = sqlx::query(sql.as_str()).execute(conn).await;
+            let _ = sqlx::query(AssertSqlSafe(sql)).execute(conn).await;
         });
     }
 }
@@ -131,7 +131,7 @@ pub fn after_each_fn(state: &mut HashMap<&'static str, TestState>) -> () {
         runtime.block_on(async {
             let conn = model.get_connection();
             let sql = SqlBuilder::delete_from(CLIENT_NAME).sql().unwrap();
-            let _ = sqlx::query(sql.as_str()).execute(conn).await;
+            let _ = sqlx::query(AssertSqlSafe(sql)).execute(conn).await;
         });
     }
 }

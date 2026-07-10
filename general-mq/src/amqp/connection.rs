@@ -175,7 +175,9 @@ impl GmqConnection for AmqpConnection {
             });
         }
 
-        result?;
+        // TODO: revert to "result?" after amqprs resolved the DropGuard issue.
+        // result?;
+        let _ = result;
         Ok(())
     }
 }

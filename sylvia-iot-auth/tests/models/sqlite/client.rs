@@ -3,6 +3,7 @@ use std::collections::HashMap;
 use chrono::{SubsecRound, Utc};
 use laboratory::{SpecContext, expect};
 use sql_builder::{SqlBuilder, quote};
+use sqlx::AssertSqlSafe;
 
 use sylvia_iot_auth::models::{Model, client::QueryCond};
 
@@ -26,7 +27,7 @@ pub fn after_each_fn(state: &mut HashMap<&'static str, TestState>) -> () {
     let runtime = state.runtime.as_ref().unwrap();
     let conn = state.sqlite.as_ref().unwrap().get_connection();
     let sql = SqlBuilder::delete_from(TABLE_NAME).sql().unwrap();
-    let _ = runtime.block_on(async { sqlx::query(sql.as_str()).execute(conn).await });
+    let _ = runtime.block_on(async { sqlx::query(AssertSqlSafe(sql)).execute(conn).await });
 }
 
 /// Test table initialization.
@@ -67,7 +68,8 @@ pub fn get_by_client_id(context: &mut SpecContext<TestState>) -> Result<(), Stri
         Err(e) => return Err(format!("sql() none error: {}", e.to_string())),
         Ok(sql) => sql,
     };
-    if let Err(e) = runtime.block_on(async { sqlx::query(&sql).execute(conn).await }) {
+    if let Err(e) = runtime.block_on(async { sqlx::query(AssertSqlSafe(sql)).execute(conn).await })
+    {
         return Err(format!("insert_into() none error: {}", e.to_string()));
     }
 
@@ -123,7 +125,8 @@ pub fn get_by_client_id(context: &mut SpecContext<TestState>) -> Result<(), Stri
         Ok(sql) => sql,
     };
 
-    if let Err(e) = runtime.block_on(async { sqlx::query(&sql).execute(conn).await }) {
+    if let Err(e) = runtime.block_on(async { sqlx::query(AssertSqlSafe(sql)).execute(conn).await })
+    {
         return Err(format!("insert_into() some error: {}", e.to_string()));
     }
 
@@ -179,7 +182,8 @@ pub fn get_by_user_client(context: &mut SpecContext<TestState>) -> Result<(), St
         Err(e) => return Err(format!("sql() get error: {}", e.to_string())),
         Ok(sql) => sql,
     };
-    if let Err(e) = runtime.block_on(async { sqlx::query(&sql).execute(conn).await }) {
+    if let Err(e) = runtime.block_on(async { sqlx::query(AssertSqlSafe(sql)).execute(conn).await })
+    {
         return Err(format!("insert_into() get error: {}", e.to_string()));
     }
     let sql = match SqlBuilder::insert_into(TABLE_NAME)
@@ -200,7 +204,8 @@ pub fn get_by_user_client(context: &mut SpecContext<TestState>) -> Result<(), St
         Err(e) => return Err(format!("sql() not-get error: {}", e.to_string())),
         Ok(sql) => sql,
     };
-    if let Err(e) = runtime.block_on(async { sqlx::query(&sql).execute(conn).await }) {
+    if let Err(e) = runtime.block_on(async { sqlx::query(AssertSqlSafe(sql)).execute(conn).await })
+    {
         return Err(format!("insert_into() not-get error: {}", e.to_string()));
     }
     let sql = match SqlBuilder::insert_into(TABLE_NAME)
@@ -221,7 +226,8 @@ pub fn get_by_user_client(context: &mut SpecContext<TestState>) -> Result<(), St
         Err(e) => return Err(format!("sql() other error: {}", e.to_string())),
         Ok(sql) => sql,
     };
-    if let Err(e) = runtime.block_on(async { sqlx::query(&sql).execute(conn).await }) {
+    if let Err(e) = runtime.block_on(async { sqlx::query(AssertSqlSafe(sql)).execute(conn).await })
+    {
         return Err(format!("insert_into() other error: {}", e.to_string()));
     }
 
