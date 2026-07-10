@@ -718,6 +718,7 @@ pub fn dldata(context: &mut SpecContext<TestState>) -> Result<(), String> {
         if mgr.status() != MgrStatus::Ready {
             return Err("manager not ready".to_string());
         }
+        time::sleep(Duration::from_secs(1)).await; // wait 1 sec because no SUBACK.
 
         let now = Utc::now();
         let ts_nanos = match now.timestamp_nanos_opt() {
@@ -1203,6 +1204,7 @@ pub fn ctrl(context: &mut SpecContext<TestState>) -> Result<(), String> {
         if mgr.status() != MgrStatus::Ready {
             return Err("manager not ready".to_string());
         }
+        time::sleep(Duration::from_secs(1)).await; // wait 1 sec because no SUBACK.
 
         let now_str = strings::time_str(&Utc::now());
         let data1 = SendNetCtrlMsg::AddDevice {

@@ -309,6 +309,7 @@ fn create_event_loop(conn: &MqttConnection) -> JoinHandle<()> {
                                             }
                                         }
                                     }
+                                    // TODO: handle PubAck and SubAck after rumqttc adds pkid.
                                     _ => {}
                                 }
                             }
