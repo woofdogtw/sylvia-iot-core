@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.4.6 - 2026-07-11
+
+### Changed
+
+- Update Rust to 1.96.1 with GitHub Actions runner image 20260705.232.1.
+
+### Fixed
+
+- **general-mq**: Fix MQTT disconnection flow.
+
 ## 0.4.5 - 2026-03-15
 
 ### Added
