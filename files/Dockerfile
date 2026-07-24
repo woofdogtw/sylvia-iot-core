@@ -14,8 +14,8 @@ RUN ARCH=$(cat /arch.txt) && \
     tar xf /tmp/bin/${PROJ}-${ARCH}.tar.xz -C / && \
     mv /${PROJ} /app
 
-# ---- scratch ----
-FROM scratch AS scratch
+# ---- bare ----
+FROM scratch AS bare
 COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
 COPY --from=builder /app /
 CMD ["/app"]
