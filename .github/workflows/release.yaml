@@ -171,7 +171,7 @@ jobs:
         uses: docker/setup-qemu-action@v4
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v4
-      - name: Docker meta auth - scratch
+      - name: Docker meta auth - bare
         id: meta-auth
         uses: docker/metadata-action@v6
         with:
@@ -184,7 +184,7 @@ jobs:
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
             type=semver,pattern={{major}}
-      - name: Create auth Docker image - scratch
+      - name: Create auth Docker image - bare
         uses: docker/build-push-action@v7
         with:
           build-args: |
@@ -195,7 +195,7 @@ jobs:
           platforms: linux/amd64,linux/arm64
           push: true
           tags: ${{ steps.meta-auth.outputs.tags }}
-          target: scratch
+          target: bare
       - name: Docker meta auth - alpine
         id: meta-auth-alpine
         uses: docker/metadata-action@v6
@@ -222,7 +222,7 @@ jobs:
           push: true
           tags: ${{ steps.meta-auth-alpine.outputs.tags }}
           target: alpine
-      - name: Docker meta broker - scratch
+      - name: Docker meta broker - bare
         id: meta-broker
         uses: docker/metadata-action@v6
         with:
@@ -235,7 +235,7 @@ jobs:
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
             type=semver,pattern={{major}}
-      - name: Create broker Docker image - scratch
+      - name: Create broker Docker image - bare
         uses: docker/build-push-action@v7
         with:
           build-args: |
@@ -246,7 +246,7 @@ jobs:
           platforms: linux/amd64,linux/arm64
           push: true
           tags: ${{ steps.meta-broker.outputs.tags }}
-          target: scratch
+          target: bare
       - name: Docker meta broker - alpine
         id: meta-broker-alpine
         uses: docker/metadata-action@v6
@@ -273,7 +273,7 @@ jobs:
           push: true
           tags: ${{ steps.meta-broker-alpine.outputs.tags }}
           target: alpine
-      - name: Docker meta coremgr - scratch
+      - name: Docker meta coremgr - bare
         id: meta-coremgr
         uses: docker/metadata-action@v6
         with:
@@ -286,7 +286,7 @@ jobs:
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
             type=semver,pattern={{major}}
-      - name: Create coremgr Docker image - scratch
+      - name: Create coremgr Docker image - bare
         uses: docker/build-push-action@v7
         with:
           build-args: |
@@ -297,7 +297,7 @@ jobs:
           platforms: linux/amd64,linux/arm64
           push: true
           tags: ${{ steps.meta-coremgr.outputs.tags }}
-          target: scratch
+          target: bare
       - name: Docker meta coremgr - alpine
         id: meta-coremgr-alpine
         uses: docker/metadata-action@v6
@@ -324,7 +324,7 @@ jobs:
           push: true
           tags: ${{ steps.meta-coremgr-alpine.outputs.tags }}
           target: alpine
-      - name: Docker meta data - scratch
+      - name: Docker meta data - bare
         id: meta-data
         uses: docker/metadata-action@v6
         with:
@@ -337,7 +337,7 @@ jobs:
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
             type=semver,pattern={{major}}
-      - name: Create data Docker image - scratch
+      - name: Create data Docker image - bare
         uses: docker/build-push-action@v7
         with:
           build-args: |
@@ -348,7 +348,7 @@ jobs:
           platforms: linux/amd64,linux/arm64
           push: true
           tags: ${{ steps.meta-data.outputs.tags }}
-          target: scratch
+          target: bare
       - name: Docker meta data - alpine
         id: meta-data-alpine
         uses: docker/metadata-action@v6
@@ -375,7 +375,7 @@ jobs:
           push: true
           tags: ${{ steps.meta-data-alpine.outputs.tags }}
           target: alpine
-      - name: Docker meta core - scratch
+      - name: Docker meta core - bare
         id: meta-core
         uses: docker/metadata-action@v6
         with:
@@ -388,7 +388,7 @@ jobs:
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
             type=semver,pattern={{major}}
-      - name: Create core Docker image - scratch
+      - name: Create core Docker image - bare
         uses: docker/build-push-action@v7
         with:
           build-args: |
@@ -399,7 +399,7 @@ jobs:
           platforms: linux/amd64,linux/arm64
           push: true
           tags: ${{ steps.meta-core.outputs.tags }}
-          target: scratch
+          target: bare
       - name: Docker meta core - alpine
         id: meta-core-alpine
         uses: docker/metadata-action@v6
