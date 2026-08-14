@@ -12,11 +12,11 @@ repository = "https://github.com/woofdogtw/sylvia-iot-core.git"
 rust-version = "1.95.0"
 
 [dependencies]
-async-trait = "0.1.91"
+async-trait = "0.1.92"
 axum = "0.8.9"
 bytes = "1.12.1"
 chrono = { version = "0.4.45", default-features = false, features = ["serde"] }
-futures = "0.3.33"
+futures = "0.3.34"
 general-mq = { path = "../general-mq" }
 hex = "0.4.3"
 reqwest = { version = "0.13.4", default-features = false, features = [
