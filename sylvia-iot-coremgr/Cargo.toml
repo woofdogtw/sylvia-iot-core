@@ -63,7 +63,7 @@ tower-http = { version = "0.7.0", default-features = false, features = [
 url = "2.5.8"
 
 [dev-dependencies]
-axum-test = "21.0.0"
+axum-test = "21.1.0"
 laboratory = "2.0.0"
 
 [profile.release]
