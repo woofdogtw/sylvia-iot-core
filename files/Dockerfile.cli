@@ -17,8 +17,8 @@ RUN ARCH=$(cat /arch.txt) && \
     mv /${PROJ} /app && \
     mv /${CLI} /app-cli
 
-# ---- scratch ----
-FROM scratch AS scratch
+# ---- bare ----
+FROM scratch AS bare
 COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
 COPY --from=builder /app /app-cli /
 CMD ["/app"]

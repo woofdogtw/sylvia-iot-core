@@ -8,23 +8,23 @@ on:
       - main
 env:
   BINUTILS_VER: v0.3.6
-  GRCOV_VER: v0.10.7
-  MDBOOK_VER: v0.5.2
+  GRCOV_VER: v0.10.8
+  MDBOOK_VER: v0.5.4
 jobs:
   general-mq:
     name: Build and test general-mq
     permissions:
       contents: write
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     services:
       rabbitmq:
-        image: rabbitmq:4.3.2-management-alpine
+        image: rabbitmq:4.3.6-management-alpine
         ports:
           - 5671:5671
           - 5672:5672
           - 15672:15672
       emqx:
-        image: emqx/emqx:6.2.2
+        image: emqx/emqx:6.3.0
         ports:
           - 1883:1883
           - 8883:8883
@@ -43,7 +43,7 @@ jobs:
           mv grcov ~/.cargo/bin/
           mv x86_64-unknown-linux-gnu/* ~/.cargo/bin/
       - name: Check out repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
       - name: Build bin/lib
         run: cargo build -p $PROJ
       - name: Print system info
@@ -78,14 +78,14 @@ jobs:
     name: Build and test sylvia-iot-auth
     permissions:
       contents: write
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     services:
       mongo:
-        image: mongo:8.3.4
+        image: mongo:9.0.4
         ports:
           - 27017:27017
       redis:
-        image: redis:8.8.0-alpine
+        image: redis:8.10.2-alpine
         ports:
           - 6379:6379
     env:
@@ -102,7 +102,7 @@ jobs:
           mv grcov ~/.cargo/bin/
           mv x86_64-unknown-linux-gnu/* ~/.cargo/bin/
       - name: Check out repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
       - name: Build bin/lib
         run: cargo build -p $PROJ
       - name: Print system info
@@ -137,20 +137,20 @@ jobs:
     name: Build and test sylvia-iot-broker
     permissions:
       contents: write
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     services:
       mongo:
-        image: mongo:8.3.4
+        image: mongo:9.0.4
         ports:
           - 27017:27017
       rabbitmq:
-        image: rabbitmq:4.3.2-management-alpine
+        image: rabbitmq:4.3.6-management-alpine
         ports:
           - 5671:5671
           - 5672:5672
           - 15672:15672
       emqx:
-        image: emqx/emqx:6.2.2
+        image: emqx/emqx:6.3.0
         ports:
           - 1883:1883
           - 8883:8883
@@ -169,7 +169,7 @@ jobs:
           mv grcov ~/.cargo/bin/
           mv x86_64-unknown-linux-gnu/* ~/.cargo/bin/
       - name: Check out repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
       - name: Build bin/lib
         run: cargo build -p $PROJ
       - name: Print system info
@@ -204,7 +204,7 @@ jobs:
     name: Build and test sylvia-iot-corelib
     permissions:
       contents: write
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     env:
       PROJ: sylvia-iot-corelib
       RUSTFLAGS: "-C instrument-coverage"
@@ -219,7 +219,7 @@ jobs:
           mv grcov ~/.cargo/bin/
           mv x86_64-unknown-linux-gnu/* ~/.cargo/bin/
       - name: Check out repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
       - name: Build bin/lib
         run: cargo build -p $PROJ
       - name: Print system info
@@ -254,14 +254,14 @@ jobs:
     name: Build and test sylvia-iot-coremgr
     permissions:
       contents: write
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     services:
       mongo:
-        image: mongo:8.3.4
+        image: mongo:9.0.4
         ports:
           - 27017:27017
       rabbitmq:
-        image: rabbitmq:4.3.2-management-alpine
+        image: rabbitmq:4.3.6-management-alpine
         ports:
           - 5671:5671
           - 5672:5672
@@ -280,7 +280,7 @@ jobs:
           mv grcov ~/.cargo/bin/
           mv x86_64-unknown-linux-gnu/* ~/.cargo/bin/
       - name: Check out repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
       - name: Run EMQX with the specified config file
         run: >
           docker run -d --rm --name emqx
@@ -288,7 +288,7 @@ jobs:
           -e EMQX_LOADED_MODULES="emqx_mod_acl_internal,emqx_mod_presence,emqx_mod_topic_metrics"
           -p 1883:1883 -p 8883:8883 -p 18083:18083
           -v "$(pwd)/.github/workflows/files/emqx.conf":"/opt/emqx/etc/emqx.conf"
-          emqx/emqx:6.2.2
+          emqx/emqx:6.3.0
       - name: Build bin/lib
         run: cargo build -p $PROJ
       - name: Print system info
@@ -323,12 +323,12 @@ jobs:
     name: Build and test sylvia-iot-coremgr-cli
     permissions:
       contents: write
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     env:
       PROJ: sylvia-iot-coremgr-cli
     steps:
       - name: Check out repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
       - name: Build bin/lib
         run: cargo build -p $PROJ
 
@@ -336,20 +336,20 @@ jobs:
     name: Build and test sylvia-iot-data
     permissions:
       contents: write
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     services:
       mongo:
-        image: mongo:8.3.4
+        image: mongo:9.0.4
         ports:
           - 27017:27017
       rabbitmq:
-        image: rabbitmq:4.3.2-management-alpine
+        image: rabbitmq:4.3.6-management-alpine
         ports:
           - 5671:5671
           - 5672:5672
           - 15672:15672
       emqx:
-        image: emqx/emqx:6.2.2
+        image: emqx/emqx:6.3.0
         ports:
           - 1883:1883
           - 8883:8883
@@ -368,7 +368,7 @@ jobs:
           mv grcov ~/.cargo/bin/
           mv x86_64-unknown-linux-gnu/* ~/.cargo/bin/
       - name: Check out repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
       - name: Build bin/lib
         run: cargo build -p $PROJ
       - name: Print system info
@@ -403,16 +403,16 @@ jobs:
     name: Build and test sylvia-iot-sdk
     permissions:
       contents: write
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     services:
       rabbitmq:
-        image: rabbitmq:4.3.2-management-alpine
+        image: rabbitmq:4.3.6-management-alpine
         ports:
           - 5671:5671
           - 5672:5672
           - 15672:15672
       emqx:
-        image: emqx/emqx:6.2.2
+        image: emqx/emqx:6.3.0
         ports:
           - 1883:1883
           - 8883:8883
@@ -431,7 +431,7 @@ jobs:
           mv grcov ~/.cargo/bin/
           mv x86_64-unknown-linux-gnu/* ~/.cargo/bin/
       - name: Check out repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
       - name: Build bin/lib
         run: cargo build -p $PROJ
       - name: Print system info
@@ -464,21 +464,21 @@ jobs:
 
   router:
     name: Build and test sylvia-router
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     env:
       PROJ: sylvia-router
     steps:
       - name: Check out repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
       - name: Build bin/lib
         run: cargo build -p $PROJ
 
   documentation:
     name: Build documentation
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     steps:
       - name: Check out repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
       - name: Install tools
         run: |
           curl -kLO https://github.com/rust-lang/mdBook/releases/download/$MDBOOK_VER/mdbook-$MDBOOK_VER-x86_64-unknown-linux-gnu.tar.gz
