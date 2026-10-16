@@ -16,8 +16,8 @@
         <link rel="icon" href="favicon-de23e50b.svg">
         <link rel="shortcut icon" href="favicon-8114d1fc.png">
         <link rel="stylesheet" href="css/variables-8adf115d.css">
-        <link rel="stylesheet" href="css/general-2459343d.css">
-        <link rel="stylesheet" href="css/chrome-ae938929.css">
+        <link rel="stylesheet" href="css/general-e96d0476.css">
+        <link rel="stylesheet" href="css/chrome-d279d366.css">
         <link rel="stylesheet" href="css/print-9e4910d8.css" media="print">
 
         <!-- Fonts -->
@@ -36,10 +36,10 @@
             const path_to_root = "";
             const default_light_theme = "rust";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-44c49986.js";
+            window.path_to_searchindex_js = "searchindex-f72aa2ae.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="toc-412b9a07.js"></script>
+        <script src="toc-1b1d87f7.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -193,7 +193,7 @@ guide also provides code structure and style.</p>
 <h1 id="what-is-sylvia-iot"><a class="header" href="#what-is-sylvia-iot">What is Sylvia-IoT?</a></h1>
 <p><strong>Sylvia-IoT</strong> is an IoT (Internet of Things) platform primarily designed to forward device messages
 to applications or enable applications to send commands to devices.</p>
-<p><img src="intro/intro.svg" alt="Introduction"></p>
+<p><label class="checkbox-label"><input class="checkbox-img" type="checkbox"><img src="intro/intro.svg" alt="Introduction"><span class="img-wrapper"><img src="intro/intro.svg" alt="Introduction"></span></label></p>
 <p>The diagram above provides a simple explanation. Devices (such as sensors) are bound to specific
 communication modules and transmit data through network gateways or servers. Sylvia-IoT acts as a
 message broker, allowing each application to subscribe to devices they are interested in for data
@@ -868,7 +868,7 @@ GET. Enabling the data channel will record the API usage history.</li>
 </ul>
 <div style="break-before: page; page-break-before: always;"></div>
 <h1 id="architecture"><a class="header" href="#architecture">Architecture</a></h1>
-<p><img src="arch/arch.svg" alt="Architecture"></p>
+<p><label class="checkbox-label"><input class="checkbox-img" type="checkbox"><img src="arch/arch.svg" alt="Architecture"><span class="img-wrapper"><img src="arch/arch.svg" alt="Architecture"></span></label></p>
 <p>Here is the diagram of Sylvia-IoT components. In this chapter, we will explain each one in detail.</p>
 <h2 id="sylvia-iot-core-components"><a class="header" href="#sylvia-iot-core-components">Sylvia-IoT Core Components</a></h2>
 <p>Abbreviated as ABCD (laughs 😊)</p>
@@ -1163,7 +1163,7 @@ only need to modify the corresponding network and address settings for the devic
 <li>Coremgr operation data: Records of system operation history, including management operations.</li>
 </ul>
 <h2 id="uplink-data"><a class="header" href="#uplink-data">Uplink Data</a></h2>
-<p><img src="arch/flow-uplink.svg" alt="Uplink"></p>
+<p><label class="checkbox-label"><input class="checkbox-img" type="checkbox"><img src="arch/flow-uplink.svg" alt="Uplink"><span class="img-wrapper"><img src="arch/flow-uplink.svg" alt="Uplink"></span></label></p>
 <p>When device data is sent to the corresponding queue through the network service, the data will be
 processed and sent to the application as follows:</p>
 <ol>
@@ -1190,7 +1190,7 @@ next network route action; if not, continue with the following actions:</li>
 network routes overlap.</p>
 </blockquote>
 <h2 id="downlink-data"><a class="header" href="#downlink-data">Downlink Data</a></h2>
-<p><img src="arch/flow-downlink.svg" alt="Downlink"></p>
+<p><label class="checkbox-label"><input class="checkbox-img" type="checkbox"><img src="arch/flow-downlink.svg" alt="Downlink"><span class="img-wrapper"><img src="arch/flow-downlink.svg" alt="Downlink"></span></label></p>
 <p>When the application service sends data to be delivered to a device through the queue, the data is
 processed as follows:</p>
 <ol>
@@ -1215,7 +1215,7 @@ is because the Broker, being part of the infrastructure, always ensures data cor
 The network service only needs to focus on delivering the data to the device and reporting the final
 result. Even if the data sent by the Broker is invalid, the network service can directly report it
 through the <code>result</code> queue.</p>
-<p><img src="arch/flow-downlink-result.svg" alt="Downlink-Result"></p>
+<p><label class="checkbox-label"><input class="checkbox-img" type="checkbox"><img src="arch/flow-downlink-result.svg" alt="Downlink-Result"><span class="img-wrapper"><img src="arch/flow-downlink-result.svg" alt="Downlink-Result"></span></label></p>
 <p>After processing the data (regardless of success or failure), the network service <strong>MUST</strong> use the
 data ID to report back to the Broker in the following order:</p>
 <ol>
@@ -1232,7 +1232,7 @@ After all, if data is sent by application A, why should application B receive th
 😊?</p>
 </blockquote>
 <h2 id="control-channel"><a class="header" href="#control-channel">Control Channel</a></h2>
-<p><img src="arch/flow-ctrl.svg" alt="Ctrl"></p>
+<p><label class="checkbox-label"><input class="checkbox-img" type="checkbox"><img src="arch/flow-ctrl.svg" alt="Ctrl"><span class="img-wrapper"><img src="arch/flow-ctrl.svg" alt="Ctrl"></span></label></p>
 <p>The Broker or coremgr provides APIs that allow the network service to update device data at any
 time. However, relying on periodic API requests for synchronization is inefficient and may impact
 routing performance due to frequent requests.
@@ -1255,7 +1255,7 @@ occurs, the network service will receive the following messages based on differe
 </li>
 </ul>
 <h2 id="operation-data"><a class="header" href="#operation-data">Operation Data</a></h2>
-<p><img src="arch/flow-opdata.svg" alt="OpData"></p>
+<p><label class="checkbox-label"><input class="checkbox-img" type="checkbox"><img src="arch/flow-opdata.svg" alt="OpData"><span class="img-wrapper"><img src="arch/flow-opdata.svg" alt="OpData"></span></label></p>
 <p>Coremgr has an optional configuration to store all system operation logs (limited to coremgr HTTP
 APIs, of course). The current scope includes POST/PUT/PATCH/DELETE, etc.</p>
 <p>As shown in the diagram, after each API operation, coremgr records the following data:</p>
@@ -1293,7 +1293,7 @@ accesses variables within the process.</p>
 <blockquote>
 <p>Currently, the Broker is implemented using <code>std::collections::HashMap</code>.</p>
 </blockquote>
-<p><img src="arch/cache.svg" alt="Cache"></p>
+<p><label class="checkbox-label"><input class="checkbox-img" type="checkbox"><img src="arch/cache.svg" alt="Cache"><span class="img-wrapper"><img src="arch/cache.svg" alt="Cache"></span></label></p>
 <p>The diagram above provides an overview of Sylvia-IoT’s caching mechanism. To meet the requirements
 of a cluster architecture, a broadcast queue is introduced to implement the <strong>Control Channel</strong>.</p>
 <p>To ensure data accuracy, updates are first made to the database before updating the cache. Below, we
@@ -2254,11 +2254,11 @@ functions based on the screen layout.</li>
 
         <script src="elasticlunr-ef4e11c1.min.js"></script>
         <script src="mark-09e88c2c.min.js"></script>
-        <script src="searcher-c2a407aa.js"></script>
+        <script src="searcher-09f2665d.js"></script>
 
         <script src="clipboard-1626706a.min.js"></script>
         <script src="highlight-abc7f01d.js"></script>
-        <script src="book-a0b12cfe.js"></script>
+        <script src="book-609e4cb8.js"></script>
 
         <!-- Custom JS scripts -->
 

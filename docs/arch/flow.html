@@ -15,8 +15,8 @@
         <link rel="icon" href="../favicon-de23e50b.svg">
         <link rel="shortcut icon" href="../favicon-8114d1fc.png">
         <link rel="stylesheet" href="../css/variables-8adf115d.css">
-        <link rel="stylesheet" href="../css/general-2459343d.css">
-        <link rel="stylesheet" href="../css/chrome-ae938929.css">
+        <link rel="stylesheet" href="../css/general-e96d0476.css">
+        <link rel="stylesheet" href="../css/chrome-d279d366.css">
         <link rel="stylesheet" href="../css/print-9e4910d8.css" media="print">
 
         <!-- Fonts -->
@@ -35,10 +35,10 @@
             const path_to_root = "../";
             const default_light_theme = "rust";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-44c49986.js";
+            window.path_to_searchindex_js = "../searchindex-f72aa2ae.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="../toc-412b9a07.js"></script>
+        <script src="../toc-1b1d87f7.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -183,7 +183,7 @@
 <li>Coremgr operation data: Records of system operation history, including management operations.</li>
 </ul>
 <h2 id="uplink-data"><a class="header" href="#uplink-data">Uplink Data</a></h2>
-<p><img src="flow-uplink.svg" alt="Uplink"></p>
+<p><label class="checkbox-label"><input class="checkbox-img" type="checkbox"><img src="flow-uplink.svg" alt="Uplink"><span class="img-wrapper"><img src="flow-uplink.svg" alt="Uplink"></span></label></p>
 <p>When device data is sent to the corresponding queue through the network service, the data will be
 processed and sent to the application as follows:</p>
 <ol>
@@ -210,7 +210,7 @@ next network route action; if not, continue with the following actions:</li>
 network routes overlap.</p>
 </blockquote>
 <h2 id="downlink-data"><a class="header" href="#downlink-data">Downlink Data</a></h2>
-<p><img src="flow-downlink.svg" alt="Downlink"></p>
+<p><label class="checkbox-label"><input class="checkbox-img" type="checkbox"><img src="flow-downlink.svg" alt="Downlink"><span class="img-wrapper"><img src="flow-downlink.svg" alt="Downlink"></span></label></p>
 <p>When the application service sends data to be delivered to a device through the queue, the data is
 processed as follows:</p>
 <ol>
@@ -235,7 +235,7 @@ is because the Broker, being part of the infrastructure, always ensures data cor
 The network service only needs to focus on delivering the data to the device and reporting the final
 result. Even if the data sent by the Broker is invalid, the network service can directly report it
 through the <code>result</code> queue.</p>
-<p><img src="flow-downlink-result.svg" alt="Downlink-Result"></p>
+<p><label class="checkbox-label"><input class="checkbox-img" type="checkbox"><img src="flow-downlink-result.svg" alt="Downlink-Result"><span class="img-wrapper"><img src="flow-downlink-result.svg" alt="Downlink-Result"></span></label></p>
 <p>After processing the data (regardless of success or failure), the network service <strong>MUST</strong> use the
 data ID to report back to the Broker in the following order:</p>
 <ol>
@@ -252,7 +252,7 @@ After all, if data is sent by application A, why should application B receive th
 😊?</p>
 </blockquote>
 <h2 id="control-channel"><a class="header" href="#control-channel">Control Channel</a></h2>
-<p><img src="flow-ctrl.svg" alt="Ctrl"></p>
+<p><label class="checkbox-label"><input class="checkbox-img" type="checkbox"><img src="flow-ctrl.svg" alt="Ctrl"><span class="img-wrapper"><img src="flow-ctrl.svg" alt="Ctrl"></span></label></p>
 <p>The Broker or coremgr provides APIs that allow the network service to update device data at any
 time. However, relying on periodic API requests for synchronization is inefficient and may impact
 routing performance due to frequent requests.
@@ -275,7 +275,7 @@ occurs, the network service will receive the following messages based on differe
 </li>
 </ul>
 <h2 id="operation-data"><a class="header" href="#operation-data">Operation Data</a></h2>
-<p><img src="flow-opdata.svg" alt="OpData"></p>
+<p><label class="checkbox-label"><input class="checkbox-img" type="checkbox"><img src="flow-opdata.svg" alt="OpData"><span class="img-wrapper"><img src="flow-opdata.svg" alt="OpData"></span></label></p>
 <p>Coremgr has an optional configuration to store all system operation logs (limited to coremgr HTTP
 APIs, of course). The current scope includes POST/PUT/PATCH/DELETE, etc.</p>
 <p>As shown in the diagram, after each API operation, coremgr records the following data:</p>
@@ -340,11 +340,11 @@ content is cleared. The key is retained to indicate that this request involves p
 
         <script src="../elasticlunr-ef4e11c1.min.js"></script>
         <script src="../mark-09e88c2c.min.js"></script>
-        <script src="../searcher-c2a407aa.js"></script>
+        <script src="../searcher-09f2665d.js"></script>
 
         <script src="../clipboard-1626706a.min.js"></script>
         <script src="../highlight-abc7f01d.js"></script>
-        <script src="../book-a0b12cfe.js"></script>
+        <script src="../book-609e4cb8.js"></script>
 
         <!-- Custom JS scripts -->
 
