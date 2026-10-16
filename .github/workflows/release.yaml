@@ -4,17 +4,17 @@ on:
     tags:
       - v*
 env:
-  GHR_VER: v0.18.0
+  GHR_VER: v0.18.5
   BIN_DIR: dist
   SBOM_VER: v0.10.0
   SBOM_DIR: sbom
 jobs:
   crates:
     name: Publish crates.io
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     steps:
       - name: Check out repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           ref: ${{ github.ref_name }}
       - name: Login to crates.io
@@ -49,7 +49,7 @@ jobs:
   release:
     name: Publish GitHub Releases and Docker Hub
     needs: crates
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     env:
       TARGET_X86_64: x86_64-unknown-linux-musl
       TARGET_ARM64: aarch64-unknown-linux-musl
@@ -60,7 +60,7 @@ jobs:
           sudo apt -y install gcc-aarch64-linux-gnu
           cargo install cross --git https://github.com/cross-rs/cross
       - name: Check out repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           ref: ${{ github.ref_name }}
       - name: Clear release target for x86_64
