@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.4.7 - 2026-10-16
+
+### Changed
+
+- Update dependencies and fix vulnerabilities.
+- Update Rust to 1.98.1 with GitHub Actions runner image 20260927.149.1.
+
 ## 0.4.6 - 2026-07-11
 
 ### Changed
