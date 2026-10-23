@@ -28,7 +28,13 @@ impl MessageHandler for TestDummyHandler {
 }
 
 #[derive(Deserialize)]
-struct GetUsersResp {
+struct GetDefinitionsResp {
+    users: Vec<GetDefinitionsUsers>,
+}
+
+#[derive(Deserialize)]
+struct GetDefinitionsUsers {
+    name: String,
     password_hash: String,
 }
 
@@ -128,16 +134,27 @@ pub fn put_user(context: &mut SpecContext<TestState>) -> Result<(), String> {
         if let Err(e) = rabbitmq::put_user(client, opts, host, user, pass).await {
             return Err(format!("put_user error: {}", e));
         }
-        let first_password = match get_object(client, "users", user).await? {
-            (StatusCode::OK, body) => match serde_json::from_str::<GetUsersResp>(body.as_str()) {
-                Err(e) => {
-                    return Err(format!(
-                        "put_user deserialize user {} error: {}, body: {}",
-                        user, e, body
-                    ));
+        let first_password = match get_object(client, "definitions", "").await? {
+            (StatusCode::OK, body) => {
+                match serde_json::from_str::<GetDefinitionsResp>(body.as_str()) {
+                    Err(e) => {
+                        return Err(format!(
+                            "put_user deserialize definitions error: {}, body: {}",
+                            e, body
+                        ));
+                    }
+                    Ok(definitions) => match definitions
+                        .users
+                        .into_iter()
+                        .find(|u| u.name.as_str().eq(user))
+                    {
+                        None => {
+                            return Err(format!("put_user user {} not found in definitions", user));
+                        }
+                        Some(user) => user.password_hash,
+                    },
                 }
-                Ok(user) => user.password_hash,
-            },
+            }
             (status, body) => {
                 return Err(format!(
                     "put_user get wrong result status: {}, body: {}",
@@ -148,16 +165,27 @@ pub fn put_user(context: &mut SpecContext<TestState>) -> Result<(), String> {
         if let Err(e) = rabbitmq::put_user(client, opts, host, user, "changed password").await {
             return Err(format!("put_user error: {}", e));
         }
-        let second_password = match get_object(client, "users", user).await? {
-            (StatusCode::OK, body) => match serde_json::from_str::<GetUsersResp>(body.as_str()) {
-                Err(e) => {
-                    return Err(format!(
-                        "put_user deserialize user {} error: {}, body: {}",
-                        user, e, body
-                    ));
+        let second_password = match get_object(client, "definitions", "").await? {
+            (StatusCode::OK, body) => {
+                match serde_json::from_str::<GetDefinitionsResp>(body.as_str()) {
+                    Err(e) => {
+                        return Err(format!(
+                            "put_user deserialize definitions error: {}, body: {}",
+                            e, body
+                        ));
+                    }
+                    Ok(definitions) => match definitions
+                        .users
+                        .into_iter()
+                        .find(|u| u.name.as_str().eq(user))
+                    {
+                        None => {
+                            return Err(format!("put_user user {} not found in definitions", user));
+                        }
+                        Some(user) => user.password_hash,
+                    },
                 }
-                Ok(user) => user.password_hash,
-            },
+            }
             (status, body) => {
                 return Err(format!(
                     "put_user get wrong result status: {}, body: {}",
