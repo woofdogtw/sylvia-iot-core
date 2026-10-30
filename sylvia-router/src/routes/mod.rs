@@ -36,10 +36,10 @@ pub async fn new_state(
 ) -> Result<State, Box<dyn StdError>> {
     let mut sys_info = System::new_with_specifics(
         RefreshKind::nothing()
-            .with_cpu(CpuRefreshKind::nothing().with_cpu_usage())
+            .with_cpu(CpuRefreshKind::nothing().with_usage())
             .with_memory(MemoryRefreshKind::nothing().with_ram().with_swap()),
-    );
-    let disk_info = Disks::new_with_refreshed_list();
+    )?;
+    let disk_info = Disks::new_with_refreshed_list()?;
     sys_info.refresh_cpu_all();
     let state = State {
         scope_path,
