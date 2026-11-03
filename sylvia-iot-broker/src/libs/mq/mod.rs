@@ -85,6 +85,12 @@ pub struct Options {
 /// Support application/network host schemes.
 pub const SUPPORT_SCHEMES: &'static [&'static str] = &["amqp", "amqps", "mqtt", "mqtts"];
 
+/// The maximum size of the uplink/downlink data message (normalized and serialized) from
+/// networks/applications. This reserves 16 KiB of the default MQTT maximum packet size (1 MiB) for
+/// the fields that the broker adds when forwarding the data to applications, networks and the data
+/// channel.
+pub const MAX_DATA_MSG_SIZE: usize = 1024 * 1024 - 16 * 1024;
+
 /// The default prefetch value for AMQP.
 const DEF_PREFETCH: u16 = 100;
 

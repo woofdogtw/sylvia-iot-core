@@ -18,6 +18,7 @@ use tokio::{
     task::{self, JoinHandle},
     time,
 };
+use url::{Host, Url};
 
 use crate::{
     ID_SIZE,
@@ -61,6 +62,8 @@ pub struct AmqpConnectionOptions {
 struct InnerOptions {
     /// The formatted URI resource.
     args: OpenConnectionArguments,
+    /// Connection timeout in milliseconds.
+    connect_timeout_millis: u64,
     /// Time in milliseconds from disconnection to reconnection.
     reconnect_millis: u64,
 }
@@ -73,16 +76,24 @@ const DEF_RECONN_TIME_MS: u64 = 1000;
 impl AmqpConnection {
     /// Create a connection instance.
     pub fn new(opts: AmqpConnectionOptions) -> Result<AmqpConnection, String> {
+        // `AMQPUri` puts the raw URI with the password in the error message of the cannot-be-a-base
+        // URL, so check it first.
+        let url = Url::parse(opts.uri.as_str()).map_err(|e| e.to_string())?;
+        if url.cannot_be_a_base() {
+            return Err("Invalid URL".to_string());
+        }
         let mut uri = AMQPUri::from_str(opts.uri.as_str())?;
-        uri.query.connection_timeout = match opts.connect_timeout_millis {
-            0 => Some(DEF_CONN_TIMEOUT_MS),
-            _ => Some(opts.connect_timeout_millis),
-        };
         if uri.vhost.len() == 0 {
             uri.vhost = "/".to_string();
         }
+        // `AMQPUri` uses `localhost` for IPv6 addresses, so get the host from `Url`. amqprs uses the
+        // host to build the `host:port` address, so IPv6 addresses need brackets.
+        let (host, tls_domain) = match url.host() {
+            Some(Host::Ipv6(ip)) => (format!("[{}]", ip), ip.to_string()),
+            _ => (uri.authority.host.clone(), uri.authority.host.clone()),
+        };
         let mut args = OpenConnectionArguments::default();
-        args.host(&uri.authority.host)
+        args.host(&host)
             .port(uri.authority.port)
             .credentials(SecurityCredentials::new_plain(
                 &uri.authority.userinfo.username,
@@ -90,7 +101,7 @@ impl AmqpConnection {
             ))
             .virtual_host(&uri.vhost);
         if uri.scheme == AMQPScheme::AMQPS {
-            let adaptor = match TlsAdaptor::without_client_auth(None, uri.authority.host.clone()) {
+            let adaptor = match TlsAdaptor::without_client_auth(None, tls_domain) {
                 Err(e) => return Err(e.to_string()),
                 Ok(adaptor) => adaptor,
             };
@@ -100,6 +111,10 @@ impl AmqpConnection {
         Ok(AmqpConnection {
             opts: InnerOptions {
                 args,
+                connect_timeout_millis: match opts.connect_timeout_millis {
+                    0 => DEF_CONN_TIMEOUT_MS,
+                    _ => opts.connect_timeout_millis,
+                },
                 reconnect_millis: match opts.reconnect_millis {
                     0 => DEF_RECONN_TIME_MS,
                     _ => opts.reconnect_millis,
@@ -200,12 +215,17 @@ fn create_event_loop(conn: &AmqpConnection) -> JoinHandle<()> {
             match this.status() {
                 Status::Closing | Status::Closed => break,
                 Status::Connecting => {
-                    let conn = match AmqprsConnection::open(&this.opts.args).await {
-                        Err(_) => {
+                    let conn = match time::timeout(
+                        Duration::from_millis(this.opts.connect_timeout_millis),
+                        AmqprsConnection::open(&this.opts.args),
+                    )
+                    .await
+                    {
+                        Err(_) | Ok(Err(_)) => {
                             time::sleep(Duration::from_millis(this.opts.reconnect_millis)).await;
                             continue;
                         }
-                        Ok(conn) => conn,
+                        Ok(Ok(conn)) => conn,
                     };
                     {
                         let mut status_mutex = this.status.lock().unwrap();

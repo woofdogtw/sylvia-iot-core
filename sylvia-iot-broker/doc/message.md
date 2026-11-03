@@ -6,6 +6,8 @@
 
 These messages are used between devices and applications with **unicast** and **reliable** queues.
 
+The size of a `dldata` message in compact JSON format must not exceed 1032192 bytes (1 MiB - 16 KiB). The broker reserves the rest of the 1 MiB MQTT maximum packet size for the fields that it adds when forwarding the data. The broker responds `err_param` error in `dldata-resp` for oversized data.
+
     broker.application.[unit].[code].uldata: {
         dataId: string,                 // unique data ID
         time: string,                   // device time for this data in RFC 3339 format
@@ -47,6 +49,8 @@ These messages are used between devices and applications with **unicast** and **
 ### Device and application data
 
 These messages are used between devices and applications with **unicast** and **reliable** queues.
+
+The size of an `uldata` message in compact JSON format must not exceed 1032192 bytes (1 MiB - 16 KiB). The broker reserves the rest of the 1 MiB MQTT maximum packet size for the fields that it adds when forwarding the data. The broker drops oversized data with a warning log.
 
     broker.network.[unit].[code].uldata: {
         time: string,                   // device time for this data in RFC 3339 format

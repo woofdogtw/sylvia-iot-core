@@ -331,6 +331,7 @@ impl NetworkMgr {
         };
         let payload = serde_json::to_vec(&msg_data)?;
         let queue = { (*self.uldata.lock().unwrap()).clone() };
+        queue.check_msg_size(payload.len())?;
         task::spawn(async move {
             let _ = queue.send_msg(payload).await;
         });
@@ -346,6 +347,7 @@ impl NetworkMgr {
 
         let payload = serde_json::to_vec(&data)?;
         let queue = { (*self.dldata_result.lock().unwrap()).clone() };
+        queue.check_msg_size(payload.len())?;
         task::spawn(async move {
             let _ = queue.send_msg(payload).await;
         });

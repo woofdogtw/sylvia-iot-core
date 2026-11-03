@@ -21,6 +21,7 @@ rumqttc = "0.25.1"
 tokio = { version = "1.54.1", features = [
     "io-util",
     "macros",
+    "net",
     "rt-multi-thread",
     "time",
 ] }

@@ -1,5 +1,34 @@
 # Changelog
 
+## 0.4.8 - TBD
+
+### Added
+
+- **general-mq**: Add `max_packet_size` to `MqttConnectionOptions` (default 1 MiB).
+- **general-mq**: Add `Queue::check_msg_size()` to check the message size before sending.
+- **general-mq**: Support IPv6 hosts in MQTT/AMQP URIs (not supported by `mqtts`).
+
+### Changed
+
+- Update dependencies.
+- **general-mq**: MQTT `send_msg()` returns `Error::PacketTooLarge` for oversized messages instead
+  of disconnecting. The new field of `MqttConnectionOptions` and the new variant of `Error` may
+  break code without `..Default::default()` or with exhaustive matching.
+- **sylvia-iot-broker**: Limit the uplink/downlink data message size to 1 MiB - 16 KiB. Oversized
+  downlink data is responded with `err_param`, and oversized uplink data is dropped.
+- **sylvia-iot-sdk**: `send_uldata()`, `send_dldata()` and `send_dldata_result()` return an error
+  for MQTT messages exceeding the maximum packet size.
+
+### Fixed
+
+- Fix for security scan.
+    - **general-mq**: Fix MQTT messages larger than 10 KiB disconnecting the shared connection.
+    - **general-mq**: Fix MQTT/AMQP IPv6 hosts being replaced with `localhost`.
+    - **general-mq**: Fix URI errors exposing passwords.
+    - **general-mq**: Fix MQTT/AMQP connection timeout.
+    - **sylvia-iot-broker**: Fix oversized data being dropped silently.
+- **general-mq**: Fix doc tests.
+
 ## 0.4.7 - 2026-10-16
 
 ### Changed

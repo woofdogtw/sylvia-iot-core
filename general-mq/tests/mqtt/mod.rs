@@ -20,6 +20,9 @@ pub fn suite() -> Suite<TestState> {
                 "connect() after connect()",
                 connection::connect_after_connect,
             );
+            context.it("connect() with timeout", connection::connect_timeout);
+            context.it("connect() with reconnect", connection::connect_reconnect);
+            context.it("connect() with IPv6", connection::connect_ipv6);
 
             context.it("remove_handler()", connection::remove_handler);
 
@@ -38,6 +41,7 @@ pub fn suite() -> Suite<TestState> {
             context.it("connect() without handler", queue::connect_no_handler);
             context.it("connect() with handler", queue::connect_with_handler);
             context.it("connect() after connect()", queue::connect_after_connect);
+            context.it("connect() with reconnect", queue::connect_reconnect);
 
             context.it("clear_handler()", queue::clear_handler);
 
@@ -80,6 +84,7 @@ pub fn suite() -> Suite<TestState> {
 
             context.it_skip("reliable", queue::data_reliable);
             context.it("best effort", queue::data_best_effort);
+            context.it("packet size limit", queue::data_packet_size);
 
             context.after_each(clear_state);
         });

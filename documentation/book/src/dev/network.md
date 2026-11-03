@@ -30,6 +30,9 @@ timing of queues and related data.
         - Currently retained for one day. If not reported, it will always be marked as "unreported".
     - The application service can decide how to handle downlink data that has not been reported for
       too long.
+- The size of an uplink data message (in compact JSON format) must not exceed 1032192 bytes
+  (1 MiB - 16 KiB). The Broker reserves 16 KiB of the 1 MiB MQTT maximum packet size for the fields
+  that it adds when forwarding the data. The Broker drops oversized data with a warning log.
 - Rules regarding `result`:
     - Less than 0 indicates the ongoing process.
         - -2: Indicates that the data is being sent to the network service. Set by the Broker before
@@ -60,3 +63,5 @@ to use it:
 - Register an `EventHandler` to receive real-time updates when the queue status changes or data is
   delivered.
 - You can use `send_uldata()` and `send_dldata_result()` to send data to the Broker.
+- When using MQTT, `send_uldata()` and `send_dldata_result()` return an error directly for the data
+  that exceeds the MQTT maximum packet size (1 MiB).

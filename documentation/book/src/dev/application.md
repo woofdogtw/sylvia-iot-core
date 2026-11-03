@@ -36,6 +36,10 @@ timing of queues and related data.
     - If the device is on the **public network**, you must use the `deviceId`. Sylvia-IoT adopts
       this approach to prevent application services from sending data arbitrarily to devices that do
       not belong to their own unit.
+- The size of a downlink data message (in compact JSON format) must not exceed 1032192 bytes
+  (1 MiB - 16 KiB). The Broker reserves 16 KiB of the 1 MiB MQTT maximum packet size for the fields
+  that it adds when forwarding the data. Oversized data will be responded with the `err_param`
+  error in `dldata-resp`.
 - Currently, the control channel is not supported. Changes to devices must rely on application
   services to request the Sylvia-IoT HTTP APIs or manage the list of devices themselves.
 
@@ -52,3 +56,5 @@ to use it:
 - Register an `EventHandler` to receive real-time updates when the queue status changes or data is
   delivered.
 - You can use `send_dldata()` to send data to the Broker.
+- When using MQTT, `send_dldata()` returns an error directly for the data that exceeds the MQTT
+  maximum packet size (1 MiB).

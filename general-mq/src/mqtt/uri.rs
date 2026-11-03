@@ -1,6 +1,6 @@
 use std::str::FromStr;
 
-use url::Url;
+use url::{Host, Url};
 use urlencoding;
 
 /// A MQTT Uri. This is used for manage parsed URI from the option.
@@ -40,7 +40,7 @@ impl FromStr for MQTTUri {
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let url = Url::parse(s).map_err(|e| e.to_string())?;
         if url.cannot_be_a_base() {
-            return Err(format!("Invalid URL: '{}'", s));
+            return Err("Invalid URL".to_string());
         }
         let default = MQTTUri::default();
         let scheme = url.scheme().parse::<MQTTScheme>()?;
@@ -51,7 +51,19 @@ impl FromStr for MQTTUri {
         let password = url
             .password()
             .map_or(Ok(default.password), percent_decode)?;
-        let host = url.domain().map_or(Ok(default.host), percent_decode)?;
+        // rumqttc uses the host to build the `host:port` address and the TLS server name, so IPv6
+        // addresses need brackets for the former but cannot have them for the latter.
+        let host = match url.host() {
+            None => default.host,
+            Some(Host::Domain(domain)) => percent_decode(domain)?,
+            Some(Host::Ipv4(ip)) => ip.to_string(),
+            Some(Host::Ipv6(ip)) => match scheme {
+                MQTTScheme::MQTT => format!("[{}]", ip),
+                MQTTScheme::MQTTS => {
+                    return Err("IPv6 address is not supported by mqtts".to_string());
+                }
+            },
+        };
         let port = url.port().unwrap_or_else(|| scheme.default_port());
 
         Ok(MQTTUri {

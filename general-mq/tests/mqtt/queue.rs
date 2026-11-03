@@ -2,7 +2,7 @@ use std::{
     error::Error as StdError,
     str,
     sync::{Arc, Mutex},
-    time::Duration,
+    time::{Duration, Instant},
 };
 
 use async_trait::async_trait;
@@ -10,7 +10,8 @@ use laboratory::{SpecContext, expect};
 use tokio::{task, time};
 
 use general_mq::{
-    MqttConnection, MqttConnectionOptions, MqttQueue, MqttQueueOptions, Queue, QueueOptions,
+    Error as GmqError, MqttConnection, MqttConnectionOptions, MqttQueue, MqttQueueOptions, Queue,
+    QueueOptions,
     connection::GmqConnection,
     queue::{EventHandler, GmqQueue, Message, MessageHandler, Status},
     randomstring,
@@ -55,7 +56,9 @@ struct TestRecvMsgHandler {
     pub nack_errors: Arc<Mutex<Vec<String>>>,
 }
 
-const RETRY_10MS: usize = 100;
+/// Queues check the connection status every `reconnect_millis` (default 1 second), so wait longer
+/// than that.
+const RETRY_10MS: usize = 300;
 
 #[async_trait]
 impl MessageHandler for TestDummyMsgHandler {
@@ -313,6 +316,52 @@ pub fn connect_after_connect(context: &mut SpecContext<TestState>) -> Result<(),
         return Err(format!("GmqQueue::connect() error: {}", e));
     }
     expect(queue.connect().is_ok()).to_equal(true)
+}
+
+/// Test `connect()` before the connection is connected, to check that `reconnect_millis` takes
+/// effect.
+pub fn connect_reconnect(context: &mut SpecContext<TestState>) -> Result<(), String> {
+    let mut state = context.state.borrow_mut();
+    let state = state.get_mut(STATE).unwrap();
+
+    let mut conn = match MqttConnection::new(MqttConnectionOptions::default()) {
+        Err(e) => return Err(format!("MqttConnection::new() error: {}", e)),
+        Ok(conn) => conn,
+    };
+    state.conn = vec![Box::new(conn.clone())];
+    let opts = MqttQueueOptions {
+        name: "name".to_string(),
+        reconnect_millis: 3000,
+        ..Default::default()
+    };
+    let mut queue = match MqttQueue::new(opts, &conn) {
+        Err(e) => return Err(format!("MqttQueue::new() error: {}", e)),
+        Ok(q) => q,
+    };
+    state.queues.push(Box::new(queue.clone()));
+    let conn: &mut dyn GmqConnection = &mut conn;
+    let queue: &mut dyn GmqQueue = &mut queue;
+
+    // The queue finds the connection not connected and waits `reconnect_millis` to check again.
+    let start = Instant::now();
+    if let Err(e) = queue.connect() {
+        return Err(format!("GmqQueue::connect() error: {}", e));
+    }
+    state
+        .runtime
+        .block_on(time::sleep(Duration::from_millis(100)));
+    if let Err(e) = conn.connect() {
+        return Err(format!("GmqConnection::connect() error: {}", e));
+    }
+    state.runtime.block_on(wait_connected(queue, 450))?;
+    let elapsed = start.elapsed().as_millis();
+    if elapsed < 2950 {
+        return Err(format!(
+            "connected after {} ms, expect about 3000 ms",
+            elapsed
+        ));
+    }
+    Ok(())
 }
 
 /// Test remove the handler.
@@ -879,6 +928,18 @@ pub fn mq_send_error(context: &mut SpecContext<TestState>) -> Result<(), String>
     {
         Err(_) => (),
         Ok(()) => return Err("send to not-connected queue should error".to_string()),
+    }
+
+    // The default maximum packet size is 1 MiB.
+    match state
+        .runtime
+        .block_on(async { queue.send_msg(vec![0; 1024 * 1024]).await })
+    {
+        Err(e) => match e.downcast_ref::<GmqError>() {
+            Some(GmqError::PacketTooLarge) => (),
+            _ => return Err(format!("send too large packet with wrong error: {}", e)),
+        },
+        Ok(()) => return Err("send too large packet should error".to_string()),
     }
 
     Ok(())
@@ -1470,6 +1531,158 @@ pub fn data_best_effort(context: &mut SpecContext<TestState>) -> Result<(), Stri
             retry = retry - 1;
         }
         Ok(())
+    })
+}
+
+/// Test sending messages with the packet size limit.
+pub fn data_packet_size(context: &mut SpecContext<TestState>) -> Result<(), String> {
+    let mut state = context.state.borrow_mut();
+    let state = state.get_mut(STATE).unwrap();
+
+    const MAX_PACKET_SIZE: usize = 1024;
+    let name = "name";
+
+    let conn_opts = MqttConnectionOptions {
+        client_id: Some(format!("sender-{}", randomstring(8))),
+        max_packet_size: MAX_PACKET_SIZE,
+        ..Default::default()
+    };
+    let mut send_conn = match MqttConnection::new(conn_opts) {
+        Err(e) => return Err(format!("MqttConnection::new() send error: {}", e)),
+        Ok(conn) => conn,
+    };
+    state.conn.push(Box::new(send_conn.clone()));
+    let conn_opts = MqttConnectionOptions {
+        client_id: Some(format!("receiver-{}", randomstring(8))),
+        ..Default::default()
+    };
+    let mut recv_conn = match MqttConnection::new(conn_opts) {
+        Err(e) => return Err(format!("MqttConnection::new() recv error: {}", e)),
+        Ok(conn) => conn,
+    };
+    state.conn.push(Box::new(recv_conn.clone()));
+
+    let mut queues = vec![];
+    for reliable in [false, true] {
+        let opts = MqttQueueOptions {
+            name: name.to_string(),
+            reliable,
+            broadcast: true,
+            ..Default::default()
+        };
+        let queue = match MqttQueue::new(opts, &send_conn) {
+            Err(e) => return Err(format!("MqttQueue::new() send error: {}", e)),
+            Ok(q) => q,
+        };
+        state.queues.push(Box::new(queue.clone()));
+        queues.push(queue);
+    }
+    let opts = MqttQueueOptions {
+        name: name.to_string(),
+        is_recv: true,
+        broadcast: true,
+        ..Default::default()
+    };
+    let mut recv_queue = match MqttQueue::new(opts, &recv_conn) {
+        Err(e) => return Err(format!("MqttQueue::new() recv error: {}", e)),
+        Ok(q) => q,
+    };
+    state.queues.push(Box::new(recv_queue.clone()));
+    let handler = TestRecvMsgHandler {
+        recv_messages: Arc::new(Mutex::new(vec![])),
+        ack_errors: Arc::new(Mutex::new(vec![])),
+        use_nack: Arc::new(Mutex::new(false)),
+        nack_messages: Arc::new(Mutex::new(vec![])),
+        nack_errors: Arc::new(Mutex::new(vec![])),
+    };
+    recv_queue.set_msg_handler(Arc::new(handler.clone()));
+
+    if let Err(e) = send_conn.connect() {
+        return Err(format!("GmqConnection::connect() send error: {}", e));
+    }
+    if let Err(e) = recv_conn.connect() {
+        return Err(format!("GmqConnection::connect() recv error: {}", e));
+    }
+    for queue in queues.iter_mut() {
+        if let Err(e) = queue.connect() {
+            return Err(format!("GmqQueue::connect() send error: {}", e));
+        }
+    }
+    if let Err(e) = recv_queue.connect() {
+        return Err(format!("GmqQueue::connect() recv error: {}", e));
+    }
+
+    // Fixed header (1 byte) + Remaining Length (2 bytes) + topic length (2 bytes) + topic, and the
+    // packet identifier (2 bytes) for QoS 1.
+    let qos0_payload_len = MAX_PACKET_SIZE - 3 - 2 - name.len();
+    let qos1_payload_len = qos0_payload_len - 2;
+
+    state.runtime.block_on(async move {
+        for queue in queues.iter() {
+            wait_connected(queue, RETRY_10MS).await?;
+        }
+        wait_connected(&recv_queue, RETRY_10MS).await?;
+
+        let dataset = [
+            (&queues[0], qos0_payload_len + 1, false),
+            (&queues[1], qos1_payload_len + 1, false),
+            (&queues[1], qos0_payload_len, false),
+            (&queues[0], qos0_payload_len, true),
+            (&queues[1], qos1_payload_len, true),
+        ];
+        for (queue, len, ok) in dataset {
+            match queue.check_msg_size(len) {
+                Err(GmqError::PacketTooLarge) => {
+                    if ok {
+                        return Err(format!("check {} bytes should be ok", len));
+                    }
+                }
+                Err(e) => return Err(format!("check {} bytes with wrong error: {}", len, e)),
+                Ok(()) => {
+                    if !ok {
+                        return Err(format!("check {} bytes should error", len));
+                    }
+                }
+            }
+            match queue.send_msg(vec![b'a'; len]).await {
+                Err(e) => {
+                    if ok {
+                        return Err(format!("send {} bytes error: {}", len, e));
+                    }
+                    match e.downcast_ref::<GmqError>() {
+                        Some(GmqError::PacketTooLarge) => (),
+                        _ => return Err(format!("send {} bytes with wrong error: {}", len, e)),
+                    }
+                }
+                Ok(()) => {
+                    if !ok {
+                        return Err(format!("send {} bytes should error", len));
+                    }
+                }
+            }
+        }
+
+        // The connection will be closed and the messages will be lost if the packets exceed the
+        // limit of rumqttc.
+        let mut len = 0;
+        let mut retry = 150;
+        while retry > 0 {
+            time::sleep(Duration::from_millis(10)).await;
+            {
+                len = handler.recv_messages.lock().unwrap().len();
+            }
+            if len == 2 {
+                break;
+            }
+            retry = retry - 1;
+        }
+        if retry == 0 {
+            return Err(format!("received {}/2 messages", len));
+        }
+        let messages = handler.recv_messages.lock().unwrap();
+        let mut lens: Vec<usize> = messages.iter().map(|m| m.len()).collect();
+        lens.sort();
+        expect(lens).to_equal(vec![qos1_payload_len, qos0_payload_len])
     })
 }
 
