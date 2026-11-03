@@ -309,6 +309,7 @@ impl ApplicationMgr {
             extension: &data.extension,
         })?;
         let queue = { (*self.dldata.lock().unwrap()).clone() };
+        queue.check_msg_size(payload.len())?;
         task::spawn(async move {
             let _ = queue.send_msg(payload).await;
         });

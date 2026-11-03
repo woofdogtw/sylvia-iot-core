@@ -13,7 +13,7 @@ use serde_json::{self, Map, Value};
 use tokio::time;
 
 use general_mq::{
-    AmqpQueueOptions, MqttQueueOptions, Queue, QueueOptions,
+    AmqpQueueOptions, Error as GmqError, MqttQueueOptions, Queue, QueueOptions,
     queue::{
         EventHandler as MqEventHandler, GmqQueue, Message, MessageHandler as MqMessageHandler,
         Status as MqStatus,
@@ -631,6 +631,23 @@ pub fn uldata_wrong(context: &mut SpecContext<TestState>) -> Result<(), String> 
         };
         expect(mgr.send_uldata(&data).is_err()).equals(true)?;
 
+        let data = UlData {
+            time: Utc::now(),
+            network_addr: "addr".to_string(),
+            data: vec![0; 512 * 1024],
+            extension: None,
+        };
+        // The message exceeds the maximum packet size of MQTT.
+        if mq_engine == MqEngine::EMQX {
+            match mgr.send_uldata(&data) {
+                Err(e) => match e.downcast_ref::<GmqError>() {
+                    Some(GmqError::PacketTooLarge) => (),
+                    _ => return Err(format!("send too large uldata with wrong error: {}", e)),
+                },
+                Ok(()) => return Err("send too large uldata should error".to_string()),
+            }
+        }
+
         Ok(())
     })?;
 
@@ -1115,6 +1132,27 @@ pub fn dldata_result_wrong(context: &mut SpecContext<TestState>) -> Result<(), S
             message: None,
         };
         expect(mgr.send_dldata_result(&data).is_err()).equals(true)?;
+
+        let data = DlDataResult {
+            data_id: "1".to_string(),
+            status: 0,
+            message: Some("a".repeat(1024 * 1024)),
+        };
+        // The message exceeds the maximum packet size of MQTT.
+        if mq_engine == MqEngine::EMQX {
+            match mgr.send_dldata_result(&data) {
+                Err(e) => match e.downcast_ref::<GmqError>() {
+                    Some(GmqError::PacketTooLarge) => (),
+                    _ => {
+                        return Err(format!(
+                            "send too large dldata-result with wrong error: {}",
+                            e
+                        ));
+                    }
+                },
+                Ok(()) => return Err("send too large dldata-result should error".to_string()),
+            }
+        }
 
         Ok(())
     })?;

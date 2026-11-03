@@ -14,7 +14,7 @@ use serde_json::{self, Map, Value};
 use tokio::time;
 
 use general_mq::{
-    AmqpQueueOptions, MqttQueueOptions, Queue, QueueOptions,
+    AmqpQueueOptions, Error as GmqError, MqttQueueOptions, Queue, QueueOptions,
     queue::{
         EventHandler as MqEventHandler, GmqQueue, Message, MessageHandler as MqMessageHandler,
         Status as MqStatus,
@@ -918,6 +918,25 @@ pub fn dldata_wrong(context: &mut SpecContext<TestState>) -> Result<(), String> 
         data.network_code = None;
         data.network_addr = None;
         expect(mgr.send_dldata(&data).is_err()).equals(true)?;
+
+        let data = DlData {
+            correlation_id: "1".to_string(),
+            device_id: Some("device".to_string()),
+            network_code: None,
+            network_addr: None,
+            data: vec![0; 512 * 1024],
+            extension: None,
+        };
+        // The message exceeds the maximum packet size of MQTT.
+        if mq_engine == MqEngine::EMQX {
+            match mgr.send_dldata(&data) {
+                Err(e) => match e.downcast_ref::<GmqError>() {
+                    Some(GmqError::PacketTooLarge) => (),
+                    _ => return Err(format!("send too large dldata with wrong error: {}", e)),
+                },
+                Ok(()) => return Err("send too large dldata should error".to_string()),
+            }
+        }
 
         Ok(())
     })?;

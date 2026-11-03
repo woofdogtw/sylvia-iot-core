@@ -3,6 +3,7 @@
 use std::{
     env,
     net::SocketAddr,
+    path::Path,
     task::{Context, Poll},
 };
 
@@ -392,14 +393,25 @@ fn get_module_name(record: &Record<'_>) -> Option<String> {
             if module.eq(SYLVIA_IOT_LOGGER_NAME) || module.eq(ACTIX_LOGGER_NAME) {
                 return Some(module.to_string());
             }
+            // Sylvia-IoT crates may be built from crates.io (absolute registry paths), so use the
+            // crate name instead of the file path to tell them from framework crates.
+            let krate = module.split("::").next().unwrap_or(module);
+            let is_sylvia = krate.starts_with("sylvia_iot_") || krate.eq("general_mq");
             match record.file() {
                 None => Some(module.to_string()),
-                Some(file) => match file.contains("/.cargo/") {
-                    false => match record.line() {
-                        None => Some(file.to_string()),
-                        Some(line) => Some(format!("{}:{}", file, line)),
-                    },
-                    true => None,
+                Some(file) => match is_sylvia || !Path::new(file).is_absolute() {
+                    false => None,
+                    true => {
+                        // Shorten registry paths to `{crate}-{version}/src/...`.
+                        let file = match file.find("/registry/src/") {
+                            None => file,
+                            Some(i) => file[i..].splitn(5, '/').last().unwrap_or(file),
+                        };
+                        match record.line() {
+                            None => Some(file.to_string()),
+                            Some(line) => Some(format!("{}:{}", file, line)),
+                        }
+                    }
                 },
             }
         }

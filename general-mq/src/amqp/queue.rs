@@ -122,6 +122,12 @@ impl AmqpQueue {
         })
     }
 
+    /// To check if the message can be sent. AMQP has no message size limit in the client side, so
+    /// this always returns `Ok`.
+    pub fn check_msg_size(&self, _payload_len: usize) -> Result<(), Error> {
+        Ok(())
+    }
+
     /// To get the associated connection status.
     fn conn_status(&self) -> ConnStatus {
         self.conn.lock().unwrap().status()

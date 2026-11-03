@@ -2,7 +2,7 @@ use std::{
     error::Error as StdError,
     str,
     sync::{Arc, Mutex},
-    time::Duration,
+    time::{Duration, Instant},
 };
 
 use async_trait::async_trait;
@@ -54,7 +54,9 @@ struct TestRecvMsgHandler {
     pub nack_errors: Arc<Mutex<Vec<String>>>,
 }
 
-const RETRY_10MS: usize = 100;
+/// Queues check the connection status every `reconnect_millis` (default 1 second), so wait longer
+/// than that.
+const RETRY_10MS: usize = 300;
 
 #[async_trait]
 impl MessageHandler for TestDummyMsgHandler {
@@ -321,6 +323,52 @@ pub fn connect_after_connect(context: &mut SpecContext<TestState>) -> Result<(),
         return Err(format!("GmqQueue::connect() error: {}", e));
     }
     expect(queue.connect().is_ok()).to_equal(true)
+}
+
+/// Test `connect()` before the connection is connected, to check that `reconnect_millis` takes
+/// effect.
+pub fn connect_reconnect(context: &mut SpecContext<TestState>) -> Result<(), String> {
+    let mut state = context.state.borrow_mut();
+    let state = state.get_mut(STATE).unwrap();
+
+    let mut conn = match AmqpConnection::new(AmqpConnectionOptions::default()) {
+        Err(e) => return Err(format!("AmqpConnection::new() error: {}", e)),
+        Ok(conn) => conn,
+    };
+    state.conn = vec![Box::new(conn.clone())];
+    let opts = AmqpQueueOptions {
+        name: "name".to_string(),
+        reconnect_millis: 3000,
+        ..Default::default()
+    };
+    let mut queue = match AmqpQueue::new(opts, &conn) {
+        Err(e) => return Err(format!("AmqpQueue::new() error: {}", e)),
+        Ok(q) => q,
+    };
+    state.queues.push(Box::new(queue.clone()));
+    let conn: &mut dyn GmqConnection = &mut conn;
+    let queue: &mut dyn GmqQueue = &mut queue;
+
+    // The queue finds the connection not connected and waits `reconnect_millis` to check again.
+    let start = Instant::now();
+    if let Err(e) = queue.connect() {
+        return Err(format!("GmqQueue::connect() error: {}", e));
+    }
+    state
+        .runtime
+        .block_on(time::sleep(Duration::from_millis(100)));
+    if let Err(e) = conn.connect() {
+        return Err(format!("GmqConnection::connect() error: {}", e));
+    }
+    state.runtime.block_on(wait_connected(queue, 450))?;
+    let elapsed = start.elapsed().as_millis();
+    if elapsed < 2950 {
+        return Err(format!(
+            "connected after {} ms, expect about 3000 ms",
+            elapsed
+        ));
+    }
+    Ok(())
 }
 
 /// Test remove the handler.

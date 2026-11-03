@@ -19,7 +19,7 @@ use general_mq::{
     },
 };
 use sylvia_iot_broker::libs::mq::{
-    Connection, MgrStatus, Options,
+    Connection, MAX_DATA_MSG_SIZE, MgrStatus, Options,
     application::{ApplicationMgr, DlData, DlDataResp, DlDataResult, EventHandler, UlData},
 };
 
@@ -1093,24 +1093,38 @@ pub fn dldata_wrong(context: &mut SpecContext<TestState>) -> Result<(), String> 
         if let Err(e) = queue_send.send_msg(payload).await {
             return Err(format!("send DlData 7 error: {}", e));
         }
+        let send_data8 = AppDlData {
+            correlation_id: "8".to_string(),
+            network_code: Some("code".to_string()),
+            network_addr: Some("addr".to_string()),
+            data: "00".repeat(MAX_DATA_MSG_SIZE / 2),
+            ..Default::default()
+        };
+        let payload = match serde_json::to_vec(&send_data8) {
+            Err(e) => return Err(format!("generate payload 8 error: {}", e)),
+            Ok(data) => data,
+        };
+        if let Err(e) = queue_send.send_msg(payload).await {
+            return Err(format!("send DlData 8 error: {}", e));
+        }
 
         for _ in 0..WAIT_COUNT {
-            if queue_handler.recv_data_resp.lock().unwrap().len() < 8 {
+            if queue_handler.recv_data_resp.lock().unwrap().len() < 9 {
                 time::sleep(Duration::from_millis(WAIT_TICK)).await;
                 continue;
             }
         }
-        if queue_handler.recv_data_resp.lock().unwrap().len() < 8 {
+        if queue_handler.recv_data_resp.lock().unwrap().len() < 9 {
             return Err(format!(
                 "receive {} dldata-resp",
                 queue_handler.recv_data_resp.lock().unwrap().len()
             ));
         }
 
-        for i in 0..8 {
+        for i in 0..9 {
             let resp = { queue_handler.recv_data_resp.lock().unwrap().pop() };
             match resp {
-                None => return Err(format!("only receive {}/8 data", i)),
+                None => return Err(format!("only receive {}/9 data", i)),
                 Some(resp) => expect(resp.error).equals(Some("err_param".to_string()))?,
             }
         }
