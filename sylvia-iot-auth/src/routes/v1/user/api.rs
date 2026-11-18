@@ -10,6 +10,7 @@ use axum::{
 use chrono::{DateTime, Utc};
 use log::{error, warn};
 use serde_json::{self, Map, Value};
+use tokio::task;
 
 use sylvia_iot_corelib::{
     constants::ContentType,
@@ -66,7 +67,7 @@ pub async fn patch_user(
     const FN_NAME: &'static str = "patch_user";
 
     let user_id = user.user_id.as_str();
-    let updates = get_updates(&body.data)?;
+    let updates = get_updates(&body.data).await?;
     if let Err(e) = state.model.user().update(user_id, &updates).await {
         error!("[{}] {}", FN_NAME, e);
         return Err(ErrResp::ErrDb(Some(e.to_string())));
@@ -128,6 +129,7 @@ pub async fn post_admin_user(
     let now = Utc::now();
     let user_id = strings::random_id(&now, ID_RAND_LEN);
     let salt = strings::randomstring(SALT_LEN);
+    let password = hash_password(body.data.password.as_str(), salt.as_str()).await?;
     let user = User {
         user_id: user_id.clone(),
         account,
@@ -140,7 +142,7 @@ pub async fn post_admin_user(
         expired_at: body.expired_at,
         disabled_at: None,
         roles: HashMap::new(),
-        password: strings::password_hash(body.data.password.as_str(), salt.as_str()),
+        password,
         salt,
         name: match body.data.name.as_ref() {
             None => "".to_string(),
@@ -375,7 +377,8 @@ pub async fn patch_admin_user(
         Role::is_role(&user.roles, Role::ADMIN),
         &target_user,
         user.user_id.as_str(),
-    )?;
+    )
+    .await?;
     if let Err(e) = state.model.user().update(user_id, &updates).await {
         error!("[{}] update error: {}", FN_NAME, e);
         return Err(ErrResp::ErrDb(Some(e.to_string())));
@@ -404,7 +407,7 @@ pub async fn delete_admin_user(
     Ok(StatusCode::NO_CONTENT)
 }
 
-fn get_updates(body: &'_ request::PatchUserData) -> Result<Updates<'_>, ErrResp> {
+async fn get_updates(body: &'_ request::PatchUserData) -> Result<Updates<'_>, ErrResp> {
     let mut updates = Updates {
         ..Default::default()
     };
@@ -416,7 +419,7 @@ fn get_updates(body: &'_ request::PatchUserData) -> Result<Updates<'_>, ErrResp>
             )));
         }
         let salt = strings::randomstring(SALT_LEN);
-        updates.password = Some(strings::password_hash(password, salt.as_str()));
+        updates.password = Some(hash_password(password, salt.as_str()).await?);
         updates.salt = Some(salt);
         count += 1;
     }
@@ -514,7 +517,7 @@ fn get_list_fields(fields_cond: &Option<String>) -> GetAdminFields {
     ret_fields
 }
 
-fn get_admin_updates<'a>(
+async fn get_admin_updates<'a>(
     body: &'a request::PatchAdminUserBody,
     is_admin: bool,
     target_user: &User,
@@ -563,7 +566,7 @@ fn get_admin_updates<'a>(
                     )));
                 }
                 let salt = strings::randomstring(SALT_LEN);
-                updates.password = Some(strings::password_hash(password, salt.as_str()));
+                updates.password = Some(hash_password(password, salt.as_str()).await?);
                 updates.salt = Some(salt);
                 count += 1;
             }
@@ -687,6 +690,21 @@ fn user_transform(user: &User, fields_cond: &GetAdminFields) -> response::GetAdm
         roles: user.roles.clone(),
         name: user.name.clone(),
         info: user.info.clone(),
+    }
+}
+
+/// To hash the password in a blocking thread because it takes a long time.
+async fn hash_password(password: &str, salt: &str) -> Result<String, ErrResp> {
+    let password = password.to_string();
+    let salt = salt.to_string();
+    match task::spawn_blocking(move || strings::password_hash(password.as_str(), salt.as_str()))
+        .await
+    {
+        Err(e) => Err(ErrResp::ErrUnknown(Some(format!(
+            "hash password error: {}",
+            e
+        )))),
+        Ok(hash) => Ok(hash),
     }
 }
 

@@ -137,7 +137,7 @@ db.user.insertOne({
   expiredAt: null,
   disabledAt: null,
   roles: {"admin":true,"dev":false},
-  password: '27258772d876ffcef7ca2c75d6f4e6bcd81c203bd3e93c0791c736e5a2df4afa',
+  password: '$pbkdf2-sha256$i=600000$371a324ab13fe3a869e7d8732f776a3ba06241cc366e0d7b6f413e7469e26f08',
   salt: 'YsBsou2O',
   name: 'Admin',
   info: {}

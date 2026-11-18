@@ -2,32 +2,41 @@
 
 ## 0.4.8 - TBD
 
-### Added
-
-- **general-mq**: Add `max_packet_size` to `MqttConnectionOptions` (default 1 MiB).
-- **general-mq**: Add `Queue::check_msg_size()` to check the message size before sending.
-- **general-mq**: Support IPv6 hosts in MQTT/AMQP URIs (not supported by `mqtts`).
-
 ### Changed
 
 - Update dependencies.
-- **general-mq**: MQTT `send_msg()` returns `Error::PacketTooLarge` for oversized messages instead
-  of disconnecting. The new field of `MqttConnectionOptions` and the new variant of `Error` may
-  break code without `..Default::default()` or with exhaustive matching.
-- **sylvia-iot-broker**: Limit the uplink/downlink data message size to 1 MiB - 16 KiB. Oversized
-  downlink data is responded with `err_param`, and oversized uplink data is dropped.
+- **general-mq**: Limit MQTT packet sizes to avoid oversized messages disconnecting the shared
+  connection.
+    - Add `max_packet_size` (default 1 MiB) to `MqttConnectionOptions`. The default limit of
+      `rumqttc` (10 KiB) was exceeded easily.
+    - Add `Queue::check_msg_size()` to check the message size before sending.
+    - MQTT `send_msg()` returns `Error::PacketTooLarge` instead of disconnecting.
+    - The new field and the new variant of `Error` may break code without `..Default::default()` or
+      with exhaustive matching.
+- **sylvia-iot-corelib**: Strengthen password hashing.
+    - `strings::password_hash()` uses 600000 PBKDF2 rounds with the
+      `$pbkdf2-sha256$i=[rounds]$[hex]` format.
+    - Add `strings::password_verify()` and `strings::password_need_rehash()` to verify and upgrade
+      legacy hashes.
+- **sylvia-iot-auth**: Hash passwords in blocking threads, and re-hash legacy hashes after the user
+  logs in.
+- **sylvia-iot-broker**: Limit the uplink/downlink data message size to 1 MiB - 16 KiB.
+    - Oversized downlink data is responded with `err_param`.
+    - Oversized uplink data is dropped with a warning log.
 - **sylvia-iot-sdk**: `send_uldata()`, `send_dldata()` and `send_dldata_result()` return an error
   for MQTT messages exceeding the maximum packet size.
 
 ### Fixed
 
-- Fix for security scan.
-    - **general-mq**: Fix MQTT messages larger than 10 KiB disconnecting the shared connection.
-    - **general-mq**: Fix MQTT/AMQP IPv6 hosts being replaced with `localhost`.
-    - **general-mq**: Fix URI errors exposing passwords.
-    - **general-mq**: Fix MQTT/AMQP connection timeout.
-    - **sylvia-iot-broker**: Fix oversized data being dropped silently.
+- **general-mq**: Fix MQTT/AMQP IPv6 hosts being replaced with `localhost` (`mqtts` does not support
+  IPv6 hosts).
+- **general-mq**: Fix URI errors exposing passwords.
+- **general-mq**: Fix MQTT/AMQP connection timeout.
 - **general-mq**: Fix doc tests.
+- **sylvia-iot-corelib**: Fix logs exposing secrets.
+    - Only keep the query keys of OAuth2 APIs.
+    - Escape control and invisible characters in the log4j style.
+- **sylvia-iot-auth**: Fix low-entropy authorization codes, tokens and login session IDs.
 
 ## 0.4.7 - 2026-10-16
 

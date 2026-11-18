@@ -26,6 +26,9 @@ pub struct Primitive {
     model: Arc<dyn Model>,
 }
 
+/// The length of authorization codes and tokens.
+pub(crate) const SECRET_LEN: usize = 64;
+
 impl Primitive {
     pub fn new(model: Arc<dyn Model>) -> Self {
         Primitive {
@@ -41,7 +44,7 @@ impl Authorizer for Primitive {
 
         let scope = grant.scope.to_string();
         let code = AuthorizationCode {
-            code: strings::random_id_sha(&grant.until, 4),
+            code: strings::randomstring(SECRET_LEN),
             expires_at: match TimeDelta::try_seconds(authorization_code::EXPIRES) {
                 None => panic!("{}", E_UNKNOWN),
                 Some(t) => Utc::now() + t,
@@ -123,9 +126,9 @@ impl Issuer for Primitive {
         const FN_NAME: &'static str = "issue";
 
         let now = Utc::now();
-        let refresh_token = strings::random_id_sha(&now, 8);
+        let refresh_token = strings::randomstring(SECRET_LEN);
         let access = AccessToken {
-            access_token: strings::random_id_sha(&now, 8),
+            access_token: strings::randomstring(SECRET_LEN),
             refresh_token: Some(refresh_token.clone()),
             expires_at: match TimeDelta::try_seconds(access_token::EXPIRES) {
                 None => panic!("{}", E_UNKNOWN),
