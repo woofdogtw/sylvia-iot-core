@@ -196,7 +196,7 @@ impl NetCtrlMsgOp {
     const DEL_DEVICE_RANGE: &'static str = "del-device-range";
 }
 
-const BULK_MAX: usize = 1024;
+const BULK_MAX: u128 = 1024;
 const LIST_LIMIT_DEFAULT: u64 = 100;
 const LIST_CURSOR_MAX: u64 = 100;
 const ID_RAND_LEN: usize = 8;
@@ -471,7 +471,7 @@ pub async fn post_device_bulk(
         return Err(ErrResp::ErrParam(Some(
             "`networkAddrs` must with at least one address".to_string(),
         )));
-    } else if body.data.network_addrs.len() > BULK_MAX {
+    } else if body.data.network_addrs.len() as u128 > BULK_MAX {
         return Err(ErrResp::ErrParam(Some(format!(
             "`networkAddrs` cannot more than {}",
             BULK_MAX
@@ -604,7 +604,7 @@ pub async fn post_device_bulk_del(
         return Err(ErrResp::ErrParam(Some(
             "`networkAddrs` must with at least one address".to_string(),
         )));
-    } else if body.data.network_addrs.len() > BULK_MAX {
+    } else if body.data.network_addrs.len() as u128 > BULK_MAX {
         return Err(ErrResp::ErrParam(Some(format!(
             "`networkAddrs` cannot more than {}",
             BULK_MAX
@@ -706,7 +706,7 @@ pub async fn post_device_range(
         Err(e) => return Err(ErrResp::ErrParam(Some(e.to_string()))),
         Ok(addr) => addr,
     };
-    let mut end_addr = match hex_addr_to_u128(body.data.end_addr.as_str()) {
+    let end_addr = match hex_addr_to_u128(body.data.end_addr.as_str()) {
         Err(e) => return Err(ErrResp::ErrParam(Some(e.to_string()))),
         Ok(addr) => addr,
     };
@@ -714,7 +714,7 @@ pub async fn post_device_range(
         return Err(ErrResp::ErrParam(Some(
             "`startAddr` cannot larger than `endAddr`".to_string(),
         )));
-    } else if (end_addr - start_addr) as usize >= BULK_MAX {
+    } else if end_addr - start_addr >= BULK_MAX {
         return Err(ErrResp::ErrParam(Some(format!(
             "numbers between `startAddr` and `endAddr` cannot more than {}",
             BULK_MAX
@@ -745,9 +745,8 @@ pub async fn post_device_range(
     };
 
     let mut devices = vec![];
-    end_addr += 1;
     let addr_len = body.data.start_addr.len();
-    for addr in start_addr..end_addr {
+    for addr in start_addr..=end_addr {
         let now = Utc::now();
         let network_addr = u128_to_addr(addr, addr_len);
         let device = Device {
@@ -843,7 +842,7 @@ pub async fn post_device_range_del(
         Err(e) => return Err(ErrResp::ErrParam(Some(e.to_string()))),
         Ok(addr) => addr,
     };
-    let mut end_addr = match hex_addr_to_u128(body.data.end_addr.as_str()) {
+    let end_addr = match hex_addr_to_u128(body.data.end_addr.as_str()) {
         Err(e) => return Err(ErrResp::ErrParam(Some(e.to_string()))),
         Ok(addr) => addr,
     };
@@ -851,7 +850,7 @@ pub async fn post_device_range_del(
         return Err(ErrResp::ErrParam(Some(
             "`startAddr` cannot larger than `endAddr`".to_string(),
         )));
-    } else if (end_addr - start_addr) as usize >= BULK_MAX {
+    } else if end_addr - start_addr >= BULK_MAX {
         return Err(ErrResp::ErrParam(Some(format!(
             "numbers between `startAddr` and `endAddr` cannot more than {}",
             BULK_MAX
@@ -882,9 +881,8 @@ pub async fn post_device_range_del(
     };
 
     let mut network_addrs = vec![];
-    end_addr += 1;
     let addr_len = body.data.start_addr.len();
-    for addr in start_addr..end_addr {
+    for addr in start_addr..=end_addr {
         network_addrs.push(u128_to_addr(addr, addr_len));
     }
     let rm_cond = request::PostDeviceBulkData {

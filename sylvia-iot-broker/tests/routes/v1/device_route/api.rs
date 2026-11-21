@@ -1277,6 +1277,28 @@ pub fn post_range_invalid_param(context: &mut SpecContext<TestState>) -> Result<
 
     test_post_range_invalid_param(runtime, &routes_state, TOKEN_MANAGER, true, None)?;
 
+    // 1024 addresses (more than the maximum).
+    let param = request::PostDeviceRouteRange {
+        data: request::PostDeviceRouteRangeData {
+            application_id: "manager".to_string(),
+            network_id: "manager".to_string(),
+            start_addr: "0000".to_string(),
+            end_addr: "0400".to_string(),
+        },
+    };
+    test_post_range_invalid_param(runtime, &routes_state, TOKEN_MANAGER, true, Some(&param))?;
+
+    // 2^64 + 6 addresses, which are 6 addresses when truncated to 64-bit integers.
+    let param = request::PostDeviceRouteRange {
+        data: request::PostDeviceRouteRangeData {
+            application_id: "manager".to_string(),
+            network_id: "manager".to_string(),
+            start_addr: "00000000000000000000000000000000".to_string(),
+            end_addr: "00000000000000010000000000000005".to_string(),
+        },
+    };
+    test_post_range_invalid_param(runtime, &routes_state, TOKEN_MANAGER, true, Some(&param))?;
+
     let param = request::PostDeviceRouteRange {
         data: request::PostDeviceRouteRangeData {
             application_id: "".to_string(),
@@ -1644,6 +1666,28 @@ pub fn post_range_del_invalid_param(context: &mut SpecContext<TestState>) -> Res
     let routes_state = state.routes_state.as_ref().unwrap();
 
     test_post_range_invalid_param(runtime, &routes_state, TOKEN_MANAGER, false, None)?;
+
+    // 1024 addresses (more than the maximum).
+    let param = request::PostDeviceRouteRange {
+        data: request::PostDeviceRouteRangeData {
+            application_id: "manager".to_string(),
+            network_id: "manager".to_string(),
+            start_addr: "0000".to_string(),
+            end_addr: "0400".to_string(),
+        },
+    };
+    test_post_range_invalid_param(runtime, &routes_state, TOKEN_MANAGER, false, Some(&param))?;
+
+    // 2^64 + 6 addresses, which are 6 addresses when truncated to 64-bit integers.
+    let param = request::PostDeviceRouteRange {
+        data: request::PostDeviceRouteRangeData {
+            application_id: "manager".to_string(),
+            network_id: "manager".to_string(),
+            start_addr: "00000000000000000000000000000000".to_string(),
+            end_addr: "00000000000000010000000000000005".to_string(),
+        },
+    };
+    test_post_range_invalid_param(runtime, &routes_state, TOKEN_MANAGER, false, Some(&param))?;
 
     let param = request::PostDeviceRouteRange {
         data: request::PostDeviceRouteRangeData {

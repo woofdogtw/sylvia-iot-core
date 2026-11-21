@@ -26,6 +26,7 @@
 - **sylvia-iot-broker**: Limit the uplink/downlink data message size to 1 MiB - 16 KiB.
     - Oversized downlink data is responded with `err_param`.
     - Oversized uplink data is dropped with a warning log.
+- **sylvia-iot-broker**: Add the missing profile sort test of the device list API.
 - **sylvia-iot-sdk**: `send_uldata()`, `send_dldata()` and `send_dldata_result()` return an error
   for MQTT messages exceeding the maximum packet size.
 
@@ -49,6 +50,13 @@
 - **sylvia-iot-auth**: Fix login sessions never expiring with SQLite and not being removed after
   denying.
 - **sylvia-iot-auth**: Fix the login response time revealing whether the user exists.
+- **sylvia-iot-broker**: Fix the application/network APIs exposing the message queue management
+  credentials in `hostUri` to unit members.
+    - Updating `hostUri` without credentials keeps the current credentials if the other parts of
+      the URI are not changed.
+- **sylvia-iot-broker**: Fix the address range APIs accepting huge ranges because of integer
+  truncation.
+- **sylvia-iot-broker**: Fix networks reporting results of downlink data sent to other networks.
 
 ## 0.4.7 - 2026-10-16
 
