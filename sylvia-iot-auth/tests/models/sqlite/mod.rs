@@ -84,6 +84,10 @@ pub fn suite() -> Suite<TestState> {
                 context.it("get()", login_session::get);
                 context.it("add()", login_session::add);
                 context.it("add() with duplicate session", login_session::add_dup);
+                context.it(
+                    "add() removes expired sessions",
+                    login_session::add_remove_expired,
+                );
                 context.it("del() by session_id", login_session::del_by_session);
                 context.it("del() twice", login_session::del_twice);
                 context.it("del() by user_id", login_session::del_by_user_id);

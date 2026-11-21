@@ -10,7 +10,6 @@ use axum::{
 use chrono::{DateTime, Utc};
 use log::{error, warn};
 use serde_json::{self, Map, Value};
-use tokio::task;
 
 use sylvia_iot_corelib::{
     constants::ContentType,
@@ -24,9 +23,12 @@ use super::{
     super::super::{ErrReq, State as AppState},
     request, response,
 };
-use crate::models::{
-    Model, access_token, authorization_code, refresh_token,
-    user::{ListOptions, ListQueryCond, QueryCond, SortCond, SortKey, Updates, User},
+use crate::{
+    libs::password,
+    models::{
+        Model, access_token, authorization_code, refresh_token,
+        user::{ListOptions, ListQueryCond, QueryCond, SortCond, SortKey, Updates, User},
+    },
 };
 
 #[derive(Default)]
@@ -38,7 +40,6 @@ struct GetAdminFields {
 const LIST_LIMIT_DEFAULT: u64 = 100;
 const LIST_CURSOR_MAX: u64 = 100;
 const ID_RAND_LEN: usize = 8;
-const SALT_LEN: usize = 8;
 
 /// `GET /{base}/api/v1/user`
 pub async fn get_user(Extension(user): Extension<User>) -> impl IntoResponse {
@@ -128,7 +129,7 @@ pub async fn post_admin_user(
 
     let now = Utc::now();
     let user_id = strings::random_id(&now, ID_RAND_LEN);
-    let salt = strings::randomstring(SALT_LEN);
+    let salt = strings::randomstring(password::SALT_LEN);
     let password = hash_password(body.data.password.as_str(), salt.as_str()).await?;
     let user = User {
         user_id: user_id.clone(),
@@ -383,7 +384,8 @@ pub async fn patch_admin_user(
         error!("[{}] update error: {}", FN_NAME, e);
         return Err(ErrResp::ErrDb(Some(e.to_string())));
     }
-    if updates.password.is_some() {
+    // Revoke tokens when the password is changed or the user is disabled.
+    if updates.password.is_some() || matches!(updates.disabled_at, Some(Some(_))) {
         remove_tokens(&FN_NAME, &state.model, user_id).await;
     }
     Ok(StatusCode::NO_CONTENT)
@@ -418,7 +420,7 @@ async fn get_updates(body: &'_ request::PatchUserData) -> Result<Updates<'_>, Er
                 "`password` must at least one character".to_string(),
             )));
         }
-        let salt = strings::randomstring(SALT_LEN);
+        let salt = strings::randomstring(password::SALT_LEN);
         updates.password = Some(hash_password(password, salt.as_str()).await?);
         updates.salt = Some(salt);
         count += 1;
@@ -565,7 +567,7 @@ async fn get_admin_updates<'a>(
                         "`password` must at least one character".to_string(),
                     )));
                 }
-                let salt = strings::randomstring(SALT_LEN);
+                let salt = strings::randomstring(password::SALT_LEN);
                 updates.password = Some(hash_password(password, salt.as_str()).await?);
                 updates.salt = Some(salt);
                 count += 1;
@@ -693,17 +695,10 @@ fn user_transform(user: &User, fields_cond: &GetAdminFields) -> response::GetAdm
     }
 }
 
-/// To hash the password in a blocking thread because it takes a long time.
+/// To hash the password with [`password::hash`].
 async fn hash_password(password: &str, salt: &str) -> Result<String, ErrResp> {
-    let password = password.to_string();
-    let salt = salt.to_string();
-    match task::spawn_blocking(move || strings::password_hash(password.as_str(), salt.as_str()))
-        .await
-    {
-        Err(e) => Err(ErrResp::ErrUnknown(Some(format!(
-            "hash password error: {}",
-            e
-        )))),
+    match password::hash(password, salt).await {
+        Err(e) => Err(ErrResp::ErrUnknown(Some(e))),
         Ok(hash) => Ok(hash),
     }
 }

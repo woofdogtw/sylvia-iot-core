@@ -19,6 +19,7 @@ use crate::models::{
     authorization_code::{self, AuthorizationCode, QueryCond as AuthorizationCodeQuery},
     client::QueryCond,
     refresh_token::{self, QueryCond as RefreshTokenQuery, RefreshToken},
+    user::QueryCond as UserQueryCond,
 };
 
 #[derive(Clone)]
@@ -255,6 +256,29 @@ impl Issuer for Primitive {
         };
         if refresh.expires_at < Utc::now() {
             return Ok(None);
+        }
+        // Disabled or expired users cannot refresh tokens.
+        let cond = UserQueryCond {
+            user_id: Some(refresh.user_id.as_str()),
+            account: None,
+        };
+        match self.model.user().get(&cond).await {
+            Err(e) => {
+                error!("[{}] get user error: {}", FN_NAME, e);
+                return Err(());
+            }
+            Ok(user) => match user {
+                None => return Ok(None),
+                Some(user) => {
+                    if user.disabled_at.is_some()
+                        || user
+                            .expired_at
+                            .is_some_and(|expired_at| Utc::now() >= expired_at)
+                    {
+                        return Ok(None);
+                    }
+                }
+            },
         }
 
         Ok(Some(Grant {

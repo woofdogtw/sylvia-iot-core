@@ -138,7 +138,13 @@ where
         match *req.method() {
             Method::GET => match Query::<AuthorizationRequest>::from_request(req, state).await {
                 Err(e) => Err(OAuth2Error::new_request(Some(e.to_string())).into_response()),
-                Ok(request) => Ok(request.0),
+                Ok(request) => {
+                    // Only the grant page can allow the authorization with POST, so that other
+                    // pages cannot skip the grant page by redirecting with `allow`.
+                    let mut request = request.0;
+                    request.allow = None;
+                    Ok(request)
+                }
             },
             Method::POST => match Form::<AuthorizationRequest>::from_request(req, state).await {
                 Err(e) => Err(OAuth2Error::new_request(Some(e.to_string())).into_response()),

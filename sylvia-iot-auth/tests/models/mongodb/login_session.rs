@@ -17,6 +17,10 @@ struct Schema {
     expires_at: DateTime,
     #[serde(rename = "userId")]
     user_id: String,
+    #[serde(rename = "clientId", skip_serializing_if = "Option::is_none")]
+    client_id: Option<String>,
+    #[serde(rename = "redirectUri", skip_serializing_if = "Option::is_none")]
+    redirect_uri: Option<String>,
     #[serde(rename = "createdAt")]
     created_at: DateTime,
 }
@@ -58,6 +62,8 @@ pub fn get(context: &mut SpecContext<TestState>) -> Result<(), String> {
         session_id: "session_id_get_none".to_string(),
         expires_at: now.into(),
         user_id: "user_id_get".to_string(),
+        client_id: None,
+        redirect_uri: None,
         created_at: now.into(),
     };
     if let Err(e) =
@@ -84,11 +90,16 @@ pub fn get(context: &mut SpecContext<TestState>) -> Result<(), String> {
     expect(session.session_id).to_equal("session_id_get_none".to_string())?;
     expect(session.expires_at).to_equal(now)?;
     expect(session.user_id).to_equal("user_id_get".to_string())?;
+    // Sessions created by previous versions have no client.
+    expect(session.client_id).to_equal("".to_string())?;
+    expect(session.redirect_uri).to_equal("".to_string())?;
 
     let item = Schema {
         session_id: "session_id_get_some".to_string(),
         expires_at: now.into(),
         user_id: "user_id_get".to_string(),
+        client_id: Some("client_id_get".to_string()),
+        redirect_uri: Some("http://localhost/redirect".to_string()),
         created_at: now.into(),
     };
     if let Err(e) =
@@ -106,7 +117,9 @@ pub fn get(context: &mut SpecContext<TestState>) -> Result<(), String> {
     };
     expect(session.session_id).to_equal("session_id_get_some".to_string())?;
     expect(session.expires_at).to_equal(now)?;
-    expect(session.user_id).to_equal("user_id_get".to_string())
+    expect(session.user_id).to_equal("user_id_get".to_string())?;
+    expect(session.client_id).to_equal("client_id_get".to_string())?;
+    expect(session.redirect_uri).to_equal("http://localhost/redirect".to_string())
 }
 
 /// Test `add()`.

@@ -7,16 +7,26 @@ use axum::{
     routing,
 };
 use axum_test::TestServer;
+use chrono::{TimeDelta, Utc};
 use laboratory::{SpecContext, expect};
 use tokio::runtime::Runtime;
 
-use sylvia_iot_auth::routes::{
-    self,
-    oauth2::middleware::{AuthService, RoleScopeType},
+use sylvia_iot_auth::{
+    models::{
+        access_token::AccessToken,
+        login_session::LoginSession,
+        refresh_token::RefreshToken,
+        user::{QueryCond as UserQueryCond, Updates as UserUpdates},
+    },
+    routes::{
+        self,
+        oauth2::middleware::{AuthService, RoleScopeType},
+    },
 };
+use sylvia_iot_corelib::strings;
 
 use super::{
-    super::read_location,
+    super::{libs::create_user, read_location},
     STATE, TestState, request,
     response::{self, OAuth2Error},
 };
@@ -249,7 +259,24 @@ pub fn get_login(context: &mut SpecContext<TestState>) -> Result<(), String> {
         None,
         StatusCode::OK,
         "",
-    )
+    )?;
+
+    // The page uses the validated state, so unknown parameters are dropped and the content is
+    // encoded.
+    let app = Router::new().merge(routes::new_service(routes_state));
+    let server = TestServer::new(app);
+    let raw_state = format!(
+        "response_type=code&client_id=public&{}&state=\"><script>alert(1)</script>&allow=yes",
+        serde_urlencoded::to_string([("redirect_uri", crate::TEST_REDIRECT_URI)]).unwrap()
+    );
+    let req = server
+        .get("/auth/oauth2/login")
+        .add_query_param("state", raw_state.as_str());
+    let resp = runtime.block_on(async { req.await });
+    expect(resp.status_code()).to_equal(StatusCode::OK)?;
+    let body = resp.text();
+    expect(body.contains("allow=yes")).to_equal(false)?;
+    expect(body.contains("<script>alert(1)</script>")).to_equal(false)
 }
 
 pub fn post_login(context: &mut SpecContext<TestState>) -> Result<(), String> {
@@ -382,7 +409,25 @@ pub fn post_login(context: &mut SpecContext<TestState>) -> Result<(), String> {
         "",
     )?;
 
-    Ok(())
+    // The redirection uses the validated state, so unknown parameters are dropped.
+    let app = Router::new().merge(routes::new_service(routes_state));
+    let server = TestServer::new(app);
+    let raw_state = format!(
+        "response_type=code&client_id=public&{}&allow=yes",
+        serde_urlencoded::to_string([("redirect_uri", crate::TEST_REDIRECT_URI)]).unwrap()
+    );
+    let req = server
+        .post("/auth/oauth2/login")
+        .form(&request::PostLoginRequest {
+            account: "user".to_string(),
+            password: "user".to_string(),
+            state: raw_state,
+        });
+    let resp = runtime.block_on(async { req.await });
+    expect(resp.status_code()).to_equal(StatusCode::FOUND)?;
+    let location = read_location(&resp)?;
+    expect(location.as_str().contains("allow=")).to_equal(false)?;
+    expect(location.as_str().contains("session_id=")).to_equal(true)
 }
 
 pub fn get_authorize(context: &mut SpecContext<TestState>) -> Result<(), String> {
@@ -527,7 +572,28 @@ pub fn get_authorize(context: &mut SpecContext<TestState>) -> Result<(), String>
         state: None,
         session_id: session_id.clone(),
     };
-    test_get_authorize(runtime, routes_state, Some(&params), StatusCode::OK, "")
+    test_get_authorize(runtime, routes_state, Some(&params), StatusCode::OK, "")?;
+
+    // GET cannot allow the authorization, and the content in the grant page is HTML-escaped.
+    let params = request::GetAuthorizeRequest {
+        response_type: "code".to_string(),
+        redirect_uri: crate::TEST_REDIRECT_URI.to_string(),
+        client_id: "public".to_string(),
+        scope: None,
+        state: Some("\"><script>alert(1)</script>".to_string()),
+        session_id: session_id.clone(),
+    };
+    let app = Router::new().merge(routes::new_service(routes_state));
+    let server = TestServer::new(app);
+    let req = server
+        .get("/auth/oauth2/authorize")
+        .add_query_params(&params)
+        .add_query_param("allow", ALLOW_VALUE);
+    let resp = runtime.block_on(async { req.await });
+    expect(resp.status_code()).to_equal(StatusCode::OK)?;
+    let body = resp.text();
+    expect(body.contains("<script>alert(1)</script>")).to_equal(false)?;
+    expect(body.contains("&quot;&gt;&lt;script&gt;")).to_equal(true)
 }
 
 pub fn post_authorize(context: &mut SpecContext<TestState>) -> Result<(), String> {
@@ -754,7 +820,14 @@ pub fn post_authorize(context: &mut SpecContext<TestState>) -> Result<(), String
         session_id: session_id.clone(),
         allow: Some(ALLOW_VALUE.to_string()),
     };
-    test_post_authorize(runtime, routes_state, Some(&params), StatusCode::FOUND, "")?;
+    // The session is removed after denying.
+    test_post_authorize(
+        runtime,
+        routes_state,
+        Some(&params),
+        StatusCode::BAD_REQUEST,
+        INVALID_AUTH,
+    )?;
 
     let params = request::GetAuthRequest {
         response_type: "code".to_string(),
@@ -776,6 +849,7 @@ pub fn post_authorize(context: &mut SpecContext<TestState>) -> Result<(), String
         Some(session_id) => session_id,
     };
 
+    // The session of the public client cannot be used for the private client.
     let params = request::PostAuthorizeRequest {
         response_type: "code".to_string(),
         redirect_uri: crate::TEST_REDIRECT_URI.to_string(),
@@ -785,16 +859,221 @@ pub fn post_authorize(context: &mut SpecContext<TestState>) -> Result<(), String
         session_id: session_id.clone(),
         allow: Some(ALLOW_VALUE.to_string()),
     };
-    test_post_authorize(runtime, routes_state, Some(&params), StatusCode::FOUND, "")?;
-
     test_post_authorize(
         runtime,
         routes_state,
         Some(&params),
         StatusCode::BAD_REQUEST,
-        "invalid_auth",
+        INVALID_AUTH,
     )?;
 
+    // The session can be used only once.
+    let login_params = request::GetAuthRequest {
+        response_type: "code".to_string(),
+        redirect_uri: crate::TEST_REDIRECT_URI.to_string(),
+        client_id: "private".to_string(),
+        scope: Some("scope1".to_string()),
+        state: None,
+    };
+    let session_id = match test_post_login(
+        runtime,
+        routes_state,
+        Some(&login_params),
+        None,
+        ("user", "user"),
+        StatusCode::FOUND,
+        "",
+    )? {
+        None => return Err("get no session ID".to_string()),
+        Some(session_id) => session_id,
+    };
+    let params = request::PostAuthorizeRequest {
+        session_id,
+        ..params
+    };
+    test_post_authorize(runtime, routes_state, Some(&params), StatusCode::FOUND, "")?;
+    test_post_authorize(
+        runtime,
+        routes_state,
+        Some(&params),
+        StatusCode::BAD_REQUEST,
+        INVALID_AUTH,
+    )?;
+
+    // Expired sessions cannot be used.
+    let session = LoginSession {
+        session_id: "session_id_expired".to_string(),
+        expires_at: Utc::now() - TimeDelta::try_minutes(1).unwrap(),
+        user_id: "user".to_string(),
+        client_id: "private".to_string(),
+        redirect_uri: crate::TEST_REDIRECT_URI.to_string(),
+    };
+    if let Err(e) =
+        runtime.block_on(async { routes_state.model.login_session().add(&session).await })
+    {
+        return Err(format!("add expired session error: {}", e));
+    }
+    let params = request::PostAuthorizeRequest {
+        session_id: session.session_id.clone(),
+        ..params
+    };
+    test_post_authorize(
+        runtime,
+        routes_state,
+        Some(&params),
+        StatusCode::BAD_REQUEST,
+        INVALID_AUTH,
+    )?;
+
+    Ok(())
+}
+
+pub fn user_status(context: &mut SpecContext<TestState>) -> Result<(), String> {
+    let state = context.state.borrow();
+    let state = state.get(STATE).unwrap();
+    let runtime = state.runtime.as_ref().unwrap();
+    let routes_state = state.routes_state.as_ref().unwrap();
+    let model = routes_state.model.clone();
+
+    // A user with the legacy password hash (10000 rounds) of `legacy`.
+    let mut user = create_user("legacy", Utc::now(), HashMap::new());
+    user.password = "83aa57aeac5fbf0d4e25fb944629c7bb915bd874c112e95bd3abe7b2075086d0".to_string();
+    if let Err(e) = runtime.block_on(async { model.user().add(&user).await }) {
+        return Err(format!("add user error: {}", e));
+    }
+
+    // The legacy hash is upgraded after logging in.
+    let params = request::GetAuthRequest {
+        response_type: "code".to_string(),
+        redirect_uri: crate::TEST_REDIRECT_URI.to_string(),
+        client_id: "public".to_string(),
+        scope: None,
+        state: None,
+    };
+    // The first login upgrades the hash with a new salt, and the second login keeps them.
+    let mut upgraded: Option<(String, String)> = None;
+    for _ in 0..2 {
+        test_post_login(
+            runtime,
+            routes_state,
+            Some(&params),
+            None,
+            ("legacy", "legacy"),
+            StatusCode::FOUND,
+            "",
+        )?;
+        let cond = UserQueryCond {
+            user_id: Some("legacy"),
+            account: None,
+        };
+        let user = match runtime.block_on(async { model.user().get(&cond).await }) {
+            Err(e) => return Err(format!("get user error: {}", e)),
+            Ok(None) => return Err("get no user".to_string()),
+            Ok(Some(user)) => user,
+        };
+        expect(user.salt.as_str()).to_not_equal("legacy")?;
+        expect(user.password.starts_with("$pbkdf2-sha256$i=600000$")).to_equal(true)?;
+        expect(strings::password_verify(
+            "legacy",
+            user.salt.as_str(),
+            user.password.as_str(),
+        ))
+        .to_equal(true)?;
+        match upgraded.as_ref() {
+            None => upgraded = Some((user.salt, user.password)),
+            Some((salt, hash)) => {
+                expect(user.salt.as_str()).to_equal(salt.as_str())?;
+                expect(user.password.as_str()).to_equal(hash.as_str())?;
+            }
+        }
+    }
+
+    // Tokens of disabled or expired users are invalid.
+    let now = Utc::now();
+    let access = AccessToken {
+        access_token: "access_token_status".to_string(),
+        refresh_token: Some("refresh_token_status".to_string()),
+        expires_at: now + TimeDelta::try_hours(1).unwrap(),
+        scope: None,
+        client_id: "public".to_string(),
+        redirect_uri: crate::TEST_REDIRECT_URI.to_string(),
+        user_id: "legacy".to_string(),
+    };
+    let refresh = RefreshToken {
+        refresh_token: "refresh_token_status".to_string(),
+        expires_at: now + TimeDelta::try_hours(1).unwrap(),
+        scope: None,
+        client_id: "public".to_string(),
+        redirect_uri: crate::TEST_REDIRECT_URI.to_string(),
+        user_id: "legacy".to_string(),
+    };
+    if let Err(e) = runtime.block_on(async {
+        model.access_token().add(&access).await?;
+        model.refresh_token().add(&refresh).await
+    }) {
+        return Err(format!("add token error: {}", e));
+    }
+    let app = Router::new().merge(routes::new_service(routes_state));
+    let server = TestServer::new(app);
+    let tokeninfo = |expect_status: StatusCode| -> Result<(), String> {
+        let req = server.get("/auth/api/v1/auth/tokeninfo").add_header(
+            header::AUTHORIZATION,
+            HeaderValue::from_str("Bearer access_token_status").unwrap(),
+        );
+        let resp = runtime.block_on(async { req.await });
+        expect(resp.status_code()).to_equal(expect_status)
+    };
+    let mut refresh_params = request::PostRefreshRequest {
+        grant_type: "refresh_token".to_string(),
+        refresh_token: "refresh_token_status".to_string(),
+        scope: None,
+        client_id: None,
+    };
+    tokeninfo(StatusCode::OK)?;
+
+    let updates_dataset = [
+        UserUpdates {
+            disabled_at: Some(Some(now)),
+            ..Default::default()
+        },
+        UserUpdates {
+            disabled_at: Some(None),
+            expired_at: Some(Some(now - TimeDelta::try_minutes(1).unwrap())),
+            ..Default::default()
+        },
+    ];
+    for updates in updates_dataset.iter() {
+        if let Err(e) = runtime.block_on(async { model.user().update("legacy", updates).await }) {
+            return Err(format!("update user error: {}", e));
+        }
+        tokeninfo(StatusCode::UNAUTHORIZED)?;
+        test_post_refresh(
+            runtime,
+            routes_state,
+            Some(&mut refresh_params),
+            None,
+            StatusCode::BAD_REQUEST,
+            INVALID_GRANT,
+        )?;
+    }
+
+    // The tokens are valid again after the user is enabled.
+    let updates = UserUpdates {
+        expired_at: Some(None),
+        ..Default::default()
+    };
+    if let Err(e) = runtime.block_on(async { model.user().update("legacy", &updates).await }) {
+        return Err(format!("update user error: {}", e));
+    }
+    tokeninfo(StatusCode::OK)?;
+    test_post_refresh(
+        runtime,
+        routes_state,
+        Some(&mut refresh_params),
+        None,
+        StatusCode::OK,
+        "",
+    )?;
     Ok(())
 }
 
@@ -1850,13 +2129,18 @@ fn test_post_token(
         None => server.post("/auth/oauth2/token"),
         Some(params) => {
             if params.code.as_str() == "public" || params.code.as_str() == "private" {
-                let auth_params = request::GetAuthRequest {
+                // The login session is bound to the client, so log in with the same client.
+                let mut auth_params = request::GetAuthRequest {
                     response_type: "code".to_string(),
                     redirect_uri: crate::TEST_REDIRECT_URI.to_string(),
                     client_id: "public".to_string(),
                     scope: None,
                     state: None,
                 };
+                if params.code.as_str() == "private" {
+                    auth_params.client_id = "private".to_string();
+                    auth_params.scope = Some("scope1".to_string());
+                }
                 let session_id = match test_post_login(
                     runtime,
                     state,

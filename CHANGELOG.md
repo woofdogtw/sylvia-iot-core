@@ -18,8 +18,11 @@
       `$pbkdf2-sha256$i=[rounds]$[hex]` format.
     - Add `strings::password_verify()` and `strings::password_need_rehash()` to verify and upgrade
       legacy hashes.
-- **sylvia-iot-auth**: Hash passwords in blocking threads, and re-hash legacy hashes after the user
-  logs in.
+- **sylvia-iot-auth**: Hash passwords in blocking threads, and re-hash legacy hashes with new salts
+  after the user logs in.
+    - Limit concurrent password hashing to the number of CPUs.
+- **sylvia-iot-auth**: Bind login sessions to the client. Login sessions record the client ID and
+  the redirect URI, and the authorization checks them.
 - **sylvia-iot-broker**: Limit the uplink/downlink data message size to 1 MiB - 16 KiB.
     - Oversized downlink data is responded with `err_param`.
     - Oversized uplink data is dropped with a warning log.
@@ -37,6 +40,15 @@
     - Only keep the query keys of OAuth2 APIs.
     - Escape control and invisible characters in the log4j style.
 - **sylvia-iot-auth**: Fix low-entropy authorization codes, tokens and login session IDs.
+- **sylvia-iot-auth**: Fix XSS in the login and grant pages by enabling HTML escaping of templates.
+- **sylvia-iot-auth**: Fix skipping the grant page by adding `allow` to the login state.
+    - Only `POST /oauth2/authorize` accepts `allow`.
+    - The login pages use the validated state instead of the raw string.
+- **sylvia-iot-auth**: Fix disabled or expired users using and refreshing tokens.
+    - Revoke tokens when disabling users.
+- **sylvia-iot-auth**: Fix login sessions never expiring with SQLite and not being removed after
+  denying.
+- **sylvia-iot-auth**: Fix the login response time revealing whether the user exists.
 
 ## 0.4.7 - 2026-10-16
 

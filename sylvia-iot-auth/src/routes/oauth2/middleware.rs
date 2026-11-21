@@ -11,6 +11,7 @@ use axum::{
     http::{Method, StatusCode, header},
     response::{IntoResponse, Response},
 };
+use chrono::Utc;
 use futures::future::BoxFuture;
 use oxide_auth::code_grant::resource::{Error as ResourceError, Request as OxideResourceRequest};
 use oxide_auth_async::code_grant;
@@ -136,6 +137,15 @@ where
                         return Ok(e.into_response());
                     }
                     Some(user) => {
+                        // Tokens of disabled or expired users are invalid, the same as logging in.
+                        if user.disabled_at.is_some()
+                            || user
+                                .expired_at
+                                .is_some_and(|expired_at| Utc::now() >= expired_at)
+                        {
+                            let e = ErrResp::ErrAuth(Some("user disabled or expired".to_string()));
+                            return Ok(e.into_response());
+                        }
                         if let Some((api_roles, api_scopes)) = role_scopes.get(req.method()) {
                             if api_roles.len() > 0 {
                                 let roles: HashSet<&str> = user
