@@ -24,6 +24,7 @@ mod client;
 mod device;
 mod device_route;
 mod dldata_buffer;
+mod mq;
 mod network;
 mod network_route;
 mod unit;
@@ -48,6 +49,11 @@ pub fn suite(mqtt_engine: &'static str) -> Suite<TestState> {
             context.describe("auth", |context| {
                 context.it("GET /tokeninfo", auth::tokeninfo);
                 context.it("POST /logout", auth::logout);
+                context.it("POST /logout with a large body", auth::logout_large_body);
+            });
+
+            context.describe("mq", |context| {
+                context.it("GET /mq/hosts", mq::get_hosts);
             });
 
             context.describe("user", |context| {
@@ -141,6 +147,11 @@ pub fn suite(mqtt_engine: &'static str) -> Suite<TestState> {
         context.describe("application", |context| {
             context.it("POST /application", application::post);
             context.it(
+                "POST /application by non-owners",
+                application::post_not_owner,
+            );
+            context.it("POST/PATCH /application with hosts", application::hosts);
+            context.it(
                 "POST /application with invalid parameters",
                 application::post_invalid,
             );
@@ -151,10 +162,18 @@ pub fn suite(mqtt_engine: &'static str) -> Suite<TestState> {
             );
             context.it("PATCH /application/{applicationId}", application::patch);
             context.it(
+                "PATCH /application/{applicationId} by non-owners",
+                application::patch_not_owner,
+            );
+            context.it(
                 "PATCH /application/{applicationId} with invalid parameters",
                 application::patch_invalid,
             );
             context.it("DELETE /application/{applicationId}", application::delete);
+            context.it(
+                "DELETE /application/{applicationId} by non-owners",
+                application::delete_not_owner,
+            );
             context.it(
                 "DELETE /application/{applicationId} with invalid parameters",
                 application::delete_invalid,
@@ -178,6 +197,8 @@ pub fn suite(mqtt_engine: &'static str) -> Suite<TestState> {
 
         context.describe("network", |context| {
             context.it("POST /network", network::post);
+            context.it("POST /network by non-owners", network::post_not_owner);
+            context.it("POST/PATCH /network with hosts", network::hosts);
             context.it(
                 "POST /network with invalid parameters",
                 network::post_invalid,
@@ -189,10 +210,18 @@ pub fn suite(mqtt_engine: &'static str) -> Suite<TestState> {
             );
             context.it("PATCH /network/{networkId}", network::patch);
             context.it(
+                "PATCH /network/{networkId} by non-owners",
+                network::patch_not_owner,
+            );
+            context.it(
                 "PATCH /network/{networkId} with invalid parameters",
                 network::patch_invalid,
             );
             context.it("DELETE /network/{networkId}", network::delete);
+            context.it(
+                "DELETE /network/{networkId} by non-owners",
+                network::delete_not_owner,
+            );
             context.it(
                 "DELETE /network/{networkId} with invalid parameters",
                 network::delete_invalid,
@@ -213,6 +242,10 @@ pub fn suite(mqtt_engine: &'static str) -> Suite<TestState> {
 
         context.describe("unit", |context| {
             context.it("DELETE /unit/{unitId}", unit::delete);
+            context.it(
+                "DELETE /unit/{unitId} by non-owners",
+                unit::delete_not_owner,
+            );
             context.it(
                 "DELETE /unit/{unitId} with invalid parameters",
                 unit::delete_invalid,

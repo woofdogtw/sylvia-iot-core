@@ -1,7 +1,8 @@
 use std::{
-    collections::HashMap,
+    collections::{HashMap, HashSet},
     error::Error as StdError,
     io::{Error as IoError, ErrorKind},
+    net::Ipv6Addr,
     sync::{Arc, Mutex},
 };
 
@@ -18,7 +19,7 @@ use general_mq::{
 use sylvia_iot_corelib::constants::MqEngine;
 
 use crate::libs::{
-    config::{self, Config},
+    config::{self, Config, MqHost},
     mq::{
         self, Connection, emqx::ManagementOpts as EmqxOpts,
         rabbitmq::ManagementOpts as RabbitMqOpts,
@@ -51,6 +52,8 @@ pub struct State {
     pub amqp: AmqpState,
     /// MQTT broker management information.
     pub mqtt: MqttState,
+    /// The message broker hosts that units can use.
+    pub mq_hosts: MqHosts,
     /// Queue connections. Key is uri.
     pub mq_conns: Arc<Mutex<HashMap<String, Connection>>>,
     /// Data channel sender.
@@ -71,6 +74,22 @@ pub enum MqttState {
     Emqx(EmqxOpts),
     /// For rumqttd.
     Rumqttd,
+}
+
+/// The maximum size of request bodies that coremgr reads into memory. This is the same as the
+/// default limit of axum extractors.
+pub(crate) const BODY_LIMIT: usize = 2 * 1024 * 1024;
+
+/// The message broker hosts that units can use. Empty lists mean unlimited.
+///
+/// The `host` and `external` fields are normalized to lowercase. IPv6 addresses are enclosed in
+/// square brackets.
+#[derive(Clone, Default)]
+pub struct MqHosts {
+    /// Hosts for `amqp` and `amqps`.
+    pub amqp: Vec<MqHost>,
+    /// Hosts for `mqtt` and `mqtts`. This is always empty for rumqttd.
+    pub mqtt: Vec<MqHost>,
 }
 
 /// The sylvia-iot module specific error codes in addition to standard
@@ -128,14 +147,19 @@ pub async fn new_state(
             length: rabbitmq.length,
         })
     };
-    let mqtt = match mq_engine.mqtt.as_ref().unwrap().as_str() {
-        MqEngine::RUMQTTD => MqttState::Rumqttd,
+    let amqp_hosts = {
+        let rabbitmq = conf.mq.as_ref().unwrap().rabbitmq.as_ref().unwrap();
+        check_mq_hosts("rabbitmq", &rabbitmq.hosts)?
+    };
+    let (mqtt, mqtt_hosts) = match mq_engine.mqtt.as_ref().unwrap().as_str() {
+        MqEngine::RUMQTTD => (MqttState::Rumqttd, vec![]),
         _ => {
             let emqx = conf.mq.as_ref().unwrap().emqx.as_ref().unwrap();
-            MqttState::Emqx(EmqxOpts {
+            let state = MqttState::Emqx(EmqxOpts {
                 api_key: emqx.api_key.as_ref().unwrap().clone(),
                 api_secret: emqx.api_secret.as_ref().unwrap().clone(),
-            })
+            });
+            (state, check_mq_hosts("emqx", &emqx.hosts)?)
         }
     };
     let mq_conns = Arc::new(Mutex::new(HashMap::new()));
@@ -157,6 +181,10 @@ pub async fn new_state(
         client: reqwest::Client::new(),
         amqp,
         mqtt,
+        mq_hosts: MqHosts {
+            amqp: amqp_hosts,
+            mqtt: mqtt_hosts,
+        },
         mq_conns,
         data_sender,
     };
@@ -185,12 +213,101 @@ pub fn new_service(state: &State) -> Router {
                 "/api/v1/dldata-buffer",
                 state,
             ))
+            .merge(v1::mq::new_service("/api/v1/mq", state))
             .layer(middleware::LogService::new(
                 state.client.clone(),
                 auth_uri,
                 state.data_sender.clone(),
             )),
     )
+}
+
+/// To check and normalize the message broker hosts.
+fn check_mq_hosts(
+    engine: &str,
+    hosts: &Option<Vec<MqHost>>,
+) -> Result<Vec<MqHost>, Box<dyn StdError>> {
+    const FN_NAME: &'static str = "check_mq_hosts";
+
+    let hosts = match hosts.as_ref() {
+        None => vec![],
+        Some(hosts) => hosts.clone(),
+    };
+    if hosts.len() == 0 {
+        warn!("[{}] no {} hosts, units can use any host", FN_NAME, engine);
+        return Ok(hosts);
+    }
+
+    let mut ret = vec![];
+    let mut host_set = HashSet::new();
+    let mut external_set = HashSet::new();
+    for item in hosts.iter() {
+        if item.name.len() == 0 {
+            let e = format!("empty name of {} hosts", engine);
+            return Err(Box::new(IoError::new(ErrorKind::InvalidInput, e)));
+        }
+        let host = match normalize_mq_host(item.host.as_str()) {
+            None => {
+                let e = format!("invalid host {} of {} hosts", item.host, engine);
+                return Err(Box::new(IoError::new(ErrorKind::InvalidInput, e)));
+            }
+            Some(host) => host,
+        };
+        let external = match normalize_mq_host(item.external.as_str()) {
+            None => {
+                let e = format!("invalid external {} of {} hosts", item.external, engine);
+                return Err(Box::new(IoError::new(ErrorKind::InvalidInput, e)));
+            }
+            Some(external) => external,
+        };
+        if !host_set.insert(host.clone()) {
+            let e = format!("duplicate host {} of {} hosts", item.host, engine);
+            return Err(Box::new(IoError::new(ErrorKind::InvalidInput, e)));
+        }
+        if !external_set.insert(external.clone()) {
+            let e = format!("duplicate external {} of {} hosts", item.external, engine);
+            return Err(Box::new(IoError::new(ErrorKind::InvalidInput, e)));
+        }
+        ret.push(MqHost {
+            name: item.name.clone(),
+            host,
+            external,
+            active: item.active,
+        });
+    }
+    Ok(ret)
+}
+
+/// To normalize the host name or IP address of the message broker. Returns [`None`] if the host
+/// contains other parts such as the scheme, the port or the path.
+///
+/// The result is in lowercase and IPv6 addresses are enclosed in square brackets.
+fn normalize_mq_host(host: &str) -> Option<String> {
+    let host = host.trim().to_lowercase();
+    if host.len() == 0 {
+        return None;
+    }
+    let host = match host.parse::<Ipv6Addr>() {
+        Err(_) => host,
+        Ok(_) => format!("[{}]", host),
+    };
+    let uri = match Url::parse(format!("amqp://{}", host).as_str()) {
+        Err(_) => return None,
+        Ok(uri) => uri,
+    };
+    if uri.username().len() > 0
+        || uri.password().is_some()
+        || uri.port().is_some()
+        || uri.path().len() > 0
+        || uri.query().is_some()
+        || uri.fragment().is_some()
+    {
+        return None;
+    }
+    match uri.host_str() {
+        None => None,
+        Some(host) => Some(host.to_lowercase()),
+    }
 }
 
 /// Create data channel sender queue.

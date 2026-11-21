@@ -27,6 +27,14 @@
     - Oversized downlink data is responded with `err_param`.
     - Oversized uplink data is dropped with a warning log.
 - **sylvia-iot-broker**: Add the missing profile sort test of the device list API.
+- **sylvia-iot-coremgr**: Support the message broker hosts that units can use
+  (`coremgr.mq.rabbitmq.hosts` and `coremgr.mq.emqx.hosts`).
+    - Add `GET /coremgr/api/v1/mq/hosts` to list the hosts for `hostUri`.
+    - The `hostUri` of applications/networks uses the external hosts, and coremgr transforms them to
+      the internal hosts for the broker.
+    - Invalid hosts (including invalid JSON) stop the service from starting.
+- **sylvia-iot-coremgr**: Recommend EMQX 6.3.0 or above in documents. Earlier versions allow all
+  topics by default.
 - **sylvia-iot-sdk**: `send_uldata()`, `send_dldata()` and `send_dldata_result()` return an error
   for MQTT messages exceeding the maximum packet size.
 
@@ -57,6 +65,15 @@
 - **sylvia-iot-broker**: Fix the address range APIs accepting huge ranges because of integer
   truncation.
 - **sylvia-iot-broker**: Fix networks reporting results of downlink data sent to other networks.
+- **sylvia-iot-coremgr**: Fix sending the message broker management account to hosts specified by
+  units when the hosts are configured.
+- **sylvia-iot-coremgr**: Fix unit members managing message broker resources of applications and
+  networks. Only the unit owner, admin and manager can create, update and delete them, including
+  deleting units.
+- **sylvia-iot-coremgr**: Fix unlimited request bodies exhausting memory. Bodies are limited to
+  2 MiB.
+- **sylvia-iot-coremgr**: Fix sending oversized data with the dldata/uldata APIs.
+- **sylvia-iot-coremgr**: Fix not clearing message broker resources after errors.
 
 ## 0.4.7 - 2026-10-16
 

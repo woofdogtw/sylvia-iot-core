@@ -20,6 +20,7 @@ use serde::{Deserialize, Serialize};
 use serde_json::{Deserializer, Map, Value};
 use url::Url;
 
+use sylvia_iot_broker::libs::mq::MAX_DATA_MSG_SIZE;
 use sylvia_iot_corelib::{
     err::ErrResp,
     http::{Json, Path},
@@ -29,10 +30,10 @@ use sylvia_iot_corelib::{
 
 use super::{
     super::{AmqpState, ErrReq, MqttState, State as AppState},
-    ClearQueueResource, CreateQueueResource, ListResp, PatchHost, api_bridge, clear_patch_host,
-    clear_queue_rsc, cmp_host_uri, create_queue_rsc, get_device_inner, get_stream_resp,
-    get_tokeninfo_inner, get_unit_inner, list_api_bridge, request, response, transfer_host_uri,
-    trunc_host_uri,
+    ClearQueueResource, CreateQueueResource, ListResp, PatchHost, api_bridge, check_unit_owner,
+    clear_patch_host, clear_queue_rsc, cmp_host_uri, create_queue_rsc, get_device_inner,
+    get_stream_resp, get_tokeninfo_inner, get_unit_inner, list_api_bridge, request, response,
+    to_internal_host_uri, transfer_host_uri, trunc_host_uri,
 };
 use crate::libs::mq::{self, QueueType, emqx, rabbitmq};
 
@@ -173,6 +174,16 @@ async fn post_network(
                     Some(unit) => unit,
                 },
             };
+            // Only the unit owner can create message broker resources.
+            match check_unit_owner(FN_NAME, &state, &token, Some(&unit)).await {
+                Err(e) => return e,
+                Ok(false) => {
+                    // TODO: member management
+                    let e = "the user is not the unit owner".to_string();
+                    return ErrResp::ErrParam(Some(e)).into_response();
+                }
+                Ok(true) => (),
+            }
             unit.code
         }
     };
@@ -204,7 +215,10 @@ async fn post_network(
         Err(e) => {
             return ErrResp::ErrParam(Some(format!("invalid `hostUri`: {}", e))).into_response();
         }
-        Ok(uri) => uri,
+        Ok(uri) => match to_internal_host_uri(&state.mq_hosts, &uri, true) {
+            Err(e) => return e,
+            Ok(uri) => uri,
+        },
     };
     let host = match uri.host() {
         None => {
@@ -249,7 +263,7 @@ async fn post_network(
         .json(&body);
     let api_req = match builder.build() {
         Err(e) => {
-            let _ = clear_queue_rsc(FN_NAME, &state, &clear_rsc);
+            let _ = clear_queue_rsc(FN_NAME, &state, &clear_rsc).await;
             let e = format!("generate request error: {}", e);
             error!("[{}] {}", FN_NAME, e);
             return ErrResp::ErrRsc(Some(e)).into_response();
@@ -258,7 +272,7 @@ async fn post_network(
     };
     let api_resp = match client.execute(api_req).await {
         Err(e) => {
-            let _ = clear_queue_rsc(FN_NAME, &state, &clear_rsc);
+            let _ = clear_queue_rsc(FN_NAME, &state, &clear_rsc).await;
             let e = format!("execute request error: {}", e);
             error!("[{}] {}", FN_NAME, e);
             return ErrResp::ErrIntMsg(Some(e)).into_response();
@@ -266,6 +280,7 @@ async fn post_network(
         Ok(resp) => match resp.status() {
             StatusCode::OK => resp,
             _ => {
+                let _ = clear_queue_rsc(FN_NAME, &state, &clear_rsc).await;
                 let mut resp_builder = Response::builder().status(resp.status());
                 for (k, v) in resp.headers() {
                     resp_builder = resp_builder.header(k, v);
@@ -283,7 +298,7 @@ async fn post_network(
     };
     let mut body = match api_resp.json::<response::PostNetwork>().await {
         Err(e) => {
-            let _ = clear_queue_rsc(FN_NAME, &state, &clear_rsc);
+            let _ = clear_queue_rsc(FN_NAME, &state, &clear_rsc).await;
             let e = format!("unexpected response: {}", e);
             return ErrResp::ErrUnknown(Some(e)).into_response();
         }
@@ -336,6 +351,7 @@ async fn get_network_list(state: State<AppState>, req: Request) -> impl IntoResp
             ListResp::ArrayStream(api_resp, resp_builder) => (api_resp, resp_builder),
         };
 
+    let mq_hosts = state.mq_hosts.clone();
     let mut resp_stream = api_resp.bytes_stream();
     let body = Body::from_stream(async_stream::stream! {
         match list_format {
@@ -370,7 +386,7 @@ async fn get_network_list(state: State<AppState>, req: Request) -> impl IntoResp
                             finish = true;
                             break;
                         }
-                        Ok(uri) => trunc_host_uri(&uri),
+                        Ok(uri) => trunc_host_uri(&mq_hosts, &uri),
                     };
                     match list_format {
                         ListFormat::Array | ListFormat::Data => match serde_json::to_string(&v) {
@@ -516,7 +532,7 @@ async fn get_network(
             }
         }
     }
-    network.host_uri = trunc_host_uri(&uri);
+    network.host_uri = trunc_host_uri(&state.mq_hosts, &uri);
     Json(&response::GetNetwork { data: network }).into_response()
 }
 
@@ -561,6 +577,28 @@ async fn patch_network(
         Err(e) => return e,
         Ok((network, uri, hostname)) => (network, uri, hostname),
     };
+    // Only the unit owner can manage message broker resources.
+    let unit = match network.unit_id.as_ref() {
+        None => None,
+        Some(unit_id) => {
+            match get_unit_inner(FN_NAME, &client, broker_base, unit_id.as_str(), &token).await {
+                Err(e) => return e,
+                Ok(unit) => match unit {
+                    None => return ErrResp::ErrNotFound(None).into_response(),
+                    Some(unit) => Some(unit),
+                },
+            }
+        }
+    };
+    match check_unit_owner(FN_NAME, &state, &token, unit.as_ref()).await {
+        Err(e) => return e,
+        Ok(false) => {
+            // TODO: member management
+            let e = "the user is not the unit owner".to_string();
+            return ErrResp::ErrParam(Some(e)).into_response();
+        }
+        Ok(true) => (),
+    }
 
     let mut patch_data = request::PatchNetworkData {
         name: data.name.clone(),
@@ -572,8 +610,29 @@ async fn patch_network(
         if !strings::is_uri(host) {
             return ErrResp::ErrParam(Some("invalid `hostUri`".to_string())).into_response();
         }
+        let host_uri = match Url::parse(host.as_str()) {
+            Err(e) => {
+                let e = format!("invalid `hostUri`: {}", e);
+                return ErrResp::ErrParam(Some(e)).into_response();
+            }
+            Ok(uri) => match uri.host_str() {
+                None => {
+                    let e = "invalid `hostUri`".to_string();
+                    return ErrResp::ErrParam(Some(e)).into_response();
+                }
+                Some(_) => uri,
+            },
+        };
+        // Compare with the internal host. The current host may not be in the hosts.
+        let internal_uri = match to_internal_host_uri(&state.mq_hosts, &host_uri, false) {
+            Err(e) => match cmp_host_uri(network.host_uri.as_str(), host_uri.as_str()) {
+                false => return e,
+                true => host_uri.clone(),
+            },
+            Ok(uri) => uri,
+        };
         // Change to the new broker host.
-        if !cmp_host_uri(network.host_uri.as_str(), host.as_str()) {
+        if !cmp_host_uri(network.host_uri.as_str(), internal_uri.as_str()) {
             let password = match data.password.as_ref() {
                 None => {
                     let e = "missing `password`".to_string();
@@ -587,18 +646,9 @@ async fn patch_network(
                     _ => password,
                 },
             };
-            let mut new_host_uri = match Url::parse(host.as_str()) {
-                Err(e) => {
-                    let e = format!("invalid `hostUri`: {}", e);
-                    return ErrResp::ErrParam(Some(e)).into_response();
-                }
-                Ok(uri) => match uri.host_str() {
-                    None => {
-                        let e = "invalid `hostUri`".to_string();
-                        return ErrResp::ErrParam(Some(e)).into_response();
-                    }
-                    Some(_) => uri,
-                },
+            let mut new_host_uri = match to_internal_host_uri(&state.mq_hosts, &host_uri, true) {
+                Err(e) => return e,
+                Ok(uri) => uri,
             };
 
             let unit_code = match network.unit_code.as_ref() {
@@ -785,9 +835,24 @@ async fn delete_network(
             Err(e) => return e,
             Ok((network, uri, host)) => (network, uri, host),
         };
+    // Only the unit owner can clear message broker resources. The broker decides the response of
+    // other users.
+    let unit = match network.unit_id.as_ref() {
+        None => None,
+        Some(unit_id) => {
+            match get_unit_inner(FN_NAME, &client, broker_base, unit_id.as_str(), &token).await {
+                Err(e) => return e,
+                Ok(unit) => unit,
+            }
+        }
+    };
+    let is_owner = match check_unit_owner(FN_NAME, &state, &token, unit.as_ref()).await {
+        Err(e) => return e,
+        Ok(is_owner) => is_owner,
+    };
 
     let resp = api_bridge(FN_NAME, &client, req, api_path.as_str()).await;
-    if !resp.status().is_success() {
+    if !resp.status().is_success() || !is_owner {
         return resp;
     }
 
@@ -1019,7 +1084,14 @@ async fn post_network_uldata(
             error!("[{}] {}", FN_NAME, e);
             return ErrResp::ErrRsc(Some(e)).into_response();
         }
-        Ok(payload) => general_purpose::STANDARD.encode(payload),
+        Ok(payload) => {
+            // The broker drops messages exceeding the size, so reject them here.
+            if payload.len() > MAX_DATA_MSG_SIZE {
+                let e = format!("data too large, the maximum is {} bytes", MAX_DATA_MSG_SIZE);
+                return ErrResp::ErrParam(Some(e)).into_response();
+            }
+            general_purpose::STANDARD.encode(payload)
+        }
     };
     match scheme {
         "amqp" | "amqps" => {

@@ -11,7 +11,7 @@ pub struct GetTokenInfo {
 #[derive(Deserialize)]
 pub struct TokenInfo {
     #[serde(rename = "userId")]
-    pub _user_id: String,
+    pub user_id: String,
     #[serde(rename = "account")]
     pub _account: String,
     #[serde(rename = "name")]

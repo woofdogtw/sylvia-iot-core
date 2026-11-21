@@ -20,7 +20,8 @@ use sylvia_iot_corelib::err::ErrResp;
 
 use super::{
     super::{AmqpState, MqttState, State as AppState},
-    ListResp, api_bridge, get_stream_resp, get_unit_inner, list_api_bridge, response,
+    ListResp, api_bridge, check_unit_owner, get_stream_resp, get_unit_inner, list_api_bridge,
+    response,
 };
 use crate::libs::mq::{self, QueueType, emqx, rabbitmq};
 
@@ -227,7 +228,13 @@ async fn delete_unit(
         Err(e) => return e,
         Ok(unit) => unit,
     };
-    if let Some(unit) = unit {
+    // Only the unit owner can clear message broker resources. The broker decides the response of
+    // other users.
+    let is_owner = match check_unit_owner(FN_NAME, &state, &token, unit.as_ref()).await {
+        Err(e) => return e,
+        Ok(is_owner) => is_owner,
+    };
+    if let (Some(unit), true) = (unit, is_owner) {
         let unit_id = param.unit_id.as_str();
         let unit_code = unit.code.as_str();
         if let Err(e) =
