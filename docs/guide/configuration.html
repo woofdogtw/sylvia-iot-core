@@ -35,7 +35,7 @@
             const path_to_root = "../";
             const default_light_theme = "rust";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-f72aa2ae.js";
+            window.path_to_searchindex_js = "../searchindex-5039d29c.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="../toc-1b1d87f7.js"></script>
@@ -478,10 +478,10 @@ API changes are made.
 <tr><td>coremgr.mq.rabbitmq.password</td><td>coremgr.mq.rabbitmq.password</td><td>COREMGR_MQ_RABBITMQ_PASSWORD</td><td>guest</td><td>RabbitMQ administrator password</td></tr>
 <tr><td>coremgr.mq.rabbitmq.ttl</td><td>coremgr.mq.rabbitmq.ttl</td><td>COREMGR_MQ_RABBITMQ_TTL</td><td></td><td>RabbitMQ default message TTL (seconds)</td></tr>
 <tr><td>coremgr.mq.rabbitmq.length</td><td>coremgr.mq.rabbitmq.length</td><td>COREMGR_MQ_RABBITMQ_LENGTH</td><td></td><td>RabbitMQ default maximum number of messages in queues</td></tr>
-<tr><td>coremgr.mq.rabbitmq.hosts</td><td>coremgr.mq.rabbitmq.hosts</td><td>COREMGR_MQ_RABBITMQ_HOSTS</td><td></td><td>(Reserved)</td></tr>
+<tr><td>coremgr.mq.rabbitmq.hosts</td><td>coremgr.mq.rabbitmq.hosts</td><td>COREMGR_MQ_RABBITMQ_HOSTS</td><td></td><td>RabbitMQ hosts that units can use</td></tr>
 <tr><td>coremgr.mq.emqx.apiKey</td><td>coremgr.mq.emqx.apikey</td><td>COREMGR_MQ_EMQX_APIKEY</td><td></td><td>EMQX management API key</td></tr>
 <tr><td>coremgr.mq.emqx.apiSecret</td><td>coremgr.mq.emqx.apisecret</td><td>COREMGR_MQ_EMQX_APISECRET</td><td></td><td>EMQX management API secret</td></tr>
-<tr><td>coremgr.mq.emqx.hosts</td><td>coremgr.mq.emqx.hosts</td><td>COREMGR_MQ_EMQX_HOSTS</td><td></td><td>(Reserved)</td></tr>
+<tr><td>coremgr.mq.emqx.hosts</td><td>coremgr.mq.emqx.hosts</td><td>COREMGR_MQ_EMQX_HOSTS</td><td></td><td>EMQX hosts that units can use</td></tr>
 <tr><td>coremgr.mq.rumqttd.mqttPort</td><td>coremgr.mq.rumqttd.mqtt-port</td><td>COREMGR_MQ_RUMQTTD_MQTT_PORT</td><td>1883</td><td>rumqttd MQTT port</td></tr>
 <tr><td>coremgr.mq.rumqttd.mqttsPort</td><td>coremgr.mq.rumqttd.mqtts-port</td><td>COREMGR_MQ_RUMQTTD_MQTTS_PORT</td><td>8883</td><td>rumqttd MQTTS port</td></tr>
 <tr><td>coremgr.mq.rumqttd.consolePort</td><td>coremgr.mq.rumqttd.console-port</td><td>COREMGR_MQ_RUMQTTD_CONSOLE_PORT</td><td>18083</td><td>rumqttd management API port</td></tr>
@@ -492,6 +492,40 @@ API changes are made.
 </div>
 <h3 id="detailed-explanation-3"><a class="header" href="#detailed-explanation-3">Detailed Explanation</a></h3>
 <ul>
+<li>Message broker hosts (<strong>hosts</strong>):
+<ul>
+<li>An array of objects. CLI parameters and environment variables use JSON strings, for example
+<code>[{"name":"Region 1","host":"rabbitmq.internal","external":"mq.example.com","active":true}]</code>.
+<ul>
+<li><strong>name</strong>: The display name.</li>
+<li><strong>host</strong>: The host name or IP address for Sylvia-IoT services to access the message
+broker.</li>
+<li><strong>external</strong>: The host name or IP address for developers of units to access the message
+broker. The <code>hostUri</code> of applications and networks in coremgr APIs uses this value, and
+<code>GET /coremgr/api/v1/mq/hosts</code> lists these values.</li>
+<li><strong>active</strong>: <code>false</code> means that the host is going to be stopped. New applications and
+networks cannot use this host, and the existing ones are not affected.</li>
+</ul>
+</li>
+<li><strong>host</strong> and <strong>external</strong> must be host names or IP addresses without schemes, ports or paths,
+and each of them must be unique. The service will not start with invalid hosts or invalid
+JSON strings.</li>
+<li>The scheme and the port of <code>hostUri</code> are used for both <strong>host</strong> and <strong>external</strong>, so the
+message broker must use the same scheme (TLS or not) and port internally and externally.</li>
+<li>If no hosts are specified (or the array is empty), units can use any host, and coremgr sends
+the management account to the host that units specify. <strong>Please specify hosts for public
+services.</strong></li>
+</ul>
+</li>
+<li>EMQX:
+<ul>
+<li>We recommend EMQX 6.3.0 or above. Earlier versions use the <code>legacy</code> security profile by
+default, which allows all topics, so units can access topics of other units. For earlier
+versions or the <code>legacy</code> profile, set <code>authorization.no_match = deny</code> and change the last
+rule of <code>acl.conf</code> to <code>{deny, all}</code>.</li>
+<li><code>mqtt.max_packet_size</code> must be less than or equal to 1 MiB (the default).</li>
+</ul>
+</li>
 <li>MQ channels:
 <ul>
 <li><strong>data</strong> represents the <strong>Data Channel Message</strong>.

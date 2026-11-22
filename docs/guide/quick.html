@@ -35,7 +35,7 @@
             const path_to_root = "../";
             const default_light_theme = "rust";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-f72aa2ae.js";
+            window.path_to_searchindex_js = "../searchindex-5039d29c.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="../toc-1b1d87f7.js"></script>
@@ -195,7 +195,7 @@ sudo usermod -aG docker $USER
 <p>Start the services (versions and data storage folders can be adjusted as needed):</p>
 <pre><code class="language-shell">export MONGODB_VER=8.2.2
 export RABBITMQ_VER=4.2.0
-export EMQX_VER=6.0.1
+export EMQX_VER=6.3.3
 
 export MONGODB_DIR=$HOME/db/mongodb
 export RABBITMQ_DIR=$HOME/db/rabbitmq
@@ -225,6 +225,11 @@ docker run --rm --name emqx -d \
 <blockquote>
 <p>The following information only introduces the plugins required by EMQX, which will not be used in
 the following demonstrations. You can also choose not to start EMQX at this stage.</p>
+</blockquote>
+<blockquote>
+<p>We recommend EMQX 6.3.0 or above. The default security profile of earlier versions allows all
+topics, so units can access topics of other units. Please refer to the
+<a href="configuration.html"><strong>Configuration</strong></a> chapter.</p>
 </blockquote>
 <h2 id="download-sylvia-iot"><a class="header" href="#download-sylvia-iot">Download Sylvia-IoT</a></h2>
 <pre><code class="language-shell">ARCH=x86_64 # x86_64 or arm64
@@ -292,7 +297,7 @@ db.user.insertOne({
   expiredAt: null,
   disabledAt: null,
   roles: {"admin":true,"dev":false},
-  password: '27258772d876ffcef7ca2c75d6f4e6bcd81c203bd3e93c0791c736e5a2df4afa',
+  password: '$pbkdf2-sha256$i=600000$371a324ab13fe3a869e7d8732f776a3ba06241cc366e0d7b6f413e7469e26f08',
   salt: 'YsBsou2O',
   name: 'Admin',
   info: {}

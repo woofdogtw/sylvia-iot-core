@@ -35,7 +35,7 @@
             const path_to_root = "../";
             const default_light_theme = "rust";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-f72aa2ae.js";
+            window.path_to_searchindex_js = "../searchindex-5039d29c.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="../toc-1b1d87f7.js"></script>
@@ -224,6 +224,11 @@ too long.</li>
 </ul>
 </li>
 <li>
+<p>The size of an uplink data message (in compact JSON format) must not exceed 1032192 bytes
+(1 MiB - 16 KiB). The Broker reserves 16 KiB of the 1 MiB MQTT maximum packet size for the fields
+that it adds when forwarding the data. The Broker drops oversized data with a warning log.</p>
+</li>
+<li>
 <p>Rules regarding <code>result</code>:</p>
 <ul>
 <li>Less than 0 indicates the ongoing process.
@@ -263,6 +268,8 @@ AMQP/MQTT properties.</li>
 <li>Register an <code>EventHandler</code> to receive real-time updates when the queue status changes or data is
 delivered.</li>
 <li>You can use <code>send_uldata()</code> and <code>send_dldata_result()</code> to send data to the Broker.</li>
+<li>When using MQTT, <code>send_uldata()</code> and <code>send_dldata_result()</code> return an error directly for the data
+that exceeds the MQTT maximum packet size (1 MiB).</li>
 </ul>
 
                     </main>

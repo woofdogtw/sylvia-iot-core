@@ -35,7 +35,7 @@
             const path_to_root = "../";
             const default_light_theme = "rust";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-f72aa2ae.js";
+            window.path_to_searchindex_js = "../searchindex-5039d29c.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="../toc-1b1d87f7.js"></script>
@@ -225,6 +225,10 @@ this approach to prevent application services from sending data arbitrarily to d
 not belong to their own unit.</li>
 </ul>
 </li>
+<li>The size of a downlink data message (in compact JSON format) must not exceed 1032192 bytes
+(1 MiB - 16 KiB). The Broker reserves 16 KiB of the 1 MiB MQTT maximum packet size for the fields
+that it adds when forwarding the data. Oversized data will be responded with the <code>err_param</code>
+error in <code>dldata-resp</code>.</li>
 <li>Currently, the control channel is not supported. Changes to devices must rely on application
 services to request the Sylvia-IoT HTTP APIs or manage the list of devices themselves.</li>
 </ul>
@@ -240,6 +244,8 @@ AMQP/MQTT properties.</li>
 <li>Register an <code>EventHandler</code> to receive real-time updates when the queue status changes or data is
 delivered.</li>
 <li>You can use <code>send_dldata()</code> to send data to the Broker.</li>
+<li>When using MQTT, <code>send_dldata()</code> returns an error directly for the data that exceeds the MQTT
+maximum packet size (1 MiB).</li>
 </ul>
 
                     </main>
