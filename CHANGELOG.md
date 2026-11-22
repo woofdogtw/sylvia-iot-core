@@ -1,5 +1,65 @@
 # Changelog
 
+## 0.4.8 - 2026-11-22
+
+### Changed
+
+- Update dependencies.
+- Update Rust to 1.100.0 with GitHub Actions runner image 20261116.202.
+- **general-mq**: Limit MQTT packet sizes to avoid oversized messages disconnecting the shared connection.
+    - Add `max_packet_size` (default 1 MiB) to `MqttConnectionOptions`. The default limit of `rumqttc` (10 KiB) was exceeded easily.
+    - Add `Queue::check_msg_size()` to check the message size before sending.
+    - MQTT `send_msg()` returns `Error::PacketTooLarge` instead of disconnecting.
+    - The new field and the new variant of `Error` may break code without `..Default::default()` or with exhaustive matching.
+- **sylvia-iot-corelib**: Strengthen password hashing.
+    - `strings::password_hash()` uses 600000 PBKDF2 rounds with the `$pbkdf2-sha256$i=[rounds]$[hex]` format.
+    - Add `strings::password_verify()` and `strings::password_need_rehash()` to verify and upgrade legacy hashes.
+- **sylvia-iot-auth**: Hash passwords in blocking threads, and re-hash legacy hashes with new salts after the user logs in.
+    - Limit concurrent password hashing to the number of CPUs.
+- **sylvia-iot-auth**: Bind login sessions to the client. Login sessions record the client ID and the redirect URI, and the authorization checks them.
+- **sylvia-iot-broker**: Limit the uplink/downlink data message size to 1 MiB - 16 KiB.
+    - Oversized downlink data is responded with `err_param`.
+    - Oversized uplink data is dropped with a warning log.
+- **sylvia-iot-broker**: Add the missing profile sort test of the device list API.
+- **sylvia-iot-coremgr**: Support the message broker hosts that units can use (`coremgr.mq.rabbitmq.hosts` and `coremgr.mq.emqx.hosts`).
+    - Add `GET /coremgr/api/v1/mq/hosts` to list the hosts for `hostUri`.
+    - The `hostUri` of applications/networks uses the external hosts, and coremgr transforms them to the internal hosts for the broker.
+    - Invalid hosts (including invalid JSON) stop the service from starting.
+- **sylvia-iot-coremgr**: Recommend EMQX 6.3.0 or above in documents. Earlier versions allow all topics by default.
+- **sylvia-iot-coremgr-cli**: `login` reads the password interactively without echo when `--password` is not specified.
+- **sylvia-iot-sdk**: `send_uldata()`, `send_dldata()` and `send_dldata_result()` return an error for MQTT messages exceeding the maximum packet size.
+
+### Fixed
+
+- **general-mq**: Fix MQTT/AMQP IPv6 hosts being replaced with `localhost` (`mqtts` does not support IPv6 hosts).
+- **general-mq**: Fix URI errors exposing passwords.
+- **general-mq**: Fix MQTT/AMQP connection timeout.
+- **general-mq**: Fix doc tests.
+- **sylvia-iot-corelib**: Fix logs exposing secrets.
+    - Only keep the query keys of OAuth2 APIs.
+    - Escape control and invisible characters in the log4j style.
+- **sylvia-iot-auth**: Fix low-entropy authorization codes, tokens and login session IDs.
+- **sylvia-iot-auth**: Fix XSS in the login and grant pages by enabling HTML escaping of templates.
+- **sylvia-iot-auth**: Fix skipping the grant page by adding `allow` to the login state.
+    - Only `POST /oauth2/authorize` accepts `allow`.
+    - The login pages use the validated state instead of the raw string.
+- **sylvia-iot-auth**: Fix disabled or expired users using and refreshing tokens.
+    - Revoke tokens when disabling users.
+- **sylvia-iot-auth**: Fix login sessions never expiring with SQLite and not being removed after denying.
+- **sylvia-iot-auth**: Fix the login response time revealing whether the user exists.
+- **sylvia-iot-broker**: Fix the application/network APIs exposing the message queue management credentials in `hostUri` to unit members.
+    - Updating `hostUri` without credentials keeps the current credentials if the other parts of the URI are not changed.
+- **sylvia-iot-broker**: Fix the address range APIs accepting huge ranges because of integer truncation.
+- **sylvia-iot-broker**: Fix networks reporting results of downlink data sent to other networks.
+- **sylvia-iot-coremgr**: Fix sending the message broker management account to hosts specified by units when the hosts are configured.
+- **sylvia-iot-coremgr**: Fix unit members managing message broker resources of applications and networks. Only the unit owner, admin and manager can create, update and delete them, including deleting units.
+- **sylvia-iot-coremgr**: Fix unlimited request bodies exhausting memory. Bodies are limited to 2 MiB.
+- **sylvia-iot-coremgr**: Fix sending oversized data with the dldata/uldata APIs.
+- **sylvia-iot-coremgr**: Fix not clearing message broker resources after errors.
+- **sylvia-iot-coremgr-cli**: Fix the token storage file readable by other local users. The file is written with the `0600` permission on Unix.
+- **sylvia-iot-coremgr-cli**: Fix the `coremgr-cli.*` command-line arguments not being registered. Debug builds panicked without `-f`.
+- **sylvia-iot-data**: Fix normal users getting data of all units with an empty `unit` query.
+
 ## 0.4.7 - 2026-10-16
 
 ### Changed

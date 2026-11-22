@@ -21,13 +21,13 @@ pub async fn get_usage(State(state): State<AppState>) -> impl IntoResponse {
 
         let mut cpu_usages = vec![];
         for cpu in sys.cpus() {
-            cpu_usages.push(cpu.cpu_usage().round() as usize);
+            cpu_usages.push(cpu.usage().round() as usize);
         }
         let mem_total = sys.total_memory();
         let mem_used = sys.used_memory();
         let mut disk_total = 0;
         let mut disk_used = 0;
-        for disk in disk.list() {
+        for disk in disk.iter() {
             if disk.mount_point().eq(Path::new("/")) {
                 disk_total = disk.total_space();
                 disk_used = disk_total - disk.available_space();

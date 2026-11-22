@@ -102,46 +102,35 @@ async fn get_unit_cond(
     let broker_base = state.broker_base.as_str();
     let client = state.client.clone();
 
-    match query_unit {
+    // Only admin and manager can get data of all units. An empty `unit` is the same as no `unit`.
+    let unit_id = match query_unit.filter(|unit_id| unit_id.len() > 0) {
         None => {
             if !Role::is_role(&token_info.roles, Role::ADMIN)
                 && !Role::is_role(&token_info.roles, Role::MANAGER)
             {
                 return Err(ErrResp::ErrParam(Some("missing `unit`".to_string())).into_response());
             }
-            Ok(None)
+            return Ok(None);
         }
-        Some(unit_id) => match unit_id.len() {
-            0 => Ok(None),
-            _ => {
-                let token =
-                    match HeaderValue::from_str(format!("Bearer {}", token_info.token).as_str()) {
-                        Err(e) => {
-                            error!("[{}] get token error: {}", fn_name, e);
-                            return Err(ErrResp::ErrRsc(Some(format!("get token error: {}", e)))
-                                .into_response());
-                        }
-                        Ok(value) => value,
-                    };
-                match get_unit_inner(fn_name, &client, broker_base, unit_id, &token).await {
-                    Err(e) => {
-                        error!("[{}] get unit error", fn_name);
-                        return Err(e);
-                    }
-                    Ok(unit) => match unit {
-                        None => {
-                            return Err(ErrResp::Custom(
-                                ErrReq::UNIT_NOT_EXIST.0,
-                                ErrReq::UNIT_NOT_EXIST.1,
-                                None,
-                            )
-                            .into_response());
-                        }
-                        Some(_) => Ok(Some(unit_id.clone())),
-                    },
-                }
-            }
-        },
+        Some(unit_id) => unit_id,
+    };
+    let token = match HeaderValue::from_str(format!("Bearer {}", token_info.token).as_str()) {
+        Err(e) => {
+            error!("[{}] get token error: {}", fn_name, e);
+            return Err(ErrResp::ErrRsc(Some(format!("get token error: {}", e))).into_response());
+        }
+        Ok(value) => value,
+    };
+    match get_unit_inner(fn_name, &client, broker_base, unit_id, &token).await {
+        Err(e) => {
+            error!("[{}] get unit error", fn_name);
+            Err(e)
+        }
+        Ok(None) => Err(
+            ErrResp::Custom(ErrReq::UNIT_NOT_EXIST.0, ErrReq::UNIT_NOT_EXIST.1, None)
+                .into_response(),
+        ),
+        Ok(Some(_)) => Ok(Some(unit_id.clone())),
     }
 }
 

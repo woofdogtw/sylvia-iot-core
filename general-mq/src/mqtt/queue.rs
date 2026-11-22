@@ -27,6 +27,8 @@ pub struct MqttQueue {
     opts: MqttQueueOptions,
     /// The associated [`crate::MqttConnection`].
     conn: Arc<Mutex<MqttConnection>>,
+    /// Maximum packet size in bytes of the associated connection.
+    max_packet_size: usize,
     /// Queue status.
     status: Arc<Mutex<Status>>,
     /// The event handler.
@@ -89,11 +91,22 @@ impl MqttQueue {
         Ok(MqttQueue {
             opts,
             conn: Arc::new(Mutex::new(conn.clone())),
+            max_packet_size: conn.opts.max_packet_size,
             status: Arc::new(Mutex::new(Status::Closed)),
             handler: Arc::new(Mutex::new(None)),
             msg_handler: Arc::new(Mutex::new(None)),
             ev_loop: Arc::new(Mutex::new(None)),
         })
+    }
+
+    /// To check if the message can be sent without exceeding the maximum packet size. This can be
+    /// used before spawning a task to send the message.
+    pub fn check_msg_size(&self, payload_len: usize) -> Result<(), Error> {
+        let topic_len = self.topic().len();
+        match publish_packet_size(topic_len, payload_len, self.qos()) > self.max_packet_size {
+            false => Ok(()),
+            true => Err(Error::PacketTooLarge),
+        }
     }
 
     /// To get the associated connection status.
@@ -221,7 +234,11 @@ impl GmqQueue for MqttQueue {
     async fn send_msg(&self, payload: Vec<u8>) -> Result<(), Box<dyn StdError + Send + Sync>> {
         if self.opts.is_recv {
             return Err(Box::new(Error::QueueIsReceiver));
-        } else if self.status() != Status::Connected {
+        }
+        // rumqttc closes the connection when writing an oversized packet, and the messages pending in
+        // the connection will be lost.
+        self.check_msg_size(payload.len())?;
+        if self.status() != Status::Connected {
             return Err(Box::new(Error::NotConnected));
         }
 
@@ -352,4 +369,24 @@ fn create_event_loop(queue: &MqttQueue) -> JoinHandle<()> {
             }
         }
     })
+}
+
+/// To calculate the size of the Publish packet in the same way as rumqttc.
+fn publish_packet_size(topic_len: usize, payload_len: usize, qos: QoS) -> usize {
+    // Topic length (2 bytes) + topic + packet identifier (QoS > 0) + payload.
+    let len = 2
+        + topic_len
+        + payload_len
+        + match qos {
+            QoS::AtMostOnce => 0,
+            _ => 2,
+        };
+    // The number of bytes of the Remaining Length field.
+    let len_len = match len {
+        0..128 => 1,
+        128..16_384 => 2,
+        16_384..2_097_152 => 3,
+        _ => 4,
+    };
+    1 + len_len + len
 }

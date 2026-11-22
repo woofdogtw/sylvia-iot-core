@@ -19,12 +19,16 @@ use crate::models::{
     authorization_code::{self, AuthorizationCode, QueryCond as AuthorizationCodeQuery},
     client::QueryCond,
     refresh_token::{self, QueryCond as RefreshTokenQuery, RefreshToken},
+    user::QueryCond as UserQueryCond,
 };
 
 #[derive(Clone)]
 pub struct Primitive {
     model: Arc<dyn Model>,
 }
+
+/// The length of authorization codes and tokens.
+pub(crate) const SECRET_LEN: usize = 64;
 
 impl Primitive {
     pub fn new(model: Arc<dyn Model>) -> Self {
@@ -41,7 +45,7 @@ impl Authorizer for Primitive {
 
         let scope = grant.scope.to_string();
         let code = AuthorizationCode {
-            code: strings::random_id_sha(&grant.until, 4),
+            code: strings::randomstring(SECRET_LEN),
             expires_at: match TimeDelta::try_seconds(authorization_code::EXPIRES) {
                 None => panic!("{}", E_UNKNOWN),
                 Some(t) => Utc::now() + t,
@@ -123,9 +127,9 @@ impl Issuer for Primitive {
         const FN_NAME: &'static str = "issue";
 
         let now = Utc::now();
-        let refresh_token = strings::random_id_sha(&now, 8);
+        let refresh_token = strings::randomstring(SECRET_LEN);
         let access = AccessToken {
-            access_token: strings::random_id_sha(&now, 8),
+            access_token: strings::randomstring(SECRET_LEN),
             refresh_token: Some(refresh_token.clone()),
             expires_at: match TimeDelta::try_seconds(access_token::EXPIRES) {
                 None => panic!("{}", E_UNKNOWN),
@@ -252,6 +256,29 @@ impl Issuer for Primitive {
         };
         if refresh.expires_at < Utc::now() {
             return Ok(None);
+        }
+        // Disabled or expired users cannot refresh tokens.
+        let cond = UserQueryCond {
+            user_id: Some(refresh.user_id.as_str()),
+            account: None,
+        };
+        match self.model.user().get(&cond).await {
+            Err(e) => {
+                error!("[{}] get user error: {}", FN_NAME, e);
+                return Err(());
+            }
+            Ok(user) => match user {
+                None => return Ok(None),
+                Some(user) => {
+                    if user.disabled_at.is_some()
+                        || user
+                            .expired_at
+                            .is_some_and(|expired_at| Utc::now() >= expired_at)
+                    {
+                        return Ok(None);
+                    }
+                }
+            },
         }
 
         Ok(Some(Grant {

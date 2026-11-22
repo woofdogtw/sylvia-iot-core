@@ -30,7 +30,7 @@ Start the services (versions and data storage folders can be adjusted as needed)
 ```shell
 export MONGODB_VER=8.2.2
 export RABBITMQ_VER=4.2.0
-export EMQX_VER=6.0.1
+export EMQX_VER=6.3.3
 
 export MONGODB_DIR=$HOME/db/mongodb
 export RABBITMQ_DIR=$HOME/db/rabbitmq
@@ -60,6 +60,10 @@ docker run --rm --name emqx -d \
 
 > The following information only introduces the plugins required by EMQX, which will not be used in
   the following demonstrations. You can also choose not to start EMQX at this stage.
+
+> We recommend EMQX 6.3.0 or above. The default security profile of earlier versions allows all
+  topics, so units can access topics of other units. Please refer to the
+  [**Configuration**](configuration.md) chapter.
 
 ## Download Sylvia-IoT
 
@@ -137,7 +141,7 @@ db.user.insertOne({
   expiredAt: null,
   disabledAt: null,
   roles: {"admin":true,"dev":false},
-  password: '27258772d876ffcef7ca2c75d6f4e6bcd81c203bd3e93c0791c736e5a2df4afa',
+  password: '$pbkdf2-sha256$i=600000$371a324ab13fe3a869e7d8732f776a3ba06241cc366e0d7b6f413e7469e26f08',
   salt: 'YsBsou2O',
   name: 'Admin',
   info: {}

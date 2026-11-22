@@ -28,6 +28,12 @@ struct Schema {
     expires_at: DateTime,
     #[serde(rename = "userId")]
     user_id: String,
+    /// Empty for sessions created by previous versions.
+    #[serde(rename = "clientId", default)]
+    client_id: String,
+    /// Empty for sessions created by previous versions.
+    #[serde(rename = "redirectUri", default)]
+    redirect_uri: String,
     #[serde(rename = "createdAt")]
     created_at: DateTime,
 }
@@ -70,6 +76,8 @@ impl LoginSessionModel for Model {
                 session_id: item.session_id,
                 expires_at: item.expires_at.into(),
                 user_id: item.user_id,
+                client_id: item.client_id,
+                redirect_uri: item.redirect_uri,
             }));
         }
         Ok(None)
@@ -80,6 +88,8 @@ impl LoginSessionModel for Model {
             session_id: session.session_id.clone(),
             expires_at: session.expires_at.into(),
             user_id: session.user_id.clone(),
+            client_id: session.client_id.clone(),
+            redirect_uri: session.redirect_uri.clone(),
             created_at: match TimeDelta::try_seconds(EXPIRES) {
                 None => panic!("{}", E_UNKNOWN),
                 Some(t) => (session.expires_at - t).into(),

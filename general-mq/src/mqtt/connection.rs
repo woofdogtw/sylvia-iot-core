@@ -28,7 +28,7 @@ use crate::{
 #[derive(Clone)]
 pub struct MqttConnection {
     /// Options of the connection.
-    opts: InnerOptions,
+    pub(super) opts: InnerOptions,
     /// Connection status.
     status: Arc<Mutex<Status>>,
     /// Hold the connection instance.
@@ -50,7 +50,7 @@ pub struct MqttConnectionOptions {
     ///
     /// Default is `mqtt://localhost`.
     pub uri: String,
-    /// Connection timeout in milliseconds.
+    /// Connection timeout in milliseconds. The value is rounded up to seconds.
     ///
     /// Default or zero value is `3000`.
     pub connect_timeout_millis: u64,
@@ -64,6 +64,11 @@ pub struct MqttConnectionOptions {
     ///
     /// **Note**: this is not stable.
     pub clean_session: bool,
+    /// Maximum packet size in bytes for both incoming and outgoing packets. Packets exceeding this
+    /// limit will cause the connection to be closed and reconnected.
+    ///
+    /// Default or zero value is `1048576` (1 MiB).
+    pub max_packet_size: usize,
 }
 
 /// Packet handler definitions.
@@ -74,7 +79,7 @@ pub(super) trait PacketHandler: Send + Sync {
 
 /// The validated options for management.
 #[derive(Clone)]
-struct InnerOptions {
+pub(super) struct InnerOptions {
     /// The formatted URI resource.
     uri: MQTTUri,
     /// Connection timeout in milliseconds.
@@ -85,12 +90,16 @@ struct InnerOptions {
     client_id: String,
     /// Clean session flag.
     clean_session: bool,
+    /// Maximum packet size in bytes.
+    pub(super) max_packet_size: usize,
 }
 
 /// Default connect timeout in milliseconds.
 const DEF_CONN_TIMEOUT_MS: u64 = 3000;
 /// Default reconnect time in milliseconds.
 const DEF_RECONN_TIME_MS: u64 = 1000;
+/// Default maximum packet size in bytes.
+const DEF_MAX_PACKET_SIZE: usize = 1024 * 1024;
 /// The accepted pattern of the client identifier.
 const CLIENT_ID_PATTERN: &'static str = "^[0-9A-Za-z-]{1,23}$";
 
@@ -121,6 +130,10 @@ impl MqttConnection {
                     }
                 },
                 clean_session: opts.clean_session,
+                max_packet_size: match opts.max_packet_size {
+                    0 => DEF_MAX_PACKET_SIZE,
+                    _ => opts.max_packet_size,
+                },
             },
             status: Arc::new(Mutex::new(Status::Closed)),
             conn: Arc::new(Mutex::new(None)),
@@ -235,6 +248,7 @@ impl Default for MqttConnectionOptions {
             reconnect_millis: DEF_RECONN_TIME_MS,
             client_id: None,
             clean_session: true,
+            max_packet_size: DEF_MAX_PACKET_SIZE,
         }
     }
 }
@@ -256,7 +270,8 @@ fn create_event_loop(conn: &MqttConnection) -> JoinHandle<()> {
                         .set_credentials(
                             this.opts.uri.username.as_str(),
                             this.opts.uri.password.as_str(),
-                        );
+                        )
+                        .set_max_packet_size(this.opts.max_packet_size, this.opts.max_packet_size);
                     if this.opts.uri.scheme == MQTTScheme::MQTTS {
                         opts.set_transport(Transport::Tls(TlsConfiguration::default()));
                     }
@@ -264,7 +279,9 @@ fn create_event_loop(conn: &MqttConnection) -> JoinHandle<()> {
                     let mut to_disconnected = false;
                     let (client, mut event_loop) = RumqttConnection::new(opts, 10);
                     let mut net_opts = NetworkOptions::new();
-                    net_opts.set_connection_timeout(this.opts.connect_timeout_millis);
+                    // rumqttc uses seconds for the connection timeout.
+                    net_opts
+                        .set_connection_timeout(this.opts.connect_timeout_millis.div_ceil(1000));
                     event_loop.set_network_options(net_opts);
                     loop {
                         match event_loop.poll().await {

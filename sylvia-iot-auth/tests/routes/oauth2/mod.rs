@@ -28,6 +28,7 @@ pub fn suite(db_engine: &'static str) -> Suite<TestState> {
         context.it("POST /oauth2/login", api::post_login);
         context.it("GET /oauth2/authorize", api::get_authorize);
         context.it("POST /oauth2/authorize", api::post_authorize);
+        context.it("user status and password hash upgrade", api::user_status);
         context.it(
             "POST /oauth2/token with authorization code",
             api::post_token,

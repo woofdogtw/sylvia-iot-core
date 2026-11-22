@@ -88,15 +88,21 @@ pub struct Rumqttd {
     pub console_port: Option<u16>,
 }
 
+/// The message broker host that units can use.
+///
+/// `host` and `external` must be host names or IP addresses without schemes, ports or paths, and
+/// they must be unique in the list.
 #[derive(Clone, Default, Deserialize)]
 pub struct MqHost {
     /// Display name.
     pub name: String,
     /// Internal host name or IP address of the message broker for sylvia-iot-broker to access.
     pub host: String,
-    /// External host name or IP address of the message broker for developer to access.
+    /// External host name or IP address of the message broker for developers to access. APIs use
+    /// this as the host of `hostUri`.
     pub external: String,
-    /// Is active broker in operation or to be stopped.
+    /// `false` means that the host is going to be stopped. New applications/networks cannot use
+    /// this host, and the existing ones are not affected.
     pub active: bool,
 }
 
@@ -318,21 +324,9 @@ pub fn read_args(args: &ArgMatches) -> Config {
                 hosts: match args.get_one::<String>("coremgr.mq.rabbitmq.hosts") {
                     None => match env::var("COREMGR_MQ_RABBITMQ_HOSTS") {
                         Err(_) => None,
-                        Ok(v) => match v.len() {
-                            0 => None,
-                            _ => match serde_json::from_str::<Vec<MqHost>>(v.as_str()) {
-                                Err(_) => None,
-                                Ok(v) => Some(v),
-                            },
-                        },
+                        Ok(v) => parse_hosts("COREMGR_MQ_RABBITMQ_HOSTS", v.as_str()),
                     },
-                    Some(v) => match v.len() {
-                        0 => None,
-                        _ => match serde_json::from_str::<Vec<MqHost>>(v.as_str()) {
-                            Err(_) => None,
-                            Ok(v) => Some(v),
-                        },
-                    },
+                    Some(v) => parse_hosts("--coremgr.mq.rabbitmq.hosts", v.as_str()),
                 },
             }),
             emqx: Some(Emqx {
@@ -353,21 +347,9 @@ pub fn read_args(args: &ArgMatches) -> Config {
                 hosts: match args.get_one::<String>("coremgr.mq.emqx.hosts") {
                     None => match env::var("COREMGR_MQ_EMQX_HOSTS") {
                         Err(_) => None,
-                        Ok(v) => match v.len() {
-                            0 => None,
-                            _ => match serde_json::from_str::<Vec<MqHost>>(v.as_str()) {
-                                Err(_) => None,
-                                Ok(v) => Some(v),
-                            },
-                        },
+                        Ok(v) => parse_hosts("COREMGR_MQ_EMQX_HOSTS", v.as_str()),
                     },
-                    Some(v) => match v.len() {
-                        0 => None,
-                        _ => match serde_json::from_str::<Vec<MqHost>>(v.as_str()) {
-                            Err(_) => None,
-                            Ok(v) => Some(v),
-                        },
-                    },
+                    Some(v) => parse_hosts("--coremgr.mq.emqx.hosts", v.as_str()),
                 },
             }),
             rumqttd: Some(Rumqttd {
@@ -425,6 +407,22 @@ pub fn read_args(args: &ArgMatches) -> Config {
             }),
         }),
     })
+}
+
+/// To parse hosts in JSON format. Empty string means unlimited.
+///
+/// # Panics
+///
+/// Panics if the JSON is invalid, so that the service will not start with unlimited hosts because
+/// of typos.
+fn parse_hosts(source: &str, value: &str) -> Option<Vec<MqHost>> {
+    match value.len() {
+        0 => None,
+        _ => match serde_json::from_str::<Vec<MqHost>>(value) {
+            Err(e) => panic!("invalid hosts of {}: {}", source, e),
+            Ok(hosts) => Some(hosts),
+        },
+    }
 }
 
 /// Fill missing configuration with default values.

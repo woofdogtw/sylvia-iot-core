@@ -28,6 +28,8 @@ API - Coremgr (Core Manager)
     - [`DELETE /coremgr/api/v1/network/{networkId}` Delete network](#delete_network)
     - [`GET /coremgr/api/v1/network/{networkId}/stats` Get network statistics](#get_network_stats)
     - [`POST /coremgr/api/v1/network/{networkId}/uldata` Simulate device uplink data](#post_network_uldata)
+- [Message queue APIs](#mq)
+    - [`GET /coremgr/api/v1/mq/hosts` Message queue host list](#get_mq_hosts)
 
 ## <a name="notes"></a>Notes
 
@@ -99,6 +101,19 @@ This system supports the following roles:
 The coremgr module wraps most of `sylvia-iot-auth` and `sylvia-iot-broker` APIs by replacing `/auth` and `/broker` with `/coremgr`. The exceptions are **application** and **network** APIs because the coremgr not only manages them by requesting APIs but also controls underlying message brokers (RabbitMQ/EMQX/...) for **authentication** and **access control**.
 
 In this document, we only describe APIs that have different body from auth/broker modules.
+
+Only the unit owner, `admin` and `manager` can create and update applications and networks of the unit, because these operations change resources of message brokers. Other unit members get `400 Bad Request` with `err_param`. Only `admin` and `manager` can create and update public networks.
+
+### <a name="host_uri"></a>Host URIs
+
+The `hostUri` of applications and networks is the URI of the message broker, such as `amqp://mq.example.com` or `mqtts://mq.example.com:8883`.
+
+If the service is configured with message queue hosts, the host of `hostUri` must be one of the `external` hosts listed by [`GET /coremgr/api/v1/mq/hosts`](#get_mq_hosts) (case insensitive):
+
+- Creating or changing `hostUri` requires an **active** host. Otherwise, the API responds `err_param`.
+- The `hostUri` in responses uses the `external` host.
+
+If the service is not configured with hosts, any host can be used.
 
 ## <a name="format"></a>List API formats
 
@@ -174,7 +189,7 @@ Create an application and get the default password.
     - *string* `code`: Application code for queues. The pattern is `[A-Za-z0-9]{1}[A-Za-z0-9-_]*`. This code will be transformed to lowercase.
         - This code will be the **user name** of the queue connection.
     - *string* `unitId`: The associated unit ID.
-    - *string* `hostUri`: The application queue URI.
+    - *string* `hostUri`: The application queue URI. See [Host URIs](#host_uri).
         - The **authority** part of URI will be ignored.
     - *string* `name`: (**optional**) Display name.
     - *object* `info`: (**optional**) Other information.
@@ -291,7 +306,7 @@ Get application list.
         - *string* `unitCode`: The associated unit code.
         - *string* `createdAt`: Creation time in RFC 3339 format.
         - *string* `modifiedAt`: Modification time in RFC 3339 format.
-        - *string* `hostUri`: The application queue URI.
+        - *string* `hostUri`: The application queue URI without credentials. See [Host URIs](#host_uri).
         - *string* `name`: Display name.
         - *object* `info`: Other information.
 
@@ -408,7 +423,7 @@ Update the specified application information.
 #### Parameters
 
 - *object* `data`:
-    - *string* `hostUri`: (**optional**) The application queue URI. Changing this value will reconnect to the new message queue.
+    - *string* `hostUri`: (**optional**) The application queue URI. Changing this value will reconnect to the new message queue. See [Host URIs](#host_uri).
     - *string* `name`: (**optional**) The display name.
     - *object* `info`: (**optional**) Other information. You must provide full of fields, or all fields will be replaced with the new value.
     - *number* `ttl`: (**optional for AMQP**) Message TTL in milliseconds. **0** is no limit.
@@ -497,6 +512,7 @@ Send downlink data to a device.
 - *object* `data`: An object that contains the downlink data information.
     - *string* `deviceId`: The target device ID.
     - *string* `payload`: The data payload in **hexadecimal** string format.
+        - The data message sent to the broker must not exceed 1 MiB - 16 KiB. Otherwise, the API responds `err_param`.
 
 - **Example**
 
@@ -533,7 +549,7 @@ Create a network.
     - *string* `code`: Network code for queues. The pattern is `[A-Za-z0-9]{1}[A-Za-z0-9-_]*`. This code will be transformed to lowercase.
     - *string | null* `unitId`: The associated unit ID for private network.
         - **null**: (**for admin or manager only**) the public network.
-    - *string* `hostUri`: The network queue URI.
+    - *string* `hostUri`: The network queue URI. See [Host URIs](#host_uri).
     - *string* `name`: (**optional**) Display name.
     - *object* `info`: (**optional**) Other information.
     - *number* `ttl`: (**optional for AMQP**) Message TTL in milliseconds. **0** is no limit.
@@ -649,7 +665,7 @@ Get network list.
         - *string | null* `unitCode`: The associated unit code.
         - *string* `createdAt`: Creation time in RFC 3339 format.
         - *string* `modifiedAt`: Modification time in RFC 3339 format.
-        - *string* `hostUri`: The network queue URI.
+        - *string* `hostUri`: The network queue URI without credentials. See [Host URIs](#host_uri).
         - *string* `name`: Display name.
         - *object* `info`: Other information.
 
@@ -766,7 +782,7 @@ Update the specified network information.
 #### Parameters
 
 - *object* `data`:
-    - *string* `hostUri`: (**optional**) The network queue URI. Changing this value will reconnect to the new message queue.
+    - *string* `hostUri`: (**optional**) The network queue URI. Changing this value will reconnect to the new message queue. See [Host URIs](#host_uri).
     - *string* `name`: (**optional**) The display name.
     - *object* `info`: (**optional**) Other information. You must provide full of fields, or all fields will be replaced with the new value.
     - *number* `ttl`: (**optional for AMQP**) Message TTL in milliseconds. Without this is no limit.
@@ -843,6 +859,7 @@ Simulate uplink data from a device.
 - *object* `data`: An object that contains the downlink data information.
     - *string* `deviceId`: The source device ID.
     - *string* `payload`: The data payload in **hexadecimal** string format.
+        - The data message sent to the broker must not exceed 1 MiB - 16 KiB. Otherwise, the API responds `err_param`.
 
 - **Example**
 
@@ -860,3 +877,38 @@ Simulate uplink data from a device.
     - `err_broker_device_not_exist`: The specified device does not exist.
 - **401, 403, 500, 503**: See [Notes](#notes).
 - **404 Not Found**: The specified network does not exist.
+
+# <a name="mq"></a>Message queue APIs
+
+## <a name="get_mq_hosts"></a>Message queue host list
+
+Get the message queue hosts that units can use for the `hostUri` of applications and networks. See [Host URIs](#host_uri).
+
+    GET /coremgr/api/v1/mq/hosts
+
+#### Response
+
+- **200 OK**: An array of hosts. The array is empty if the service is not configured with hosts. Parameters are:
+
+    - *object[]* `data`:
+        - *string* `type`: The message queue type. One of `amqp` and `mqtt`.
+        - *string* `name`: Display name.
+        - *string* `external`: The host for the `hostUri`.
+        - *boolean* `active`: `false` means that the host is going to be stopped. New applications and networks cannot use this host.
+
+    - **Example**
+
+        ```json
+        {
+            "data": [
+                {
+                    "type": "amqp",
+                    "name": "Region 1",
+                    "external": "mq.example.com",
+                    "active": true
+                }
+            ]
+        }
+        ```
+
+- **401, 500, 503**: See [Notes](#notes).

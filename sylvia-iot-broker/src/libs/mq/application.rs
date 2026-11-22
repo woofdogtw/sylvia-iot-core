@@ -22,7 +22,8 @@ use general_mq::{
 use sylvia_iot_corelib::{err, strings};
 
 use super::{
-    Connection, MgrMqStatus, MgrStatus, Options, get_connection, new_data_queues, remove_connection,
+    Connection, MAX_DATA_MSG_SIZE, MgrMqStatus, MgrStatus, Options, get_connection,
+    new_data_queues, remove_connection,
 };
 
 /// Uplink data from broker to application.
@@ -50,7 +51,7 @@ pub struct UlData {
 }
 
 /// Downlink data from application to broker.
-#[derive(Deserialize)]
+#[derive(Deserialize, Serialize)]
 pub struct DlData {
     #[serde(rename = "correlationId")]
     pub correlation_id: String,
@@ -239,6 +240,7 @@ impl ApplicationMgr {
     pub fn send_uldata(&self, data: &UlData) -> Result<(), Box<dyn StdError>> {
         let payload = serde_json::to_vec(data)?;
         let queue = { (*self.uldata.lock().unwrap()).clone() };
+        queue.check_msg_size(payload.len())?;
         task::spawn(async move {
             let _ = queue.send_msg(payload).await;
         });
@@ -434,6 +436,15 @@ fn parse_dldata_msg(msg: &[u8]) -> Result<DlData, DlDataResp> {
             });
         }
         data.data = data.data.to_lowercase();
+    }
+    // The broker adds fields when forwarding the data, so limit the size of the normalized data.
+    if serde_json::to_vec(&data).map_or(0, |v| v.len()) > MAX_DATA_MSG_SIZE {
+        return Err(DlDataResp {
+            correlation_id: data.correlation_id.clone(),
+            error: Some(err::E_PARAM.to_string()),
+            message: Some("data too large".to_string()),
+            ..Default::default()
+        });
     }
     Ok(data)
 }

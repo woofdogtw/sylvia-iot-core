@@ -36,7 +36,10 @@ use sylvia_iot_corelib::{
 use super::{
     super::{
         super::{ErrReq, State as AppState, middleware::GetTokenInfoData},
-        lib::{check_application, check_unit, gen_mgr_key},
+        lib::{
+            check_application, check_unit, gen_mgr_key, hide_host_uri_credentials,
+            restore_host_uri_credentials,
+        },
     },
     request, response,
 };
@@ -723,6 +726,9 @@ pub async fn patch_application(
             Some(application) => application,
         };
 
+    // API responses hide the credentials, so use the current credentials if the host URI is not
+    // changed and has no credentials.
+    restore_host_uri_credentials(&mut body.data.host_uri, application.host_uri.as_str());
     let updates = get_updates(&mut body.data).await?;
     let mut should_add_mgr = false;
 
@@ -971,7 +977,7 @@ fn application_transform(application: &Application) -> response::GetApplicationD
         unit_code: application.unit_code.clone(),
         created_at: time_str(&application.created_at),
         modified_at: time_str(&application.modified_at),
-        host_uri: application.host_uri.clone(),
+        host_uri: hide_host_uri_credentials(application.host_uri.as_str()),
         name: application.name.clone(),
         info: application.info.clone(),
     }

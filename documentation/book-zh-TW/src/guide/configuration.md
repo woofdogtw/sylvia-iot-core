@@ -199,10 +199,10 @@ JSON5 可以參考範例檔案，該檔案提供了完整的設定項目。
 | coremgr.mq.rabbitmq.password          | coremgr.mq.rabbitmq.password          | COREMGR_MQ_RABBITMQ_PASSWORD          | guest                         | RabbitMQ 管理者密碼 |
 | coremgr.mq.rabbitmq.ttl               | coremgr.mq.rabbitmq.ttl               | COREMGR_MQ_RABBITMQ_TTL               |                               | RabbitMQ 預設佇列訊息存活長度（秒） |
 | coremgr.mq.rabbitmq.length            | coremgr.mq.rabbitmq.length            | COREMGR_MQ_RABBITMQ_LENGTH            |                               | RabbitMQ 預設佇列訊息最多個數 |
-| coremgr.mq.rabbitmq.hosts             | coremgr.mq.rabbitmq.hosts             | COREMGR_MQ_RABBITMQ_HOSTS             |                               | （保留） |
+| coremgr.mq.rabbitmq.hosts             | coremgr.mq.rabbitmq.hosts             | COREMGR_MQ_RABBITMQ_HOSTS             |                               | unit 可使用的 RabbitMQ 主機 |
 | coremgr.mq.emqx.apiKey                | coremgr.mq.emqx.apikey                | COREMGR_MQ_EMQX_APIKEY                |                               | EMQX 管理 API key |
 | coremgr.mq.emqx.apiSecret             | coremgr.mq.emqx.apisecret             | COREMGR_MQ_EMQX_APISECRET             |                               | EMQX 管理 API secret |
-| coremgr.mq.emqx.hosts                 | coremgr.mq.emqx.hosts                 | COREMGR_MQ_EMQX_HOSTS                 |                               | （保留） |
+| coremgr.mq.emqx.hosts                 | coremgr.mq.emqx.hosts                 | COREMGR_MQ_EMQX_HOSTS                 |                               | unit 可使用的 EMQX 主機 |
 | coremgr.mq.rumqttd.mqttPort           | coremgr.mq.rumqttd.mqtt-port          | COREMGR_MQ_RUMQTTD_MQTT_PORT          | 1883                          | rumqttd MQTT 連接埠 |
 | coremgr.mq.rumqttd.mqttsPort          | coremgr.mq.rumqttd.mqtts-port         | COREMGR_MQ_RUMQTTD_MQTTS_PORT         | 8883                          | rumqttd MQTTS 連接埠 |
 | coremgr.mq.rumqttd.consolePort        | coremgr.mq.rumqttd.console-port       | COREMGR_MQ_RUMQTTD_CONSOLE_PORT       | 18083                         | rumqttd 管理 API 連接埠 |
@@ -211,6 +211,26 @@ JSON5 可以參考範例檔案，該檔案提供了完整的設定項目。
 
 ### 詳細說明
 
+- 訊息代理主機（**hosts**）：
+    - 物件陣列。CLI 參數和環境變數使用 JSON 字串，例如
+      `[{"name":"Region 1","host":"rabbitmq.internal","external":"mq.example.com","active":true}]`。
+        - **name**：顯示名稱。
+        - **host**：Sylvia-IoT 服務存取訊息代理使用的主機名稱或 IP 位址。
+        - **external**：unit 的開發者存取訊息代理使用的主機名稱或 IP 位址。coremgr API 中 application
+          和 network 的 `hostUri` 使用這個值，`GET /coremgr/api/v1/mq/hosts` 也會列出這些值。
+        - **active**：`false` 表示這台主機即將停用。新的 application 和 network 不能使用這台主機，已經存在的
+          不受影響。
+    - **host** 和 **external** 只能是主機名稱或 IP 位址，不能包含 scheme、port 或 path，而且各自不能重複。
+      主機格式錯誤或 JSON 字串錯誤時，服務不會啟動。
+    - `hostUri` 的 scheme 和 port 同時用於 **host** 和 **external**，所以訊息代理內外要使用相同的 scheme
+      （是否使用 TLS）和 port。
+    - 不指定（或是空陣列）時，unit 可以使用任何主機，coremgr 也會把管理帳號送到 unit 指定的主機。
+      **公開的服務請務必設定。**
+- EMQX：
+    - 建議使用 EMQX 6.3.0 以上的版本。較低版本預設使用 `legacy` 安全設定，允許存取所有 topic，unit 會存取到
+      其他 unit 的 topic。使用較低版本或 `legacy` 設定時，請設定 `authorization.no_match = deny`，並把
+      `acl.conf` 的最後一條規則改成 `{deny, all}`。
+    - `mqtt.max_packet_size` 必須小於或等於 1 MiB（預設值）。
 - MQ channels:
     - **data** 是 **資料訊息（data channel message）**
         - 目前 coremgr 支援紀錄 GET API 以外的 HTTP 請求內容，開啟資料通道即可紀錄 API 使用歷程。

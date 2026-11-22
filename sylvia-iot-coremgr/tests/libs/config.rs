@@ -1,4 +1,8 @@
-use std::{env, ffi::OsStr};
+use std::{
+    env,
+    ffi::OsStr,
+    panic::{self, AssertUnwindSafe},
+};
 
 use clap::Command;
 use laboratory::{SpecContext, expect};
@@ -170,22 +174,18 @@ pub fn read_args(_context: &mut SpecContext<TestState>) -> Result<(), String> {
     expect(data_conf.persistent.is_some()).to_equal(true)?;
     expect(data_conf.persistent.unwrap()).to_equal(true)?;
 
-    // Test wrong command-line arguments.
-    let args = vec![
-        "test",
-        "--coremgr.mq.rabbitmq.hosts",
-        "{",
-        "--coremgr.mq.emqx.hosts",
-        "}",
-    ];
-    let args = config::reg_args(Command::new("test")).get_matches_from(args);
-    let conf = config::read_args(&args);
-    expect(conf.mq.as_ref().unwrap().rabbitmq.is_some()).to_equal(true)?;
-    let rabbitmq = conf.mq.as_ref().unwrap().rabbitmq.as_ref().unwrap();
-    expect(rabbitmq.hosts.is_none()).to_equal(true)?;
-    expect(conf.mq.as_ref().unwrap().emqx.is_some()).to_equal(true)?;
-    let emqx = conf.mq.as_ref().unwrap().emqx.as_ref().unwrap();
-    expect(emqx.hosts.is_none()).to_equal(true)?;
+    // Test wrong command-line arguments. Invalid hosts panic to stop starting the service.
+    for (key, value) in [
+        ("--coremgr.mq.rabbitmq.hosts", "{"),
+        ("--coremgr.mq.emqx.hosts", "}"),
+    ] {
+        let args =
+            config::reg_args(Command::new("test")).get_matches_from(vec!["test", key, value]);
+        let result = panic::catch_unwind(AssertUnwindSafe(|| config::read_args(&args)));
+        if result.is_ok() {
+            return Err(format!("invalid {} should panic", key));
+        }
+    }
 
     // Clear command-line arguments.
     let args = config::reg_args(Command::new("test")).get_matches_from(vec!["test"]);
@@ -282,8 +282,8 @@ pub fn read_args(_context: &mut SpecContext<TestState>) -> Result<(), String> {
     set_env_var("COREMGR_MQ_ENGINE_MQTT", "emqx1");
     set_env_var("COREMGR_MQ_RABBITMQ_TTL", "12_000");
     set_env_var("COREMGR_MQ_RABBITMQ_LENGTH", "12_000");
-    set_env_var("COREMGR_MQ_RABBITMQ_HOSTS", "}");
-    set_env_var("COREMGR_MQ_EMQX_HOSTS", "{");
+    set_env_var("COREMGR_MQ_RABBITMQ_HOSTS", "");
+    set_env_var("COREMGR_MQ_EMQX_HOSTS", "");
     set_env_var("COREMGR_MQ_RUMQTTD_MQTT_PORT", "12_000");
     set_env_var("COREMGR_MQ_RUMQTTD_MQTTS_PORT", "12_000");
     set_env_var("COREMGR_MQ_RUMQTTD_CONSOLE_PORT", "12_000");
@@ -312,6 +312,16 @@ pub fn read_args(_context: &mut SpecContext<TestState>) -> Result<(), String> {
     let data_conf = mq_channels_conf.data.as_ref().unwrap();
     expect(data_conf.persistent.is_some()).to_equal(true)?;
     expect(data_conf.persistent.unwrap()).to_equal(config::DEF_MQ_PERSISTENT)?;
+
+    // Invalid hosts panic to stop starting the service.
+    for key in ["COREMGR_MQ_RABBITMQ_HOSTS", "COREMGR_MQ_EMQX_HOSTS"] {
+        set_env_var(key, "{");
+        let result = panic::catch_unwind(AssertUnwindSafe(|| config::read_args(&args)));
+        set_env_var(key, "");
+        if result.is_ok() {
+            return Err(format!("invalid {} should panic", key));
+        }
+    }
 
     // Test command-line arguments overwrite environment variables.
     let args = vec![

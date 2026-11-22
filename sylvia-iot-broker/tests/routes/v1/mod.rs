@@ -104,7 +104,15 @@ pub fn suite(db_engine: &'static str, cache_engine: &'static str) -> Suite<TestS
                 "GET /application/{applicationId} with invalid token",
                 applicationapi::get_invalid_token,
             );
+            context.it(
+                "GET /application hides credentials of hostUri",
+                applicationapi::get_host_uri_credentials,
+            );
             context.it("PATCH /application/{applicationId}", applicationapi::patch);
+            context.it(
+                "PATCH /application/{applicationId} with hostUri without credentials",
+                applicationapi::patch_host_uri_credentials,
+            );
             context.it(
                 "PATCH /application/{applicationId} with wrong ID",
                 applicationapi::patch_wrong_id,
@@ -497,7 +505,15 @@ pub fn suite(db_engine: &'static str, cache_engine: &'static str) -> Suite<TestS
                 "GET /network/{networkId} with invalid token",
                 networkapi::get_invalid_token,
             );
+            context.it(
+                "GET /network hides credentials of hostUri",
+                networkapi::get_host_uri_credentials,
+            );
             context.it("PATCH /network/{networkId}", networkapi::patch);
+            context.it(
+                "PATCH /network/{networkId} with hostUri without credentials",
+                networkapi::patch_host_uri_credentials,
+            );
             context.it(
                 "PATCH /network/{networkId} with wrong ID",
                 networkapi::patch_wrong_id,

@@ -1938,10 +1938,8 @@ fn test_patch_admin_admin(
         HeaderValue::from_str(format!("Bearer {}", user_token).as_str()).unwrap(),
     );
     let resp = runtime.block_on(async { req.await });
-    match patch_password {
-        false => expect(resp.status_code()).to_equal(StatusCode::OK)?,
-        true => expect(resp.status_code()).to_equal(StatusCode::UNAUTHORIZED)?,
-    }
+    // The tokens are revoked because the user is disabled.
+    expect(resp.status_code()).to_equal(StatusCode::UNAUTHORIZED)?;
 
     let body = request::PatchAdminUser {
         disable: Some(false),
@@ -1958,7 +1956,15 @@ fn test_patch_admin_admin(
     expect(resp.status_code()).to_equal(StatusCode::NO_CONTENT)?;
 
     let user_info = get_user_model(runtime, state, user_id)?;
-    expect(user_info.disabled_at.is_none()).to_equal(true)
+    expect(user_info.disabled_at.is_none()).to_equal(true)?;
+
+    // The revoked tokens cannot be used after the user is enabled again.
+    let req = server.get("/auth/api/v1/user").add_header(
+        header::AUTHORIZATION,
+        HeaderValue::from_str(format!("Bearer {}", user_token).as_str()).unwrap(),
+    );
+    let resp = runtime.block_on(async { req.await });
+    expect(resp.status_code()).to_equal(StatusCode::UNAUTHORIZED)
 }
 
 fn test_patch_admin_manager(

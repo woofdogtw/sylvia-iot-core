@@ -30,7 +30,7 @@ sudo usermod -aG docker $USER
 ```shell
 export MONGODB_VER=8.2.2
 export RABBITMQ_VER=4.2.0
-export EMQX_VER=6.0.1
+export EMQX_VER=6.3.3
 
 export MONGODB_DIR=$HOME/db/mongodb
 export RABBITMQ_DIR=$HOME/db/rabbitmq
@@ -59,6 +59,9 @@ docker run --rm --name emqx -d \
 ```
 
 > 這裡只是介紹 EMQX 需要使用的 plugin，下面的展示不會使用。您也可以先不啟動 EMQX。
+
+> 建議使用 EMQX 6.3.0 以上的版本。較低版本預設的安全設定允許存取所有 topic，unit 會存取到其他 unit 的
+  topic。詳細請參考 [**設定檔**](configuration.md) 章節。
 
 ## 下載 Sylvia-IoT
 
@@ -136,7 +139,7 @@ db.user.insertOne({
   expiredAt: null,
   disabledAt: null,
   roles: {"admin":true,"dev":false},
-  password: '27258772d876ffcef7ca2c75d6f4e6bcd81c203bd3e93c0791c736e5a2df4afa',
+  password: '$pbkdf2-sha256$i=600000$371a324ab13fe3a869e7d8732f776a3ba06241cc366e0d7b6f413e7469e26f08',
   salt: 'YsBsou2O',
   name: 'Admin',
   info: {}

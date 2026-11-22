@@ -139,6 +139,12 @@ pub fn get_count_invalid_param(context: &mut SpecContext<TestState>) -> Result<(
     test_get_400(runtime, routes_state, TOKEN_OWNER, uri, &query, code)?;
     test_get_400(runtime, routes_state, TOKEN_MEMBER, uri, &query, code)?;
 
+    // An empty `unit` is the same as no `unit` for normal users.
+    let mut query = Map::<String, Value>::new();
+    query.insert("unit".to_string(), Value::String("".to_string()));
+    test_get_400(runtime, routes_state, TOKEN_OWNER, uri, &query, code)?;
+    test_get_400(runtime, routes_state, TOKEN_MEMBER, uri, &query, code)?;
+
     let mut query = Map::<String, Value>::new();
     query.insert("unit".to_string(), Value::String(UNIT_OWNER.to_string()));
     query.insert("tstart".to_string(), Value::String("0".to_string()));
@@ -826,6 +832,12 @@ pub fn get_list_invalid_param(context: &mut SpecContext<TestState>) -> Result<()
     let code = err::E_PARAM;
 
     let query = Map::<String, Value>::new();
+    test_get_400(runtime, routes_state, TOKEN_OWNER, uri, &query, code)?;
+    test_get_400(runtime, routes_state, TOKEN_MEMBER, uri, &query, code)?;
+
+    // An empty `unit` is the same as no `unit` for normal users.
+    let mut query = Map::<String, Value>::new();
+    query.insert("unit".to_string(), Value::String("".to_string()));
     test_get_400(runtime, routes_state, TOKEN_OWNER, uri, &query, code)?;
     test_get_400(runtime, routes_state, TOKEN_MEMBER, uri, &query, code)?;
 

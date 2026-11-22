@@ -9,10 +9,13 @@ use reqwest::{self, Client, Method};
 use serde_urlencoded;
 use url::Url;
 
-use sylvia_iot_corelib::err::ErrResp;
+use sylvia_iot_corelib::{err::ErrResp, role::Role};
 
-use super::{AmqpState, MqttState, State as AppState};
-use crate::libs::mq::{QueueType, emqx, rabbitmq};
+use super::{AmqpState, BODY_LIMIT, MqHosts, MqttState, State as AppState};
+use crate::libs::{
+    config::MqHost,
+    mq::{QueueType, emqx, rabbitmq},
+};
 
 pub mod application;
 pub mod auth;
@@ -20,6 +23,7 @@ pub mod client;
 pub mod device;
 pub mod device_route;
 pub mod dldata_buffer;
+pub mod mq;
 pub mod network;
 pub mod network_route;
 mod request;
@@ -74,7 +78,7 @@ async fn api_bridge(fn_name: &str, client: &Client, req: Request, api_path: &str
             Ok(query) => builder = builder.query(&query),
         }
     }
-    match body::to_bytes(body, usize::MAX).await {
+    match body::to_bytes(body, BODY_LIMIT).await {
         Err(e) => {
             let e = format!("convert body error: {}", e);
             return ErrResp::ErrParam(Some(e)).into_response();
@@ -386,14 +390,14 @@ async fn create_queue_rsc<'a>(
                     return Err(e.into_response());
                 }
                 if let Err(e) = rabbitmq::put_vhost(&client, opts, host, username).await {
-                    let _ = clear_queue_rsc(fn_name, &state, &clear_rsc);
+                    let _ = clear_queue_rsc(fn_name, &state, &clear_rsc).await;
                     error!("[{}] add RabbitMQ vhost {} error: {}", fn_name, username, e);
                     return Err(e.into_response());
                 }
                 if let Err(e) =
                     rabbitmq::put_permissions(&client, opts, host, rsc.q_type, username).await
                 {
-                    let _ = clear_queue_rsc(fn_name, &state, &clear_rsc);
+                    let _ = clear_queue_rsc(fn_name, &state, &clear_rsc).await;
                     error!(
                         "[{}] add RabbitMQ permission {} error: {}",
                         fn_name, username, e
@@ -408,7 +412,7 @@ async fn create_queue_rsc<'a>(
                     if let Err(e) =
                         rabbitmq::put_policies(&client, opts, host, username, &policies).await
                     {
-                        let _ = clear_queue_rsc(fn_name, &state, &clear_rsc);
+                        let _ = clear_queue_rsc(fn_name, &state, &clear_rsc).await;
                         error!("[{}] patch RabbitMQ {} error: {}", fn_name, username, e);
                         return Err(e.into_response());
                     }
@@ -447,14 +451,14 @@ async fn create_queue_rsc<'a>(
                     return Err(e.into_response());
                 }
                 if let Err(e) = emqx::post_acl(&client, opts, host, rsc.q_type, username).await {
-                    let _ = clear_queue_rsc(fn_name, &state, &clear_rsc);
+                    let _ = clear_queue_rsc(fn_name, &state, &clear_rsc).await;
                     error!("[{}] add EMQX ACL {} error: {}", fn_name, username, e);
                     return Err(e.into_response());
                 }
                 if let Err(e) =
                     emqx::post_topic_metrics(&client, opts, host, rsc.q_type, username).await
                 {
-                    let _ = clear_queue_rsc(fn_name, &state, &clear_rsc);
+                    let _ = clear_queue_rsc(fn_name, &state, &clear_rsc).await;
                     error!("[{}] add EMQX metrics {} error: {}", fn_name, username, e);
                     return Err(e.into_response());
                 }
@@ -540,7 +544,7 @@ async fn clear_patch_host(
                 username: patch_host.username.as_str(),
                 q_type,
             };
-            let _ = clear_queue_rsc(fn_name, &state, &clear_rsc);
+            let _ = clear_queue_rsc(fn_name, &state, &clear_rsc).await;
         }
     }
 }
@@ -566,11 +570,94 @@ fn transfer_host_uri(state: &AppState, host_uri: &mut Url, mq_username: &str) {
     }
 }
 
-/// Truncates the host (from sylvia-iot-broker) to `scheme://host:port`.
-fn trunc_host_uri(host_uri: &Url) -> String {
+/// Truncates the host (from sylvia-iot-broker) to `scheme://host:port`, and replaces the internal
+/// host with the external host of the `hosts` configurations.
+fn trunc_host_uri(mq_hosts: &MqHosts, host_uri: &Url) -> String {
     let mut new_uri = host_uri.clone();
     let _ = new_uri.set_username("");
     let _ = new_uri.set_password(None);
     new_uri.set_path("");
+    if let Some(host) = host_uri.host_str() {
+        let host = host.to_lowercase();
+        let hosts = get_mq_hosts(mq_hosts, host_uri.scheme());
+        if let Some(item) = hosts.iter().find(|item| item.host == host) {
+            let _ = new_uri.set_host(Some(item.external.as_str()));
+        }
+    }
     new_uri.to_string()
+}
+
+/// To get the hosts of the scheme.
+fn get_mq_hosts<'a>(mq_hosts: &'a MqHosts, scheme: &str) -> &'a Vec<MqHost> {
+    match scheme {
+        "mqtt" | "mqtts" => &mq_hosts.mqtt,
+        _ => &mq_hosts.amqp,
+    }
+}
+
+/// To replace the external host of the host URI (from users) with the internal host of the `hosts`
+/// configurations. The URI is not changed if there are no hosts.
+///
+/// # Errors
+///
+/// Returns `err_param` if the host is not in the hosts, or the host is not active when
+/// `check_active` is `true`.
+fn to_internal_host_uri(
+    mq_hosts: &MqHosts,
+    host_uri: &Url,
+    check_active: bool,
+) -> Result<Url, Response> {
+    let hosts = get_mq_hosts(mq_hosts, host_uri.scheme());
+    if hosts.len() == 0 {
+        return Ok(host_uri.clone());
+    }
+    let external = match host_uri.host_str() {
+        None => {
+            let e = "invalid `hostUri`".to_string();
+            return Err(ErrResp::ErrParam(Some(e)).into_response());
+        }
+        Some(host) => host.to_lowercase(),
+    };
+    let item = match hosts.iter().find(|item| item.external == external) {
+        None => {
+            let e = format!("unavailable host {} of `hostUri`", external);
+            return Err(ErrResp::ErrParam(Some(e)).into_response());
+        }
+        Some(item) => item,
+    };
+    if check_active && !item.active {
+        let e = format!("inactive host {} of `hostUri`", external);
+        return Err(ErrResp::ErrParam(Some(e)).into_response());
+    }
+    let mut uri = host_uri.clone();
+    if let Err(e) = uri.set_host(Some(item.host.as_str())) {
+        let e = format!(
+            "invalid host {} of `hosts` configurations: {}",
+            item.host, e
+        );
+        return Err(ErrResp::ErrUnknown(Some(e)).into_response());
+    }
+    Ok(uri)
+}
+
+/// To check if the user can manage the message broker resources of the unit. The unit owner, admin
+/// and manager can manage the resources. Only admin and manager can manage public networks (no
+/// unit).
+async fn check_unit_owner(
+    fn_name: &str,
+    state: &AppState,
+    token: &HeaderValue,
+    unit: Option<&response::Unit>,
+) -> Result<bool, Response> {
+    let token_info =
+        get_tokeninfo_inner(fn_name, &state.client, state.auth_base.as_str(), token).await?;
+    if Role::is_role(&token_info.roles, Role::ADMIN)
+        || Role::is_role(&token_info.roles, Role::MANAGER)
+    {
+        return Ok(true);
+    }
+    match unit {
+        None => Ok(false),
+        Some(unit) => Ok(unit.owner_id == token_info.user_id),
+    }
 }

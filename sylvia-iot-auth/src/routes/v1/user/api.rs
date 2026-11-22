@@ -23,9 +23,12 @@ use super::{
     super::super::{ErrReq, State as AppState},
     request, response,
 };
-use crate::models::{
-    Model, access_token, authorization_code, refresh_token,
-    user::{ListOptions, ListQueryCond, QueryCond, SortCond, SortKey, Updates, User},
+use crate::{
+    libs::password,
+    models::{
+        Model, access_token, authorization_code, refresh_token,
+        user::{ListOptions, ListQueryCond, QueryCond, SortCond, SortKey, Updates, User},
+    },
 };
 
 #[derive(Default)]
@@ -37,7 +40,6 @@ struct GetAdminFields {
 const LIST_LIMIT_DEFAULT: u64 = 100;
 const LIST_CURSOR_MAX: u64 = 100;
 const ID_RAND_LEN: usize = 8;
-const SALT_LEN: usize = 8;
 
 /// `GET /{base}/api/v1/user`
 pub async fn get_user(Extension(user): Extension<User>) -> impl IntoResponse {
@@ -66,7 +68,7 @@ pub async fn patch_user(
     const FN_NAME: &'static str = "patch_user";
 
     let user_id = user.user_id.as_str();
-    let updates = get_updates(&body.data)?;
+    let updates = get_updates(&body.data).await?;
     if let Err(e) = state.model.user().update(user_id, &updates).await {
         error!("[{}] {}", FN_NAME, e);
         return Err(ErrResp::ErrDb(Some(e.to_string())));
@@ -127,7 +129,8 @@ pub async fn post_admin_user(
 
     let now = Utc::now();
     let user_id = strings::random_id(&now, ID_RAND_LEN);
-    let salt = strings::randomstring(SALT_LEN);
+    let salt = strings::randomstring(password::SALT_LEN);
+    let password = hash_password(body.data.password.as_str(), salt.as_str()).await?;
     let user = User {
         user_id: user_id.clone(),
         account,
@@ -140,7 +143,7 @@ pub async fn post_admin_user(
         expired_at: body.expired_at,
         disabled_at: None,
         roles: HashMap::new(),
-        password: strings::password_hash(body.data.password.as_str(), salt.as_str()),
+        password,
         salt,
         name: match body.data.name.as_ref() {
             None => "".to_string(),
@@ -375,12 +378,14 @@ pub async fn patch_admin_user(
         Role::is_role(&user.roles, Role::ADMIN),
         &target_user,
         user.user_id.as_str(),
-    )?;
+    )
+    .await?;
     if let Err(e) = state.model.user().update(user_id, &updates).await {
         error!("[{}] update error: {}", FN_NAME, e);
         return Err(ErrResp::ErrDb(Some(e.to_string())));
     }
-    if updates.password.is_some() {
+    // Revoke tokens when the password is changed or the user is disabled.
+    if updates.password.is_some() || matches!(updates.disabled_at, Some(Some(_))) {
         remove_tokens(&FN_NAME, &state.model, user_id).await;
     }
     Ok(StatusCode::NO_CONTENT)
@@ -404,7 +409,7 @@ pub async fn delete_admin_user(
     Ok(StatusCode::NO_CONTENT)
 }
 
-fn get_updates(body: &'_ request::PatchUserData) -> Result<Updates<'_>, ErrResp> {
+async fn get_updates(body: &'_ request::PatchUserData) -> Result<Updates<'_>, ErrResp> {
     let mut updates = Updates {
         ..Default::default()
     };
@@ -415,8 +420,8 @@ fn get_updates(body: &'_ request::PatchUserData) -> Result<Updates<'_>, ErrResp>
                 "`password` must at least one character".to_string(),
             )));
         }
-        let salt = strings::randomstring(SALT_LEN);
-        updates.password = Some(strings::password_hash(password, salt.as_str()));
+        let salt = strings::randomstring(password::SALT_LEN);
+        updates.password = Some(hash_password(password, salt.as_str()).await?);
         updates.salt = Some(salt);
         count += 1;
     }
@@ -514,7 +519,7 @@ fn get_list_fields(fields_cond: &Option<String>) -> GetAdminFields {
     ret_fields
 }
 
-fn get_admin_updates<'a>(
+async fn get_admin_updates<'a>(
     body: &'a request::PatchAdminUserBody,
     is_admin: bool,
     target_user: &User,
@@ -562,8 +567,8 @@ fn get_admin_updates<'a>(
                         "`password` must at least one character".to_string(),
                     )));
                 }
-                let salt = strings::randomstring(SALT_LEN);
-                updates.password = Some(strings::password_hash(password, salt.as_str()));
+                let salt = strings::randomstring(password::SALT_LEN);
+                updates.password = Some(hash_password(password, salt.as_str()).await?);
                 updates.salt = Some(salt);
                 count += 1;
             }
@@ -687,6 +692,14 @@ fn user_transform(user: &User, fields_cond: &GetAdminFields) -> response::GetAdm
         roles: user.roles.clone(),
         name: user.name.clone(),
         info: user.info.clone(),
+    }
+}
+
+/// To hash the password with [`password::hash`].
+async fn hash_password(password: &str, salt: &str) -> Result<String, ErrResp> {
+    match password::hash(password, salt).await {
+        Err(e) => Err(ErrResp::ErrUnknown(Some(e))),
+        Ok(hash) => Ok(hash),
     }
 }
 

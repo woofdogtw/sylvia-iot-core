@@ -20,15 +20,25 @@ struct Schema {
     /// i64 as time tick from Epoch in milliseconds.
     expires_at: i64,
     user_id: String,
+    client_id: String,
+    redirect_uri: String,
 }
 
 const TABLE_NAME: &'static str = "login_session";
-const FIELDS: &'static [&'static str] = &["session_id", "expires_at", "user_id"];
+const FIELDS: &'static [&'static str] = &[
+    "session_id",
+    "expires_at",
+    "user_id",
+    "client_id",
+    "redirect_uri",
+];
 const TABLE_INIT_SQL: &'static str = "\
     CREATE TABLE IF NOT EXISTS login_session (\
     session_id TEXT NOT NULL UNIQUE,\
     expires_at INTEGER NOT NULL,\
     user_id TEXT NOT NULL,\
+    client_id TEXT NOT NULL,\
+    redirect_uri TEXT NOT NULL,\
     PRIMARY KEY (session_id))";
 
 impl Model {
@@ -71,14 +81,26 @@ impl LoginSessionModel for Model {
             session_id: row.session_id,
             expires_at: Utc.timestamp_nanos(row.expires_at * 1000000),
             user_id: row.user_id,
+            client_id: row.client_id,
+            redirect_uri: row.redirect_uri,
         }))
     }
 
     async fn add(&self, session: &LoginSession) -> Result<(), Box<dyn StdError>> {
+        // SQLite has no TTL, so remove expired sessions here.
+        let sql = SqlBuilder::delete_from(TABLE_NAME)
+            .and_where_lt("expires_at", Utc::now().timestamp_millis())
+            .sql()?;
+        let _ = sqlx::query(AssertSqlSafe(sql))
+            .execute(self.conn.as_ref())
+            .await?;
+
         let values = vec![
             quote(session.session_id.as_str()),
             session.expires_at.timestamp_millis().to_string(),
             quote(session.user_id.as_str()),
+            quote(session.client_id.as_str()),
+            quote(session.redirect_uri.as_str()),
         ];
         let sql = SqlBuilder::insert_into(TABLE_NAME)
             .fields(FIELDS)

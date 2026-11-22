@@ -22,6 +22,8 @@ use tower::{Layer, Service};
 use general_mq::{Queue, queue::GmqQueue};
 use sylvia_iot_corelib::{err::ErrResp, http as sylvia_http, strings};
 
+use super::BODY_LIMIT;
+
 #[derive(Clone)]
 pub struct GetTokenInfoData {
     pub token: String,
@@ -184,7 +186,7 @@ where
                 Ok(token) => token,
             };
             let (parts, body) = req.into_parts();
-            let body_bytes = match body::to_bytes(body, usize::MAX).await {
+            let body_bytes = match body::to_bytes(body, BODY_LIMIT).await {
                 Err(e) => {
                     let e = format!("convert body error: {}", e);
                     return Ok(ErrResp::ErrParam(Some(e)).into_response());

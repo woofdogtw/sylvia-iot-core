@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 
 use log::error;
+use url::Url;
 
 use sylvia_iot_corelib::{err::ErrResp, role::Role};
 
@@ -163,4 +164,39 @@ pub async fn check_device(
 /// To generate a key for managing managers. Empty unit for public networks.
 pub fn gen_mgr_key(unit: &str, name: &str) -> String {
     format!("{}.{}", unit, name)
+}
+
+/// To hide the credentials of the host URI in API responses. The broker uses the credentials to
+/// connect to the message broker, and they may be the management account of RabbitMQ or the API
+/// key of EMQX.
+pub fn hide_host_uri_credentials(host_uri: &str) -> String {
+    match Url::parse(host_uri) {
+        Err(_) => "".to_string(),
+        Ok(mut uri) => {
+            let _ = uri.set_username("");
+            let _ = uri.set_password(None);
+            uri.to_string()
+        }
+    }
+}
+
+/// To use the current host URI if the new host URI has no credentials and other parts are the same
+/// as the current host URI, because API responses hide the credentials.
+///
+/// The credentials are not used for other hosts or paths (virtual hosts), so that they will not be
+/// sent to the hosts or used for the virtual hosts specified by users.
+pub fn restore_host_uri_credentials(new_host_uri: &mut Option<String>, current_host_uri: &str) {
+    let new_uri = match new_host_uri.as_ref() {
+        None => return,
+        Some(host_uri) => match Url::parse(host_uri.as_str()) {
+            Err(_) => return,
+            Ok(uri) => uri,
+        },
+    };
+    if !new_uri.username().is_empty() || new_uri.password().is_some() {
+        return;
+    }
+    if new_uri.as_str() == hide_host_uri_credentials(current_host_uri).as_str() {
+        *new_host_uri = Some(current_host_uri.to_string());
+    }
 }

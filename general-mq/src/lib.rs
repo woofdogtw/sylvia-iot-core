@@ -41,22 +41,30 @@
 //!
 //! - To install using Docker:
 //!
-//!       $ docker run --rm --name rabbitmq -d -p 5672:5672 rabbitmq:management-alpine
-//!       $ docker run --rm --name emqx -d -p 1883:1883 emqx/emqx
+//!   ```sh
+//!   $ docker run --rm --name rabbitmq -d -p 5672:5672 rabbitmq:management-alpine
+//!   $ docker run --rm --name emqx -d -p 1883:1883 emqx/emqx
+//!   ```
 //!
 //! Then run the test:
 //!
-//!     $ cargo test --test integration_test -- --nocapture
+//! ```sh
+//! $ cargo test --test integration_test -- --nocapture
+//! ```
 //!
 //! # Example
 //!
 //! Run RabbitMQ and then run AMQP example:
 //!
-//!     $ cargo run --example simple
+//! ```sh
+//! $ cargo run --example simple
+//! ```
 //!
 //! Run EMQX and then run MQTT example:
 //!
-//!     $ RUN_MQTT= cargo run --example simple
+//! ```sh
+//! $ RUN_MQTT= cargo run --example simple
+//! ```
 
 use std::{error::Error as StdError, fmt, sync::Arc};
 
@@ -83,6 +91,8 @@ pub enum Error {
     NotConnected,
     /// The queue is a receiver that cannot send messages.
     QueueIsReceiver,
+    /// The message exceeds the maximum packet size of the connection (MQTT only).
+    PacketTooLarge,
 }
 
 #[derive(Clone)]
@@ -106,6 +116,7 @@ impl fmt::Display for Error {
             Error::NoMsgHandler => write!(f, "no message handler"),
             Error::NotConnected => write!(f, "not connected"),
             Error::QueueIsReceiver => write!(f, "this queue is a receiver"),
+            Error::PacketTooLarge => write!(f, "packet too large"),
         }
     }
 }
@@ -117,6 +128,15 @@ impl Queue {
         match opts {
             QueueOptions::Amqp(opts, conn) => Ok(Queue::Amqp(AmqpQueue::new(opts, conn)?)),
             QueueOptions::Mqtt(opts, conn) => Ok(Queue::Mqtt(MqttQueue::new(opts, conn)?)),
+        }
+    }
+
+    /// To check if the message can be sent without exceeding the size limit. This can be used
+    /// before spawning a task to send the message.
+    pub fn check_msg_size(&self, payload_len: usize) -> Result<(), Error> {
+        match self {
+            Queue::Amqp(q) => q.check_msg_size(payload_len),
+            Queue::Mqtt(q) => q.check_msg_size(payload_len),
         }
     }
 }

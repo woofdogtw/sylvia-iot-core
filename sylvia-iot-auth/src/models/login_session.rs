@@ -11,6 +11,10 @@ pub struct LoginSession {
     pub session_id: String,
     pub expires_at: DateTime<Utc>,
     pub user_id: String,
+    /// The client that the user logs in for.
+    pub client_id: String,
+    /// The redirect URI of the client that the user logs in for.
+    pub redirect_uri: String,
 }
 
 /// The query condition to get item(s).

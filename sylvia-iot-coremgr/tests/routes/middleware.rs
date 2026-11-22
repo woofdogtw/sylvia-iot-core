@@ -83,6 +83,7 @@ pub fn suite(mqtt_engine: Option<&'static str>, data_host: &'static str) -> Suit
         context.it("POST", test_post);
         context.it("PATCH with password", test_patch_password);
         context.it("DELETE for more coverage", test_delete_cover);
+        context.it("POST with a large body", test_post_large_body);
 
         context
             .before_all(move |state| {
@@ -411,6 +412,45 @@ fn test_delete_cover(context: &mut SpecContext<TestState>) -> Result<(), String>
         }
         expect(is_data_recv).to_equal(false)
     })
+}
+
+/// The middleware rejects bodies larger than 2 MiB.
+fn test_post_large_body(context: &mut SpecContext<TestState>) -> Result<(), String> {
+    let state = context.state.borrow();
+    let state = state.get(STATE).unwrap();
+    let runtime = state.runtime.as_ref().unwrap();
+    let auth_uri = state.auth_uri.as_ref().unwrap();
+    let data_sender = state.routes_state.as_ref().unwrap().data_sender.clone();
+    let client = state.client.as_ref().unwrap();
+
+    let app = Router::new()
+        .route("/", routing::post(dummy_handler))
+        .layer(LogService::new(
+            client.clone(),
+            auth_uri.clone(),
+            data_sender,
+        ));
+    let server = TestServer::new(app);
+
+    let req = server
+        .post("/")
+        .add_header(
+            header::AUTHORIZATION,
+            HeaderValue::from_str(format!("Bearer {}", TOKEN_MANAGER).as_str()).unwrap(),
+        )
+        .text("0".repeat(2 * 1024 * 1024 + 1));
+    let resp = runtime.block_on(async { req.await });
+    expect(resp.status_code()).to_equal(StatusCode::BAD_REQUEST)?;
+
+    let req = server
+        .post("/")
+        .add_header(
+            header::AUTHORIZATION,
+            HeaderValue::from_str(format!("Bearer {}", TOKEN_MANAGER).as_str()).unwrap(),
+        )
+        .text("0".repeat(2 * 1024 * 1024));
+    let resp = runtime.block_on(async { req.await });
+    expect(resp.status_code()).to_equal(StatusCode::NO_CONTENT)
 }
 
 async fn dummy_handler() -> impl IntoResponse {

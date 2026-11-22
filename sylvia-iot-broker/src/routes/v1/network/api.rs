@@ -36,7 +36,10 @@ use sylvia_iot_corelib::{
 use super::{
     super::{
         super::{ErrReq, State as AppState, middleware::GetTokenInfoData},
-        lib::{check_network, check_unit, gen_mgr_key},
+        lib::{
+            check_network, check_unit, gen_mgr_key, hide_host_uri_credentials,
+            restore_host_uri_credentials,
+        },
     },
     request, response,
 };
@@ -772,6 +775,9 @@ pub async fn patch_network(
         Some(network) => network,
     };
 
+    // API responses hide the credentials, so use the current credentials if the host URI is not
+    // changed and has no credentials.
+    restore_host_uri_credentials(&mut body.data.host_uri, network.host_uri.as_str());
     let updates = get_updates(&mut body.data).await?;
     let mut should_add_mgr = false;
 
@@ -1028,7 +1034,7 @@ fn network_transform(network: &Network) -> response::GetNetworkData {
         unit_code: network.unit_code.clone(),
         created_at: time_str(&network.created_at),
         modified_at: time_str(&network.modified_at),
-        host_uri: network.host_uri.clone(),
+        host_uri: hide_host_uri_credentials(network.host_uri.as_str()),
         name: network.name.clone(),
         info: network.info.clone(),
     }
@@ -1769,7 +1775,11 @@ impl EventHandler for MgrHandler {
     // Do the following jobs:
     // - check if the associated dldata buffer exists.
     // - send the result to the source application.
-    async fn on_dldata_result(&self, _mgr: &NetworkMgr, data: Box<DlDataResult>) -> Result<(), ()> {
+    async fn on_dldata_result(
+        &self,
+        network_mgr: &NetworkMgr,
+        data: Box<DlDataResult>,
+    ) -> Result<(), ()> {
         const FN_NAME: &'static str = "on_dldata_result";
 
         let now = Utc::now();
@@ -1791,6 +1801,16 @@ impl EventHandler for MgrHandler {
                 Some(dldata) => dldata,
             },
         };
+        // Only the network that the data is sent to can report the result.
+        if dldata.network_id.as_str() != network_mgr.id() {
+            warn!(
+                "[{}] data ID {} is not for network {}",
+                FN_NAME,
+                data.data_id,
+                network_mgr.id()
+            );
+            return Ok(());
+        }
 
         let key = gen_mgr_key(dldata.unit_code.as_str(), dldata.application_code.as_str());
         let mgr = {
