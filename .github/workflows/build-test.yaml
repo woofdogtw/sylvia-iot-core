@@ -66,7 +66,7 @@ jobs:
           rm default*.profraw
           cargo profdata -- merge -sparse target/$PROJ.profraw -o target/$PROJ.profdata
           mkdir -p target/coverage
-          grcov . --binary-path $TEST_FILE -s $PROJ/src -t html --branch --ignore-not-existing -o ./target/coverage/$PROJ
+          grcov . --binary-path $TEST_FILE -s $PROJ --keep-only "src/*" -t html --branch --ignore-not-existing -o ./target/coverage/$PROJ
       - name: Publish coverage
         if: ${{ github.event_name != 'pull_request' }}
         uses: JamesIves/github-pages-deploy-action@v4
@@ -125,7 +125,7 @@ jobs:
           rm default*.profraw
           cargo profdata -- merge -sparse target/$PROJ.profraw -o target/$PROJ.profdata
           mkdir -p target/coverage
-          grcov . --binary-path $TEST_FILE -s $PROJ/src -t html --branch --ignore-not-existing -o ./target/coverage/$PROJ
+          grcov . --binary-path $TEST_FILE -s $PROJ --keep-only "src/*" -t html --branch --ignore-not-existing -o ./target/coverage/$PROJ
       - name: Publish coverage
         if: ${{ github.event_name != 'pull_request' }}
         uses: JamesIves/github-pages-deploy-action@v4
@@ -192,7 +192,7 @@ jobs:
           rm default*.profraw
           cargo profdata -- merge -sparse target/$PROJ.profraw -o target/$PROJ.profdata
           mkdir -p target/coverage
-          grcov . --binary-path $TEST_FILE -s $PROJ/src -t html --branch --ignore-not-existing -o ./target/coverage/$PROJ
+          grcov . --binary-path $TEST_FILE -s $PROJ --keep-only "src/*" -t html --branch --ignore-not-existing -o ./target/coverage/$PROJ
       - name: Publish coverage
         if: ${{ github.event_name != 'pull_request' }}
         uses: JamesIves/github-pages-deploy-action@v4
@@ -242,7 +242,7 @@ jobs:
           rm default*.profraw
           cargo profdata -- merge -sparse target/$PROJ.profraw -o target/$PROJ.profdata
           mkdir -p target/coverage
-          grcov . --binary-path $TEST_FILE -s $PROJ/src -t html --branch --ignore-not-existing -o ./target/coverage/$PROJ
+          grcov . --binary-path $TEST_FILE -s $PROJ --keep-only "src/*" -t html --branch --ignore-not-existing -o ./target/coverage/$PROJ
       - name: Publish coverage
         if: ${{ github.event_name != 'pull_request' }}
         uses: JamesIves/github-pages-deploy-action@v4
@@ -311,7 +311,7 @@ jobs:
           rm default*.profraw
           cargo profdata -- merge -sparse target/$PROJ.profraw -o target/$PROJ.profdata
           mkdir -p target/coverage
-          grcov . --binary-path $TEST_FILE -s $PROJ/src -t html --branch --ignore-not-existing -o ./target/coverage/$PROJ
+          grcov . --binary-path $TEST_FILE -s $PROJ --keep-only "src/*" -t html --branch --ignore-not-existing -o ./target/coverage/$PROJ
       - name: Publish coverage
         if: ${{ github.event_name != 'pull_request' }}
         uses: JamesIves/github-pages-deploy-action@v4
@@ -391,7 +391,7 @@ jobs:
           rm default*.profraw
           cargo profdata -- merge -sparse target/$PROJ.profraw -o target/$PROJ.profdata
           mkdir -p target/coverage
-          grcov . --binary-path $TEST_FILE -s $PROJ/src -t html --branch --ignore-not-existing -o ./target/coverage/$PROJ
+          grcov . --binary-path $TEST_FILE -s $PROJ --keep-only "src/*" -t html --branch --ignore-not-existing -o ./target/coverage/$PROJ
       - name: Publish coverage
         if: ${{ github.event_name != 'pull_request' }}
         uses: JamesIves/github-pages-deploy-action@v4
@@ -454,7 +454,7 @@ jobs:
           rm default*.profraw
           cargo profdata -- merge -sparse target/$PROJ.profraw -o target/$PROJ.profdata
           mkdir -p target/coverage
-          grcov . --binary-path $TEST_FILE -s $PROJ/src -t html --branch --ignore-not-existing -o ./target/coverage/$PROJ
+          grcov . --binary-path $TEST_FILE -s $PROJ --keep-only "src/*" -t html --branch --ignore-not-existing -o ./target/coverage/$PROJ
       - name: Publish coverage
         if: ${{ github.event_name != 'pull_request' }}
         uses: JamesIves/github-pages-deploy-action@v4

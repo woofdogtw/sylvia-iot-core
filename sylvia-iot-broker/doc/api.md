@@ -565,7 +565,7 @@ Get application list.
         - *string* `unitCode`: The associated unit code.
         - *string* `createdAt`: Creation time in RFC 3339 format.
         - *string* `modifiedAt`: Modification time in RFC 3339 format.
-        - *string* `hostUri`: The application queue URI.
+        - *string* `hostUri`: The application queue URI without credentials.
         - *string* `name`: Display name.
         - *object* `info`: Other information.
 
@@ -673,7 +673,7 @@ Update the specified application information.
 #### Parameters
 
 - *object* `data`:
-    - *string* `hostUri`: (**optional**) The application queue URI. Changing this value will reconnect to the new message queue.
+    - *string* `hostUri`: (**optional**) The application queue URI. Changing this value will reconnect to the new message queue. If the URI has no credentials and the other parts are the same as the current URI, the current credentials are kept.
     - *string* `name`: (**optional**) The display name.
     - *object* `info`: (**optional**) Other information. You must provide full of fields, or all fields will be replaced with the new value.
 
@@ -840,7 +840,7 @@ Get network list.
         - *string | null* `unitCode`: The associated unit code.
         - *string* `createdAt`: Creation time in RFC 3339 format.
         - *string* `modifiedAt`: Modification time in RFC 3339 format.
-        - *string* `hostUri`: The network queue URI.
+        - *string* `hostUri`: The network queue URI without credentials.
         - *string* `name`: Display name.
         - *object* `info`: Other information.
 
@@ -948,7 +948,7 @@ Update the specified network information.
 #### Parameters
 
 - *object* `data`:
-    - *string* `hostUri`: (**optional**) The network queue URI. Changing this value will reconnect to the new message queue.
+    - *string* `hostUri`: (**optional**) The network queue URI. Changing this value will reconnect to the new message queue. If the URI has no credentials and the other parts are the same as the current URI, the current credentials are kept.
     - *string* `name`: (**optional**) The display name.
     - *object* `info`: (**optional**) Other information. You must provide full of fields, or all fields will be replaced with the new value.
 

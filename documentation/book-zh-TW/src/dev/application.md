@@ -25,6 +25,7 @@
     - 如果有成功被處理，將會回應 `dataId`。應用服務可以透過資料 ID 追蹤這筆下行資料在網路服務的處理情形。
 - 下行資料中，可以選擇使用 `deviceId` 或是 `networkCode`+`networkAddr` 的方式指定目的裝置。
     - 如果裝置是在 **公用網路** 上，一定要使用 `deviceId`。Sylvia-IoT 用這方式避免應用服務任意傳輸資料到不屬於他們單位的裝置。
+- 一筆下行資料（以精簡 JSON 格式計算）不可超過 1032192 位元組（1 MiB - 16 KiB）。Broker 轉送資料時會加上其他欄位，因此保留了 MQTT 封包上限 1 MiB 中的 16 KiB。超過的資料會在 `dldata-resp` 收到 `err_param` 錯誤。
 - 目前還沒有支援控制通道。裝置的變更就要依靠應用服務自行請求 Sylvia-IoT HTTP API，或是自己維護裝置的列表。
 
 ## Rust 使用 SDK
@@ -36,3 +37,4 @@
 - 只要管理 `ApplicationMgr` 即可，無需自行管理所有佇列的連線狀態和 AMQP/MQTT 的屬性。
 - 註冊 `EventHandler` 可即時於佇列狀態改變或是資料送達時收到。
 - 可以透過 `send_dldata()` 傳送資料給 Broker。
+- 使用 MQTT 時，`send_dldata()` 對於超過 MQTT 封包上限（1 MiB）的資料會直接回傳錯誤。

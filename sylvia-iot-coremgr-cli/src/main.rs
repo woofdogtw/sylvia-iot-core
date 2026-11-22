@@ -55,6 +55,7 @@ fn init_config() -> Result<(AppConfig, ArgMatches), Box<dyn StdError>> {
             .help("config file")
             .num_args(1),
     );
+    args = libs::config::reg_args(args);
     args = libs::reg_args(args);
     let args = args.get_matches();
 

@@ -1,4 +1,4 @@
-use chrono::{SubsecRound, Utc};
+use chrono::{SubsecRound, TimeDelta, Utc};
 use laboratory::expect;
 use tokio::runtime::Runtime;
 
@@ -8,8 +8,10 @@ use sylvia_iot_auth::models::login_session::{LoginSession, LoginSessionModel, Qu
 pub fn add(runtime: &Runtime, model: &dyn LoginSessionModel) -> Result<(), String> {
     let session = LoginSession {
         session_id: "session_id_add_none".to_string(),
-        expires_at: Utc::now().trunc_subsecs(3),
+        expires_at: Utc::now().trunc_subsecs(3) + TimeDelta::try_hours(1).unwrap(),
         user_id: "user_id_add".to_string(),
+        client_id: "client_id".to_string(),
+        redirect_uri: "http://localhost/redirect".to_string(),
     };
     if let Err(e) = runtime.block_on(async { model.add(&session).await }) {
         return Err(format!("model.add() none error: {}", e));
@@ -26,8 +28,10 @@ pub fn add(runtime: &Runtime, model: &dyn LoginSessionModel) -> Result<(), Strin
 
     let session = LoginSession {
         session_id: "session_id_add_some".to_string(),
-        expires_at: Utc::now().trunc_subsecs(3),
+        expires_at: Utc::now().trunc_subsecs(3) + TimeDelta::try_hours(1).unwrap(),
         user_id: "user_id_add".to_string(),
+        client_id: "client_id".to_string(),
+        redirect_uri: "http://localhost/redirect".to_string(),
     };
     if let Err(e) = runtime.block_on(async { model.add(&session).await }) {
         return Err(format!("model.add() some error: {}", e));
@@ -47,8 +51,10 @@ pub fn add(runtime: &Runtime, model: &dyn LoginSessionModel) -> Result<(), Strin
 pub fn add_dup(runtime: &Runtime, model: &dyn LoginSessionModel) -> Result<(), String> {
     let session = LoginSession {
         session_id: "session_id_add".to_string(),
-        expires_at: Utc::now().trunc_subsecs(3),
+        expires_at: Utc::now().trunc_subsecs(3) + TimeDelta::try_hours(1).unwrap(),
         user_id: "user_id_add".to_string(),
+        client_id: "client_id".to_string(),
+        redirect_uri: "http://localhost/redirect".to_string(),
     };
     if let Err(e) = runtime.block_on(async { model.add(&session).await }) {
         return Err(format!("model.add() error: {}", e));
@@ -65,8 +71,10 @@ pub fn del_by_session(runtime: &Runtime, model: &dyn LoginSessionModel) -> Resul
     let session_id_not_del = "session_id_not_del";
     let mut session = LoginSession {
         session_id: session_id_del.to_string(),
-        expires_at: Utc::now().trunc_subsecs(3),
+        expires_at: Utc::now().trunc_subsecs(3) + TimeDelta::try_hours(1).unwrap(),
         user_id: "user_id_del".to_string(),
+        client_id: "client_id".to_string(),
+        redirect_uri: "http://localhost/redirect".to_string(),
     };
     let cond = QueryCond {
         session_id: Some(session_id_del),
@@ -101,8 +109,10 @@ pub fn del_twice(runtime: &Runtime, model: &dyn LoginSessionModel) -> Result<(),
     let session_id_del = "session_id_del";
     let session = LoginSession {
         session_id: session_id_del.to_string(),
-        expires_at: Utc::now().trunc_subsecs(3),
+        expires_at: Utc::now().trunc_subsecs(3) + TimeDelta::try_hours(1).unwrap(),
         user_id: "user_id_del".to_string(),
+        client_id: "client_id".to_string(),
+        redirect_uri: "http://localhost/redirect".to_string(),
     };
     let cond = QueryCond {
         session_id: Some(session_id_del),
@@ -125,8 +135,10 @@ pub fn del_by_user_id(runtime: &Runtime, model: &dyn LoginSessionModel) -> Resul
     let session_id_not_del = "session_id_not_del";
     let mut session = LoginSession {
         session_id: session_id_del1.to_string(),
-        expires_at: Utc::now().trunc_subsecs(3),
+        expires_at: Utc::now().trunc_subsecs(3) + TimeDelta::try_hours(1).unwrap(),
         user_id: "user_id_del".to_string(),
+        client_id: "client_id".to_string(),
+        redirect_uri: "http://localhost/redirect".to_string(),
     };
     let cond = QueryCond {
         user_id: Some("user_id_del"),

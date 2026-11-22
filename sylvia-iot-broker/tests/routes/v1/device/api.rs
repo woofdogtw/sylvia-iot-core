@@ -1154,6 +1154,41 @@ pub fn post_range(context: &mut SpecContext<TestState>) -> Result<(), String> {
         "owner",
         &network_addrs1,
         &profiles,
+    )?;
+
+    // The maximum address must not overflow.
+    add_network_model(runtime, routes_state, "owner", "owner-max", "amqp://host")?;
+    let network_addrs = vec![
+        strings::u128_to_addr(u128::MAX - 1, 32),
+        strings::u128_to_addr(u128::MAX, 32),
+    ];
+    let profiles = vec!["".to_string(), "".to_string()];
+    param.data.network_id = "owner-max".to_string();
+    param.data.start_addr = strings::u128_to_addr(u128::MAX - 1, 32);
+    param.data.end_addr = strings::u128_to_addr(u128::MAX, 32);
+    test_post_range(
+        runtime,
+        routes_state,
+        TOKEN_OWNER,
+        true,
+        &param,
+        "",
+        Some("owner"),
+        "owner-max",
+        &network_addrs,
+        &profiles,
+    )?;
+    test_post_range(
+        runtime,
+        routes_state,
+        TOKEN_OWNER,
+        false,
+        &param,
+        "",
+        Some("owner"),
+        "owner-max",
+        &vec![],
+        &vec![],
     )
 }
 
@@ -1289,6 +1324,30 @@ pub fn post_range_invalid_param(context: &mut SpecContext<TestState>) -> Result<
     add_unit_model(runtime, routes_state, "manager", vec![], "manager")?;
 
     test_post_range_invalid_param(runtime, &routes_state, TOKEN_MANAGER, true, None)?;
+
+    // 1024 addresses (more than the maximum).
+    let param = request::PostDeviceRange {
+        data: request::PostDeviceRangeData {
+            unit_id: "manager".to_string(),
+            network_id: "manager".to_string(),
+            start_addr: "0000".to_string(),
+            end_addr: "0400".to_string(),
+            profile: None,
+        },
+    };
+    test_post_range_invalid_param(runtime, &routes_state, TOKEN_MANAGER, true, Some(&param))?;
+
+    // 2^64 + 6 addresses, which are 6 addresses when truncated to 64-bit integers.
+    let param = request::PostDeviceRange {
+        data: request::PostDeviceRangeData {
+            unit_id: "manager".to_string(),
+            network_id: "manager".to_string(),
+            start_addr: "00000000000000000000000000000000".to_string(),
+            end_addr: "00000000000000010000000000000005".to_string(),
+            profile: None,
+        },
+    };
+    test_post_range_invalid_param(runtime, &routes_state, TOKEN_MANAGER, true, Some(&param))?;
 
     let param = request::PostDeviceRange {
         data: request::PostDeviceRangeData {
@@ -1685,6 +1744,30 @@ pub fn post_range_del_invalid_param(context: &mut SpecContext<TestState>) -> Res
     add_unit_model(runtime, routes_state, "manager", vec![], "manager")?;
 
     test_post_range_invalid_param(runtime, &routes_state, TOKEN_MANAGER, false, None)?;
+
+    // 1024 addresses (more than the maximum).
+    let param = request::PostDeviceRange {
+        data: request::PostDeviceRangeData {
+            unit_id: "manager".to_string(),
+            network_id: "manager".to_string(),
+            start_addr: "0000".to_string(),
+            end_addr: "0400".to_string(),
+            profile: None,
+        },
+    };
+    test_post_range_invalid_param(runtime, &routes_state, TOKEN_MANAGER, false, Some(&param))?;
+
+    // 2^64 + 6 addresses, which are 6 addresses when truncated to 64-bit integers.
+    let param = request::PostDeviceRange {
+        data: request::PostDeviceRangeData {
+            unit_id: "manager".to_string(),
+            network_id: "manager".to_string(),
+            start_addr: "00000000000000000000000000000000".to_string(),
+            end_addr: "00000000000000010000000000000005".to_string(),
+            profile: None,
+        },
+    };
+    test_post_range_invalid_param(runtime, &routes_state, TOKEN_MANAGER, false, Some(&param))?;
 
     let param = request::PostDeviceRange {
         data: request::PostDeviceRangeData {
@@ -2470,6 +2553,41 @@ pub fn get_list_sort(context: &mut SpecContext<TestState>) -> Result<(), String>
             "owner1-1",
             "owner-public",
             "manager-public",
+            "manager",
+        ],
+    )?;
+
+    param.sort_vec = Some(vec![("profile", true), ("addr", true)]);
+    test_get_list_sort(
+        runtime,
+        &routes_state,
+        TOKEN_MANAGER,
+        &mut param,
+        &[
+            "manager",
+            "manager-public",
+            "owner1-1",
+            "owner1-2",
+            "owner1-3",
+            "owner2-1",
+            "owner2-2",
+            "owner-public",
+        ],
+    )?;
+    param.sort_vec = Some(vec![("profile", false), ("addr", true)]);
+    test_get_list_sort(
+        runtime,
+        &routes_state,
+        TOKEN_MANAGER,
+        &mut param,
+        &[
+            "owner-public",
+            "owner2-2",
+            "manager-public",
+            "owner1-1",
+            "owner1-2",
+            "owner1-3",
+            "owner2-1",
             "manager",
         ],
     )?;

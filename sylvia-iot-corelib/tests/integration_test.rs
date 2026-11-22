@@ -26,6 +26,7 @@ pub fn integration_test() -> LabResult {
             context.it("apply_default", logger::apply_default);
             context.it("reg_args", logger::reg_args);
             context.it("read_args", logger::read_args);
+            context.it("logger_layer", logger::logger_layer);
         });
 
         context.describe("role", |context| {
@@ -45,6 +46,8 @@ pub fn integration_test() -> LabResult {
             context.it("is_scope", strings::is_scope);
             context.it("is_uri", strings::is_uri);
             context.it("password_hash", strings::password_hash);
+            context.it("password_verify", strings::password_verify);
+            context.it("password_need_rehash", strings::password_need_rehash);
             context.it("random_id", strings::random_id);
             context.it("random_id_sha", strings::random_id_sha);
             context.it("randomstring", strings::randomstring);

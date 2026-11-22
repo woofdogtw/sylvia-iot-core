@@ -222,10 +222,10 @@ provided in the **Authentication Service** section for more details.
 | coremgr.mq.rabbitmq.password          | coremgr.mq.rabbitmq.password          | COREMGR_MQ_RABBITMQ_PASSWORD          | guest                         | RabbitMQ administrator password |
 | coremgr.mq.rabbitmq.ttl               | coremgr.mq.rabbitmq.ttl               | COREMGR_MQ_RABBITMQ_TTL               |                               | RabbitMQ default message TTL (seconds) |
 | coremgr.mq.rabbitmq.length            | coremgr.mq.rabbitmq.length            | COREMGR_MQ_RABBITMQ_LENGTH            |                               | RabbitMQ default maximum number of messages in queues |
-| coremgr.mq.rabbitmq.hosts             | coremgr.mq.rabbitmq.hosts             | COREMGR_MQ_RABBITMQ_HOSTS             |                               | (Reserved) |
+| coremgr.mq.rabbitmq.hosts             | coremgr.mq.rabbitmq.hosts             | COREMGR_MQ_RABBITMQ_HOSTS             |                               | RabbitMQ hosts that units can use |
 | coremgr.mq.emqx.apiKey                | coremgr.mq.emqx.apikey                | COREMGR_MQ_EMQX_APIKEY                |                               | EMQX management API key |
 | coremgr.mq.emqx.apiSecret             | coremgr.mq.emqx.apisecret             | COREMGR_MQ_EMQX_APISECRET             |                               | EMQX management API secret |
-| coremgr.mq.emqx.hosts                 | coremgr.mq.emqx.hosts                 | COREMGR_MQ_EMQX_HOSTS                 |                               | (Reserved) |
+| coremgr.mq.emqx.hosts                 | coremgr.mq.emqx.hosts                 | COREMGR_MQ_EMQX_HOSTS                 |                               | EMQX hosts that units can use |
 | coremgr.mq.rumqttd.mqttPort           | coremgr.mq.rumqttd.mqtt-port          | COREMGR_MQ_RUMQTTD_MQTT_PORT          | 1883                          | rumqttd MQTT port |
 | coremgr.mq.rumqttd.mqttsPort          | coremgr.mq.rumqttd.mqtts-port         | COREMGR_MQ_RUMQTTD_MQTTS_PORT         | 8883                          | rumqttd MQTTS port |
 | coremgr.mq.rumqttd.consolePort        | coremgr.mq.rumqttd.console-port       | COREMGR_MQ_RUMQTTD_CONSOLE_PORT       | 18083                         | rumqttd management API port |
@@ -234,6 +234,31 @@ provided in the **Authentication Service** section for more details.
 
 ### Detailed Explanation
 
+- Message broker hosts (**hosts**):
+    - An array of objects. CLI parameters and environment variables use JSON strings, for example
+      `[{"name":"Region 1","host":"rabbitmq.internal","external":"mq.example.com","active":true}]`.
+        - **name**: The display name.
+        - **host**: The host name or IP address for Sylvia-IoT services to access the message
+          broker.
+        - **external**: The host name or IP address for developers of units to access the message
+          broker. The `hostUri` of applications and networks in coremgr APIs uses this value, and
+          `GET /coremgr/api/v1/mq/hosts` lists these values.
+        - **active**: `false` means that the host is going to be stopped. New applications and
+          networks cannot use this host, and the existing ones are not affected.
+    - **host** and **external** must be host names or IP addresses without schemes, ports or paths,
+      and each of them must be unique. The service will not start with invalid hosts or invalid
+      JSON strings.
+    - The scheme and the port of `hostUri` are used for both **host** and **external**, so the
+      message broker must use the same scheme (TLS or not) and port internally and externally.
+    - If no hosts are specified (or the array is empty), units can use any host, and coremgr sends
+      the management account to the host that units specify. **Please specify hosts for public
+      services.**
+- EMQX:
+    - We recommend EMQX 6.3.0 or above. Earlier versions use the `legacy` security profile by
+      default, which allows all topics, so units can access topics of other units. For earlier
+      versions or the `legacy` profile, set `authorization.no_match = deny` and change the last
+      rule of `acl.conf` to `{deny, all}`.
+    - `mqtt.max_packet_size` must be less than or equal to 1 MiB (the default).
 - MQ channels:
     - **data** represents the **Data Channel Message**.
         - Currently, coremgr supports recording HTTP request content for all API requests except

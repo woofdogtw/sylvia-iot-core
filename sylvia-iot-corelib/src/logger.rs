@@ -3,12 +3,14 @@
 use std::{
     env,
     net::SocketAddr,
+    path::Path,
     task::{Context, Poll},
 };
 
 use anyhow::Result;
 use axum::{
     extract::{ConnectInfo, Request},
+    http::Uri,
     response::Response,
 };
 use chrono::{SecondsFormat, Utc};
@@ -96,7 +98,11 @@ pub const STYLE_LOG4J: &'static str = "log4j";
 pub const DEF_LEVEL: &'static str = LEVEL_INFO;
 pub const DEF_STYLE: &'static str = STYLE_JSON;
 
-pub const FILTER_ONLY: [&'static str; 2] = ["/auth/oauth2/", "/api/"];
+pub const FILTER_ONLY: [&'static str; 2] = [OAUTH2_PATH, "/api/"];
+
+/// The path of OAuth2 APIs. The query values of these APIs are not logged because they may contain
+/// secrets such as the session ID and the authorization code.
+const OAUTH2_PATH: &'static str = "/oauth2/";
 
 impl LoggerLayer {
     pub fn new() -> Self {
@@ -135,7 +141,7 @@ where
                 Some(info) => info.0.to_string(),
             };
             let method = req.method().clone();
-            let uri = req.uri().clone();
+            let uri = log_uri(req.uri());
 
             let res = svc.call(req).await?;
 
@@ -210,7 +216,7 @@ impl Encode for Log4jEncoder {
                 Utc::now().to_rfc3339_opts(SecondsFormat::Millis, true),
                 record.level(),
                 module,
-                record.args().to_string().replace("\n", "\\n")
+                record.args().to_string().escape_debug()
             )
         };
         w.write_all(str.as_bytes())?;
@@ -392,17 +398,46 @@ fn get_module_name(record: &Record<'_>) -> Option<String> {
             if module.eq(SYLVIA_IOT_LOGGER_NAME) || module.eq(ACTIX_LOGGER_NAME) {
                 return Some(module.to_string());
             }
+            // Sylvia-IoT crates may be built from crates.io (absolute registry paths), so use the
+            // crate name instead of the file path to tell them from framework crates.
+            let krate = module.split("::").next().unwrap_or(module);
+            let is_sylvia = krate.starts_with("sylvia_iot_") || krate.eq("general_mq");
             match record.file() {
                 None => Some(module.to_string()),
-                Some(file) => match file.contains("/.cargo/") {
-                    false => match record.line() {
-                        None => Some(file.to_string()),
-                        Some(line) => Some(format!("{}:{}", file, line)),
-                    },
-                    true => None,
+                Some(file) => match is_sylvia || !Path::new(file).is_absolute() {
+                    false => None,
+                    true => {
+                        // Shorten registry paths to `{crate}-{version}/src/...`.
+                        let file = match file.find("/registry/src/") {
+                            None => file,
+                            Some(i) => file[i..].splitn(5, '/').last().unwrap_or(file),
+                        };
+                        match record.line() {
+                            None => Some(file.to_string()),
+                            Some(line) => Some(format!("{}:{}", file, line)),
+                        }
+                    }
                 },
             }
         }
+    }
+}
+
+/// To get the URI for logging. Only the query keys are kept for OAuth2 APIs.
+fn log_uri(uri: &Uri) -> String {
+    let path = uri.path();
+    match uri.query() {
+        Some(query) if path.contains(OAUTH2_PATH) => {
+            let keys: Vec<&str> = query
+                .split('&')
+                .filter_map(|pair| match pair.split('=').next() {
+                    Some(key) if key.len() > 0 => Some(key),
+                    _ => None,
+                })
+                .collect();
+            format!("{}?{}", path, keys.join("&"))
+        }
+        _ => uri.to_string(),
     }
 }
 

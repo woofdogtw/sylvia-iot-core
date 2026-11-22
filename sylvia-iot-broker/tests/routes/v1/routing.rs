@@ -828,6 +828,32 @@ pub fn downlink(context: &mut SpecContext<TestState>) -> Result<(), String> {
             .equals(data.network_addr.as_ref().unwrap().as_str())?;
         expect(recv_dldata.extension.as_ref()).equals(data.extension.as_ref())?;
 
+        // Other networks cannot report the result, and the data buffer is kept for step 3.
+        let result_data0 = NetDlDataResult {
+            data_id: recv_dldata.data_id.clone(),
+            status: 0,
+            message: None,
+        };
+        let payload = match serde_json::to_vec(&result_data0) {
+            Err(e) => return Err(format!("{}.2 generate payload error: {}", CASE, e)),
+            Ok(payload) => payload,
+        };
+        if let Err(e) = rsc.public_network_dldata_result.send_msg(payload).await {
+            return Err(format!("{}.2 send error: {}", CASE, e));
+        }
+        for _ in 0..WAIT_COUNT {
+            if let Some(_) = {
+                rsc.manager_app_handler
+                    .recv_dldata_result
+                    .lock()
+                    .unwrap()
+                    .pop()
+            } {
+                return Err(format!("{}.2 should not receive result", CASE));
+            }
+            time::sleep(Duration::from_millis(WAIT_TICK)).await;
+        }
+
         // Step 3.
         let mut recv_dldata_result = None;
         let result_data1 = NetDlDataResult {

@@ -29,21 +29,25 @@ use sylvia_iot_corelib::{constants::ContentType, err::E_UNKNOWN, http::Json, str
 use super::{
     super::State as AppState,
     endpoint::Endpoint,
+    primitive::SECRET_LEN,
     request::{
         self, AccessTokenRequest, AuthorizationRequest, GetAuthRequest, GetLoginRequest,
         PostLoginRequest, RefreshTokenRequest,
     },
     response::OAuth2Error,
 };
-use crate::models::{
-    Model,
-    client::QueryCond as ClientQueryCond,
-    login_session::{self, LoginSession, QueryCond as SessionQueryCond},
-    user::QueryCond as UserQueryCond,
+use crate::{
+    libs::password,
+    models::{
+        Model,
+        client::QueryCond as ClientQueryCond,
+        login_session::{self, LoginSession, QueryCond as SessionQueryCond},
+        user::{QueryCond as UserQueryCond, Updates as UserUpdates},
+    },
 };
 
-pub const TMPL_LOGIN: &'static str = "login";
-pub const TMPL_GRANT: &'static str = "grant";
+pub const TMPL_LOGIN: &'static str = "login.html";
+pub const TMPL_GRANT: &'static str = "grant.html";
 
 /// `GET /{base}/oauth2/auth`
 ///
@@ -99,30 +103,15 @@ pub async fn get_login(
 ) -> impl IntoResponse {
     const FN_NAME: &'static str = "get_login";
 
-    if req.state.as_str().len() == 0 {
-        warn!("[{}] empty state content", FN_NAME);
-        return resp_invalid_request(Some("invalid state content"));
-    }
-    match serde_urlencoded::from_str::<GetAuthRequest>(req.state.as_str()) {
-        Err(e) => {
-            warn!(
-                "[{}] parse state error: {}, content: {}",
-                FN_NAME,
-                e,
-                req.state.as_str()
-            );
-            return resp_invalid_request(Some("invalid state content"));
-        }
-        Ok(inner_req) => {
-            if let Err(resp) = check_auth_params(FN_NAME, &inner_req, &state.model).await {
-                return resp;
-            }
-        }
-    }
+    let (_, login_state) = match check_login_state(FN_NAME, req.state.as_str(), &state.model).await
+    {
+        Err(resp) => return resp,
+        Ok(result) => result,
+    };
 
     let mut context = Context::new();
     context.insert("scope_path", &state.scope_path);
-    context.insert("state", &req.state);
+    context.insert("state", &login_state);
     let page = match tera.render(TMPL_LOGIN, &context) {
         Err(e) => {
             let err_str = e.to_string();
@@ -145,65 +134,76 @@ pub async fn get_login(
 pub async fn post_login(State(state): State<AppState>, req: PostLoginRequest) -> impl IntoResponse {
     const FN_NAME: &'static str = "post_login";
 
-    if req.state.as_str().len() == 0 {
-        warn!("[{}] empty state content", FN_NAME);
-        return resp_invalid_request(Some("invalid state content"));
-    }
-    match serde_urlencoded::from_str::<GetAuthRequest>(req.state.as_str()) {
-        Err(e) => {
-            warn!(
-                "[{}] parse state error: {}, content: {}",
-                FN_NAME,
-                e,
-                req.state.as_str()
-            );
-            return resp_invalid_request(Some("invalid state content"));
-        }
-        Ok(inner_req) => {
-            if let Err(resp) = check_auth_params(FN_NAME, &inner_req, &state.model).await {
-                return resp;
-            }
-        }
-    }
+    let (inner_req, login_state) =
+        match check_login_state(FN_NAME, req.state.as_str(), &state.model).await {
+            Err(resp) => return resp,
+            Ok(result) => result,
+        };
 
     let user_cond = UserQueryCond {
         user_id: None,
         account: Some(req.account.as_str()),
     };
-    let user_id = match state.model.user().get(&user_cond).await {
+    let user = match state.model.user().get(&user_cond).await {
         Err(e) => {
             let err_str = e.to_string();
             error!("[{}] get user DB error: {}", FN_NAME, err_str.as_str());
             return resp_temporary_unavailable(Some(err_str));
         }
-        Ok(user) => match user {
-            None => {
-                return resp_invalid_auth(None);
-            }
-            Some(user) => {
-                if user.disabled_at.is_some() {
-                    return resp_invalid_auth(None);
-                } else if let Some(expired_at) = user.expired_at
-                    && Utc::now() >= expired_at
-                {
-                    return resp_invalid_auth(None);
-                }
-                let hash = strings::password_hash(req.password.as_str(), user.salt.as_str());
-                if user.password != hash {
-                    return resp_invalid_auth(None);
-                }
-                user.user_id
-            }
-        },
+        Ok(user) => user,
     };
 
+    // Verify the password before checking the user status, and verify with a dummy hash for
+    // nonexistent users, so that the response time does not reveal the user status.
+    let user_hash = user
+        .as_ref()
+        .map(|user| (user.salt.as_str(), user.password.as_str()));
+    let new_salt_hash = match password::verify(req.password.as_str(), user_hash).await {
+        Err(e) => {
+            error!("[{}] {}", FN_NAME, e);
+            return resp_server_error(Some(e));
+        }
+        Ok((false, _)) => return resp_invalid_auth(None),
+        Ok((true, new_salt_hash)) => new_salt_hash,
+    };
+    let user = match user {
+        None => return resp_invalid_auth(None),
+        Some(user) => user,
+    };
+    if user.disabled_at.is_some() {
+        return resp_invalid_auth(None);
+    } else if let Some(expired_at) = user.expired_at
+        && Utc::now() >= expired_at
+    {
+        return resp_invalid_auth(None);
+    }
+    // Re-hash the password with a new salt if the hash is generated by the legacy format or other
+    // rounds.
+    if let Some((new_salt, new_hash)) = new_salt_hash {
+        let updates = UserUpdates {
+            password: Some(new_hash),
+            salt: Some(new_salt),
+            ..Default::default()
+        };
+        if let Err(e) = state
+            .model
+            .user()
+            .update(user.user_id.as_str(), &updates)
+            .await
+        {
+            error!("[{}] re-hash password error: {}", FN_NAME, e);
+        }
+    }
+
     let session = LoginSession {
-        session_id: strings::random_id_sha(&Utc::now(), 4),
+        session_id: strings::randomstring(SECRET_LEN),
         expires_at: match TimeDelta::try_seconds(login_session::EXPIRES) {
             None => panic!("{}", E_UNKNOWN),
             Some(t) => Utc::now() + t,
         },
-        user_id,
+        user_id: user.user_id,
+        client_id: inner_req.client_id,
+        redirect_uri: inner_req.redirect_uri,
     };
     if let Err(e) = state.model.login_session().add(&session).await {
         let err_str = e.to_string();
@@ -212,7 +212,7 @@ pub async fn post_login(State(state): State<AppState>, req: PostLoginRequest) ->
     }
     resp_found(format!(
         "{}/oauth2/authorize?{}&session_id={}",
-        state.scope_path, req.state, session.session_id
+        state.scope_path, login_state, session.session_id
     ))
 }
 
@@ -247,6 +247,15 @@ pub async fn authorize(
     if let Some(allowed) = req.allowed() {
         match allowed {
             false => {
+                // The session cannot be used anymore after denying.
+                let cond = SessionQueryCond {
+                    session_id: Some(req.session_id()),
+                    ..Default::default()
+                };
+                if let Err(e) = state.model.login_session().del(&cond).await {
+                    error!("[{}] authorize() remove session ID error: {}", FN_NAME, e);
+                    return resp_temporary_unavailable(None);
+                }
                 if let Err(e) = pending.deny() {
                     match e {
                         AuthorizationError::Redirect(url) => {
@@ -256,12 +265,11 @@ pub async fn authorize(
                         _ => (),
                     }
                 }
-                let e = OAuth2Error::new("server_error", Some("deny error".to_string()));
-                return (StatusCode::INTERNAL_SERVER_ERROR, Json(e)).into_response();
+                return resp_server_error(Some("deny error".to_string()));
             }
             true => {
                 let session_id = req.session_id();
-                let user_id = match state.model.login_session().get(session_id).await {
+                let session = match state.model.login_session().get(session_id).await {
                     Err(e) => {
                         error!("[{}] authorize() with primitive error: {}", FN_NAME, e);
                         return resp_temporary_unavailable(None);
@@ -271,7 +279,7 @@ pub async fn authorize(
                             warn!("[{}] authorize() with invalid session ID", FN_NAME);
                             return resp_invalid_auth(None);
                         }
-                        Some(session) => session.user_id,
+                        Some(session) => session,
                     },
                 };
                 let cond = SessionQueryCond {
@@ -282,7 +290,20 @@ pub async fn authorize(
                     error!("[{}] authorize() remove session ID error: {}", FN_NAME, e);
                     return resp_temporary_unavailable(None);
                 }
-                match pending.authorize(&mut endpoint, Cow::from(user_id)).await {
+                // The session must be valid and created for this client.
+                if session.expires_at < Utc::now() {
+                    warn!("[{}] authorize() with expired session ID", FN_NAME);
+                    return resp_invalid_auth(None);
+                } else if req.client_id().as_deref() != Some(session.client_id.as_str())
+                    || req.redirect_uri().as_deref() != Some(session.redirect_uri.as_str())
+                {
+                    warn!("[{}] authorize() with session of other client", FN_NAME);
+                    return resp_invalid_auth(None);
+                }
+                match pending
+                    .authorize(&mut endpoint, Cow::from(session.user_id))
+                    .await
+                {
                     Err(_) => {
                         error!("[{}] authorize error", FN_NAME);
                         return resp_temporary_unavailable(None);
@@ -491,6 +512,38 @@ async fn client_credentials_token(
     .into_response()
 }
 
+/// To parse and check the login state. Returns the parsed content and the state re-serialized from
+/// it, so that unknown parameters in the raw state are dropped.
+async fn check_login_state(
+    fn_name: &str,
+    login_state: &str,
+    model: &Arc<dyn Model>,
+) -> Result<(GetAuthRequest, String), Response> {
+    if login_state.len() == 0 {
+        warn!("[{}] empty state content", fn_name);
+        return Err(resp_invalid_request(Some("invalid state content")));
+    }
+    let inner_req = match serde_urlencoded::from_str::<GetAuthRequest>(login_state) {
+        Err(e) => {
+            warn!(
+                "[{}] parse state error: {}, content: {}",
+                fn_name, e, login_state
+            );
+            return Err(resp_invalid_request(Some("invalid state content")));
+        }
+        Ok(inner_req) => inner_req,
+    };
+    check_auth_params(fn_name, &inner_req, model).await?;
+    match serde_urlencoded::to_string(&inner_req) {
+        Err(e) => {
+            let err_str = e.to_string();
+            error!("[{}] encode state error: {}", fn_name, err_str.as_str());
+            Err(resp_server_error(Some(err_str)))
+        }
+        Ok(login_state) => Ok((inner_req, login_state)),
+    }
+}
+
 /// To check the authorization grant flow parameters.
 async fn check_auth_params(
     fn_name: &str,
@@ -603,6 +656,14 @@ fn resp_invalid_request<'a>(description: Option<&'a str>) -> Response {
     (
         StatusCode::BAD_REQUEST,
         Json(OAuth2Error::new("invalid_request", description)),
+    )
+        .into_response()
+}
+
+fn resp_server_error(description: Option<String>) -> Response {
+    (
+        StatusCode::INTERNAL_SERVER_ERROR,
+        Json(OAuth2Error::new("server_error", description)),
     )
         .into_response()
 }

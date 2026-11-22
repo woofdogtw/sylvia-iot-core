@@ -25,6 +25,7 @@
     - 對於未回報的下行資料，對 Broker 沒有影響。
         - 目前只保留一天。如沒有回報則永遠呈現未回報狀態。
     - 應用服務可以自行決定太久沒有回報的下行資料該如何處理。
+- 一筆上行資料（以精簡 JSON 格式計算）不可超過 1032192 位元組（1 MiB - 16 KiB）。Broker 轉送資料時會加上其他欄位，因此保留了 MQTT 封包上限 1 MiB 中的 16 KiB。超過的資料會被 Broker 丟棄並留下警告 log。
 - 關於 `result` 的規則：
     - 小於 0 表示進行中。
         - -2: 表示資料正在往網路服務傳送中。由 Broker 在儲存到資料庫前設定。
@@ -45,3 +46,4 @@
 - 只要管理 `NetworkMgr` 即可，無需自行管理所有佇列的連線狀態和 AMQP/MQTT 的屬性。
 - 註冊 `EventHandler` 可即時於佇列狀態改變或是資料送達時收到。
 - 可以透過 `send_uldata()` 和 `send_dldata_result()` 傳送資料給 Broker。
+- 使用 MQTT 時，`send_uldata()` 和 `send_dldata_result()` 對於超過 MQTT 封包上限（1 MiB）的資料會直接回傳錯誤。

@@ -19,7 +19,7 @@ use general_mq::{
     },
 };
 use sylvia_iot_broker::libs::mq::{
-    Connection, MgrStatus, Options,
+    Connection, MAX_DATA_MSG_SIZE, MgrStatus, Options,
     network::{DlData, DlDataResult, EventHandler, NetworkMgr, UlData},
 };
 
@@ -648,6 +648,19 @@ pub fn uldata_wrong(context: &mut SpecContext<TestState>) -> Result<(), String> 
         };
         if let Err(e) = queue_send.send_msg(payload).await {
             return Err(format!("send UlData 3 error: {}", e));
+        }
+        let send_data4 = NetUlData {
+            time: "2022-01-02T03:04:05Z".to_string(),
+            network_addr: "addr".to_string(),
+            data: "00".repeat(MAX_DATA_MSG_SIZE / 2),
+            ..Default::default()
+        };
+        let payload = match serde_json::to_vec(&send_data4) {
+            Err(e) => return Err(format!("generate payload 4 error: {}", e)),
+            Ok(data) => data,
+        };
+        if let Err(e) = queue_send.send_msg(payload).await {
+            return Err(format!("send UlData 4 error: {}", e));
         }
         time::sleep(Duration::from_secs(1)).await;
         expect(handler.recv_uldata.lock().unwrap().len()).equals(0)?;

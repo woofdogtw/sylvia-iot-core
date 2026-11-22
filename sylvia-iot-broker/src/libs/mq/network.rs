@@ -23,12 +23,12 @@ use general_mq::{
 use sylvia_iot_corelib::strings;
 
 use super::{
-    Connection, MgrMqStatus, MgrStatus, Options, get_connection, new_ctrl_queues, new_data_queues,
-    remove_connection,
+    Connection, MAX_DATA_MSG_SIZE, MgrMqStatus, MgrStatus, Options, get_connection,
+    new_ctrl_queues, new_data_queues, remove_connection,
 };
 
 /// Uplink data from network to broker.
-#[derive(Deserialize)]
+#[derive(Deserialize, Serialize)]
 pub struct UlData {
     pub time: String,
     #[serde(rename = "networkAddr")]
@@ -208,6 +208,7 @@ impl NetworkMgr {
     pub fn send_dldata(&self, data: &DlData) -> Result<(), Box<dyn StdError>> {
         let payload = serde_json::to_vec(data)?;
         let queue = { (*self.dldata.lock().unwrap()).clone() };
+        queue.check_msg_size(payload.len())?;
         task::spawn(async move {
             let _ = queue.send_msg(payload).await;
         });
@@ -306,6 +307,19 @@ impl MessageHandler for MgrMqEventHandler {
                             return;
                         }
                         data.data = data.data.to_lowercase();
+                    }
+                    // The broker adds fields when forwarding the data, so limit the size of the
+                    // normalized data.
+                    let size = serde_json::to_vec(&data).map_or(0, |v| v.len());
+                    if size > MAX_DATA_MSG_SIZE {
+                        warn!(
+                            "[{}] data too large ({} bytes) from {}",
+                            FN_NAME, size, queue_name
+                        );
+                        if let Err(e) = msg.ack().await {
+                            error!("[{}] ACK message error: {}", FN_NAME, e);
+                        }
+                        return;
                     }
                     data
                 }

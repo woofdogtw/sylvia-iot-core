@@ -1,17 +1,21 @@
 //! String libraries.
 
-use std::sync::LazyLock;
+use std::{num::NonZeroU32, sync::LazyLock};
 
+use aws_lc_rs::pbkdf2;
 use chrono::{DateTime, SecondsFormat, Utc};
 use hex;
-use hmac::Hmac;
-use pbkdf2;
 use rand::{RngExt, distr::Alphanumeric};
 use regex::Regex;
 use sha2::{Digest, Sha256};
 use url::Url;
 
-const PASSWORD_ROUNDS: u32 = 10000;
+/// PBKDF2 rounds for hashing passwords.
+const PASSWORD_ROUNDS: u32 = 600000;
+/// PBKDF2 rounds of the legacy password hash format (hex string without the prefix).
+const PASSWORD_ROUNDS_LEGACY: u32 = 10000;
+/// The prefix of the password hash format: `$pbkdf2-sha256$i=[rounds]$[hex]`.
+const PASSWORD_HASH_PREFIX: &'static str = "$pbkdf2-sha256$i=";
 
 static CODE_REGEX: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"^[a-z0-9]{1}[a-z0-9_-]*$").unwrap());
@@ -58,16 +62,66 @@ pub fn is_uri(uri: &str) -> bool {
     Url::parse(uri).is_ok()
 }
 
-/// To hash the password.
+/// To hash the password with PBKDF2-HMAC-SHA256 in `$pbkdf2-sha256$i=[rounds]$[hex]` format.
+///
+/// **Note**: this takes a long time, please use async utility to call this function.
 pub fn password_hash(password: &str, salt: &str) -> String {
     let mut res: [u8; 32] = [0; 32];
-    let _ = pbkdf2::pbkdf2::<Hmac<Sha256>>(
-        password.as_bytes(),
+    pbkdf2::derive(
+        pbkdf2::PBKDF2_HMAC_SHA256,
+        NonZeroU32::new(PASSWORD_ROUNDS).unwrap(),
         salt.as_bytes(),
-        PASSWORD_ROUNDS,
+        password.as_bytes(),
         &mut res,
     );
-    hex::encode(res)
+    format!(
+        "{}{}${}",
+        PASSWORD_HASH_PREFIX,
+        PASSWORD_ROUNDS,
+        hex::encode(res)
+    )
+}
+
+/// To verify the password with the hash from [`password_hash`] or the legacy format.
+///
+/// **Note**: this takes a long time, please use async utility to call this function.
+pub fn password_verify(password: &str, salt: &str, hash: &str) -> bool {
+    let (rounds, hash_hex) = match hash.strip_prefix(PASSWORD_HASH_PREFIX) {
+        None => (PASSWORD_ROUNDS_LEGACY, hash),
+        Some(value) => match value.split_once('$') {
+            None => return false,
+            Some((rounds, hash_hex)) => match rounds.parse::<u32>() {
+                Err(_) => return false,
+                Ok(rounds) => (rounds, hash_hex),
+            },
+        },
+    };
+    let rounds = match NonZeroU32::new(rounds) {
+        None => return false,
+        Some(rounds) => rounds,
+    };
+    let derived = match hex::decode(hash_hex) {
+        Err(_) => return false,
+        Ok(derived) => derived,
+    };
+    if derived.len() == 0 {
+        return false;
+    }
+    pbkdf2::verify(
+        pbkdf2::PBKDF2_HMAC_SHA256,
+        rounds,
+        salt.as_bytes(),
+        password.as_bytes(),
+        derived.as_slice(),
+    )
+    .is_ok()
+}
+
+/// To check if the password hash is not generated with the current rounds by [`password_hash`].
+/// Re-hash the password after verified to upgrade it.
+pub fn password_need_rehash(hash: &str) -> bool {
+    let current = format!("{}{}$", PASSWORD_HASH_PREFIX, PASSWORD_ROUNDS);
+    !hash.starts_with(current.as_str())
 }
 
 /// To generate item ID in `[timestamp-milliseconds]-[random-alphanumeric]` format.
@@ -76,6 +130,9 @@ pub fn random_id(time: &DateTime<Utc>, len: usize) -> String {
 }
 
 /// To generate hex-string item ID using [`random_id`] and additional hash.
+///
+/// **Note**: the result only has the entropy of the `len` random characters (the timestamp is
+/// predictable), so do not use this for secrets such as tokens. Use [`randomstring`] instead.
 pub fn random_id_sha(time: &DateTime<Utc>, len: usize) -> String {
     let str = random_id(time, len);
     let mut hasher = Sha256::new();
@@ -84,6 +141,8 @@ pub fn random_id_sha(time: &DateTime<Utc>, len: usize) -> String {
 }
 
 /// To generate random alphanumeric string with the specified length.
+///
+/// This uses a cryptographically secure random number generator, so it can be used for secrets.
 pub fn randomstring(len: usize) -> String {
     let mut rng = rand::rng();
     std::iter::repeat(())

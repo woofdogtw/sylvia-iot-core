@@ -1306,6 +1306,112 @@ pub fn delete_invalid_token(context: &mut SpecContext<TestState>) -> Result<(), 
     )
 }
 
+pub fn get_host_uri_credentials(context: &mut SpecContext<TestState>) -> Result<(), String> {
+    let state = context.state.borrow();
+    let state = state.get(STATE).unwrap();
+    let runtime = state.runtime.as_ref().unwrap();
+    let routes_state = state.routes_state.as_ref().unwrap();
+
+    add_unit_model(runtime, routes_state, "owner", vec!["member"], "owner")?;
+    add_network_model(
+        runtime,
+        routes_state,
+        "owner",
+        "owner",
+        "amqp://admin:secret@host/vhost",
+    )?;
+
+    let app = Router::new().merge(routes::new_service(routes_state));
+    let server = TestServer::new(app);
+
+    for token in [TOKEN_MANAGER, TOKEN_OWNER, TOKEN_MEMBER] {
+        let req = server.get("/broker/api/v1/network/owner").add_header(
+            header::AUTHORIZATION,
+            HeaderValue::from_str(format!("Bearer {}", token).as_str()).unwrap(),
+        );
+        let resp = runtime.block_on(async { req.await });
+        expect(resp.status_code()).to_equal(StatusCode::OK)?;
+        let body: response::GetNetwork = resp.json();
+        expect(body.data.host_uri.as_str()).to_equal("amqp://host/vhost")?;
+
+        let req = server
+            .get("/broker/api/v1/network/list")
+            .add_query_param("unit", "owner")
+            .add_header(
+                header::AUTHORIZATION,
+                HeaderValue::from_str(format!("Bearer {}", token).as_str()).unwrap(),
+            );
+        let resp = runtime.block_on(async { req.await });
+        expect(resp.status_code()).to_equal(StatusCode::OK)?;
+        let body: response::GetNetworkList = resp.json();
+        expect(body.data.len()).to_equal(1)?;
+        expect(body.data[0].host_uri.as_str()).to_equal("amqp://host/vhost")?;
+    }
+    Ok(())
+}
+
+pub fn patch_host_uri_credentials(context: &mut SpecContext<TestState>) -> Result<(), String> {
+    let state = context.state.borrow();
+    let state = state.get(STATE).unwrap();
+    let runtime = state.runtime.as_ref().unwrap();
+    let routes_state = state.routes_state.as_ref().unwrap();
+
+    add_unit_model(runtime, routes_state, "owner", vec![], "owner")?;
+    add_network_model(
+        runtime,
+        routes_state,
+        "owner",
+        "owner",
+        "amqp://admin:secret@host/vhost",
+    )?;
+
+    let app = Router::new().merge(routes::new_service(routes_state));
+    let server = TestServer::new(app);
+
+    // (the host URI to patch, the expected host URI in the database)
+    let cases = [
+        // The same URI without credentials uses the current credentials.
+        ("amqp://host/vhost", "amqp://admin:secret@host/vhost"),
+        // Other paths (virtual hosts) do not use the current credentials.
+        ("amqp://host/vhost2", "amqp://host/vhost2"),
+        (
+            "amqp://admin:secret@host/vhost",
+            "amqp://admin:secret@host/vhost",
+        ),
+        // Other hosts do not use the current credentials.
+        ("amqp://host2/vhost", "amqp://host2/vhost"),
+        (
+            "amqp://user:pass@host2/vhost",
+            "amqp://user:pass@host2/vhost",
+        ),
+        // URIs with credentials are used as is.
+        ("amqp://:pass2@host2/vhost", "amqp://:pass2@host2/vhost"),
+    ];
+    for (host_uri, expect_host_uri) in cases {
+        let body = request::PatchNetwork {
+            data: request::PatchNetworkData {
+                host_uri: Some(host_uri.to_string()),
+                ..Default::default()
+            },
+        };
+        let req = server
+            .patch("/broker/api/v1/network/owner")
+            .add_header(
+                header::AUTHORIZATION,
+                HeaderValue::from_str(format!("Bearer {}", TOKEN_OWNER).as_str()).unwrap(),
+            )
+            .json(&body);
+        let resp = runtime.block_on(async { req.await });
+        expect(resp.status_code()).to_equal(StatusCode::NO_CONTENT)?;
+
+        let info = get_network_model(runtime, routes_state, "owner", true)?.unwrap();
+        if let Err(e) = expect(info.host_uri.as_str()).to_equal(expect_host_uri) {
+            return Err(format!("patch {} error: {}", host_uri, e));
+        }
+    }
+    Ok(())
+}
+
 fn test_post(
     runtime: &Runtime,
     state: &routes::State,

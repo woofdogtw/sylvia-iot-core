@@ -64,16 +64,20 @@ pub fn reg_args(cmd: Command) -> Command {
             Arg::new("password")
                 .short('p')
                 .long("password")
-                .help("Password")
-                .num_args(1)
-                .required(true),
+                .help("Password. Input interactively without echo if not specified")
+                .num_args(1),
         )
 }
 
 pub async fn run(conf: &Config, args: &ArgMatches) -> Result<Option<()>, Box<dyn StdError>> {
+    // Prompt for the password to avoid leaving it in the shell history and process list.
+    let password = match args.get_one::<String>("password") {
+        None => rpassword::prompt_password("Password: ")?,
+        Some(password) => password.clone(),
+    };
     let token = login(
         args.get_one::<String>("account").unwrap().as_str(),
-        args.get_one::<String>("password").unwrap().as_str(),
+        password.as_str(),
         conf,
     )
     .await?;

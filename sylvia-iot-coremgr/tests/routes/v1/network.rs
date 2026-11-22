@@ -16,10 +16,14 @@ use general_mq::{
     connection::{GmqConnection, Status as ConnStatus},
     queue::{GmqQueue, Message, MessageHandler, Status as QueueStatus},
 };
-use sylvia_iot_broker::models::{Model, device};
+use sylvia_iot_broker::libs::mq::MAX_DATA_MSG_SIZE;
+use sylvia_iot_broker::models::{Model, device, network};
 use sylvia_iot_corelib::{constants::ContentType, err};
 use sylvia_iot_coremgr::{
-    libs::mq::{self, QueueType, emqx, rabbitmq, to_username},
+    libs::{
+        config::MqHost,
+        mq::{self, QueueType, emqx, rabbitmq, to_username},
+    },
     routes,
 };
 
@@ -29,8 +33,8 @@ use super::{
     super::{
         TestState,
         libs::{
-            ApiError, TOKEN_MANAGER, TOKEN_MEMBER, create_device, create_unit, test_invalid_param,
-            test_invalid_token, test_list,
+            ApiError, TOKEN_MANAGER, TOKEN_MEMBER, TOKEN_OWNER, create_device, create_unit,
+            test_invalid_param, test_invalid_token, test_list,
         },
     },
     STATE, Stats, remove_network, remove_unit,
@@ -166,11 +170,21 @@ pub fn after_each_fn(state: &mut HashMap<&'static str, TestState>) -> () {
         if let Err(e) = remove_unit(client, UNIT_CODE).await {
             println!("remove unit error: {}", e);
         }
-        if let Err(e) = remove_network(client, NETP_CODE).await {
-            println!("remove public network error: {}", e);
-        }
-        if let Err(e) = remove_network(client, NETP2_CODE).await {
-            println!("remove public network 2 error: {}", e);
+        for code in [NETP_CODE, NETP2_CODE] {
+            let cond = network::QueryCond {
+                unit_id: Some(None),
+                code: Some(code),
+                ..Default::default()
+            };
+            match broker_db.network().get(&cond).await {
+                Err(e) => println!("get public network {} error: {}", code, e),
+                Ok(None) => (),
+                Ok(Some(network)) => {
+                    if let Err(e) = remove_network(client, network.network_id.as_str()).await {
+                        println!("remove public network {} error: {}", code, e);
+                    }
+                }
+            }
         }
         let cond = device::QueryCond {
             unit_id: Some(UNIT_CODE),
@@ -1330,6 +1344,18 @@ pub fn uldata_invalid(context: &mut SpecContext<TestState>) -> Result<(), String
         .json(&body);
     test_invalid_param(runtime, req, "err_param")?;
 
+    // The data message exceeds the maximum size of the broker.
+    body.data.device_id = "addr".to_string();
+    body.data.payload = "00".repeat(MAX_DATA_MSG_SIZE / 2);
+    let req = server
+        .post(format!("/coremgr/api/v1/network/{}/uldata", network_id).as_str())
+        .add_header(
+            header::AUTHORIZATION,
+            HeaderValue::from_str(format!("Bearer {}", TOKEN_MANAGER).as_str()).unwrap(),
+        )
+        .json(&body);
+    test_invalid_param(runtime, req, "err_param")?;
+
     body.data.device_id = "test".to_string();
     body.data.payload = hex::encode("payload");
     let req = server
@@ -1340,6 +1366,393 @@ pub fn uldata_invalid(context: &mut SpecContext<TestState>) -> Result<(), String
         )
         .json(&body);
     test_invalid_param(runtime, req, "err_broker_device_not_exist")
+}
+
+/// Only the unit owner, admin and manager can create networks.
+pub fn post_not_owner(context: &mut SpecContext<TestState>) -> Result<(), String> {
+    let state = context.state.borrow();
+    let state = state.get(STATE).unwrap();
+    let runtime = state.runtime.as_ref().unwrap();
+    let routes_state = state.routes_state.as_ref().unwrap();
+    let broker_db = state.broker_db.as_ref().unwrap();
+    let host = crate::TEST_MQ_HOST;
+
+    match runtime.block_on(async {
+        let mut unit = create_unit(UNIT_CODE, "owner");
+        unit.member_ids.push("member".to_string());
+        broker_db.unit().add(&unit).await
+    }) {
+        Err(e) => return Err(format!("add unit model info error: {}", e)),
+        Ok(_) => (),
+    }
+
+    let server = new_test_server(routes_state)?;
+    // Use a host without message brokers. Creating resources before checking the owner responds
+    // `err_intmsg` instead of `err_param`.
+    let mut param = PostNetwork {
+        data: PostNetworkData {
+            code: NET_CODE.to_string(),
+            unit_id: Some(UNIT_CODE.to_string()),
+            host_uri: "amqp://127.0.0.2".to_string(),
+            name: None,
+            info: None,
+            ttl: None,
+            length: None,
+        },
+    };
+    let req = server
+        .post("/coremgr/api/v1/network")
+        .add_header(
+            header::AUTHORIZATION,
+            HeaderValue::from_str(format!("Bearer {}", TOKEN_MEMBER).as_str()).unwrap(),
+        )
+        .json(&param);
+    test_invalid_param(runtime, req, "err_param")?;
+
+    param.data.host_uri = format!("amqp://{}", host);
+    let req = server
+        .post("/coremgr/api/v1/network")
+        .add_header(
+            header::AUTHORIZATION,
+            HeaderValue::from_str(format!("Bearer {}", TOKEN_OWNER).as_str()).unwrap(),
+        )
+        .json(&param);
+    let resp = runtime.block_on(async { req.await });
+    expect(resp.status_code()).to_equal(StatusCode::OK)
+}
+
+/// Only the unit owner, admin and manager can update networks.
+pub fn patch_not_owner(context: &mut SpecContext<TestState>) -> Result<(), String> {
+    let state = context.state.borrow();
+    let state = state.get(STATE).unwrap();
+    let runtime = state.runtime.as_ref().unwrap();
+    let routes_state = state.routes_state.as_ref().unwrap();
+    let broker_db = state.broker_db.as_ref().unwrap();
+    let host = crate::TEST_MQ_HOST;
+
+    match runtime.block_on(async {
+        let mut unit = create_unit(UNIT_CODE, "owner");
+        unit.member_ids.push("member".to_string());
+        broker_db.unit().add(&unit).await
+    }) {
+        Err(e) => return Err(format!("add unit model info error: {}", e)),
+        Ok(_) => (),
+    }
+    let param = PostNetwork {
+        data: PostNetworkData {
+            code: NET_CODE.to_string(),
+            unit_id: Some(UNIT_CODE.to_string()),
+            host_uri: format!("amqp://{}", host),
+            name: None,
+            info: None,
+            ttl: None,
+            length: None,
+        },
+    };
+    let info = create_network(runtime, routes_state, &param)?;
+    let uri = format!("/coremgr/api/v1/network/{}", info.network_id);
+
+    let server = new_test_server(routes_state)?;
+    let body = PatchNetwork {
+        data: PatchNetworkData {
+            host_uri: None,
+            name: None,
+            info: None,
+            ttl: None,
+            length: None,
+            password: Some("password".to_string()),
+        },
+    };
+    let req = server
+        .patch(uri.as_str())
+        .add_header(
+            header::AUTHORIZATION,
+            HeaderValue::from_str(format!("Bearer {}", TOKEN_MEMBER).as_str()).unwrap(),
+        )
+        .json(&body);
+    test_invalid_param(runtime, req, "err_param")?;
+
+    let req = server
+        .patch(uri.as_str())
+        .add_header(
+            header::AUTHORIZATION,
+            HeaderValue::from_str(format!("Bearer {}", TOKEN_OWNER).as_str()).unwrap(),
+        )
+        .json(&body);
+    let resp = runtime.block_on(async { req.await });
+    expect(resp.status_code()).to_equal(StatusCode::NO_CONTENT)?;
+
+    // Only admin and manager can manage public networks.
+    let param = PostNetwork {
+        data: PostNetworkData {
+            code: NETP_CODE.to_string(),
+            unit_id: None,
+            host_uri: format!("amqp://{}", host),
+            name: None,
+            info: None,
+            ttl: None,
+            length: None,
+        },
+    };
+    let info = create_network(runtime, routes_state, &param)?;
+    let uri = format!("/coremgr/api/v1/network/{}", info.network_id);
+
+    let req = server
+        .patch(uri.as_str())
+        .add_header(
+            header::AUTHORIZATION,
+            HeaderValue::from_str(format!("Bearer {}", TOKEN_MEMBER).as_str()).unwrap(),
+        )
+        .json(&body);
+    test_invalid_param(runtime, req, "err_not_found")?;
+
+    let req = server
+        .patch(uri.as_str())
+        .add_header(
+            header::AUTHORIZATION,
+            HeaderValue::from_str(format!("Bearer {}", TOKEN_MANAGER).as_str()).unwrap(),
+        )
+        .json(&body);
+    let resp = runtime.block_on(async { req.await });
+    expect(resp.status_code()).to_equal(StatusCode::NO_CONTENT)
+}
+
+/// Non-owners cannot clear message broker resources with the DELETE API.
+pub fn delete_not_owner(context: &mut SpecContext<TestState>) -> Result<(), String> {
+    let state = context.state.borrow();
+    let state = state.get(STATE).unwrap();
+    let runtime = state.runtime.as_ref().unwrap();
+    let routes_state = state.routes_state.as_ref().unwrap();
+    let broker_db = state.broker_db.as_ref().unwrap();
+    let host = crate::TEST_MQ_HOST;
+
+    match runtime.block_on(async {
+        let mut unit = create_unit(UNIT_CODE, "owner");
+        unit.member_ids.push("member".to_string());
+        broker_db.unit().add(&unit).await
+    }) {
+        Err(e) => return Err(format!("add unit model info error: {}", e)),
+        Ok(_) => (),
+    }
+    let param = PostNetwork {
+        data: PostNetworkData {
+            code: NET_CODE.to_string(),
+            unit_id: Some(UNIT_CODE.to_string()),
+            host_uri: format!("amqp://{}", host),
+            name: None,
+            info: None,
+            ttl: None,
+            length: None,
+        },
+    };
+    let info = create_network(runtime, routes_state, &param)?;
+    let uri = format!("/coremgr/api/v1/network/{}", info.network_id);
+    let host_uri = param.data.host_uri.as_str();
+
+    // The broker does nothing for non-owners, and the resources must be kept.
+    let server = new_test_server(routes_state)?;
+    let req = server.delete(uri.as_str()).add_header(
+        header::AUTHORIZATION,
+        HeaderValue::from_str(format!("Bearer {}", TOKEN_MEMBER).as_str()).unwrap(),
+    );
+    let resp = runtime.block_on(async { req.await });
+    expect(resp.status_code()).to_equal(StatusCode::NO_CONTENT)?;
+    runtime.block_on(async {
+        check_queue(host_uri, info.password.as_str(), UNIT_CODE, NET_CODE).await
+    })?;
+
+    let req = server.delete(uri.as_str()).add_header(
+        header::AUTHORIZATION,
+        HeaderValue::from_str(format!("Bearer {}", TOKEN_OWNER).as_str()).unwrap(),
+    );
+    let resp = runtime.block_on(async { req.await });
+    expect(resp.status_code()).to_equal(StatusCode::NO_CONTENT)?;
+
+    // Only admin and manager can delete public networks.
+    let param = PostNetwork {
+        data: PostNetworkData {
+            code: NETP_CODE.to_string(),
+            unit_id: None,
+            host_uri: format!("amqp://{}", host),
+            name: None,
+            info: None,
+            ttl: None,
+            length: None,
+        },
+    };
+    let info = create_network(runtime, routes_state, &param)?;
+    let uri = format!("/coremgr/api/v1/network/{}", info.network_id);
+    let host_uri = param.data.host_uri.as_str();
+
+    let req = server.delete(uri.as_str()).add_header(
+        header::AUTHORIZATION,
+        HeaderValue::from_str(format!("Bearer {}", TOKEN_MEMBER).as_str()).unwrap(),
+    );
+    test_invalid_param(runtime, req, "err_not_found")?;
+    runtime
+        .block_on(async { check_queue(host_uri, info.password.as_str(), "", NETP_CODE).await })?;
+
+    let req = server.delete(uri.as_str()).add_header(
+        header::AUTHORIZATION,
+        HeaderValue::from_str(format!("Bearer {}", TOKEN_MANAGER).as_str()).unwrap(),
+    );
+    let resp = runtime.block_on(async { req.await });
+    expect(resp.status_code()).to_equal(StatusCode::NO_CONTENT)
+}
+
+/// Test `hostUri` with the `hosts` configurations.
+pub fn hosts(context: &mut SpecContext<TestState>) -> Result<(), String> {
+    let state = context.state.borrow();
+    let state = state.get(STATE).unwrap();
+    let runtime = state.runtime.as_ref().unwrap();
+    let routes_state = state.routes_state.as_ref().unwrap();
+    let broker_db = state.broker_db.as_ref().unwrap();
+    let host = crate::TEST_MQ_HOST;
+
+    match runtime.block_on(async {
+        let unit = create_unit(UNIT_CODE, UNIT_OWNER);
+        broker_db.unit().add(&unit).await
+    }) {
+        Err(e) => return Err(format!("add unit model info error: {}", e)),
+        Ok(_) => (),
+    }
+
+    let mut hosts_state = routes_state.clone();
+    hosts_state.mq_hosts.amqp = vec![
+        MqHost {
+            name: "local".to_string(),
+            host: host.to_string(),
+            external: "mq.example.com".to_string(),
+            active: true,
+        },
+        MqHost {
+            name: "inactive".to_string(),
+            host: "127.0.0.1".to_string(),
+            external: "inactive.example.com".to_string(),
+            active: false,
+        },
+    ];
+    let server = new_test_server(&hosts_state)?;
+    let mut param = PostNetwork {
+        data: PostNetworkData {
+            code: NET_CODE.to_string(),
+            unit_id: Some(UNIT_CODE.to_string()),
+            host_uri: format!("amqp://{}", host),
+            name: None,
+            info: None,
+            ttl: None,
+            length: None,
+        },
+    };
+
+    // Internal hosts and inactive hosts cannot be used.
+    for host_uri in ["amqp://localhost", "amqp://inactive.example.com"] {
+        param.data.host_uri = host_uri.to_string();
+        let req = server
+            .post("/coremgr/api/v1/network")
+            .add_header(
+                header::AUTHORIZATION,
+                HeaderValue::from_str(format!("Bearer {}", TOKEN_MANAGER).as_str()).unwrap(),
+            )
+            .json(&param);
+        test_invalid_param(runtime, req, "err_param")?;
+    }
+
+    // The external host (case insensitive) is transformed to the internal host.
+    param.data.host_uri = "amqp://MQ.Example.com".to_string();
+    let info = create_network(runtime, &hosts_state, &param)?;
+    runtime.block_on(async {
+        let host_uri = format!("amqp://{}", host);
+        check_queue(
+            host_uri.as_str(),
+            info.password.as_str(),
+            UNIT_CODE,
+            NET_CODE,
+        )
+        .await
+    })?;
+    let uri = format!("/coremgr/api/v1/network/{}", info.network_id);
+    expect(get_host_uri(runtime, &hosts_state, uri.as_str())?.as_str())
+        .to_equal("amqp://mq.example.com")?;
+    expect(get_host_uri(runtime, routes_state, uri.as_str())?.as_str())
+        .to_equal("amqp://localhost")?;
+    let req = server
+        .get(format!("/coremgr/api/v1/network/list?unit={}", UNIT_CODE).as_str())
+        .add_header(
+            header::AUTHORIZATION,
+            HeaderValue::from_str(format!("Bearer {}", TOKEN_MANAGER).as_str()).unwrap(),
+        );
+    let resp = runtime.block_on(async { req.await });
+    expect(resp.status_code()).to_equal(StatusCode::OK)?;
+    let body: Value = match serde_json::from_str(resp.text().as_str()) {
+        Err(e) => return Err(format!("unexpected list response: {}", e)),
+        Ok(body) => body,
+    };
+    expect(body["data"][0]["hostUri"].as_str()).to_equal(Some("amqp://mq.example.com"))?;
+
+    // Patching the same host does not change the host, even if the host is inactive.
+    let mut body = PatchNetwork {
+        data: PatchNetworkData {
+            host_uri: Some("amqp://mq.example.com".to_string()),
+            name: Some("name".to_string()),
+            info: None,
+            ttl: None,
+            length: None,
+            password: None,
+        },
+    };
+    let req = server
+        .patch(uri.as_str())
+        .add_header(
+            header::AUTHORIZATION,
+            HeaderValue::from_str(format!("Bearer {}", TOKEN_MANAGER).as_str()).unwrap(),
+        )
+        .json(&body);
+    let resp = runtime.block_on(async { req.await });
+    expect(resp.status_code()).to_equal(StatusCode::NO_CONTENT)?;
+    let mut inactive_state = hosts_state.clone();
+    inactive_state.mq_hosts.amqp[0].active = false;
+    let inactive_server = new_test_server(&inactive_state)?;
+    let req = inactive_server
+        .patch(uri.as_str())
+        .add_header(
+            header::AUTHORIZATION,
+            HeaderValue::from_str(format!("Bearer {}", TOKEN_MANAGER).as_str()).unwrap(),
+        )
+        .json(&body);
+    let resp = runtime.block_on(async { req.await });
+    expect(resp.status_code()).to_equal(StatusCode::NO_CONTENT)?;
+
+    // Cannot change to inactive or unavailable hosts.
+    body.data.password = Some("password".to_string());
+    for host_uri in ["amqp://inactive.example.com", "amqp://127.0.0.1"] {
+        body.data.host_uri = Some(host_uri.to_string());
+        let req = server
+            .patch(uri.as_str())
+            .add_header(
+                header::AUTHORIZATION,
+                HeaderValue::from_str(format!("Bearer {}", TOKEN_MANAGER).as_str()).unwrap(),
+            )
+            .json(&body);
+        test_invalid_param(runtime, req, "err_param")?;
+    }
+
+    // The current host that is not in the hosts can be patched without changes.
+    let mut other_state = routes_state.clone();
+    other_state.mq_hosts.amqp = vec![hosts_state.mq_hosts.amqp[1].clone()];
+    let other_server = new_test_server(&other_state)?;
+    body.data.host_uri = Some(format!("amqp://{}", host));
+    body.data.password = None;
+    let req = other_server
+        .patch(uri.as_str())
+        .add_header(
+            header::AUTHORIZATION,
+            HeaderValue::from_str(format!("Bearer {}", TOKEN_MANAGER).as_str()).unwrap(),
+        )
+        .json(&body);
+    let resp = runtime.block_on(async { req.await });
+    expect(resp.status_code()).to_equal(StatusCode::NO_CONTENT)?;
+    expect(get_host_uri(runtime, &other_state, uri.as_str())?.as_str()).to_equal("amqp://localhost")
 }
 
 fn test_get(runtime: &Runtime, state: &routes::State, param: &PostNetwork) -> Result<(), String> {
@@ -1858,5 +2271,22 @@ async fn check_queue(host_uri: &str, password: &str, unit: &str, code: &str) -> 
         Err("MQTT queue not connected".to_string())
     } else {
         Err("not support scheme".to_string())
+    }
+}
+
+/// To get `hostUri` of the network.
+fn get_host_uri(runtime: &Runtime, state: &routes::State, uri: &str) -> Result<String, String> {
+    let server = new_test_server(state)?;
+    let req = server.get(uri).add_header(
+        header::AUTHORIZATION,
+        HeaderValue::from_str(format!("Bearer {}", TOKEN_MANAGER).as_str()).unwrap(),
+    );
+    let resp = runtime.block_on(async { req.await });
+    if resp.status_code() != StatusCode::OK {
+        return Err(format!("get {} error: {}", uri, resp.text()));
+    }
+    match serde_json::from_str::<GetNetworkRes>(resp.text().as_str()) {
+        Err(e) => Err(format!("unexpected response format: {}", e)),
+        Ok(body) => Ok(body.data.host_uri),
     }
 }
