@@ -35,6 +35,8 @@
     - Invalid hosts (including invalid JSON) stop the service from starting.
 - **sylvia-iot-coremgr**: Recommend EMQX 6.3.0 or above in documents. Earlier versions allow all
   topics by default.
+- **sylvia-iot-coremgr-cli**: `login` reads the password interactively without echo when
+  `--password` is not specified.
 - **sylvia-iot-sdk**: `send_uldata()`, `send_dldata()` and `send_dldata_result()` return an error
   for MQTT messages exceeding the maximum packet size.
 
@@ -74,6 +76,10 @@
   2 MiB.
 - **sylvia-iot-coremgr**: Fix sending oversized data with the dldata/uldata APIs.
 - **sylvia-iot-coremgr**: Fix not clearing message broker resources after errors.
+- **sylvia-iot-coremgr-cli**: Fix the token storage file readable by other local users. The file is
+  written with the `0600` permission on Unix.
+- **sylvia-iot-coremgr-cli**: Fix the `coremgr-cli.*` command-line arguments not being registered.
+  Debug builds panicked without `-f`.
 - **sylvia-iot-data**: Fix normal users getting data of all units with an empty `unit` query.
 
 ## 0.4.7 - 2026-10-16

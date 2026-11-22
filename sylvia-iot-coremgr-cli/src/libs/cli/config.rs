@@ -2,7 +2,7 @@
 
 use std::{env, error::Error as StdError, fs};
 
-use clap::ArgMatches;
+use clap::{Arg, ArgMatches, Command};
 use dirs;
 use serde_json;
 
@@ -22,7 +22,69 @@ pub fn read_storage() -> Result<Storage, Box<dyn StdError>> {
 
 pub fn write_storage(storage: &Storage) -> Result<(), Box<dyn StdError>> {
     let json_str = serde_json::to_string_pretty(storage)?;
-    Ok(fs::write(storage_path(), json_str)?)
+    Ok(write_private_file(
+        storage_path().as_str(),
+        json_str.as_bytes(),
+    )?)
+}
+
+/// To write the file that only the owner can read and write because it contains tokens.
+#[cfg(unix)]
+fn write_private_file(path: &str, content: &[u8]) -> std::io::Result<()> {
+    use std::{
+        fs::{OpenOptions, Permissions},
+        io::Write,
+        os::unix::fs::{OpenOptionsExt, PermissionsExt},
+    };
+
+    let mut file = OpenOptions::new()
+        .write(true)
+        .create(true)
+        .truncate(true)
+        .mode(0o600)
+        .open(path)?;
+    // The mode only applies to new files, so also fix files created by previous versions.
+    file.set_permissions(Permissions::from_mode(0o600))?;
+    file.write_all(content)
+}
+
+#[cfg(not(unix))]
+fn write_private_file(path: &str, content: &[u8]) -> std::io::Result<()> {
+    fs::write(path, content)
+}
+
+/// To register Clap arguments.
+pub fn reg_args(cmd: Command) -> Command {
+    cmd.arg(
+        Arg::new("coremgr-cli.auth")
+            .long("coremgr-cli.auth")
+            .help("sylvia-iot-auth host (ex: http://localhost:1080/auth)")
+            .num_args(1),
+    )
+    .arg(
+        Arg::new("coremgr-cli.coremgr")
+            .long("coremgr-cli.coremgr")
+            .help("sylvia-iot-coremgr host (ex: http://localhost:3080/coremgr)")
+            .num_args(1),
+    )
+    .arg(
+        Arg::new("coremgr-cli.data")
+            .long("coremgr-cli.data")
+            .help("sylvia-iot-data host (ex: http://localhost:4080/data)")
+            .num_args(1),
+    )
+    .arg(
+        Arg::new("coremgr-cli.client-id")
+            .long("coremgr-cli.client-id")
+            .help("CLI client ID")
+            .num_args(1),
+    )
+    .arg(
+        Arg::new("coremgr-cli.redirect-uri")
+            .long("coremgr-cli.redirect-uri")
+            .help("CLI client redirect URI")
+            .num_args(1),
+    )
 }
 
 /// To read input arguments from command-line arguments and environment variables.
