@@ -74,6 +74,7 @@
   2 MiB.
 - **sylvia-iot-coremgr**: Fix sending oversized data with the dldata/uldata APIs.
 - **sylvia-iot-coremgr**: Fix not clearing message broker resources after errors.
+- **sylvia-iot-data**: Fix normal users getting data of all units with an empty `unit` query.
 
 ## 0.4.7 - 2026-10-16
 
